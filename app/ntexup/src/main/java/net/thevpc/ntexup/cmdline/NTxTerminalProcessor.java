@@ -44,7 +44,7 @@ public class NTxTerminalProcessor {
                         continueParsingNew(cmdLine, options);
                     })
                     .withNonOption().matchAny(a -> options.paths.add(NPath.of(a.image())))
-                    .requireWithDefault();
+                    .requireDefaults();
         }
     }
 
@@ -55,7 +55,7 @@ public class NTxTerminalProcessor {
                     .with("--dump").matchFlag(a -> options.dump = true)
                     .with("--template").matchEntry(a -> options.templateUrl = a.stringValue())
                     .withNonOption().matchAny(a -> options.paths.add(NPath.of(a.image())))
-                    .requireWithDefault();
+                    .requireDefaults();
         }
     }
 
@@ -73,7 +73,7 @@ public class NTxTerminalProcessor {
                         continueParsingPdf(cmdLine, options);
                     })
                     .withNonOption().matchAny(a -> options.paths.add(NPath.of(a.image())))
-                    .requireWithDefault();
+                    .requireDefaults();
         }
     }
 
@@ -83,7 +83,7 @@ public class NTxTerminalProcessor {
             cmdLine.matcher()
                     .with("--dump").matchFlag(a -> options.dump = true)
                     .withNonOption().matchAny(a -> options.paths.add(NPath.of(a.image())))
-                    .requireWithDefault();
+                    .requireDefaults();
         }
     }
 
@@ -93,7 +93,7 @@ public class NTxTerminalProcessor {
             cmdLine.matcher()
                     .with("--dump").matchFlag(a -> options.dump = true)
                     .withNonOption().matchAny(a -> options.paths.add(NPath.of(a.image())))
-                    .requireWithDefault();
+                    .requireDefaults();
         }
     }
 
@@ -102,7 +102,7 @@ public class NTxTerminalProcessor {
             cmdLine.matcher()
                     .with("--dump").matchFlag(a -> options.dump = true)
                     .withNonOption().matchAny(a -> options.paths.add(NPath.of(a.image())))
-                    .requireWithDefault();
+                    .requireDefaults();
         }
     }
 
@@ -119,7 +119,7 @@ public class NTxTerminalProcessor {
                         options.vars.put(a.key().substring("--var-".length()), a.stringValue());
                     })
                     .withNonOption().matchAny(a -> options.paths.add(NPath.of(a.image())))
-                    .requireWithDefault();
+                    .requireDefaults();
         }
     }
 

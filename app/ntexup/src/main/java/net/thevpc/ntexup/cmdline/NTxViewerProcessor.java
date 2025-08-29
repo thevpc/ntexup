@@ -2,7 +2,6 @@ package net.thevpc.ntexup.cmdline;
 
 import com.formdev.flatlaf.FlatLightLaf;
 import net.thevpc.ntexup.main.MainFrame;
-import net.thevpc.nuts.NSession;
 import net.thevpc.nuts.cmdline.NCmdLine;
 import net.thevpc.nuts.io.NPath;
 import net.thevpc.nuts.nswing.NSwingUtils;
@@ -21,7 +20,7 @@ public class NTxViewerProcessor {
                     .with("--view").matchTrueFlag(a -> options.requireViewer())
                     .with("--view-log").matchTrueFlag(a -> options.requireViewer().showLogs = true)
                     .withNonOption().matchAny(a -> options.paths.add(NPath.of(a.image())))
-                    .requireWithDefault();
+                    .requireDefaults();
         }
         if (options.documentation) {
             options.paths.add(NPath.of("github://thevpc/ntexup-doc-slides/"));
