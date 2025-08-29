@@ -117,11 +117,11 @@ public class NTxClassLoader extends URLClassLoader {
         }
 
         // try current class loader
-        URL s = getResource("META-INF/maven/" + id.getGroupId() + "/" + id.getArtifactId() + "/pom.properties");
+        URL s = getResource("META-INF/maven/" + id.getGroupId() + "/" + id.getArtifactId() + "/prom.properties");
         if (s != null) {
             return true;
         }
-        s = getResource("META-INF/maven/" + id.getGroupId() + "/" + id.getArtifactId() + "/pom.xml");
+        s = getResource("META-INF/maven/" + id.getGroupId() + "/" + id.getArtifactId() + "/prom.xml");
         if (s != null) {
             return true;
         }

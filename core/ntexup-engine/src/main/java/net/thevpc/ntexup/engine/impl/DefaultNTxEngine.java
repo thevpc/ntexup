@@ -48,6 +48,7 @@ import net.thevpc.ntexup.engine.document.NTxDocumentFactoryImpl;
 import net.thevpc.ntexup.engine.renderer.NTxGraphicsImpl;
 import net.thevpc.nuts.*;
 import net.thevpc.nuts.elem.*;
+import net.thevpc.nuts.ext.NExtensions;
 import net.thevpc.nuts.io.NPath;
 import net.thevpc.nuts.util.*;
 
@@ -71,7 +72,7 @@ public class DefaultNTxEngine implements NTxEngine {
     private NTxFunctionList functions;
     private NTxMessageList log = new NTxMessageList();
     NtxTextFlavorList textFlavors;
-    private NTxClassLoader classLoader;
+    private NMutableClassLoader classLoader;
     private List<NTxDependencyLoadedListener> dependencyLoadedListeners = new ArrayList<>();
     NTxNodeRendererList renderers;
     private NTxImageTypeRendererFactoryList imageTypeRendererFactoryList;
@@ -80,7 +81,7 @@ public class DefaultNTxEngine implements NTxEngine {
         addLog(new DefaultNTxLogger());
         tools = new MyNTxEngineTools(this);
 
-        classLoader = new NTxClassLoader(Thread.currentThread().getContextClassLoader(), this);
+        classLoader = NExtensions.of().createMutableClassLoader(Thread.currentThread().getContextClassLoader());
         textFlavors = new NtxTextFlavorList(this);
         functions = new NTxFunctionList(this);
         documentRendererFactories = new NTxDocumentRendererFactoryList(this);
@@ -109,7 +110,7 @@ public class DefaultNTxEngine implements NTxEngine {
     @Override
     public void dump(Consumer<NMsg> out) {
         out.accept(NMsg.ofC("NTexup Engine"));
-        classLoader.dump(out);
+        dump_classloader(out);
         textFlavors.dump(out);
         functions.dump(out);
         documentRendererFactories.dump(out);
@@ -118,6 +119,14 @@ public class DefaultNTxEngine implements NTxEngine {
         nodeParserFactories.dump(out);
         renderers.dump(out);
         imageTypeRendererFactoryList.dump(out);
+    }
+
+    private void dump_classloader(Consumer<NMsg> out) {
+        List<NDefinition> dependencies = classLoader.getLoadedDependencies();
+        out.accept(NMsg.ofC("Dependencies : %s", dependencies.size()));
+        for (NDefinition dependency : dependencies) {
+            out.accept(NMsg.ofC("\t %s", dependency.getId()));
+        }
     }
 
     public List<NTxImageTypeRendererFactory> imageTypeRendererFactories() {
@@ -130,11 +139,11 @@ public class DefaultNTxEngine implements NTxEngine {
     }
 
     public <S> List<S> loadServices(Class<S> serviceClass) {
-        return classLoader.loadServices(serviceClass);
+        return NCollections.list(ServiceLoader.load(serviceClass, classLoader.asClassLoader()));
     }
 
     public boolean importDependencies(String... deps) {
-        boolean u = classLoader.loadDependencies(deps);
+        boolean u = classLoader.loadDependencies(Arrays.stream(deps).map(x -> NDependency.of(x)).toArray(NDependency[]::new));
         if (u) {
             for (NTxDependencyLoadedListener d : dependencyLoadedListeners) {
                 d.onLoadDependencyLoaded();
