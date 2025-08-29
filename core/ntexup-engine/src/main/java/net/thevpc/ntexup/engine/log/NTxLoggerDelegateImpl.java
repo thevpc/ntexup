@@ -4,7 +4,7 @@ import net.thevpc.ntexup.api.log.NTxMsg;
 import net.thevpc.ntexup.api.log.NTxLogger;
 import net.thevpc.ntexup.api.source.NTxSource;
 import net.thevpc.nuts.log.NLog;
-import net.thevpc.nuts.log.NLogVerb;
+import net.thevpc.nuts.log.NMsgIntent;
 import net.thevpc.nuts.util.NMsg;
 
 import java.time.Instant;
@@ -62,6 +62,6 @@ public class NTxLoggerDelegateImpl implements NTxLogger {
         if (other != null) {
             other.log(NTxMsg.of(msg, error, source));
         }
-        NLog.of(getClass()).log(msg.getLevel(), NLogVerb.INFO, NMsg.ofC("%s %s",source, msg),error);
+        NLog.of(getClass()).log(msg.getLevel(), NMsgIntent.INFO, NMsg.ofC("%s %s",source, msg),error);
     }
 }
