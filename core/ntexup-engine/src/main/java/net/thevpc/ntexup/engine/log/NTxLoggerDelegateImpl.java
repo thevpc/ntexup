@@ -62,6 +62,6 @@ public class NTxLoggerDelegateImpl implements NTxLogger {
         if (other != null) {
             other.log(NTxMsg.of(msg, error, source));
         }
-        NLog.of(getClass()).log(msg.getLevel(), NMsgIntent.INFO, NMsg.ofC("%s %s",source, msg),error);
+        NLog.of(getClass()).log(NMsg.ofC("%s %s",source, msg).asInfo().withThrowable(error));
     }
 }
