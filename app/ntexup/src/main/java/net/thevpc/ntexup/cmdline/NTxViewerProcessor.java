@@ -13,7 +13,6 @@ public class NTxViewerProcessor {
         while (!cmdLine.isEmpty()) {
             cmdLine.matcher()
                     .with("--reopen").matchTrueFlag(a -> options.reopen = true)
-                    .with("--list-templates").matchFlag(a -> options.action = net.thevpc.ntexup.cmdline.Action.LIST_TEMPLATES)
                     .with("--documentation").matchFlag(a -> options.documentation = true)
                     .with("--open").matchEntry(a -> options.paths.add(NPath.of(a.stringValue())))
                     .with("--new").matchTrueFlag(a -> options.action = Action.NEW)
