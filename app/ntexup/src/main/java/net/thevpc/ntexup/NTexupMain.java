@@ -23,18 +23,21 @@ public class NTexupMain {
         NCmdLine cmdLine = NApp.of().getCmdLine();
         while (!cmdLine.isEmpty()) {
             NArg p = cmdLine.peek().get();
-            if(p.isOption()){
-                if(NSession.of().configureFirst(cmdLine)){
+            if (p.isOption()) {
+                if (NSession.of().configureFirst(cmdLine)) {
                     // okkay
-                }else if(p.key().equals("--view")){
+                } else if (
+                        p.key().equals("--view")
+                                || p.key().equals("--gui")
+                ) {
                     cmdLine.next();
-                    new NTxViewerProcessor().runViewer(cmdLine,options);
+                    new NTxViewerProcessor().runViewer(cmdLine, options);
                     return;
-                }else{
+                } else {
                     new NTxTerminalProcessor().runTerminal(cmdLine, options);
                     return;
                 }
-            }else{
+            } else {
                 new NTxTerminalProcessor().runTerminal(cmdLine, options);
                 return;
             }
