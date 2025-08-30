@@ -1,0 +1,76 @@
+```sh ntexup``` Declarative Document & Presentation Generator
+
+```sh ntexup``` is an open-source, text-based document and presentation generator designed to make the creation of professional, math-heavy, and reusable teaching materials effortless.
+
+### INSTALL
+
+```
+nuts install ntexup
+```
+
+##) EXAMPLE OF USAGE
+
+```
+nuts ntexup --view  file.ntexup
+```
+
+###) SYNOPSYS (CMD MODE)
+
+```
+nuts ntexup <option> file.ntexup
+```
+
+Options are :
+
+```--reopen```
+reopen last file/folder
+
+```--build-repo --dump```
+build repository
+
+```--list-templates```
+list available templates
+
+```--documentation```
+build documentation
+
+```--open=<path>```
+generate file ntexup file/folder
+
+```--output=<path>```
+generated file output file/folder path
+
+
+```--pdf```
+generate pf
+
+```--dump```
+show dump
+
+
+###) SYNOPSYS (UI MODE)
+
+```
+nuts ntexup --view <option>
+```
+
+
+Options are :
+
+```--new```
+open new project
+
+```--view-log```
+show log panel
+
+
+```--documentation```
+show documentation
+
+```--open <path>```
+
+
+##) EXAMPLES:
+
+# ntexup: generate pdf
+nuts -Zy -w test ntexup myfolder
