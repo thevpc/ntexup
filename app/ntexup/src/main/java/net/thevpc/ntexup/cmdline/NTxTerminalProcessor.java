@@ -12,6 +12,7 @@ import net.thevpc.nuts.NSession;
 import net.thevpc.nuts.cmdline.NArg;
 import net.thevpc.nuts.cmdline.NCmdLine;
 import net.thevpc.nuts.io.NPath;
+import net.thevpc.nuts.io.NPathRenameOptions;
 import net.thevpc.nuts.util.NBlankable;
 import net.thevpc.nuts.util.NMsg;
 
@@ -210,12 +211,12 @@ public class NTxTerminalProcessor {
                     NPath output = null;
                     if (options.paths.size() == 1) {
                         if (expecteOutput.isDirectory()) {
-                            output = expecteOutput.resolve(path.getName()).resolveSiblingWithExtension("pdf");
+                            output = expecteOutput.resolve(path.getName()).resolveSibling(NPathRenameOptions.ofExtension("pdf"));
                         } else {
-                            output = expecteOutput.resolveSiblingWithExtension("pdf");
+                            output = expecteOutput.resolveSibling(NPathRenameOptions.ofExtension("pdf"));
                         }
                     } else {
-                        output = expecteOutput.resolve(path.getName()).resolveSiblingWithExtension("pdf");
+                        output = expecteOutput.resolve(path.getName()).resolveSibling(NPathRenameOptions.ofExtension("pdf"));
                     }
                     renderer.setOutput(output);
                     renderer.render(doc);

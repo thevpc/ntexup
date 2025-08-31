@@ -9,7 +9,7 @@ public class UserConfigManager {
     private NPath userConfigFile;
 
     public UserConfigManager() {
-        this.userConfigFile = NWorkspace.of().getStoreLocation(NId.of("net.thevpc.nuts:nuts"), NStoreType.CONF).resolve("user-config.tson");
+        this.userConfigFile = NPath.ofIdStore(NId.of("net.thevpc.nuts:nuts"), NStoreType.CONF).resolve("user-config.tson");
     }
 
 

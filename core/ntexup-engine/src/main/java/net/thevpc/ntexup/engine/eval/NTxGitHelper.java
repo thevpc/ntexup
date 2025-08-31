@@ -28,7 +28,7 @@ public class NTxGitHelper {
         NPath userConfHome;
         NPath appCacheFolder = NApp.of().getCacheFolder();
         if (appCacheFolder == null) {
-            userConfHome = NWorkspace.of().getStoreLocation(NId.of("net.thevpc.ntexup:ntexup"), NStoreType.CACHE).resolve("github");
+            userConfHome = NPath.ofIdStore(NId.of("net.thevpc.ntexup:ntexup"), NStoreType.CACHE).resolve("github");
         } else {
             userConfHome = appCacheFolder.resolve("ntexup/github");
         }

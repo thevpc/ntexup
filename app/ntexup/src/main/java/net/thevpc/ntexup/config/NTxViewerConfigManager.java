@@ -24,7 +24,7 @@ public class NTxViewerConfigManager {
         NPath appCacheFolder = NApp.of().getConfFolder();
         if (viewerConfigFile == null) {
             if (appCacheFolder == null) {
-                viewerConfigFile = NWorkspace.of().getStoreLocation(NId.of("net.thevpc.ntexup:ntexup"), NStoreType.CACHE).resolve(configName);
+                viewerConfigFile = NPath.ofIdStore(NId.of("net.thevpc.ntexup:ntexup"), NStoreType.CACHE).resolve(configName);
             } else {
                 viewerConfigFile = appCacheFolder.resolve(configName);
             }
