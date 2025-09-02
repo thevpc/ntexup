@@ -28,10 +28,7 @@ public class NTxHighlighterMapper {
         nTextTransformConfig.setFlatten(true);
         nTextTransformConfig.setNormalize(true);
         nTextTransformConfig.setProcessTitleNumbers(true);
-        List<NText> flatten = ttt.flatten(parsedText, nTextTransformConfig).toList();
-        for (NText nText : flatten) {
-            processNTextRecursively(nText, result, ctx, new NTextStyle[0],p, cache);
-        }
+        processNTextRecursively(ttt.normalize(parsedText, nTextTransformConfig), result, ctx, new NTextStyle[0],p, cache);
         result.computeBound(ctx);
     }
 
@@ -125,12 +122,12 @@ public class NTxHighlighterMapper {
         }
     }
 
-    private static void processNTextRecursively(NText nText, NTxTextRendererBuilder result, NTxNodeRendererContext ctx, NTextStyle[] styles, NTxNode p, Map<String, NTxTextPartStyle> cache) {
+    private static void processNTextRecursively(NNormalizedText nText, NTxTextRendererBuilder result, NTxNodeRendererContext ctx, NTextStyle[] styles, NTxNode p, Map<String, NTxTextPartStyle> cache) {
         NTxGraphics g = ctx.graphics();
         if(styles==null){
             styles=new NTextStyle[0];
         }
-        switch (nText.getType()) {
+        switch (nText.type()) {
             case PLAIN: {
                 if (result.isEmpty()) {
                     result.nextLine();
@@ -164,18 +161,18 @@ public class NTxHighlighterMapper {
                 NTextStyled ss=(NTextStyled)nText;
                 List<NTextStyle> newStyles=new ArrayList<>(Arrays.asList(styles));
                 newStyles.addAll(ss.getStyles().toList());
-                processNTextRecursively(ss.getChild(), result, ctx,newStyles.toArray(new NTextStyle[0]), p,cache);
+                processNTextRecursively((NNormalizedText) ss.getChild(), result, ctx,newStyles.toArray(new NTextStyle[0]), p,cache);
                 break;
             }
             case LIST:{
                 NTextList list = (NTextList) nText;
                 for (NText nt : list.getChildren()) {
-                    processNTextRecursively(nt, result, ctx,styles, p,cache);
+                    processNTextRecursively((NNormalizedText)nt, result, ctx,styles, p,cache);
                 }
                 break;
             }
             default:{
-                throw new IllegalArgumentException("Unsupported text type: " + nText.getType());
+                throw new IllegalArgumentException("Unsupported text type: " + nText.type());
             }
         }
     }
