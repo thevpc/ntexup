@@ -442,7 +442,7 @@ public class DefaultNTxEngine implements NTxEngine {
                     List<NPath> all = path.stream().filter(x -> x.isRegularFile() && NTxEngineUtils.isNTexupFile(x)).toList();
                     if (all.isEmpty()) {
                         log().log(
-                                NMsg.ofC("invalid folder (no valid enclosed files) %s", path).asSevere()
+                                NMsg.ofC("invalid folder (no valid enclosed files) %s", path.normalize().toAbsolute()).asSevere()
                         );
                         return new NTxDocumentLoadingResultImpl(document, source, false);
                     }
