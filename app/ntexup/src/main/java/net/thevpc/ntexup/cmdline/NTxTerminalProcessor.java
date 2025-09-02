@@ -205,6 +205,10 @@ public class NTxTerminalProcessor {
                     }
 //                    engine.importDefaultDependencies();
                     NTxCompiledDocument doc = engine.loadCompiledDocument(path);
+                    if (doc.pages().isEmpty()) {
+                        engine.log().log(NMsg.ofC("no pages to render : %s", path.normalize().toAbsolute()).asError());
+                        return;
+                    }
                     NTxDocumentStreamRendererConfig renderConfig = new NTxDocumentStreamRendererConfig();
                     NTxDocumentStreamRenderer renderer = engine.newPdfRenderer().get();
                     renderer.setStreamRendererConfig(renderConfig);
