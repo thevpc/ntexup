@@ -1434,6 +1434,9 @@ public class NTxValue {
             if (dd.length == 2) {
                 return NOptional.of(new NTxPoint2D(dd[0], dd[1]));
             }
+            if (dd.length == 1) {
+                return NOptional.of(new NTxPoint2D(dd[0], dd[0]));
+            }
         }
         return NOptional.ofNamedEmpty("Point2D from " + element);
     }
@@ -1556,6 +1559,48 @@ public class NTxValue {
                 throw new IllegalArgumentException("unsupported type " + type);
             }
         }
+    }
+
+    public NOptional<NTxPoint2D[][]> asPoint2DArray2Or1() {
+        if (element instanceof NTxPoint2D[][]) {
+            return NOptional.of((NTxPoint2D[][]) element);
+        }
+        if (element instanceof NTxPoint2D[]) {
+            NTxPoint2D[][] v = new NTxPoint2D[1][];
+            v[0] = (NTxPoint2D[]) element;
+            return NOptional.of(v);
+        }
+        if (element instanceof NElement) {
+            NElement te = (NElement) element;
+            if (te.isListContainer()) {
+                NArrayElement array = te.toArray().get();
+                if(array.isEmpty()) {
+                    return NOptional.of(new NTxPoint2D[0][0]);
+                }
+                if(array.get(0).get().isListContainer()) {
+                    NTxPoint2D[][] all=new NTxPoint2D[array.size()][];
+                    List<NElement> children = array.children();
+                    for (int i = 0; i < children.size(); i++) {
+                        NElement child = children.get(i);
+                        NOptional<NTxPoint2D[]> u = NTxValue.of(child).asPoint2DArray();
+                        if (u.isPresent()) {
+                            all[i]=u.get();
+                        } else {
+                            return NOptional.ofNamedEmpty("Point2DArray from " + child);
+                        }
+                    }
+                    return NOptional.of(all);
+                }
+                NOptional<NTxPoint2D[]> u = asPoint2DArray();
+                if(u.isPresent()) {
+                    NTxPoint2D[][] v = new NTxPoint2D[1][];
+                    v[0] = u.get();
+                    return NOptional.of(v);
+                }
+                return NOptional.ofNamedEmpty("Point2DArray from " + element);
+            }
+        }
+        return NOptional.ofNamedEmpty("Point2DArray from " + element);
     }
 
     public NOptional<NTxPoint2D[]> asPoint2DArray() {
