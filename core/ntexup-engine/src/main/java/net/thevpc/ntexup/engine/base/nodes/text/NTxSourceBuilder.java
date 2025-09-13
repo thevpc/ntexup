@@ -19,6 +19,7 @@ public class NTxSourceBuilder implements NTxNodeBuilder {
     public void build(NTxNodeBuilderContext builderContext) {
         builderContext.id(NTxNodeType.SOURCE)
                 .parseParam().matchesName().matchesLeading().storeName(NTxPropName.LANG).then()
+                .parseParam().matchesNamedPair("text-path").then()
                 .parseParam().matchesNamedPair(NTxPropName.VALUE,NTxPropName.FILE,NTxPropName.LANG).then()
                 .parseParam().matchesAnyNonPair().storeFirstMissingName(NTxPropName.VALUE).then()
                 .renderText().buildText(this::renderTextBuildText)
