@@ -8,6 +8,7 @@ import net.thevpc.ntexup.api.document.style.*;
 
 import net.thevpc.ntexup.api.renderer.NTxNodeRendererContext;
 import net.thevpc.ntexup.api.util.NTxSizeRef;
+import net.thevpc.ntexup.api.util.NTxUtils;
 import net.thevpc.ntexup.api.util.NtxFontInfo;
 import net.thevpc.nuts.elem.NElement;
 import net.thevpc.nuts.elem.NNumberElement;
@@ -385,12 +386,7 @@ public class NTxValueByName {
     public static NOptional<NTxShadow> readStyleAsShadow(NTxNode t, String s, NTxNodeRendererContext ctx) {
         Object sv = ctx.computePropertyValue(t, s).orNull();
         NTxValue o = NTxValue.of(sv);
-        NOptional<NTxPoint2D> r = getStyleAsShadowDistance(sv, ctx);
-        if (r.isPresent()) {
-            NTxShadow ss = new NTxShadow();
-            ss.setTranslation(r.get());
-            return NOptional.of(ss);
-        }
+        NTxSizeRef sr = ctx.sizeRef();
         if (sv instanceof NElement && ((NElement) sv).isListContainer()) {
             NTxShadow shadow = new NTxShadow();
             for (Map.Entry<String, NTxValue> e : o.argsOrBodyMap().entrySet()) {
@@ -398,20 +394,47 @@ public class NTxValueByName {
                     case "distance":
                     case "shift":
                     case "origin": {
-                        NOptional<NTxPoint2D> d = getStyleAsShadowDistance(e.getValue(), ctx);
+                        NOptional<NTxPoint2D> d = e.getValue().asPoint2DOrDouble();
                         if (d.isPresent()) {
-                            shadow.setTranslation(d.get());
+                            shadow.setTranslation(NTxUtils.point2DasRelative(d.get(),sr));
                         } else {
-                            return (NOptional) d;
+                            //return (NOptional) d;
+                        }
+                        break;
+                    }
+                    case "radius": {
+                        NOptional<Double> d = e.getValue().asDouble();
+                        if (d.isPresent()) {
+                            shadow.setRadius(d.get());
+                        } else {
+                            //return (NOptional) d;
+                        }
+                        break;
+                    }
+                    case "alpha": {
+                        NOptional<Double> d = e.getValue().asDouble();
+                        if (d.isPresent()) {
+                            shadow.setAlpha(d.get());
+                        } else {
+                            //return (NOptional) d;
                         }
                         break;
                     }
                     case "shear": {
-                        NOptional<NTxPoint2D> d = getStyleAsShadowDistance(e.getValue(), ctx);
+                        NOptional<NTxPoint2D> d = e.getValue().asPoint2DOrDouble();
                         if (d.isPresent()) {
-                            shadow.setShear(d.get());
+                            shadow.setShear(NTxUtils.point2DasRelative(d.get(),sr));
                         } else {
-                            return (NOptional) d;
+                            //return (NOptional) d;
+                        }
+                        break;
+                    }
+                    case "zoom": {
+                        NOptional<NTxPoint2D> d = e.getValue().asPoint2DOrDouble();
+                        if (d.isPresent()) {
+                            shadow.setZoom(NTxUtils.point2DasRelative(d.get(),sr));
+                        } else {
+                            //return (NOptional) d;
                         }
                         break;
                     }
@@ -420,7 +443,7 @@ public class NTxValueByName {
                         if (d.isPresent()) {
                             shadow.setColor(d.get());
                         } else {
-                            return (NOptional) d;
+                            //return (NOptional) d;
                         }
                         break;
                     }
@@ -429,20 +452,28 @@ public class NTxValueByName {
                     }
                 }
             }
+            if(shadow.getTranslation()==null){
+                shadow.setTranslation(NTxUtils.point2DasRelative(new NTxPoint2D(1, 1),sr));
+            }
+            if(shadow.getRadius()<=0){
+                shadow.setRadius(2);
+            }
             return NOptional.of(shadow);
         }
         NOptional<Boolean> rb = NTxValue.of(sv).asBoolean();
         if (rb.isPresent()) {
             if (rb.get()) {
                 NTxShadow ss = new NTxShadow();
-                ss.setTranslation(new NTxPoint2D(1, 1));
+                ss.setTranslation(NTxUtils.point2DasRelative(new NTxPoint2D(1, 1),sr));
+                ss.setRadius(2);
                 return NOptional.of(ss);
             }
         }
-        NOptional<Double> rd = NTxValue.of(sv).asDouble();
-        if (r.isPresent()) {
+        NOptional<NTxPoint2D> rd = NTxValue.of(sv).asPoint2DOrDouble();
+        if (rd.isPresent()) {
             NTxShadow ss = new NTxShadow();
-            ss.setTranslation(new NTxPoint2D(rd.get(), rd.get()));
+            ss.setTranslation(NTxUtils.point2DasRelative(new NTxPoint2D(rd.get().getX(), rd.get().getY()),sr));
+            ss.setRadius(2);
             return NOptional.of(ss);
         }
         return NOptional.ofNamedEmpty("shadow");
@@ -508,6 +539,11 @@ public class NTxValueByName {
                         n.get().doubleValue() / 100.0 * hh
                 ));
             }
+        } else if(o.isBoolean()){
+            return NOptional.of(new NTxPoint2D(
+                    1 / 100.0 * ww,
+                    1 / 100.0 * hh
+            ));
         } else {
             NOptional<NTxPoint2D> n = o.asPoint2D();
             if (n.isPresent()) {
