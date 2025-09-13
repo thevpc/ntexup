@@ -24,15 +24,17 @@ public class NTexupMain {
         while (!cmdLine.isEmpty()) {
             NArg p = cmdLine.peek().get();
             if (p.isOption()) {
-                if (NSession.of().configureFirst(cmdLine)) {
-                    // okkay
-                } else if (
-                        p.key().equals("--view")
-                                || p.key().equals("--gui")
-                ) {
+                if (p.key().equals("--gui")) {
+                    NSession.of().setGui(true);
                     cmdLine.next();
                     new NTxViewerProcessor().runViewer(cmdLine, options);
                     return;
+                } else if (p.key().equals("--view")) {
+                    cmdLine.next();
+                    new NTxViewerProcessor().runViewer(cmdLine, options);
+                    return;
+                } else if (NSession.of().configureFirst(cmdLine)) {
+                    // okkay
                 } else {
                     new NTxTerminalProcessor().runTerminal(cmdLine, options);
                     return;
