@@ -28,6 +28,7 @@ public class DocumentPopupMenu {
                 NTxDocumentStreamRendererConfig config = configDialog.getConfig();
 
                 if (documentView.listener != null) {
+
                     documentView.listener.onSaveDocument(documentView.compiledDocument(), config);
                 } else {
                     System.err.println("saveDocumentListener is null or document is null");
