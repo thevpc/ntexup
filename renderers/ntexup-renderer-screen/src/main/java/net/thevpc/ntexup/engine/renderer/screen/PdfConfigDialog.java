@@ -22,12 +22,13 @@ public class PdfConfigDialog extends JDialog {
     private JTextField marginLeftField;
     private JTextField marginRightField;
     private boolean confirmed;
+    private Runnable onConfirm;
 
-    public PdfConfigDialog(Frame parent) {
+    public PdfConfigDialog(Frame parent, Runnable onConfirm) {
         super(parent, "PDF Configuration", true);
         setLayout(new BorderLayout());
         getContentPane().setBackground(Color.WHITE);
-
+        this.onConfirm = onConfirm;
         JPanel headerPanel = new JPanel();
         headerPanel.setBackground(new Color(33, 150, 243));
         headerPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
@@ -63,8 +64,13 @@ public class PdfConfigDialog extends JDialog {
 
         JButton okButton = createButton("OK", new Color(76, 175, 80));
         okButton.addActionListener(e -> {
-            confirmed = true;
-            setVisible(false);
+            if(onConfirm!=null){
+                new Thread(()->{
+                    onConfirm.run();
+                    confirmed = true;
+                    SwingUtilities.invokeLater(()->setVisible(false));
+                }).start();
+            }
         });
 
         JButton cancelButton = createButton("Cancel", new Color(244, 67, 54));
