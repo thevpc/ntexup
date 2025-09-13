@@ -203,7 +203,7 @@ public class DocumentView {
         }
         new Thread(() -> {
             reloadDocumentSync();
-            if (!isShown) {
+            if (!isShown && getPagesCount()>0) {
                 isShown = true;
                 show();
             }
@@ -319,6 +319,7 @@ public class DocumentView {
     public void showPage(int index) {
         int count = getPagesCount();
         if(count<=0){
+            JOptionPane.showMessageDialog(contentPane,"No Pages to render","Error",JOptionPane.ERROR_MESSAGE);
             return;
         }
         if (index > count) {
