@@ -1,26 +1,38 @@
 page{
-    grid(2,2){
-        styles:{
-            "*":{
-                font-size:6%P
-            }
-        }
-        ul{
-            ¶ Hello ####World####
-            "
-                Hello
-                ###World###
-            "
-            ul{
-                ¶ Bye ####World####
-                "
-                    Bye
-                    ##Bad##
-                    ###World###
-                "
-                ¶ Bye ####World####
-            }
-            ¶ Morning ####World####
-        }
-    }
+   text(
+    "Hello ####World####
+    of strange things"
+    //"Hello World"
+    font-size:10%P
+    shadow:(alpha:0.5,color:yellow)
+    at:top,font-bold,font-italic
+    text-path:{(0,0),(20,20),(80,50)}
+   )
+   text(
+    "Hello ####World####"
+    //"Hello World"
+    font-size:10%P
+    shadow:(alpha:0.5,color:yellow)
+    at:top,font-bold,font-italic
+    text-path:{arc(x:50,y:50,rx:40,ry:40,to:210)}
+    debug
+   )
+   text(
+    "Strange Things..."
+    //"Hello World"
+    font-size:10%P
+    shadow:(alpha:0.5,color:yellow)
+    at:top,font-bold,font-italic
+    text-path:{arc(x:50,y:50,rx:30,ry:30,to:180)}
+    debug
+   )
+   text(
+    "Always happen..."
+    //"Hello World"
+    font-size:10%P
+    shadow:(alpha:0.5,color:yellow)
+    at:top,font-bold,font-italic
+    text-path:{arc(x:50,y:50,rx:20,ry:20,to:140)}
+    debug
+   )
 }
