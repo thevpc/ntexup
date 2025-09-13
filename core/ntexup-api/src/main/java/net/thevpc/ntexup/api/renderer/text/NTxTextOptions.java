@@ -1,6 +1,7 @@
 package net.thevpc.ntexup.api.renderer.text;
 
 import net.thevpc.ntexup.api.document.elem2d.NTxPoint2D;
+import net.thevpc.ntexup.api.document.elem2d.NTxShadow;
 import net.thevpc.ntexup.api.document.elem2d.NTxSize;
 import net.thevpc.ntexup.api.eval.NTxFontBySizeResolver;
 import net.thevpc.ntexup.api.renderer.NTxGraphics;
@@ -25,8 +26,7 @@ public class NTxTextOptions implements Cloneable, NBlankable {
     public Boolean underlined;
     public Boolean strikeThrough;
     public Font baseFont;
-    public Paint shadowColor;
-    public NTxPoint2D shadowTranslation;
+    public NTxShadow shadow;
     public Stroke stroke;
     public NTxSizeRef sr;
     public Font computedFont;
@@ -63,10 +63,7 @@ public class NTxTextOptions implements Cloneable, NBlankable {
         if (baseFont != null) {
             return false;
         }
-        if (shadowColor != null) {
-            return false;
-        }
-        if (shadowTranslation != null) {
+        if (shadow != null) {
             return false;
         }
         if (stroke != null) {
@@ -189,21 +186,12 @@ public class NTxTextOptions implements Cloneable, NBlankable {
         return this;
     }
 
-    public Paint getShadowColor() {
-        return shadowColor;
+    public NTxShadow getShadow() {
+        return shadow;
     }
 
-    public NTxTextOptions setShadowColor(Paint shadowColor) {
-        this.shadowColor = shadowColor;
-        return this;
-    }
-
-    public NTxPoint2D getShadowTranslation() {
-        return shadowTranslation;
-    }
-
-    public NTxTextOptions setShadowTranslation(NTxPoint2D shadowTranslation) {
-        this.shadowTranslation = shadowTranslation;
+    public NTxTextOptions setShadow(NTxShadow shadow) {
+        this.shadow = shadow;
         return this;
     }
 
@@ -236,6 +224,9 @@ public class NTxTextOptions implements Cloneable, NBlankable {
             return true;
         }
         if (backgroundColor != null) {
+            return true;
+        }
+        if (shadow != null) {
             return true;
         }
         return false;
@@ -329,24 +320,24 @@ public class NTxTextOptions implements Cloneable, NBlankable {
         attributedString.addAttribute(TextAttribute.FONT, f);
     }
 
-    public AttributedString createShadowAttributedString(String text, NTxGraphics g) {
-        AttributedString attributedString = new AttributedString(text);
-        int strLen = text.length();
-        if (underlined != null && underlined) {
-            attributedString.addAttribute(TextAttribute.UNDERLINE, TextAttribute.UNDERLINE_ON, 0, strLen);
-        }
-        if (strikeThrough != null && strikeThrough) {
-            attributedString.addAttribute(TextAttribute.STRIKETHROUGH, TextAttribute.STRIKETHROUGH_ON, 0, strLen);
-        }
-        if (shadowColor != null) {
-            attributedString.addAttribute(TextAttribute.FOREGROUND, shadowColor, 0, strLen);
-        }
-        if (backgroundColor != null) {
-            attributedString.addAttribute(TextAttribute.BACKGROUND, backgroundColor, 0, strLen);
-        }
-        applyFont(attributedString, g);
-        return attributedString;
-    }
+//    public AttributedString createShadowAttributedString(String text, NTxGraphics g) {
+//        AttributedString attributedString = new AttributedString(text);
+//        int strLen = text.length();
+//        if (underlined != null && underlined) {
+//            attributedString.addAttribute(TextAttribute.UNDERLINE, TextAttribute.UNDERLINE_ON, 0, strLen);
+//        }
+//        if (strikeThrough != null && strikeThrough) {
+//            attributedString.addAttribute(TextAttribute.STRIKETHROUGH, TextAttribute.STRIKETHROUGH_ON, 0, strLen);
+//        }
+//        if (shadowColor != null) {
+//            attributedString.addAttribute(TextAttribute.FOREGROUND, shadowColor, 0, strLen);
+//        }
+//        if (backgroundColor != null) {
+//            attributedString.addAttribute(TextAttribute.BACKGROUND, backgroundColor, 0, strLen);
+//        }
+//        applyFont(attributedString, g);
+//        return attributedString;
+//    }
 
     public NTxTextOptions copyNonNullFrom(NTxTextOptions other) {
         if (other != null) {
@@ -377,11 +368,8 @@ public class NTxTextOptions implements Cloneable, NBlankable {
             if (other.baseFont != null) {
                 this.baseFont = other.baseFont;
             }
-            if (other.shadowColor != null) {
-                this.shadowColor = other.shadowColor;
-            }
-            if (other.shadowTranslation != null) {
-                this.shadowTranslation = other.shadowTranslation;
+            if (other.shadow != null) {
+                this.shadow = other.shadow;
             }
         }
         return this;
