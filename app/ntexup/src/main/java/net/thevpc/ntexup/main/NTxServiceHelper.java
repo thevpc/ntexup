@@ -1,5 +1,7 @@
 package net.thevpc.ntexup.main;
 
+import net.thevpc.ntexup.api.document.NTxDocument;
+import net.thevpc.ntexup.api.document.NTxDocumentLoadingResult;
 import net.thevpc.ntexup.api.engine.NTxCompiledDocument;
 import net.thevpc.ntexup.api.engine.NTxEngine;
 import net.thevpc.ntexup.api.engine.NTxTemplateInfo;
@@ -206,6 +208,9 @@ public class NTxServiceHelper {
     }
 
     public void doSavePDf(NTxCompiledDocument document, NTxDocumentStreamRendererConfig config) {
+        //we must recompile the document so
+        NTxDocument raw = document.rawDocument();
+        NTxCompiledDocument newCompiledDocument = engine.asCompiledDocument(engine.compileDocument(raw).document().get());
         JFileChooser f = new JFileChooser();
         f.setFileSelectionMode(JFileChooser.FILES_ONLY);
 
@@ -223,7 +228,7 @@ public class NTxServiceHelper {
                 NTxDocumentStreamRenderer renderer = engine.newPdfRenderer().get();
                 renderer.setStreamRendererConfig(config);
                 renderer.setOutput(outputPdfPath);
-                renderer.render(document);
+                renderer.render(newCompiledDocument);
 
                 if (Desktop.isDesktopSupported()) {
                     try {
