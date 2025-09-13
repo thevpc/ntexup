@@ -1,6 +1,7 @@
 package net.thevpc.ntexup.api.util;
 
 import net.thevpc.ntexup.api.document.elem2d.NTxBounds2;
+import net.thevpc.ntexup.api.document.elem2d.NTxPoint2D;
 import net.thevpc.ntexup.api.document.elem3d.NTxPoint3D;
 import net.thevpc.ntexup.api.document.node.NTxItem;
 import net.thevpc.ntexup.api.document.node.NTxItemList;
@@ -33,6 +34,61 @@ public class NTxUtils {
         return NOptional.ofOptional(e, NMsg.ofC("Missing CompilerDeclarationPath in %s", element));
     }
 
+    public static NTxPoint2D point2DasRelative(NTxPoint2D a, NTxSizeRef sr) {
+        return a == null ? null : new NTxPoint2D(
+                a.getX() / 100.0 * sr.getParentWidth(),
+                a.getY() / 100 * sr.getParentHeight()
+        );
+    }
+    /**
+     * Generates points along an elliptical arc.
+     *
+     * @param minX      bounding box left
+     * @param minY      bounding box top
+     * @param maxX      bounding box right
+     * @param maxY      bounding box bottom
+     * @param startDeg  start angle in degrees (0° = right, increasing counterclockwise)
+     * @param endDeg    end angle in degrees
+     * @param steps     number of points along the curve
+     * @return          list of points along the arc
+     */
+    public static List<NTxPoint2D> createArc(double minX, double minY, double maxX, double maxY,
+                                          double startDeg, double endDeg, int steps) {
+        List<NTxPoint2D> points = new ArrayList<>();
+        double cx = (minX + maxX) / 2.0;
+        double cy = (minY + maxY) / 2.0;
+        double rx = (maxX - minX) / 2.0;
+        double ry = (maxY - minY) / 2.0;
+
+        double startRad = Math.toRadians(startDeg);
+        double endRad = Math.toRadians(endDeg);
+
+        for (int i = 0; i <= steps; i++) {
+            double t = (double) i / steps; // 0 → 1
+            double angle = startRad + t * (endRad - startRad);
+            double x = cx + rx * Math.cos(angle);
+            double y = cy - ry * Math.sin(angle); // Y down
+            points.add(new NTxPoint2D(x, y));
+        }
+
+        return points;
+    }
+    public static List<NTxPoint2D> createArc2(double cx, double cy, double rx, double ry,
+                                          double startDeg, double endDeg, int steps) {
+        List<NTxPoint2D> points = new ArrayList<>();
+        double startRad = Math.toRadians(startDeg);
+        double endRad = Math.toRadians(endDeg);
+
+        for (int i = 0; i <= steps; i++) {
+            double t = (double) i / steps; // 0 → 1
+            double angle = startRad + t * (endRad - startRad);
+            double x = cx + rx * Math.cos(angle);
+            double y = cy - ry * Math.sin(angle); // Y down
+            points.add(new NTxPoint2D(x, y));
+        }
+
+        return points;
+    }
     public static NElement addCompilerDeclarationPath(NElement elem, NTxSource resource) {
         if (resource != null) {
             NPath nPath = resource.path().orNull();
@@ -60,7 +116,7 @@ public class NTxUtils {
         if (o.isPresent()) {
             return element;
         }
-        if(element.isString()) {
+        if (element.isString()) {
             return element.builder().addAnnotation(COMPILER_DECLARATION_PATH, NElement.ofString(path)).build();
         }
         return element;
@@ -331,7 +387,7 @@ public class NTxUtils {
 
     public static Paint resolveForegroundColor(NTxTextOptions options, NTxNode node, NTxNodeRendererContext ctx) {
         if (options.foregroundColorIndex != null) {
-            return NTxColors.resolveDefaultColorByIndex(options.foregroundColorIndex, null,node, ctx);
+            return NTxColors.resolveDefaultColorByIndex(options.foregroundColorIndex, null, node, ctx);
         } else if (options.foregroundColor instanceof Color) {
             return options.foregroundColor;
         }
@@ -515,4 +571,5 @@ public class NTxUtils {
         }
         return r;
     }
+
 }
