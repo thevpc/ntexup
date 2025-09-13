@@ -23,7 +23,7 @@ public class NtxFontInfo {
     }
 
     public NtxFontInfo copy() {
-        return new NtxFontInfo(size, baseFont, bold, italic, family);
+        return new NtxFontInfo(size, baseFont, italic, bold, family);
     }
 
     public NtxFontInfo applyDefaults(NtxFontInfo defaultFont) {
