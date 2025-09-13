@@ -470,16 +470,16 @@ public class NTxGraphicsImpl implements NTxGraphics {
         if (options.getBaseFont() != null) {
             g.setFont(options.getBaseFont());
         }
-        NTxPoint2D sht = options.getShadowTranslation();
-        if (options.getShadowColor() != null && sht != null && !sht.equals(new NTxPoint2D(0, 0))) {
-            if (options.isStyled()) {
-                AttributedString attrStr = options.createShadowAttributedString(str, this);
-                g.drawString(attrStr.getIterator(), (float) (x + sht.getX()), (float) (y + sht.getY()));
-            } else {
-                g.setPaint(options.getShadowColor());
-                g.drawString(str, (float) (x + sht.getX()), (float) (y + sht.getY()));
-            }
-        }
+//        NTxPoint2D sht = options.getShadowTranslation();
+//        if (options.getShadowColor() != null && sht != null && !sht.equals(new NTxPoint2D(0, 0))) {
+//            if (options.isStyled()) {
+//                AttributedString attrStr = options.createShadowAttributedString(str, this);
+//                g.drawString(attrStr.getIterator(), (float) (x + sht.getX()), (float) (y + sht.getY()));
+//            } else {
+//                g.setPaint(options.getShadowColor());
+//                g.drawString(str, (float) (x + sht.getX()), (float) (y + sht.getY()));
+//            }
+//        }
         {
             if (options.isStyled()) {
                 AttributedString attrStr = options.createAttributedString(str, this);
