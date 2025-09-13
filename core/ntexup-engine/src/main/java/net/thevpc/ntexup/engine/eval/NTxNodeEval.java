@@ -247,7 +247,7 @@ public class NTxNodeEval implements NTxObjectEvalContext {
                     NPairElement ff = ((NPairElement) elementExpr);
                     return ff.builder()
                             .key(eval(ff.key(), node))
-                            .key(eval(ff.value(), node))
+                            .value(eval(ff.value(), node))
                             .build();
                 }
                 case ARRAY:
