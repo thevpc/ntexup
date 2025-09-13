@@ -1,0 +1,3 @@
+page{
+   text("Hello ####World####",font-size:40%P,shadow:(alpha:0.5,color:yellow),at:top,font-bold,font-italic)
+}
