@@ -26,6 +26,7 @@ public class NTxTextBuilder implements NTxNodeBuilder {
         builderContext.id(NTxNodeType.TEXT)
                 .parseAny(x -> true)
                 .parseParam().matchesNamedPair(NTxPropName.VALUE,NTxPropName.FILE).then()
+                .parseParam().matchesNamedPair("text-path").then()
                 .parseParam().matchesAnyNonPair().storeFirstMissingName(NTxPropName.VALUE).then()
                 .renderText().buildText(this::buildText).parseTokens(this::parseTokens)
         ;
