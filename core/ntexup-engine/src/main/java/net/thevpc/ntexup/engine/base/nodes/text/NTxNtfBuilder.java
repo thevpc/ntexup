@@ -15,6 +15,7 @@ public class NTxNtfBuilder implements NTxNodeBuilder {
     @Override
     public void build(NTxNodeBuilderContext builderContext) {
         builderContext.id(NTxNodeType.NTF)
+                .parseParam().matchesNamedPair("text-path").then()
                 .parseParam().matchesNamedPair(NTxPropName.VALUE,NTxPropName.FILE).then()
                 .parseParam().matchesAnyNonPair().storeFirstMissingName(NTxPropName.VALUE).then()
                 .renderText().buildText(this::renderTextBuildText)
