@@ -2,13 +2,18 @@ package net.thevpc.ntexup.engine.renderer;
 
 import net.thevpc.ntexup.api.document.elem2d.*;
 import net.thevpc.ntexup.api.document.node.*;
+import net.thevpc.ntexup.api.document.style.NTxPropName;
 import net.thevpc.ntexup.api.eval.NTxValueByName;
 import net.thevpc.ntexup.api.document.NTxSizeRequirements;
 import net.thevpc.ntexup.api.eval.NTxValue;
 import net.thevpc.ntexup.api.renderer.NTxGraphics;
 import net.thevpc.ntexup.api.renderer.NTxNodeRenderer;
 import net.thevpc.ntexup.api.renderer.NTxNodeRendererContext;
+import net.thevpc.ntexup.engine.util.NTx2DUtils;
 import net.thevpc.ntexup.engine.util.NTxNodeRendererUtils;
+import net.thevpc.nuts.util.NOptional;
+
+import java.awt.*;
 
 public abstract class NTxNodeRendererBase implements NTxNodeRenderer {
 
@@ -37,7 +42,7 @@ public abstract class NTxNodeRendererBase implements NTxNodeRenderer {
     }
 
     public void render(NTxNodeRendererContext rendererContext) {
-        NTxNode node=rendererContext.node();
+        NTxNode node = rendererContext.node();
         boolean v = NTxValueByName.isVisible(node, rendererContext);
         if (!v) {
             return;
@@ -73,8 +78,19 @@ public abstract class NTxNodeRendererBase implements NTxNodeRenderer {
                         }
                     }
                 }
-                renderMain(rendererContext);
+
+                NOptional<NTxShadow> shadowOptional = NTxValueByName.readStyleAsShadow(node, NTxPropName.SHADOW, rendererContext);
+                if (shadowOptional.isPresent() && !shadowOptional.get().isBlank()) {
+                    NTxShadow shadow = shadowOptional.get();
+                    NTxNodeRendererContext finalRendererContext = rendererContext;
+                    NTx2DUtils.drawShadowed(rendererContext.graphics(), gg -> {
+                        renderMain(finalRendererContext.withGraphics(gg));
+                    }, finalRendererContext.getGlobalBounds(), shadow);
+                } else {
+                    renderMain(rendererContext);
+                }
                 NTxNodeRendererUtils.drawDebugBox(rendererContext.node(), rendererContext, rendererContext.graphics(), rendererContext.selfBounds());
+
             }
         } finally {
             if (nv != null) {
