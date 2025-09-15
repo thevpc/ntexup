@@ -51,6 +51,7 @@
     </licenses>
 
     <dependencies>
+        <dependency><groupId>net.thevpc.nuts</groupId><artifactId>nuts-swing</artifactId><version>0.8.6.0</version></dependency>
         <dependency><groupId>net.thevpc.ntexup</groupId><artifactId>ntexup-api</artifactId><version>0.8.6</version></dependency>
         <dependency><groupId>net.thevpc.ntexup</groupId><artifactId>ntexup-engine</artifactId><version>0.8.6.0</version></dependency>
 
