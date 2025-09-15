@@ -1,12 +1,21 @@
 package net.thevpc.ntexup.engine.renderer.screen;
 
+import net.thevpc.ntexup.api.document.NTxDocument;
+import net.thevpc.ntexup.api.engine.NTxCompiledDocument;
+import net.thevpc.ntexup.api.engine.NTxEngine;
+import net.thevpc.ntexup.api.renderer.NTxDocumentStreamRenderer;
 import net.thevpc.ntexup.api.renderer.NTxDocumentStreamRendererConfig;
 import net.thevpc.ntexup.api.renderer.NTxPageOrientation;
+import net.thevpc.nuts.io.NPath;
+import net.thevpc.nuts.nswing.GBC;
 import net.thevpc.nuts.util.NLiteral;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.io.File;
+import java.io.IOException;
+import java.util.function.Consumer;
 
 public class PdfConfigDialog extends JDialog {
     private JRadioButton portraitRadioButton;
@@ -22,13 +31,18 @@ public class PdfConfigDialog extends JDialog {
     private JTextField marginLeftField;
     private JTextField marginRightField;
     private boolean confirmed;
-    private Runnable onConfirm;
+    private JProgressBar progressBar;
+    private NTxEngine engine;
+    private DocumentView documentView;
+    private JButton okButton;
+    private JButton cancelButton;
 
-    public PdfConfigDialog(Frame parent, Runnable onConfirm) {
+    public PdfConfigDialog(Frame parent, DocumentView documentView) {
         super(parent, "PDF Configuration", true);
+        this.documentView = documentView;
+        this.engine = documentView.engine();
         setLayout(new BorderLayout());
         getContentPane().setBackground(Color.WHITE);
-        this.onConfirm = onConfirm;
         JPanel headerPanel = new JPanel();
         headerPanel.setBackground(new Color(33, 150, 243));
         headerPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
@@ -38,22 +52,25 @@ public class PdfConfigDialog extends JDialog {
         headerPanel.add(titleLabel);
         add(headerPanel, BorderLayout.NORTH);
 
-        JPanel contentPanel = new JPanel();
-        contentPanel.setLayout(new GridLayout(0, 2, 10, 10));
+        JPanel contentPanel = new JPanel(new GridBagLayout());
+//        contentPanel.setLayout(new GridLayout(0, 2, 10, 10));
         contentPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
         contentPanel.setBackground(Color.WHITE);
 
-        addLabelAndComponent(contentPanel, "Orientation:", createOrientationPanel());
-        addLabelAndComponent(contentPanel, "Grid X:", gridXField = createTextField());
-        addLabelAndComponent(contentPanel, "Grid Y:", gridYField = createTextField());
-        addLabelAndComponent(contentPanel, "Page Size:", sizePageComboBox = createComboBox(new String[]{"Small (300x300)", "Medium (600x600)", "Large (900x900)", "Max (1200x1200)"}));
-        addLabelAndComponent(contentPanel, "Show Page Number:", showPageNumberCheckBox = createCheckBox());
-        addLabelAndComponent(contentPanel, "Show File Name:", showFileNameCheckBox = createCheckBox());
-        addLabelAndComponent(contentPanel, "Show Date:", showDateCheckBox = createCheckBox());
-        addLabelAndComponent(contentPanel, "Margin Top:", marginTopField = createTextField());
-        addLabelAndComponent(contentPanel, "Margin Bottom:", marginBottomField = createTextField());
-        addLabelAndComponent(contentPanel, "Margin Left:", marginLeftField = createTextField());
-        addLabelAndComponent(contentPanel, "Margin Right:", marginRightField = createTextField());
+        int line = 0;
+        addLabelAndComponent(line++, contentPanel, "Orientation:", createOrientationPanel());
+        addLabelAndComponent(line++, contentPanel, "Grid X:", gridXField = createTextField());
+        addLabelAndComponent(line++, contentPanel, "Grid Y:", gridYField = createTextField());
+        addLabelAndComponent(line++, contentPanel, "Page Size:", sizePageComboBox = createComboBox(new String[]{"Small (300x300)", "Medium (600x600)", "Large (900x900)", "Max (1200x1200)"}));
+        addLabelAndComponent(line++, contentPanel, "Show Page Number:", showPageNumberCheckBox = createCheckBox());
+        addLabelAndComponent(line++, contentPanel, "Show File Name:", showFileNameCheckBox = createCheckBox());
+        addLabelAndComponent(line++, contentPanel, "Show Date:", showDateCheckBox = createCheckBox());
+        addLabelAndComponent(line++, contentPanel, "Margin Top:", marginTopField = createTextField());
+        addLabelAndComponent(line++, contentPanel, "Margin Bottom:", marginBottomField = createTextField());
+        addLabelAndComponent(line++, contentPanel, "Margin Left:", marginLeftField = createTextField());
+        addLabelAndComponent(line++, contentPanel, "Margin Right:", marginRightField = createTextField());
+        progressBar = new JProgressBar(0, 100);
+        contentPanel.add(progressBar, GBC.of(0, line).colspan(2).rowspan(1).weightx(2).insets(10).fillBoth().build());
 
         add(contentPanel, BorderLayout.CENTER);
 
@@ -62,18 +79,14 @@ public class PdfConfigDialog extends JDialog {
         footerPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
         footerPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
 
-        JButton okButton = createButton("OK", new Color(76, 175, 80));
+        okButton = createButton("OK", new Color(76, 175, 80));
         okButton.addActionListener(e -> {
-            if(onConfirm!=null){
-                new Thread(()->{
-                    onConfirm.run();
-                    confirmed = true;
-                    SwingUtilities.invokeLater(()->setVisible(false));
-                }).start();
-            }
+            new Thread(() -> {
+                doSavePDf(documentView.compiledDocument(), getConfig(), PdfConfigDialog.this);
+            }).start();
         });
 
-        JButton cancelButton = createButton("Cancel", new Color(244, 67, 54));
+        cancelButton = createButton("Cancel", new Color(244, 67, 54));
         cancelButton.addActionListener(e -> {
             confirmed = false;
             setVisible(false);
@@ -88,12 +101,29 @@ public class PdfConfigDialog extends JDialog {
         setResizable(false);
     }
 
-    private void addLabelAndComponent(JPanel panel, String labelText, JComponent component) {
+    private void setEditableEditors(boolean editable) {
+        okButton.setEnabled(editable);
+        cancelButton.setEnabled(editable);
+        portraitRadioButton.setEnabled(editable);
+        landscapeRadioButton.setEnabled(editable);
+        gridXField.setEnabled(editable);
+        gridYField.setEnabled(editable);
+        sizePageComboBox.setEnabled(editable);
+        showPageNumberCheckBox.setEnabled(editable);
+        showFileNameCheckBox.setEnabled(editable);
+        showDateCheckBox.setEnabled(editable);
+        marginTopField.setEnabled(editable);
+        marginBottomField.setEnabled(editable);
+        marginLeftField.setEnabled(editable);
+        marginRightField.setEnabled(editable);
+    }
+
+    private void addLabelAndComponent(int index, JPanel panel, String labelText, JComponent component) {
         JLabel label = new JLabel(labelText);
         label.setForeground(new Color(33, 150, 243));
         label.setFont(new Font("Arial", Font.BOLD, 14));
-        panel.add(label);
-        panel.add(component);
+        panel.add(label, GBC.of(0, index).insets(3).fillHorizontal().build());
+        panel.add(component, GBC.of(1, index).insets(3).fillHorizontal().build());
     }
 
     private JPanel createOrientationPanel() {
@@ -185,4 +215,60 @@ public class PdfConfigDialog extends JDialog {
         config.setMarginRight(NLiteral.of(marginRightField.getText()).asFloat().orElse(0f));
         return config;
     }
+
+    public void doSavePDf(NTxCompiledDocument document, NTxDocumentStreamRendererConfig config, Component parentComponent) {
+        //we must recompile the document so
+        try {
+            SwingUtilities.invokeLater(() -> setEditableEditors(false));
+            NTxDocument raw = document.rawDocument();
+            JFileChooser f;
+            try {
+                SwingUtilities.invokeLater(() -> progressBar.setIndeterminate(true));
+                f = new JFileChooser(new File("."));
+            } finally {
+                SwingUtilities.invokeLater(() -> progressBar.setIndeterminate(false));
+            }
+            f.setFileSelectionMode(JFileChooser.FILES_ONLY);
+
+            int r = f.showOpenDialog(parentComponent);
+            if (r == JFileChooser.APPROVE_OPTION) {
+                File sf = f.getSelectedFile();
+                if (sf != null) {
+                    if (!sf.exists()) {
+                        if (!sf.getName().endsWith(".pdf")) {
+                            sf = new File(sf.getParent(), sf.getName() + ".pdf");
+                        }
+                    }
+                    NPath outputPdfPath = NPath.of(sf);
+
+                    try {
+                        SwingUtilities.invokeLater(() -> progressBar.setIndeterminate(true));
+                        NTxDocumentStreamRenderer renderer = engine.newPdfRenderer().get();
+                        renderer.setStreamRendererConfig(config);
+                        renderer.setOutput(outputPdfPath);
+                        NTxCompiledDocument newCompiledDocument = engine.asCompiledDocument(engine.compileDocument(raw).document().get());
+                        renderer.render(newCompiledDocument);
+                    } finally {
+                        SwingUtilities.invokeLater(() -> progressBar.setIndeterminate(false));
+                    }
+                    confirmed = true;
+                    if (Desktop.isDesktopSupported()) {
+                        try {
+                            Desktop.getDesktop().open(sf);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    } else {
+                        System.out.println("Desktop is not supported on this system.");
+                    }
+                    SwingUtilities.invokeLater(() -> {
+                        setVisible(false);
+                    });
+                }
+            }
+        } finally {
+            SwingUtilities.invokeLater(() -> setEditableEditors(true));
+        }
+    }
+
 }
