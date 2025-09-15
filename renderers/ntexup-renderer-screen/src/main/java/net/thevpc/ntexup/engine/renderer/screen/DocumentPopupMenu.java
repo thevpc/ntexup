@@ -1,5 +1,9 @@
 package net.thevpc.ntexup.engine.renderer.screen;
 
+import net.thevpc.ntexup.api.document.NTxDocument;
+import net.thevpc.ntexup.api.engine.NTxCompiledDocument;
+import net.thevpc.ntexup.api.engine.NTxEngine;
+import net.thevpc.ntexup.api.renderer.NTxDocumentStreamRenderer;
 import net.thevpc.ntexup.api.source.NTxSource;
 import net.thevpc.ntexup.api.renderer.NTxDocumentStreamRendererConfig;
 import net.thevpc.ntexup.engine.renderer.screen.utils.JPopupMenuHelper;
@@ -22,18 +26,8 @@ public class DocumentPopupMenu {
     void showPopupMenu(MouseEvent e) {
         JPopupMenuHelper popupMenu = new JPopupMenuHelper();
         popupMenu.addMenuItem("Save as PDF", ev -> {
-            PdfConfigDialog configDialog = new PdfConfigDialog((Frame) SwingUtilities.getWindowAncestor((Component) e.getSource()));
+            PdfConfigDialog configDialog = new PdfConfigDialog((Frame) SwingUtilities.getWindowAncestor((Component) e.getSource()),documentView);
             configDialog.setVisible(true);
-            if (configDialog.isConfirmed()) {
-                NTxDocumentStreamRendererConfig config = configDialog.getConfig();
-
-                if (documentView.listener != null) {
-
-                    documentView.listener.onSaveDocument(documentView.compiledDocument(), config);
-                } else {
-                    System.err.println("saveDocumentListener is null or document is null");
-                }
-            }
         });
 
         NTxSource source = documentView.compiledDocument().source();
@@ -96,4 +90,6 @@ public class DocumentPopupMenu {
         popupMenu.addMenu(sizeMenu);
         popupMenu.show(e);
     }
+
+
 }
