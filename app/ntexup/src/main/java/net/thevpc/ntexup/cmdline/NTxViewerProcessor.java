@@ -14,7 +14,13 @@ public class NTxViewerProcessor {
             cmdLine.matcher()
                     .with("--reopen").matchTrueFlag(a -> options.reopen = true)
                     .with("--documentation").matchFlag(a -> options.documentation = true)
-                    .with("--open").matchEntry(a -> options.paths.add(NPath.of(a.stringValue())))
+                    .with("--open").matchEntry(a -> {
+                        if(a.getStringValue().isPresent()){
+                            options.paths.add(NPath.of(a.stringValue()));
+                        }else{
+                            options.paths.add(NPath.ofUserDirectory());
+                        }
+                    })
                     .with("--new").matchTrueFlag(a -> options.action = Action.NEW)
                     .with("--view").matchTrueFlag(a -> options.requireViewer())
                     .with("--view-log").matchTrueFlag(a -> options.requireViewer().showLogs = true)
