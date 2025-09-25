@@ -88,6 +88,26 @@ public class DocumentPopupMenu {
             });
         }
         popupMenu.addMenu(sizeMenu);
+        JMenu sizeMenu2 = new JMenu("Square Size");
+        for (String s : new String[]{
+                "480x480",
+                "600x600",
+                "800x800",
+                "960x960",
+                "1024x1024",
+                "1080x1080",
+                "1280x1280",
+                "1366x1366",
+                "1964x1964",
+        }) {
+            JMenuItem menuItem = new JMenuItem(s);
+            sizeMenu2.add(menuItem);
+            menuItem.addActionListener(ev -> {
+                String[] u = s.split("x");
+                documentView.frame.setSize(Integer.parseInt(u[0]), Integer.parseInt(u[1]));
+            });
+        }
+        popupMenu.addMenu(sizeMenu2);
         popupMenu.show(e);
     }
 
