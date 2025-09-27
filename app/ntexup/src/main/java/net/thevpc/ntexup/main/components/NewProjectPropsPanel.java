@@ -7,57 +7,38 @@ import net.thevpc.ntexup.main.NTxServiceHelper;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class NewProjectPropsPanel extends JPanel {
     Map<String, PropInfo> props = new LinkedHashMap<>();
-    JComboBox template;
+    NTxServiceHelper serviceHelper;
 
     public NewProjectPropsPanel(NTxServiceHelper serviceHelper) {
         super(new GridBagLayout());
-        PropInfo[] propInfos={
+        PropInfo[] propInfos = {
                 new NewProjectPropsPanel.PropInfo("template.title", "Title", "New Document")
                 , new NewProjectPropsPanel.PropInfo("template.subtitle", "Sub-Title")
                 , new NewProjectPropsPanel.PropInfo("template.subsubtitle", "Sub-Sub-Title")
                 , new NewProjectPropsPanel.PropInfo("template.date", "Date", new SimpleDateFormat("yyyy-MM-dd").format(new Date()))
                 , new NewProjectPropsPanel.PropInfo("template.version", "Version", "v1.0.0")
         };
+        this.serviceHelper = serviceHelper;
         int row = 0;
-        add(new JLabel("Template"), NTxUIHelper.forLabel(0, row));
-        add(template = new JComboBox<>(), NTxUIHelper.forEditor(1, row));
-        template.setEditable(true);
-        row++;
-        DefaultComboBoxModel aModel = new DefaultComboBoxModel();
-        for (NTxTemplateInfo defaultTemplateUrl : serviceHelper.engine().getTemplates()) {
-            aModel.addElement(defaultTemplateUrl);
-        }
-        template.setModel(aModel);
-
         for (PropInfo s : propInfos) {
             props.put(s.id, s);
             s.field = new JTextField();
-            if(s.defaultValue!=null){
+            if (s.defaultValue != null) {
                 s.field.setText(s.defaultValue);
             }
             add(new JLabel(s.label), NTxUIHelper.forLabel(0, row));
             add(s.field, NTxUIHelper.forEditor(1, row));
             row++;
         }
-    }
-    public NTxTemplateInfo getSelectedTemplate() {
-        Object s = template.getSelectedItem();
-        if(s instanceof String){
-            String ss=(String)s;
-            return new NTxTemplateInfoImpl(
-                    ss,
-                    ss, false, null, null,
-                    ss,new String[0]
-            );
-        }
-        return (NTxTemplateInfo) s;
     }
 
     public String getSelectedProperty(String property) {
