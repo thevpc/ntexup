@@ -700,10 +700,10 @@ public class DefaultNTxEngine implements NTxEngine {
                     try {
                         NPath bp = finalProjectUrl;
                         NPath pp = bp.getParent();
-                        if (pp != null && pp.getName().equals("boot")) {
+                        if (pp != null && pp.getName().equals("templates")) {
                             pp = pp.getParent();
                             if (pp != null) {
-                                pp = pp.resolve("dist");
+                                pp = pp.resolve("theme");
                                 return pp.toString();
                             }
                         }
@@ -732,7 +732,12 @@ public class DefaultNTxEngine implements NTxEngine {
             }
             return null;
         };
-        copyTemplate(projectUrl, path, vars2);
+        try {
+            copyTemplate(projectUrl, path, vars2,true,false);
+        }catch (Exception ex) {
+            throw new NIllegalArgumentException(NMsg.ofC("cannot create project at %s. folder not empty",path));
+        }
+        copyTemplate(projectUrl, path, vars2,false,true);
     }
 
     @Override
@@ -749,19 +754,19 @@ public class DefaultNTxEngine implements NTxEngine {
         }
         NTxTemplateInfoLoader loader = new NTxTemplateInfoLoader();
         for (Repo repo : new Repo[]{
-                new Repo("dev", NPath.ofUserHome().resolve("xprojects/nuts-world/nuts-productivity/ntexup-templates/main")),
+                new Repo("dev", NPath.ofUserHome().resolve("xprojects/nuts-world/nuts-productivity/ntexup-templates")),
                 new Repo("local", NApp.of().getSharedConfFolder().resolve("templates")),
                 new Repo("user", NPath.ofUserStore(NStoreType.CONF).resolve("ntexup/templates")),
-                new Repo("user", NPath.ofSystemStore(NStoreType.CONF).resolve("ntexup/templates")),
-                new Repo("central-github", NPath.of("github://thevpc/ntexup-templates/main"))
+                new Repo("system", NPath.ofSystemStore(NStoreType.CONF).resolve("ntexup/templates")),
+                new Repo("central-github", NPath.of("github://thevpc/ntexup-templates"))
         }) {
-            loader.loadTemplateInfo(repo.name, repo.path.resolve("ntexup-repository.tson"), log());
+            allTemplates.addAll(loader.loadTemplateInfo(repo.name, repo.path, log()));
         }
         return allTemplates.toArray(new NTxTemplateInfo[0]);
     }
 
 
-    private void copyTemplate(NPath from, NPath to, Function<String, String> vars) {
+    private void copyTemplate(NPath from, NPath to, Function<String, String> vars, boolean dry, boolean acceptOverride) {
         if (from.isDirectory()) {
             if (!to.exists()) {
                 to.mkdirs();
@@ -770,14 +775,21 @@ public class DefaultNTxEngine implements NTxEngine {
                 throw new IllegalArgumentException("cannot copy folder " + from + " to " + to);
             }
             for (NPath nPath : from.list()) {
-                copyTemplate(nPath, to.resolve(nPath.getName()), vars);
+                copyTemplate(nPath, to.resolve(nPath.getName()), vars, dry, acceptOverride);
             }
         } else if (from.isRegularFile()) {
-            if (NTxEngineUtils.isNTexupFile(from)) {
-                String code = from.readString();
-                to.writeString(NMsg.ofV(code, vars).toString());
-            } else {
-                from.copyTo(to);
+            if (to.isRegularFile()) {
+                if (!acceptOverride) {
+                    throw new IllegalArgumentException("cannot copy " + from + " to " + to + ". file alreay exists");
+                }
+            }
+            if (!dry) {
+                if (NTxEngineUtils.isNTexupFile(from)) {
+                    String code = from.readString();
+                    to.writeString(NMsg.ofV(code, vars).toString());
+                } else {
+                    from.copyTo(to);
+                }
             }
         } else {
             throw new IllegalArgumentException("cannot copy " + from + " to " + to);
