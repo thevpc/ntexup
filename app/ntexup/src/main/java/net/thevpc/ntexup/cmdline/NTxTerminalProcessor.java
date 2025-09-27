@@ -7,132 +7,29 @@ import net.thevpc.ntexup.api.renderer.NTxDocumentStreamRenderer;
 import net.thevpc.ntexup.api.renderer.NTxDocumentStreamRendererConfig;
 import net.thevpc.ntexup.engine.impl.DefaultNTxEngine;
 import net.thevpc.ntexup.engine.repo.RepoBuilderTool;
+import net.thevpc.nuts.NCmdLineException;
 import net.thevpc.nuts.NOut;
 import net.thevpc.nuts.NSession;
+import net.thevpc.nuts.NValidationException;
+import net.thevpc.nuts.boot.NBootException;
+import net.thevpc.nuts.boot.reserved.util.NBootMsg;
 import net.thevpc.nuts.cmdline.NArg;
 import net.thevpc.nuts.cmdline.NCmdLine;
 import net.thevpc.nuts.io.NPath;
 import net.thevpc.nuts.io.NPathRenameOptions;
-import net.thevpc.nuts.util.NBlankable;
-import net.thevpc.nuts.util.NMsg;
+import net.thevpc.nuts.text.NText;
+import net.thevpc.nuts.text.NTextBuilder;
+import net.thevpc.nuts.text.NTextStyle;
+import net.thevpc.nuts.util.*;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class NTxTerminalProcessor {
 
-    public void parse(NCmdLine cmdLine, Options options) {
-        while (!cmdLine.isEmpty()) {
-            cmdLine.matcher()
-                    .with("--reopen").matchTrueFlag(a -> {
-                        options.reopen = true;
-                        continueParsingReopen(cmdLine, options);
-                    })
-                    .with("--build-repo").matchTrueFlag(a -> {
-                        continueParsingBuildRepository(cmdLine, options);
-                    })
-                    .with("--list-templates").matchFlag(a -> {
-                        continueParsingListTemplates(cmdLine, options);
-                    })
-                    .with("--dump").matchFlag(a -> options.dump = true)
-                    .with("--documentation").matchFlag(a -> options.documentation = true)
-                    .with("--output").matchEntry(a -> options.output = NPath.of(a.stringValue()))
-                    .with("--open").matchEntry(a -> {
-                        options.paths.add(NPath.of(a.stringValue()));
-                        continueParsingOpen(cmdLine, options);
-                    })
-                    .with("--pdf").matchFlag(a -> {
-                        continueParsingPdf(cmdLine, options);
-                    })
-                    .with("--new").matchTrueFlag(a -> {
-                        continueParsingNew(cmdLine, options);
-                    })
-                    .withNonOption().matchAny(a -> options.paths.add(NPath.of(a.image())))
-                    .requireDefaults();
-        }
-    }
+    public void runTerminal(Options options) {
 
-    private void continueParsingNew(NCmdLine cmdLine, Options options) {
-        options.action = Action.NEW;
-        while (!cmdLine.isEmpty()) {
-            cmdLine.matcher()
-                    .with("--dump").matchFlag(a -> options.dump = true)
-                    .with("--template").matchEntry(a -> options.templateUrl = a.stringValue())
-                    .withNonOption().matchAny(a -> options.paths.add(NPath.of(a.image())))
-                    .requireDefaults();
-        }
-    }
-
-    private void continueParsingReopen(NCmdLine cmdLine, Options options) {
-        while (!cmdLine.isEmpty()) {
-            cmdLine.matcher()
-                    .with("--dump").matchFlag(a -> options.dump = true)
-                    .with("--documentation").matchFlag(a -> options.documentation = true)
-                    .with("--output").matchEntry(a -> options.output = NPath.of(a.stringValue()))
-                    .with("--open").matchEntry(a -> {
-                        options.paths.add(NPath.of(a.stringValue()));
-                        continueParsingOpen(cmdLine, options);
-                    })
-                    .with("--pdf").matchEntry(a -> {
-                        continueParsingPdf(cmdLine, options);
-                    })
-                    .withNonOption().matchAny(a -> options.paths.add(NPath.of(a.image())))
-                    .requireDefaults();
-        }
-    }
-
-    private void continueParsingBuildRepository(NCmdLine cmdLine, Options options) {
-        options.action = Action.BUILD_REPO;
-        while (!cmdLine.isEmpty()) {
-            cmdLine.matcher()
-                    .with("--dump").matchFlag(a -> options.dump = true)
-                    .withNonOption().matchAny(a -> options.paths.add(NPath.of(a.image())))
-                    .requireDefaults();
-        }
-    }
-
-    private void continueParsingListTemplates(NCmdLine cmdLine, Options options) {
-        options.action = net.thevpc.ntexup.cmdline.Action.LIST_TEMPLATES;
-        while (!cmdLine.isEmpty()) {
-            cmdLine.matcher()
-                    .with("--dump").matchFlag(a -> options.dump = true)
-                    .withNonOption().matchAny(a -> options.paths.add(NPath.of(a.image())))
-                    .requireDefaults();
-        }
-    }
-
-    private void continueParsingOpen(NCmdLine cmdLine, Options options) {
-        while (!cmdLine.isEmpty()) {
-            cmdLine.matcher()
-                    .with("--dump").matchFlag(a -> options.dump = true)
-                    .withNonOption().matchAny(a -> options.paths.add(NPath.of(a.image())))
-                    .requireDefaults();
-        }
-    }
-
-    private void continueParsingPdf(NCmdLine cmdLine, Options options) {
-        options.outputFormat = OutputFormat.PDF;
-        while (!cmdLine.isEmpty()) {
-            cmdLine.matcher()
-                    .with("--output").matchEntry(a -> options.output = NPath.of(a.stringValue()))
-                    .with("--dump").matchFlag(a -> options.dump = true)
-                    .withCondition(c -> {
-                        NArg a = c.peek().get();
-                        return a.isOption() && a.key().startsWith("--var-");
-                    }).matchEntry(a -> {
-                        options.vars.put(a.key().substring("--var-".length()), a.stringValue());
-                    })
-                    .withNonOption().matchAny(a -> options.paths.add(NPath.of(a.image())))
-                    .requireDefaults();
-        }
-    }
-
-    public void runTerminal(NCmdLine cmdLine, Options options) {
-        parse(cmdLine, options);
-        if (!options.viewer && !options.console) {
-            options.viewer = NSession.of().isGui();
-            options.console = !options.viewer;
-        } else if (options.viewer && options.console) {
-            options.viewer = NSession.of().isGui();
-            options.console = !options.viewer;
-        }
 
         switch (options.action) {
             case NEW: {
@@ -141,16 +38,70 @@ public class NTxTerminalProcessor {
                     engine.dump();
                 }
                 if (NBlankable.isBlank(options.templateUrl)) {
-                    cmdLine.throwMissingArgument("--template");
-                }
-                if (NBlankable.isBlank(options.paths.size() > 1)) {
-                    cmdLine.throwError(NMsg.ofC("too many paths"));
+                    NTextBuilder sb = NTextBuilder.of();
+                    sb.append("Enter template url. You can choose from the following :").newLine();
+                    NTxTemplateInfo[] templates = engine.getTemplates();
+                    for (int i = 0; i < templates.length; i++) {
+                        NTxTemplateInfo template = templates[i];
+                        sb.append(NMsg.ofC("[%-3s] %-25s : %s",NText.ofStyled("#"+(i+1),NTextStyle.number()),NMsg.ofStyledPrimary1(template.name()),NMsg.ofStyledPath(template.url())))
+                        .newLine();
+                    }
+                    String value = NAsk.of().forString(NMsg.ofC("%s", sb))
+                            .setValidator((sval,a)->{
+                                NTxTemplateInfo ok=null;
+                                List<NTxTemplateInfo> found = Arrays.stream(templates).filter(x -> x.url().equals(sval)).collect(Collectors.toList());
+                                if(!found.isEmpty()){
+                                    ok = found.get(0);
+                                }else{
+                                    found = Arrays.stream(templates).filter(x -> NStringUtils.trim(x.name()).equalsIgnoreCase(NStringUtils.trim(sval))).collect(Collectors.toList());
+                                    if(!found.isEmpty()) {
+                                        ok = found.get(0);
+                                    }else{
+                                        if(sval.startsWith("#")){
+                                            NOptional<Integer> z = NLiteral.of(sval.substring(1).trim()).asInt();
+                                            if(z.isPresent()){
+                                                int zi = z.get();
+                                                if(zi>=1 && zi<=templates.length){
+                                                    ok=templates[zi-1];
+                                                }
+                                            }
+                                        }
+                                        if(ok==null){
+                                            NOptional<Integer> z = NLiteral.of(sval.trim()).asInt();
+                                            if(z.isPresent()){
+                                                int zi = z.get();
+                                                if(zi>=1 && zi<=templates.length){
+                                                    ok=templates[zi-1];
+                                                }
+                                            }
+                                        }
+                                        if(ok==null){
+                                            found = Arrays.stream(templates).filter(x -> NStringUtils.trim(x.name()).contains(NStringUtils.trim(sval))).collect(Collectors.toList());
+                                            if(found.size()==1){
+                                                ok=found.get(0);
+                                            }else if(found.size()>1){
+                                                throw new NValidationException(NMsg.ofC("ambiguous selection matches : %s", found.stream().map(Object::toString).collect(Collectors.joining(", "))));
+                                            }
+                                        }
+                                    }
+                                }
+                                if(ok!=null){
+                                    return ok.url();
+                                }
+                                throw new NValidationException(NMsg.ofC("Invalid template url: %s", sval));
+                            })
+                            .getValue();
+                    if(value==null){
+                        throw new NValidationException(NMsg.ofC("Invalid template url: %s", value));
+                    }
+                    options.templateUrl=value;
                 }
                 if (options.paths.isEmpty()) {
-                    options.paths.add(NPath.of(".").resolve(NPath.of(options.templateUrl).getName()));
+                    options.paths.add(NPath.ofUserDirectory());
                 }
-                NPath f = options.paths.get(0);
-                engine.createProject(f, NPath.of(options.templateUrl), x -> options.vars.get(x));
+                for (NPath f : options.paths) {
+                    engine.createProject(f, NPath.of(options.templateUrl), x -> options.vars.get(x));
+                }
                 break;
             }
             case LIST_TEMPLATES: {
