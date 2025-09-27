@@ -16,6 +16,7 @@ import net.thevpc.ntexup.api.renderer.NTxDocumentRendererListener;
 import net.thevpc.ntexup.api.renderer.NTxDocumentScreenRenderer;
 import net.thevpc.ntexup.api.renderer.NTxDocumentStreamRenderer;
 import net.thevpc.ntexup.api.renderer.NTxDocumentStreamRendererConfig;
+import net.thevpc.ntexup.util.NTexupUtils;
 import net.thevpc.nuts.io.NPath;
 import net.thevpc.nuts.util.NBlankable;
 import net.thevpc.nuts.util.NStringUtils;
@@ -127,52 +128,59 @@ public class NTxServiceHelper {
     }
 
     public void showNewProject() {
-        NewProjectPanel projectPanel = new NewProjectPanel(this);
-        if (projectPanel.showDialog(mainFrame.getContentPane())) {
-            NTxTemplateInfo selectedTemplate = projectPanel.getSelectedTemplate();
-            if (selectedTemplate == null) {
-                selectedTemplate = Arrays.stream(engine.getTemplates()).filter(NTxTemplateInfo::recommended).findAny().orElse(null);
-            }
-            if (selectedTemplate == null) {
-                JOptionPane.showMessageDialog(mainFrame.getContentPane(), "Missing template", "Warning", JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-            NPath rootPath = NPath.of(NStringUtils.firstNonBlank(projectPanel.getSelectedRootFolder(), "."));
-            NPath newProjectPath;
-            String baseName = NStringUtils.trim(projectPanel.getSelectedProjectName());
-            if (NBlankable.isBlank(baseName)) {
-                baseName = "new-project";
-            }
-            int index = 1;
-            newProjectPath = null;
-            while (true) {
-                String nn = index == 1 ? baseName : (baseName + "-" + index);
-                newProjectPath = rootPath.resolve(nn);
-                if (!newProjectPath.exists()) {
-                    break;
+        showNewProject(null);
+    }
+
+    public void showNewProject(String rootFolder) {
+        NTexupUtils.runUiAsync(()->{
+            NewProjectPanel projectPanel = new NewProjectPanel(this);
+            projectPanel.setSelectedRootFolder(rootFolder);
+            if (projectPanel.showDialog(mainFrame.getContentPane())) {
+                NTxTemplateInfo selectedTemplate = projectPanel.getSelectedTemplate();
+                if (selectedTemplate == null) {
+                    selectedTemplate = Arrays.stream(engine.getTemplates()).filter(NTxTemplateInfo::recommended).findAny().orElse(null);
                 }
-                index++;
-            }
-            if (index != 1) {
-                if (JOptionPane.showConfirmDialog(mainFrame.getContentPane(), "Folder " + baseName + " already exists. Should we consider new name " + newProjectPath.getName(), "Warning", JOptionPane.WARNING_MESSAGE, JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
-                    //usersConfig().saveUserConfig(newUserConfig);
-                } else {
+                if (selectedTemplate == null) {
+                    JOptionPane.showMessageDialog(mainFrame.getContentPane(), "Missing template", "Warning", JOptionPane.ERROR_MESSAGE);
                     return;
                 }
-            }
-            Map<String, String> propValues = projectPanel.getPropValues();
-            engine.createProject(newProjectPath, NPath.of(selectedTemplate.url()), propValues::get);
-            UserConfig newUserConfig = projectPanel.getUserConfig();
-            UserConfig oldUser = usersConfig().loadUserConfig(newUserConfig.getId());
-            if (oldUser != null && Objects.equals(newUserConfig, oldUser)) {
-                if (JOptionPane.showConfirmDialog(mainFrame.getContentPane(), "User Info changed. Do you want to save them?", "Warning", JOptionPane.WARNING_MESSAGE, JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
+                NPath rootPath = NPath.of(NStringUtils.firstNonBlank(projectPanel.getSelectedRootFolder(), "."));
+                NPath newProjectPath;
+                String baseName = NStringUtils.trim(projectPanel.getSelectedProjectName());
+                if (NBlankable.isBlank(baseName)) {
+                    baseName = "new-project";
+                }
+                int index = 1;
+                newProjectPath = null;
+                while (true) {
+                    String nn = index == 1 ? baseName : (baseName + "-" + index);
+                    newProjectPath = rootPath.resolve(nn);
+                    if (!newProjectPath.exists()) {
+                        break;
+                    }
+                    index++;
+                }
+                if (index != 1) {
+                    if (JOptionPane.showConfirmDialog(mainFrame.getContentPane(), "Folder " + baseName + " already exists. Should we consider new name " + newProjectPath.getName(), "Warning", JOptionPane.WARNING_MESSAGE, JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
+                        //usersConfig().saveUserConfig(newUserConfig);
+                    } else {
+                        return;
+                    }
+                }
+                Map<String, String> propValues = projectPanel.getPropValues();
+                engine.createProject(newProjectPath, NPath.of(selectedTemplate.url()), propValues::get);
+                UserConfig newUserConfig = projectPanel.getUserConfig();
+                UserConfig oldUser = usersConfig().loadUserConfig(newUserConfig.getId());
+                if (oldUser != null && Objects.equals(newUserConfig, oldUser)) {
+                    if (JOptionPane.showConfirmDialog(mainFrame.getContentPane(), "User Info changed. Do you want to save them?", "Warning", JOptionPane.WARNING_MESSAGE, JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
+                        usersConfig().saveUserConfig(newUserConfig);
+                    }
+                } else if (oldUser == null) {
                     usersConfig().saveUserConfig(newUserConfig);
                 }
-            } else if (oldUser == null) {
-                usersConfig().saveUserConfig(newUserConfig);
+                openProject(newProjectPath);
             }
-            openProject(newProjectPath);
-        }
+        });
     }
 
     public void showNewFile() {
