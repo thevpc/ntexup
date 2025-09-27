@@ -25,11 +25,17 @@ public interface NTxTemplateInfo {
 
     String name();
 
+    String layout();
+
+    String version();
+
     String localPath();
 
     String url();
 
     List<String> binaryVersions();
+
     boolean recommended();
+
     NElement toElement();
 }
