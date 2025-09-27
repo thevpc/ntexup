@@ -104,7 +104,7 @@ public class RepoBuilderTool {
                 ok.add(
                         new NTxTemplateInfoImpl(
                                 a.name(),
-                                null,
+                                a.layout(), a.version(), null,
                                 a.recommended(),
                                 null,
                                 null,
@@ -131,7 +131,7 @@ public class RepoBuilderTool {
             for (NPath templateFolder : templateFolders) {
                 NTxTemplateInfo old = newTemplates.stream().filter(x -> x.localPath().equals(templateFolder.getName())).findFirst().orElse(null);
                 if (old == null) {
-                    newTemplates.add(new NTxTemplateInfoImpl(themeName + " " + templateFolder.getName() + " " + versionName, null, false, null, null, templateFolder.getName(), new String[]{NTxEngine.CURRENT_VERSION}));
+                    newTemplates.add(new NTxTemplateInfoImpl(themeName, templateFolder.getName(), versionName, null, false, null, null, templateFolder.getName(), new String[]{NTxEngine.CURRENT_VERSION}));
                 } else {
                     if (old.binaryVersions().isEmpty()) {
                         newTemplates.remove(old);
@@ -141,7 +141,7 @@ public class RepoBuilderTool {
             }
         } else {
             for (NPath templateFolder : templateFolders) {
-                newTemplates.add(new NTxTemplateInfoImpl(themeName + " " + templateFolder.getName() + " " + versionName, null, false, null, null, templateFolder.getName(), new String[]{NTxEngine.CURRENT_VERSION}));
+                newTemplates.add(new NTxTemplateInfoImpl(themeName, templateFolder.getName(), versionName, null, false, null, null, templateFolder.getName(), new String[]{NTxEngine.CURRENT_VERSION}));
             }
         }
         if (!newTemplates.isEmpty()) {
