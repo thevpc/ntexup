@@ -7,6 +7,7 @@ import net.thevpc.ntexup.api.log.NTxLogger;
 import net.thevpc.ntexup.engine.util.NTxUtilsImages;
 import net.thevpc.ntexup.api.renderer.NTxDocumentRendererListener;
 import net.thevpc.ntexup.api.renderer.NTxDocumentStreamRendererConfig;
+import net.thevpc.ntexup.util.NTexupUtils;
 
 import javax.swing.*;
 import java.awt.*;
@@ -122,7 +123,9 @@ public class NTxDebugFrame extends JFrame {
     }
 
     public void run() {
-        updateContent();
-        setVisible(true);
+        NTexupUtils.runUiAsync(()->{
+            updateContent();
+            setVisible(true);
+        });
     }
 }
