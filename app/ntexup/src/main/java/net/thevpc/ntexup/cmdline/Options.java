@@ -1,6 +1,8 @@
 package net.thevpc.ntexup.cmdline;
 
+import net.thevpc.nuts.NIllegalArgumentException;
 import net.thevpc.nuts.io.NPath;
+import net.thevpc.nuts.util.NMsg;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -15,14 +17,25 @@ public class Options {
     public boolean documentation;
     public boolean dump;
     public String templateUrl;
-    public boolean viewer;
-    public boolean console;
     public boolean showLogs;
     public boolean reopen;
+    public boolean terminalMode;
+    public boolean guiMode;
     public Map<String,String> vars=new LinkedHashMap<>();
 
-    public Options requireViewer() {
-        this.viewer = true;
+    public Options setTerminalMode(boolean terminalMode) {
+        if(guiMode && terminalMode) {
+            throw new NIllegalArgumentException(NMsg.ofC("cannot mix terminal mode and gui mode"));
+        }
+        this.terminalMode = terminalMode;
+        return this;
+    }
+
+    public Options setGuiMode(boolean guiMode) {
+        if(guiMode && terminalMode) {
+            throw new NIllegalArgumentException(NMsg.ofC("cannot mix terminal mode and gui mode"));
+        }
+        this.guiMode = guiMode;
         return this;
     }
 }
