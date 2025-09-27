@@ -12,6 +12,8 @@ import java.util.stream.Stream;
 
 public class NTxTemplateInfoImpl implements NTxTemplateInfo {
     private String name;
+    private String layout;
+    private String version;
     private String localPath;
     private String url;
     private String repoUrl;
@@ -19,7 +21,7 @@ public class NTxTemplateInfoImpl implements NTxTemplateInfo {
     private String[] binaryVersions;
     private boolean recommended;
 
-    public NTxTemplateInfoImpl(String name, String url, boolean recommended, String repoName, String repoUrl, String localPath, String[] binaryVersions) {
+    public NTxTemplateInfoImpl(String name, String layout, String version, String url, boolean recommended, String repoName, String repoUrl, String localPath, String[] binaryVersions) {
         this.name = name;
         this.localPath = localPath;
         this.repoUrl = repoUrl;
@@ -27,41 +29,43 @@ public class NTxTemplateInfoImpl implements NTxTemplateInfo {
         this.url = url;
         this.recommended = recommended;
         this.binaryVersions = binaryVersions;
+        this.layout = layout;
+        this.version = version;
     }
 
     @Override
     public NTxTemplateInfo withName(String name) {
-        return new NTxTemplateInfoImpl(name, url, recommended, repoName, repoUrl, localPath, binaryVersions);
+        return new NTxTemplateInfoImpl(name, layout, version, url, recommended, repoName, repoUrl, localPath, binaryVersions);
     }
 
     @Override
     public NTxTemplateInfo withRecommended(boolean recommended) {
-        return new NTxTemplateInfoImpl(name, url, recommended, repoName, repoUrl, localPath, binaryVersions);
+        return new NTxTemplateInfoImpl(name, layout, version, url, recommended, repoName, repoUrl, localPath, binaryVersions);
     }
 
     @Override
     public NTxTemplateInfo withBinaryVersions(String[] binaryVersions) {
-        return new NTxTemplateInfoImpl(name, url, recommended, repoName, repoUrl, localPath, binaryVersions);
+        return new NTxTemplateInfoImpl(name, layout, version, url, recommended, repoName, repoUrl, localPath, binaryVersions);
     }
 
     @Override
     public NTxTemplateInfo withLocalPath(String localPath) {
-        return new NTxTemplateInfoImpl(name, url, recommended, repoName, repoUrl, localPath, binaryVersions);
+        return new NTxTemplateInfoImpl(name, layout, version, url, recommended, repoName, repoUrl, localPath, binaryVersions);
     }
 
     @Override
     public NTxTemplateInfo withUrl(String url) {
-        return new NTxTemplateInfoImpl(name, url, recommended, repoName, repoUrl, localPath, binaryVersions);
+        return new NTxTemplateInfoImpl(name, layout, version, url, recommended, repoName, repoUrl, localPath, binaryVersions);
     }
 
     @Override
     public NTxTemplateInfo withRepoUrl(String repoUrl) {
-        return new NTxTemplateInfoImpl(name, url, recommended, repoName, repoUrl, localPath, binaryVersions);
+        return new NTxTemplateInfoImpl(name, layout, version, url, recommended, repoName, repoUrl, localPath, binaryVersions);
     }
 
     @Override
     public NTxTemplateInfo withRepoName(String repoName) {
-        return new NTxTemplateInfoImpl(name, url, recommended, repoName, repoUrl, localPath, binaryVersions);
+        return new NTxTemplateInfoImpl(name, layout, version, url, recommended, repoName, repoUrl, localPath, binaryVersions);
     }
 
     @Override
@@ -77,6 +81,16 @@ public class NTxTemplateInfoImpl implements NTxTemplateInfo {
     @Override
     public String name() {
         return name;
+    }
+
+    @Override
+    public String layout() {
+        return layout;
+    }
+
+    @Override
+    public String version() {
+        return version;
     }
 
     @Override
