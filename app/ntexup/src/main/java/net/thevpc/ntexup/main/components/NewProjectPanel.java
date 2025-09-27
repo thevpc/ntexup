@@ -4,6 +4,8 @@ import net.thevpc.ntexup.api.engine.NTxTemplateInfo;
 import net.thevpc.ntexup.config.UserConfig;
 import net.thevpc.ntexup.main.NTxUIHelper;
 import net.thevpc.ntexup.main.NTxServiceHelper;
+import net.thevpc.nuts.util.NBlankable;
+import net.thevpc.nuts.util.NStringUtils;
 
 import javax.swing.*;
 import java.awt.*;
@@ -13,6 +15,7 @@ public class NewProjectPanel extends JPanel {
     JTextField projectName;
     PathField rootFolder;
     NTxServiceHelper serviceHelper;
+    NewProjectTemplatePanel templatePanel;
     NewProjectPropsPanel props;
     UserConfigPanel userConfPanel;
 
@@ -28,10 +31,25 @@ public class NewProjectPanel extends JPanel {
         add(rootFolder = new PathField(), NTxUIHelper.forEditor(1, 1));
         rootFolder.path.setText(System.getProperty("user.dir"));
         {
-            props = new NewProjectPropsPanel(serviceHelper);
+            templatePanel = new NewProjectTemplatePanel(serviceHelper);
             GridBagConstraints g = new GridBagConstraints();
             g.gridx = 0;
             g.gridy = 3;
+            g.weightx = 4;
+            g.weighty = 2;
+            g.gridwidth = 2;
+            g.gridheight = 2;
+            g.fill = GridBagConstraints.BOTH;
+            g.anchor = GridBagConstraints.WEST;
+            g.insets = new Insets(2, 2, 2, 2);
+            templatePanel.setBorder(BorderFactory.createTitledBorder("Template Properties"));
+            add(templatePanel, g);
+        }
+        {
+            props = new NewProjectPropsPanel(serviceHelper);
+            GridBagConstraints g = new GridBagConstraints();
+            g.gridx = 0;
+            g.gridy = 5;
             g.weightx = 4;
             g.weighty = 2;
             g.gridwidth = 2;
@@ -46,7 +64,7 @@ public class NewProjectPanel extends JPanel {
             userConfPanel = new UserConfigPanel(serviceHelper.usersConfig().loadUserConfigs());
             GridBagConstraints g = new GridBagConstraints();
             g.gridx = 0;
-            g.gridy = 5;
+            g.gridy = 7;
             g.weightx = 4;
             g.weighty = 2;
             g.gridwidth = 2;
@@ -81,12 +99,17 @@ public class NewProjectPanel extends JPanel {
         return projectName.getText();
     }
 
+
+    public void setSelectedRootFolder(String a) {
+        rootFolder.path.setText(NStringUtils.firstNonBlank(a, System.getProperty("user.dir")));
+    }
+
     public String getSelectedRootFolder() {
         return rootFolder.path.getText();
     }
 
     public NTxTemplateInfo getSelectedTemplate() {
-        return props.getSelectedTemplate();
+        return templatePanel.getSelectedTemplate();
     }
 
     public boolean showDialog(Component parent) {
