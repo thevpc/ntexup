@@ -2,7 +2,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>net.thevpc.ntexup</groupId>
     <artifactId>ntexup-extension-svg</artifactId>
-    <version>0.8.6.0</version>
+    <version>0.8.7.0</version>
     <packaging>jar</packaging>
     <name>ntexup :: Extension SVG</name>
     <description>SVG</description>
@@ -52,7 +52,7 @@
     </licenses>
 
     <dependencies>
-        <dependency><groupId>net.thevpc.ntexup</groupId><artifactId>ntexup-api</artifactId><version>0.8.6</version></dependency>
+        <dependency><groupId>net.thevpc.ntexup</groupId><artifactId>ntexup-api</artifactId><version>0.8.7</version></dependency>
         <dependency><groupId>com.kitfox.svg</groupId><artifactId>svg-salamander</artifactId><version>1.0</version></dependency>
     </dependencies>
     <build>
