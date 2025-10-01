@@ -2,7 +2,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>net.thevpc.ntexup</groupId>
     <artifactId>ntexup-extension-latex</artifactId>
-    <version>0.8.6.0</version>
+    <version>0.8.7.0</version>
     <packaging>jar</packaging>
     <name>ntexup :: Extension Latex</name>
     <properties>
@@ -51,7 +51,7 @@
     </licenses>
 
     <dependencies>
-        <dependency><groupId>net.thevpc.ntexup</groupId><artifactId>ntexup-api</artifactId><version>0.8.6</version></dependency>
+        <dependency><groupId>net.thevpc.ntexup</groupId><artifactId>ntexup-api</artifactId><version>0.8.7</version></dependency>
         <dependency><groupId>org.scilab.forge</groupId><artifactId>jlatexmath</artifactId><version>1.0.7</version></dependency>
     </dependencies>
     <build>
