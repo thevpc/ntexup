@@ -155,14 +155,14 @@ public class DefaultNTxEngine implements NTxEngine {
     @Override
     public boolean importDefaultDependencies() {
         return importDependencies(
-                "net.thevpc.ntexup:ntexup-extension-plantuml:0.8.6.0",
-                "net.thevpc.ntexup:ntexup-extension-animated-gif:0.8.6.0",
-                "net.thevpc.ntexup:ntexup-extension-svg:0.8.6.0",
-                "net.thevpc.ntexup:ntexup-extension-shapes2d:0.8.6.0",
-                "net.thevpc.ntexup:ntexup-extension-shapes3d:0.8.6.0",
-                "net.thevpc.ntexup:ntexup-extension-plot2d:0.8.6.0",
-                "net.thevpc.ntexup:ntexup-extension-presenters:0.8.6.0",
-                "net.thevpc.ntexup:ntexup-extension-latex:0.8.6.0"
+                "net.thevpc.ntexup:ntexup-extension-plantuml:"+NTxEngine.CURRENT_VERSION,
+                "net.thevpc.ntexup:ntexup-extension-animated-gif:"+NTxEngine.CURRENT_VERSION,
+                "net.thevpc.ntexup:ntexup-extension-svg:"+NTxEngine.CURRENT_VERSION,
+                "net.thevpc.ntexup:ntexup-extension-shapes2d:"+NTxEngine.CURRENT_VERSION,
+                "net.thevpc.ntexup:ntexup-extension-shapes3d:"+NTxEngine.CURRENT_VERSION,
+                "net.thevpc.ntexup:ntexup-extension-plot2d:"+NTxEngine.CURRENT_VERSION,
+                "net.thevpc.ntexup:ntexup-extension-presenters:"+NTxEngine.CURRENT_VERSION,
+                "net.thevpc.ntexup:ntexup-extension-latex:"+NTxEngine.CURRENT_VERSION
         );
     }
 
