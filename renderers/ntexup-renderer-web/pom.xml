@@ -31,23 +31,23 @@
 		<maven.compiler.release>17</maven.compiler.release>
 	</properties>
 	<dependencies>
-		<dependency><groupId>net.thevpc.ntexup</groupId><artifactId>ntexup-api</artifactId><version>0.8.6</version></dependency>
-		<dependency><groupId>net.thevpc.ntexup</groupId><artifactId>ntexup-engine</artifactId><version>0.8.6.0</version></dependency>
-		<dependency><groupId>net.thevpc.nuts</groupId><artifactId>nuts-runtime</artifactId><version>0.8.6.0</version></dependency>
-		<dependency><groupId>net.thevpc.nuts</groupId><artifactId>nuts-spring-boot</artifactId><version>0.8.6.0</version></dependency>
+		<dependency><groupId>net.thevpc.ntexup</groupId><artifactId>ntexup-api</artifactId><version>0.8.7</version></dependency>
+		<dependency><groupId>net.thevpc.ntexup</groupId><artifactId>ntexup-engine</artifactId><version>0.8.7.0</version></dependency>
+		<dependency><groupId>net.thevpc.nuts</groupId><artifactId>nuts-runtime</artifactId><version>0.8.7.0</version></dependency>
+		<dependency><groupId>net.thevpc.nuts</groupId><artifactId>nuts-spring-boot</artifactId><version>0.8.7.0</version></dependency>
 
-		<dependency><groupId>net.thevpc.ntexup</groupId><artifactId>ntexup-renderer-html</artifactId><version>0.8.6.0</version></dependency>
+		<dependency><groupId>net.thevpc.ntexup</groupId><artifactId>ntexup-renderer-html</artifactId><version>0.8.7.0</version></dependency>
 		<dependency><groupId>org.apache.pdfbox</groupId><artifactId>pdfbox</artifactId><version>2.0.27</version></dependency>
 
 		<dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-thymeleaf</artifactId></dependency>
 
-		<dependency><groupId>net.thevpc.ntexup</groupId><artifactId>ntexup-extension-plantuml</artifactId><version>0.8.6.0</version></dependency>
-		<dependency><groupId>net.thevpc.ntexup</groupId><artifactId>ntexup-extension-animated-gif</artifactId><version>0.8.6.0</version></dependency>
-		<dependency><groupId>net.thevpc.ntexup</groupId><artifactId>ntexup-extension-svg</artifactId><version>0.8.6.0</version></dependency>
-		<dependency><groupId>net.thevpc.ntexup</groupId><artifactId>ntexup-extension-shapes2d</artifactId><version>0.8.6.0</version></dependency>
-		<dependency><groupId>net.thevpc.ntexup</groupId><artifactId>ntexup-extension-shapes3d</artifactId><version>0.8.6.0</version></dependency>
-		<dependency><groupId>net.thevpc.ntexup</groupId><artifactId>ntexup-extension-latex</artifactId><version>0.8.6.0</version></dependency>
-		<dependency><groupId>net.thevpc.ntexup</groupId><artifactId>ntexup-renderer-pdf</artifactId><version>0.8.6.0</version></dependency>
+		<dependency><groupId>net.thevpc.ntexup</groupId><artifactId>ntexup-extension-plantuml</artifactId><version>0.8.7.0</version></dependency>
+		<dependency><groupId>net.thevpc.ntexup</groupId><artifactId>ntexup-extension-animated-gif</artifactId><version>0.8.7.0</version></dependency>
+		<dependency><groupId>net.thevpc.ntexup</groupId><artifactId>ntexup-extension-svg</artifactId><version>0.8.7.0</version></dependency>
+		<dependency><groupId>net.thevpc.ntexup</groupId><artifactId>ntexup-extension-shapes2d</artifactId><version>0.8.7.0</version></dependency>
+		<dependency><groupId>net.thevpc.ntexup</groupId><artifactId>ntexup-extension-shapes3d</artifactId><version>0.8.7.0</version></dependency>
+		<dependency><groupId>net.thevpc.ntexup</groupId><artifactId>ntexup-extension-latex</artifactId><version>0.8.7.0</version></dependency>
+		<dependency><groupId>net.thevpc.ntexup</groupId><artifactId>ntexup-renderer-pdf</artifactId><version>0.8.7.0</version></dependency>
 
 		<dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-web</artifactId><version>3.3.1 </version><!-- Replace with your Spring Boot version --></dependency>
 
