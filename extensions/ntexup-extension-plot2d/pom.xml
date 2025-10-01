@@ -2,7 +2,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>net.thevpc.ntexup</groupId>
     <artifactId>ntexup-extension-plot2d</artifactId>
-    <version>0.8.6.0</version>
+    <version>0.8.7.0</version>
     <packaging>jar</packaging>
     <name>ntexup :: Extension Plot 2D OBJ</name>
     <description>SVG</description>
@@ -52,7 +52,7 @@
     </licenses>
 
     <dependencies>
-        <dependency><groupId>net.thevpc.ntexup</groupId><artifactId>ntexup-api</artifactId><version>0.8.6</version></dependency>
+        <dependency><groupId>net.thevpc.ntexup</groupId><artifactId>ntexup-api</artifactId><version>0.8.7</version></dependency>
         <dependency><groupId>org.jfree</groupId><artifactId>jfreechart</artifactId><version>1.5.5</version></dependency>
     </dependencies>
     <build>
