@@ -165,7 +165,7 @@ you can start with the existing documentation and play with it.
 first install nuts package manager (if you didnt already)
 
 ```bash
-curl -sL https://maven.thevpc.net/net/thevpc/nuts/nuts-app/0.8.6/nuts-app-0.8.6.jar -o nuts.jar && java -jar nuts.jar -Zy
+curl -s https://thevpc.net/nuts/install-latest.sh | bash
 # make sure you restart your terminal for the nuts command to be loaded into your environment
 
 ```
