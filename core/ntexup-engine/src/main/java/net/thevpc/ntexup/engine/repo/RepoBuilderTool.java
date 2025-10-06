@@ -5,7 +5,7 @@ import net.thevpc.ntexup.api.engine.NTxTemplateInfo;
 import net.thevpc.ntexup.api.log.NTxLogger;
 import net.thevpc.ntexup.engine.impl.NTxTemplateInfoImpl;
 import net.thevpc.ntexup.engine.impl.NTxTemplateInfoLoader;
-import net.thevpc.nuts.NVersion;
+import net.thevpc.nuts.artifact.NVersion;
 import net.thevpc.nuts.io.NPath;
 import net.thevpc.nuts.util.NMsg;
 
