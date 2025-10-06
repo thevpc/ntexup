@@ -1,13 +1,9 @@
 package net.thevpc.ntexup.cmdline;
 
-import net.thevpc.ntexup.api.engine.NTxEngine;
-import net.thevpc.ntexup.engine.impl.DefaultNTxEngine;
-import net.thevpc.nuts.NSession;
+import net.thevpc.nuts.core.NSession;
 import net.thevpc.nuts.cmdline.NArg;
 import net.thevpc.nuts.cmdline.NCmdLine;
 import net.thevpc.nuts.io.NPath;
-import net.thevpc.nuts.util.NBlankable;
-import net.thevpc.nuts.util.NMsg;
 
 public class NTexupOptionsParser {
     public void parse(NCmdLine cmdLine, Options options) {
