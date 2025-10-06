@@ -1,6 +1,6 @@
 package net.thevpc.ntexup.cmdline;
 
-import net.thevpc.nuts.NIllegalArgumentException;
+import net.thevpc.nuts.util.NIllegalArgumentException;
 import net.thevpc.nuts.io.NPath;
 import net.thevpc.nuts.util.NMsg;
 
