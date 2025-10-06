@@ -1,10 +1,11 @@
 package net.thevpc.ntexup;
 
 import net.thevpc.ntexup.cmdline.*;
-import net.thevpc.nuts.*;
-import net.thevpc.nuts.cmdline.NArg;
+import net.thevpc.nuts.app.NApp;
+import net.thevpc.nuts.app.NAppDefinition;
+import net.thevpc.nuts.app.NAppRunner;
 import net.thevpc.nuts.cmdline.NCmdLine;
-import net.thevpc.nuts.util.NOptional;
+import net.thevpc.nuts.core.NWorkspace;
 
 /**
  * @author vpc
