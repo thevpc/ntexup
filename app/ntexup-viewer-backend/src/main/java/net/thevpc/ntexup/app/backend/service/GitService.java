@@ -2,9 +2,8 @@ package net.thevpc.ntexup.app.backend.service;
 
 import net.thevpc.ntexup.api.engine.NTxCompiledPage;
 import net.thevpc.ntexup.api.engine.NTxEngine;
-import net.thevpc.ntexup.api.document.node.NTxNode;
 import net.thevpc.ntexup.api.renderer.NTxNodeRendererConfig;
-import net.thevpc.nuts.NExecCmd;
+import net.thevpc.nuts.command.NExecCmd;
 import net.thevpc.nuts.io.NPath;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
