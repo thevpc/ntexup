@@ -13,7 +13,7 @@ import net.thevpc.ntexup.api.renderer.text.NTxTextRendererFlavorParseContext;
 import net.thevpc.ntexup.api.renderer.text.NTxTextToken;
 import net.thevpc.ntexup.api.renderer.text.NTxTextOptions;
 import net.thevpc.ntexup.api.renderer.text.NTxTextRendererBuilder;
-import net.thevpc.nuts.NCallableSupport;
+import net.thevpc.nuts.concurrent.NCallableSupport;
 import net.thevpc.nuts.elem.NElement;
 
 import java.util.List;
