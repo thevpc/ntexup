@@ -7,7 +7,7 @@ import net.thevpc.ntexup.api.util.NTxUtils;
 import net.thevpc.ntexup.engine.util.ToElementHelper;
 import net.thevpc.ntexup.api.eval.NTxValue;
 import net.thevpc.ntexup.api.document.node.*;
-import net.thevpc.nuts.NCallableSupport;
+import net.thevpc.nuts.concurrent.NCallableSupport;
 import net.thevpc.nuts.elem.*;
 import net.thevpc.nuts.util.NBlankable;
 import net.thevpc.nuts.util.NMsg;
