@@ -7,7 +7,7 @@ package net.thevpc.ntexup.engine.renderer.screen;
 import net.thevpc.ntexup.api.renderer.NTxDocumentRenderer;
 import net.thevpc.ntexup.api.renderer.NTxDocumentRendererFactory;
 import net.thevpc.ntexup.api.renderer.NTxDocumentRendererFactoryContext;
-import net.thevpc.nuts.NCallableSupport;
+import net.thevpc.nuts.concurrent.NCallableSupport;
 import net.thevpc.nuts.util.NMsg;
 
 /**
