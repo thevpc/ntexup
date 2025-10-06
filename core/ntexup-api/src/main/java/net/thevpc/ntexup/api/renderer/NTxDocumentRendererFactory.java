@@ -4,7 +4,7 @@
  */
 package net.thevpc.ntexup.api.renderer;
 
-import net.thevpc.nuts.NCallableSupport;
+import net.thevpc.nuts.concurrent.NCallableSupport;
 
 /**
  * @author vpc
