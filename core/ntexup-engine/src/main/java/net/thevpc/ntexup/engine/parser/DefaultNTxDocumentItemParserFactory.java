@@ -14,7 +14,7 @@ import net.thevpc.ntexup.api.eval.NTxValue;
 import net.thevpc.ntexup.api.parser.NTxNodeParser;
 import net.thevpc.ntexup.engine.parser.ctrlnodes.CtrlNTxNodeName;
 import net.thevpc.ntexup.engine.document.NTxItemBag;
-import net.thevpc.nuts.NCallableSupport;
+import net.thevpc.nuts.concurrent.NCallableSupport;
 import net.thevpc.nuts.elem.*;
 import net.thevpc.nuts.io.NPath;
 import net.thevpc.nuts.util.*;
