@@ -1,9 +1,10 @@
 package net.thevpc.ntexup.config;
 
-import net.thevpc.nuts.*;
+import net.thevpc.nuts.artifact.NId;
 import net.thevpc.nuts.elem.NElementParser;
 import net.thevpc.nuts.elem.NElementWriter;
 import net.thevpc.nuts.io.NPath;
+import net.thevpc.nuts.platform.NStoreType;
 
 public class UserConfigManager {
     private NPath userConfigFile;
