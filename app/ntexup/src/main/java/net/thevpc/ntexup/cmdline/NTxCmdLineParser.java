@@ -1,6 +1,6 @@
 //package net.thevpc.ntexup.cmdline;
 //
-//import net.thevpc.nuts.NSession;
+//import net.thevpc.nuts.core.NSession;
 //import net.thevpc.nuts.cmdline.NCmdLine;
 //import net.thevpc.nuts.io.NPath;
 //
