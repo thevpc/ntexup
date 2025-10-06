@@ -4,7 +4,7 @@ import net.thevpc.ntexup.api.document.node.*;
 import net.thevpc.ntexup.api.document.style.NTxProp;
 import net.thevpc.ntexup.api.document.style.NTxStyleRule;
 import net.thevpc.ntexup.api.source.NTxSource;
-import net.thevpc.nuts.NIllegalArgumentException;
+import net.thevpc.nuts.util.NIllegalArgumentException;
 import net.thevpc.nuts.util.NMsg;
 
 import java.util.ArrayList;
