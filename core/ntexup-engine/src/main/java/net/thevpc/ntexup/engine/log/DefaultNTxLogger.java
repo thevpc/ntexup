@@ -3,7 +3,7 @@ package net.thevpc.ntexup.engine.log;
 import net.thevpc.ntexup.api.log.NTxMsg;
 import net.thevpc.ntexup.api.log.NTxLogger;
 import net.thevpc.ntexup.api.source.NTxSource;
-import net.thevpc.nuts.NOut;
+import net.thevpc.nuts.io.NOut;
 import net.thevpc.nuts.util.NMsg;
 import net.thevpc.nuts.util.NStringUtils;
 
