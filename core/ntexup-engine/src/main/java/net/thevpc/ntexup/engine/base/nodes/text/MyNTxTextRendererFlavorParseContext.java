@@ -4,10 +4,9 @@ import net.thevpc.ntexup.api.renderer.NTxNodeRendererContext;
 import net.thevpc.ntexup.api.renderer.text.NTxTextRendererFlavorParseContext;
 import net.thevpc.ntexup.api.renderer.text.NTxTextToken;
 import net.thevpc.ntexup.api.renderer.text.NTxTextTokenFlavored;
-import net.thevpc.nuts.NExceptions;
-import net.thevpc.nuts.reserved.util.NReservedSimpleCharQueue;
+import net.thevpc.nuts.util.NExceptions;
+import net.thevpc.nuts.internal.util.NReservedSimpleCharQueue;
 import net.thevpc.nuts.util.NAssert;
-import net.thevpc.nuts.util.NBlankable;
 import net.thevpc.nuts.util.NMsg;
 
 import java.util.Arrays;
