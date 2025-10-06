@@ -3,7 +3,7 @@ package net.thevpc.ntexup.engine.base.nodes.text;
 import net.thevpc.ntexup.api.engine.NTxNodeBuilderContext;
 import net.thevpc.ntexup.api.renderer.NTxNodeRendererContext;
 import net.thevpc.ntexup.api.renderer.text.*;
-import net.thevpc.nuts.reserved.util.NReservedSimpleCharQueue;
+import net.thevpc.nuts.internal.util.NReservedSimpleCharQueue;
 import net.thevpc.nuts.util.NStringUtils;
 
 import java.util.*;
