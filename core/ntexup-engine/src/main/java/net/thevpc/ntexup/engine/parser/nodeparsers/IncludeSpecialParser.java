@@ -6,7 +6,7 @@ import net.thevpc.ntexup.api.document.node.NTxNodeType;
 import net.thevpc.ntexup.api.parser.NTxNodeFactoryParseContext;
 import net.thevpc.ntexup.api.util.NTxUtils;
 import net.thevpc.ntexup.engine.parser.ctrlnodes.CtrlNTxNodeInclude;
-import net.thevpc.nuts.NCallableSupport;
+import net.thevpc.nuts.concurrent.NCallableSupport;
 import net.thevpc.nuts.elem.NUpletElement;
 import net.thevpc.nuts.util.NMsg;
 import net.thevpc.nuts.elem.NElement;
