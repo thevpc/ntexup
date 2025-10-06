@@ -1,7 +1,7 @@
 package net.thevpc.ntexup.app.backend;
 
-import net.thevpc.nuts.NAppDefinition;
-import net.thevpc.nuts.NAppRunner;
+import net.thevpc.nuts.app.NAppDefinition;
+import net.thevpc.nuts.app.NAppRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
