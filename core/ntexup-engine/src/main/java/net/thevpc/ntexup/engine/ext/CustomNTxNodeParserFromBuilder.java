@@ -10,7 +10,7 @@ import net.thevpc.ntexup.engine.parser.NTxNodeParserBase;
 import net.thevpc.ntexup.api.document.node.NTxNode;
 import net.thevpc.ntexup.engine.util.ToElementHelper;
 import net.thevpc.ntexup.engine.parser.NTxParseHelper;
-import net.thevpc.nuts.NCallableSupport;
+import net.thevpc.nuts.concurrent.NCallableSupport;
 import net.thevpc.nuts.elem.NElement;
 import net.thevpc.nuts.util.NMsg;
 import net.thevpc.nuts.util.NOptional;
