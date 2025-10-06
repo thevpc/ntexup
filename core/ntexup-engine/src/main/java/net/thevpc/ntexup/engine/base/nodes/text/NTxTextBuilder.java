@@ -12,7 +12,7 @@ import net.thevpc.ntexup.api.document.style.NTxPropName;
 import net.thevpc.ntexup.api.renderer.*;
 import net.thevpc.ntexup.api.renderer.text.*;
 import net.thevpc.nuts.elem.NElement;
-import net.thevpc.nuts.reserved.util.NReservedSimpleCharQueue;
+import net.thevpc.nuts.internal.util.NReservedSimpleCharQueue;
 
 import java.util.*;
 
