@@ -7,7 +7,7 @@ import net.thevpc.ntexup.api.renderer.text.NTxTextTokenFlavored;
 import net.thevpc.nuts.util.NExceptions;
 import net.thevpc.nuts.internal.util.NReservedSimpleCharQueue;
 import net.thevpc.nuts.util.NAssert;
-import net.thevpc.nuts.util.NMsg;
+import net.thevpc.nuts.text.NMsg;
 
 import java.util.Arrays;
 import java.util.List;
