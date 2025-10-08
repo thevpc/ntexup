@@ -29,7 +29,7 @@ import net.thevpc.ntexup.api.renderer.*;
 import net.thevpc.nuts.util.NIllegalArgumentException;
 import net.thevpc.nuts.io.NIOException;
 import net.thevpc.nuts.io.NPath;
-import net.thevpc.nuts.util.NMsg;
+import net.thevpc.nuts.text.NMsg;
 import org.xhtmlrenderer.pdf.ITextRenderer;
 
 /**
