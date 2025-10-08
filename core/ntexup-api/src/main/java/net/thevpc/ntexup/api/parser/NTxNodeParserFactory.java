@@ -1,13 +1,13 @@
 package net.thevpc.ntexup.api.parser;
 
 import net.thevpc.ntexup.api.document.node.NTxItem;
-import net.thevpc.nuts.concurrent.NCallableSupport;
+import net.thevpc.nuts.concurrent.NScorableCallable;
 
 /**
  * @author vpc
  */
 public interface NTxNodeParserFactory {
 
-    NCallableSupport<NTxItem> parseNode(NTxNodeFactoryParseContext context);
+    NScorableCallable<NTxItem> parseNode(NTxNodeFactoryParseContext context);
 
 }
