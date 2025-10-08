@@ -1,7 +1,7 @@
 package net.thevpc.ntexup.api.log;
 
 import net.thevpc.ntexup.api.source.NTxSource;
-import net.thevpc.nuts.util.NMsg;
+import net.thevpc.nuts.text.NMsg;
 
 public class NTxMsg {
     private NMsg message;
