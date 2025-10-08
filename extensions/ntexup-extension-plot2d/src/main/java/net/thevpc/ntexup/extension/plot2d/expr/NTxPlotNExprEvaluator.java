@@ -5,7 +5,7 @@ import net.thevpc.ntexup.api.util.NTxUtils;
 import net.thevpc.ntexup.extension.plot2d.model.NTxFunctionPlotInfo;
 import net.thevpc.nuts.expr.*;
 import net.thevpc.nuts.util.NDoubleFunction;
-import net.thevpc.nuts.util.NMsg;
+import net.thevpc.nuts.text.NMsg;
 import net.thevpc.nuts.util.NOptional;
 
 import java.util.HashMap;
