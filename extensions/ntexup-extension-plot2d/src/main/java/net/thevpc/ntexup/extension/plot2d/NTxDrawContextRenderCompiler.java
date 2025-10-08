@@ -13,7 +13,7 @@ import net.thevpc.ntexup.extension.plot2d.model.NTxPlot2DData;
 import net.thevpc.nuts.elem.NElement;
 import net.thevpc.nuts.time.NChronometer;
 import net.thevpc.nuts.util.NDoubleFunction;
-import net.thevpc.nuts.util.NMsg;
+import net.thevpc.nuts.text.NMsg;
 
 import java.awt.*;
 import java.util.List;
