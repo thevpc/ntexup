@@ -7,7 +7,7 @@ import net.thevpc.ntexup.api.extension.NTxFunction;
 import net.thevpc.ntexup.engine.util.NTxColorUtils;
 import net.thevpc.ntexup.engine.util.NTxElementUtils;
 import net.thevpc.nuts.elem.NElement;
-import net.thevpc.nuts.util.NMsg;
+import net.thevpc.nuts.text.NMsg;
 
 import java.awt.*;
 
