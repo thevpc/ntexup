@@ -14,9 +14,12 @@ import net.thevpc.ntexup.api.eval.NTxValue;
 import net.thevpc.ntexup.api.parser.NTxNodeParser;
 import net.thevpc.ntexup.engine.parser.ctrlnodes.CtrlNTxNodeName;
 import net.thevpc.ntexup.engine.document.NTxItemBag;
-import net.thevpc.nuts.concurrent.NCallableSupport;
+import net.thevpc.nuts.concurrent.DefaultNScorableCallable;
+import net.thevpc.nuts.concurrent.NScorableCallable;
 import net.thevpc.nuts.elem.*;
 import net.thevpc.nuts.io.NPath;
+import net.thevpc.nuts.spi.NScorableContext;
+import net.thevpc.nuts.text.NMsg;
 import net.thevpc.nuts.util.*;
 
 
@@ -34,13 +37,13 @@ public class DefaultNTxDocumentItemParserFactory
     }
 
     @Override
-    public NCallableSupport<NTxItem> parseNode(NTxNodeFactoryParseContext context) {
+    public NScorableCallable<NTxItem> parseNode(NTxNodeFactoryParseContext context) {
         NElement c = context.element();
         NTxEngine engine = context.engine();
         if (c.annotations().stream().anyMatch(x -> NTxNodeType.CTRL_DEFINE.equals(x.name()))) {
             //this is a node definition
             if (c.isAnyObject() || c.isNamed()) {
-                return NCallableSupport.ofValid(() -> {
+                return NScorableCallable.ofValid(() -> {
                     NObjectElement object = c.asObject().get();
                     String templateName = object.name().get();
                     List<NTxNodeDefParam> params;
@@ -102,7 +105,7 @@ public class DefaultNTxDocumentItemParserFactory
                             NOptional<String> nn = kh.asStringOrName();
                             if (nn.isPresent()) {
                                 String nnn = NStringUtils.trim(nn.get());
-                                return NCallableSupport.ofValid(() -> DefaultNTxNode.ofAssign(nnn, v, context.source()));
+                                return NScorableCallable.ofValid(() -> DefaultNTxNode.ofAssign(nnn, v, context.source()));
                             } else {
                                 return _invalidSupport(NMsg.ofC("unable to interpret left hand of assignment as a valid var : %s", k), context);
                             }
@@ -119,7 +122,7 @@ public class DefaultNTxDocumentItemParserFactory
                             NOptional<String> nn = kh.asStringOrName();
                             if (nn.isPresent()) {
                                 String nnn = NStringUtils.trim(nn.get());
-                                return NCallableSupport.ofValid(() -> DefaultNTxNode.ofAssignIfEmpty(nnn, v, context.source()));
+                                return NScorableCallable.ofValid(() -> DefaultNTxNode.ofAssignIfEmpty(nnn, v, context.source()));
                             } else {
                                 return _invalidSupport(NMsg.ofC("unable to interpret left hand of assignment as a valid var : %s", k), context);
                             }
@@ -130,8 +133,8 @@ public class DefaultNTxDocumentItemParserFactory
                 }
                 NOptional<NTxNodeParser> ff = engine.nodeTypeParser(c.type().opSymbol());
                 if (ff.isPresent()) {
-                    NCallableSupport<NTxItem> uu = ff.get().parseNode(context);
-                    if (uu.isValid()) {
+                    NScorableCallable<NTxItem> uu = ff.get().parseNode(context);
+                    if (uu.isValid(NScorableContext.of())) {
                         return uu;
                     }
                 }
@@ -160,7 +163,7 @@ public class DefaultNTxDocumentItemParserFactory
                             return p.parseNode(context);
                         }
                         if (c.isNamedUplet() || c.isAnyObject()) {
-                            return NCallableSupport.ofValid(() -> createCtrlNodeCall(c, context));
+                            return NScorableCallable.ofValid(() -> createCtrlNodeCall(c, context));
                         }
                         return _invalidSupport(NMsg.ofC("[%s] unable to resolve node : %s", NTxUtils.shortName(context.source()), NTxUtils.snippet(c)), context);
                     }
@@ -170,8 +173,8 @@ public class DefaultNTxDocumentItemParserFactory
                             String name = p.key().asStringValue().get();
                             NOptional<NTxNodeParser> ff = engine.nodeTypeParser(name);
                             if (ff.isPresent()) {
-                                NCallableSupport<NTxItem> uu = ff.get().parseNode(context);
-                                if (uu.isValid()) {
+                                NScorableCallable<NTxItem> uu = ff.get().parseNode(context);
+                                if (uu.isValid(NScorableContext.of())) {
                                     return uu;
                                 }
                             }
@@ -196,16 +199,16 @@ public class DefaultNTxDocumentItemParserFactory
                 break;
             }
             case NAME: {
-                return NCallableSupport.ofValid(()->new CtrlNTxNodeName(context.source(),c));
+                return NScorableCallable.ofValid(()->new CtrlNTxNodeName(context.source(),c));
             }
         }
         return _invalidSupport(NMsg.ofC("[%s] unable to resolve node : %s", NTxUtils.shortName(context.source()), NTxUtils.snippet(c)), context);
     }
 
-    private NCallableSupport<NTxItem> _invalidSupport(NMsg msg, NTxNodeFactoryParseContext context) {
+    private NScorableCallable<NTxItem> _invalidSupport(NMsg msg, NTxNodeFactoryParseContext context) {
         msg = msg.asError();
         context.messages().log(msg.asError());
-        return NCallableSupport.ofInvalid(msg);
+        return NScorableCallable.ofInvalid(msg);
     }
 
 
@@ -360,7 +363,7 @@ public class DefaultNTxDocumentItemParserFactory
         return false;
     }
 
-    private NCallableSupport<NTxItem> parseNoNameBloc(NTxNodeFactoryParseContext context) {
+    private NScorableCallable<NTxItem> parseNoNameBloc(NTxNodeFactoryParseContext context) {
         NElement c = context.element();
         NTxEngine engine = context.engine();
         NTxDocumentFactory f = engine.documentFactory();
@@ -405,7 +408,7 @@ public class DefaultNTxDocumentItemParserFactory
                     ), context);
                 }
             }
-            return NCallableSupport.ofValid(pg);
+            return NScorableCallable.ofValid(pg);
         } else {
             NTxItemList pg = new NTxItemList();
             for (NElement child : ee.body()) {
@@ -419,7 +422,7 @@ public class DefaultNTxDocumentItemParserFactory
                     ), context);
                 }
             }
-            return NCallableSupport.ofValid(pg);
+            return NScorableCallable.ofValid(pg);
         }
     }
 
