@@ -57,7 +57,6 @@
         <dependency><groupId>net.thevpc.ntexup</groupId><artifactId>ntexup-renderer-screen</artifactId><version>0.8.7.0</version></dependency>
         <dependency><groupId>net.thevpc.ntexup</groupId><artifactId>ntexup-renderer-html</artifactId><version>0.8.7.0</version></dependency>
         <dependency><groupId>com.formdev</groupId><artifactId>flatlaf</artifactId><version>3.5.4</version></dependency>
-        <dependency><groupId>net.thevpc.nuts</groupId><artifactId>nuts-boot-swing</artifactId><version>0.8.7.0</version></dependency>
     </dependencies>
     <build>
         <plugins>
