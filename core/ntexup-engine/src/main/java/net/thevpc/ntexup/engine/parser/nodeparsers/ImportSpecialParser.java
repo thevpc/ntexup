@@ -6,10 +6,10 @@ import net.thevpc.ntexup.api.parser.NTxNodeFactoryParseContext;
 import net.thevpc.ntexup.api.util.NTxUtils;
 import net.thevpc.ntexup.engine.parser.NTxNodeParserBase;
 import net.thevpc.ntexup.engine.parser.ctrlnodes.CtrlNTxNodeImport;
-import net.thevpc.nuts.concurrent.NCallableSupport;
+import net.thevpc.nuts.concurrent.NScorableCallable;
 import net.thevpc.nuts.elem.NElement;
 import net.thevpc.nuts.elem.NUpletElement;
-import net.thevpc.nuts.util.NMsg;
+import net.thevpc.nuts.text.NMsg;
 
 public class ImportSpecialParser extends NTxNodeParserBase {
     public ImportSpecialParser() {
@@ -18,18 +18,18 @@ public class ImportSpecialParser extends NTxNodeParserBase {
 
 
     @Override
-    public NCallableSupport<NTxItem> parseNode(NTxNodeFactoryParseContext context) {
+    public NScorableCallable<NTxItem> parseNode(NTxNodeFactoryParseContext context) {
         NElement tsonElement = context.element();
         switch (tsonElement.type()) {
             case NAMED_UPLET: {
                 NUpletElement uplet = tsonElement.asUplet().get();
                 if (uplet.isNamed("import")) {
-                    return NCallableSupport.ofValid( () -> new CtrlNTxNodeImport(context.source(),uplet.params()));
+                    return NScorableCallable.ofValid( () -> new CtrlNTxNodeImport(context.source(),uplet.params()));
                 }
                 break;
             }
         }
-        return NCallableSupport.ofInvalid(NMsg.ofC("missing import from %s", NTxUtils.snippet(tsonElement)).asError());
+        return NScorableCallable.ofInvalid(NMsg.ofC("missing import from %s", NTxUtils.snippet(tsonElement)).asError());
     }
 
 
