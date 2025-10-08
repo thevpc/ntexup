@@ -21,6 +21,7 @@ import net.thevpc.ntexup.engine.parser.NTxNodeDefImpl;
 import net.thevpc.ntexup.engine.parser.NTxNodeDefParamImpl;
 import net.thevpc.ntexup.engine.document.DefaultNTxNode;
 import net.thevpc.ntexup.engine.parser.ctrlnodes.*;
+import net.thevpc.nuts.text.NMsg;
 import net.thevpc.nuts.util.NIllegalArgumentException;
 import net.thevpc.nuts.elem.NElement;
 import net.thevpc.nuts.elem.NPairElement;
