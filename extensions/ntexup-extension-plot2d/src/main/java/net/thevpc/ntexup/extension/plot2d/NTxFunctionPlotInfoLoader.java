@@ -6,7 +6,7 @@ import net.thevpc.ntexup.extension.plot2d.model.NTxFunctionPlotInfo;
 import net.thevpc.ntexup.extension.plot2d.model.NTxPlotSource;
 import net.thevpc.ntexup.extension.plot2d.model.NTxPlotType;
 import net.thevpc.nuts.elem.*;
-import net.thevpc.nuts.util.NMsg;
+import net.thevpc.nuts.text.NMsg;
 import net.thevpc.nuts.util.NNameFormat;
 import net.thevpc.nuts.util.NStringUtils;
 
