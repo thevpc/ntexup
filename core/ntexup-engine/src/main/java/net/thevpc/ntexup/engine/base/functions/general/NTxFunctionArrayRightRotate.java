@@ -6,7 +6,7 @@ import net.thevpc.ntexup.api.eval.NTxFunctionArgs;
 import net.thevpc.ntexup.api.eval.NTxFunctionContext;
 import net.thevpc.ntexup.api.util.NTxUtils;
 import net.thevpc.nuts.elem.NElement;
-import net.thevpc.nuts.util.NMsg;
+import net.thevpc.nuts.text.NMsg;
 import net.thevpc.nuts.util.NOptional;
 
 import java.util.ArrayList;
