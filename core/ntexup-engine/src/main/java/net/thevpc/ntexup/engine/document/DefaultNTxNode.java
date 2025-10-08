@@ -8,6 +8,7 @@ import net.thevpc.ntexup.api.document.elem2d.NTxAlign;
 import net.thevpc.ntexup.api.source.NTxSource;
 import net.thevpc.ntexup.api.util.NTxUtils;
 import net.thevpc.ntexup.api.eval.NTxValue;
+import net.thevpc.nuts.text.NMsg;
 import net.thevpc.nuts.util.NIllegalArgumentException;
 import net.thevpc.nuts.elem.*;
 import net.thevpc.nuts.util.*;
