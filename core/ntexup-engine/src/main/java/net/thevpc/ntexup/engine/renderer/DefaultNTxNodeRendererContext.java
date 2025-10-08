@@ -25,7 +25,7 @@ import net.thevpc.nuts.elem.NElement;
 import net.thevpc.nuts.text.NText;
 import net.thevpc.nuts.util.NAssert;
 import net.thevpc.nuts.util.NLiteral;
-import net.thevpc.nuts.util.NMsg;
+import net.thevpc.nuts.text.NMsg;
 import net.thevpc.nuts.util.NOptional;
 
 import java.awt.*;
