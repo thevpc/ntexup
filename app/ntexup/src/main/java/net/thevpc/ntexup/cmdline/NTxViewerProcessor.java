@@ -3,11 +3,8 @@ package net.thevpc.ntexup.cmdline;
 import com.formdev.flatlaf.FlatLightLaf;
 import net.thevpc.ntexup.main.MainFrame;
 import net.thevpc.ntexup.util.NTexupUtils;
-import net.thevpc.nuts.cmdline.NCmdLine;
 import net.thevpc.nuts.io.NPath;
-import net.thevpc.nuts.nswing.NSwingUtils;
-
-import javax.swing.*;
+import net.thevpc.nuts.swing.NSwingUtils;
 
 public class NTxViewerProcessor {
     public void runViewer(Options options) {
