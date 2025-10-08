@@ -5,6 +5,7 @@ import net.thevpc.ntexup.api.document.style.*;
 import net.thevpc.ntexup.api.parser.NTxNodeFactoryParseContext;
 import net.thevpc.ntexup.api.util.NTxUtils;
 import net.thevpc.ntexup.api.eval.NTxValue;
+import net.thevpc.nuts.text.NMsg;
 import net.thevpc.nuts.util.*;
 
 import net.thevpc.nuts.elem.NElement;
