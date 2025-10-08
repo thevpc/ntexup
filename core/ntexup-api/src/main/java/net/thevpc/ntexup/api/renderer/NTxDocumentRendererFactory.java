@@ -4,13 +4,13 @@
  */
 package net.thevpc.ntexup.api.renderer;
 
-import net.thevpc.nuts.concurrent.NCallableSupport;
+import net.thevpc.nuts.concurrent.NScorableCallable;
 
 /**
  * @author vpc
  */
 public interface NTxDocumentRendererFactory {
 
-    NCallableSupport<NTxDocumentRenderer> createDocumentRenderer(NTxDocumentRendererFactoryContext context);
+    NScorableCallable<NTxDocumentRenderer> createDocumentRenderer(NTxDocumentRendererFactoryContext context);
 
 }
