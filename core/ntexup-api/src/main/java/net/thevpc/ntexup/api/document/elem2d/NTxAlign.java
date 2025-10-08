@@ -3,7 +3,7 @@ package net.thevpc.ntexup.api.document.elem2d;
 import net.thevpc.ntexup.api.util.NTxUtils;
 import net.thevpc.nuts.elem.NElement;
 import net.thevpc.nuts.elem.NToElement;
-import net.thevpc.nuts.util.NMsg;
+import net.thevpc.nuts.text.NMsg;
 import net.thevpc.nuts.util.NNameFormat;
 import net.thevpc.nuts.util.NOptional;
 import net.thevpc.nuts.util.NStringUtils;
