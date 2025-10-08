@@ -12,12 +12,12 @@ import net.thevpc.ntexup.api.extension.NTxNodeBuilder;
 import net.thevpc.ntexup.api.renderer.*;
 import net.thevpc.ntexup.api.util.NTxUtils;
 import net.thevpc.ntexup.engine.util.ToElementHelper;
-import net.thevpc.nuts.core.NConstants;
+import net.thevpc.nuts.spi.NScorable;
 import net.thevpc.nuts.util.NIllegalArgumentException;
 import net.thevpc.nuts.elem.NElement;
 import net.thevpc.nuts.util.NAssert;
 import net.thevpc.nuts.util.NBlankable;
-import net.thevpc.nuts.util.NMsg;
+import net.thevpc.nuts.text.NMsg;
 
 import java.util.*;
 import java.util.function.Predicate;
@@ -69,14 +69,14 @@ public class NTxNodeBuilderContextImpl implements NTxNodeBuilderContext {
     @Override
     public NTxNodeBuilderContext parseAny(Predicate<NElement> a) {
         this.extraElementSupportByPredicate = a;
-        this.extraElementSupportByPredicateSupport = NConstants.Support.DEFAULT_SUPPORT;
+        this.extraElementSupportByPredicateSupport = NScorable.DEFAULT_SCORE;
         return this;
     }
 
     @Override
-    public NTxNodeBuilderContext parseAny(Predicate<NElement> a, int support) {
+    public NTxNodeBuilderContext parseAny(Predicate<NElement> a, int score) {
         this.extraElementSupportByPredicate = a;
-        this.extraElementSupportByPredicateSupport = support;
+        this.extraElementSupportByPredicateSupport = score;
         return this;
     }
 
