@@ -10,6 +10,7 @@ import net.thevpc.ntexup.engine.repo.RepoBuilderTool;
 import net.thevpc.nuts.io.NAsk;
 import net.thevpc.nuts.io.NOut;
 import net.thevpc.nuts.core.NSession;
+import net.thevpc.nuts.text.NMsg;
 import net.thevpc.nuts.util.NValidationException;
 import net.thevpc.nuts.io.NPath;
 import net.thevpc.nuts.io.NPathRenameOptions;
@@ -39,7 +40,7 @@ public class NTxTerminalProcessor {
                     NTxTemplateInfo[] templates = engine.getTemplates();
                     for (int i = 0; i < templates.length; i++) {
                         NTxTemplateInfo template = templates[i];
-                        sb.append(NMsg.ofC("[%-3s] %-25s : %s",NText.ofStyled("#"+(i+1),NTextStyle.number()),NMsg.ofStyledPrimary1(template.name()),NMsg.ofStyledPath(template.url())))
+                        sb.append(NMsg.ofC("[%-3s] %-25s : %s",NText.ofStyled("#"+(i+1),NTextStyle.number()), NMsg.ofStyledPrimary1(template.name()),NMsg.ofStyledPath(template.url())))
                         .newLine();
                     }
                     String value = NAsk.of().forString(NMsg.ofC("%s", sb))
