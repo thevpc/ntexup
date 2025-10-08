@@ -7,9 +7,9 @@ import net.thevpc.ntexup.api.document.elem2d.NTxImageOptions;
 import net.thevpc.ntexup.api.renderer.NTxImageTypeRendererFactory;
 import net.thevpc.ntexup.api.renderer.NTxGraphics;
 import net.thevpc.ntexup.api.renderer.NTxGraphicsImageDrawer;
-import net.thevpc.nuts.concurrent.NCallableSupport;
+import net.thevpc.nuts.concurrent.NScorableCallable;
 import net.thevpc.nuts.io.NPath;
-import net.thevpc.nuts.util.NMsg;
+import net.thevpc.nuts.text.NMsg;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -18,15 +18,15 @@ import java.net.URL;
 
 public class NTxImageTypeRendererFactorySalamanderForSVG implements NTxImageTypeRendererFactory {
     @Override
-    public NCallableSupport<NTxGraphicsImageDrawer> resolveRenderer(NPath path, NTxImageOptions options, NTxGraphics graphics) {
+    public NScorableCallable<NTxGraphicsImageDrawer> resolveRenderer(NPath path, NTxImageOptions options, NTxGraphics graphics) {
         if (path.getName().toLowerCase().endsWith(".svg")) {
-            return NCallableSupport.ofValid(
+            return NScorableCallable.ofValid(
                     () -> {
                         return new SvgNTxImageByTypeRenderer(path);
                     }
             );
         }
-        return NCallableSupport.ofInvalid(() -> NMsg.ofC("not supported %s", path));
+        return NScorableCallable.ofInvalid(() -> NMsg.ofC("not supported %s", path));
     }
 
     private static SVGIcon createSVGIconFromBytes(byte[] svgBytes) {
