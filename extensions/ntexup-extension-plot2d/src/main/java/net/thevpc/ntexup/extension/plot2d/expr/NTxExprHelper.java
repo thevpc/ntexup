@@ -3,10 +3,8 @@ package net.thevpc.ntexup.extension.plot2d.expr;
 import net.thevpc.ntexup.api.eval.NTxValue;
 import net.thevpc.ntexup.api.renderer.NTxNodeRendererContext;
 import net.thevpc.nuts.expr.*;
-import net.thevpc.nuts.util.NMsg;
+import net.thevpc.nuts.text.NMsg;
 import net.thevpc.nuts.util.NOptional;
-
-import java.util.List;
 
 public class NTxExprHelper {
     public static NExprMutableDeclarations create(NTxNodeRendererContext rendererContext){
