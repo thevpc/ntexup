@@ -49,12 +49,14 @@ import net.thevpc.ntexup.engine.renderer.NTxGraphicsImpl;
 import net.thevpc.nuts.app.NApp;
 import net.thevpc.nuts.artifact.NDefinition;
 import net.thevpc.nuts.artifact.NDependency;
-import net.thevpc.nuts.concurrent.NCallableSupport;
+import net.thevpc.nuts.concurrent.NScorableCallable;
 import net.thevpc.nuts.core.NMutableClassLoader;
 import net.thevpc.nuts.elem.*;
 import net.thevpc.nuts.ext.NExtensions;
 import net.thevpc.nuts.io.NPath;
 import net.thevpc.nuts.platform.NStoreType;
+import net.thevpc.nuts.spi.NScorable;
+import net.thevpc.nuts.text.NMsg;
 import net.thevpc.nuts.util.*;
 
 import javax.imageio.ImageIO;
@@ -241,11 +243,13 @@ public class DefaultNTxEngine implements NTxEngine {
                 Arrays.asList(ctx.nodePath())
                 , ctx.source()
         );
-        NOptional<NTxItem> optional = NCallableSupport.resolve(
+        NOptional<NTxItem> optional = NScorable.<NScorableCallable<NTxItem>>query()
+                .withName(NMsg.ofC("support for node from type '%s' value '%s'", element.type().id(), NTxUtils.snippet(element)))
+                .fromStream(
                         nodeParserFactories.list().stream()
-                                .map(x -> x.parseNode(newContext)),
-                        () -> NMsg.ofC("missing support for node from type '%s' value '%s'", element.type().id(), NTxUtils.snippet(element)))
-                .toOptional();
+                                .map(x -> x.parseNode(newContext))
+                        )
+                .getBest().map(x->x.call());
         if (optional.isPresent()) {
             NTxItem nTxItem = optional.get();
             if (nTxItem instanceof NTxNode) {
@@ -254,8 +258,9 @@ public class DefaultNTxEngine implements NTxEngine {
                     throw new IllegalArgumentException("unexpected source null");
                 }
             }
+            return NOptional.of(nTxItem);
         }
-        return optional;
+        return NOptional.ofNamedEmpty(NMsg.ofC("support for node from type '%s' value '%s'", element.type().id(), NTxUtils.snippet(element)));
     }
 
     @Override
@@ -296,11 +301,13 @@ public class DefaultNTxEngine implements NTxEngine {
     @Override
     public NOptional<NTxDocumentRenderer> newRenderer(String type) {
         NTxDocumentRendererFactoryContext ctx = new NTxDocumentRendererFactoryContextImpl(this, type);
-        return NCallableSupport.resolve(
+        return NScorable.<NScorableCallable<NTxDocumentRenderer>>query()
+                .withName(NMsg.ofC("StreamRenderer %s", type))
+                        .fromStream(
                         documentRendererFactories().stream()
-                                .map(x -> x.<NTxDocumentStreamRenderer>createDocumentRenderer(ctx)),
-                        () -> NMsg.ofC("missing StreamRenderer %s", type))
-                .toOptional();
+                                .map(x -> x.<NTxDocumentStreamRenderer>createDocumentRenderer(ctx))
+                        )
+                .getBest().map(x->x.call());
     }
 
     private List<NTxDocumentRendererFactory> documentRendererFactories() {
