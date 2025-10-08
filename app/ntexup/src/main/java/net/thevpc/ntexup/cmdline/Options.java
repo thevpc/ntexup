@@ -2,7 +2,7 @@ package net.thevpc.ntexup.cmdline;
 
 import net.thevpc.nuts.util.NIllegalArgumentException;
 import net.thevpc.nuts.io.NPath;
-import net.thevpc.nuts.util.NMsg;
+import net.thevpc.nuts.text.NMsg;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
