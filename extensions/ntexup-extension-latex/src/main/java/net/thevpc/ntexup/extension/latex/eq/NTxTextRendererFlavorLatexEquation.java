@@ -7,7 +7,7 @@ import net.thevpc.ntexup.api.renderer.*;
 import net.thevpc.ntexup.api.renderer.text.*;
 import net.thevpc.ntexup.api.util.NTxColors;
 import net.thevpc.ntexup.api.util.NTxUtils;
-import net.thevpc.nuts.util.NMsg;
+import net.thevpc.nuts.text.NMsg;
 import org.scilab.forge.jlatexmath.TeXConstants;
 import org.scilab.forge.jlatexmath.TeXFormula;
 import org.scilab.forge.jlatexmath.TeXIcon;
