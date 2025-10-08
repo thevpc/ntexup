@@ -2,7 +2,7 @@ package net.thevpc.ntexup.engine.parser;
 
 import net.thevpc.ntexup.api.document.*;
 import net.thevpc.ntexup.api.source.NTxSource;
-import net.thevpc.nuts.util.NMsg;
+import net.thevpc.nuts.text.NMsg;
 import net.thevpc.nuts.util.NOptional;
 
 public class NTxDocumentLoadingResultImpl implements NTxDocumentLoadingResult {
