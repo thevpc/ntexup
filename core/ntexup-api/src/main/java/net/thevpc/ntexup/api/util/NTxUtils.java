@@ -11,6 +11,7 @@ import net.thevpc.ntexup.api.source.NTxSource;
 import net.thevpc.ntexup.api.renderer.text.NTxTextOptions;
 import net.thevpc.nuts.elem.*;
 import net.thevpc.nuts.io.NPath;
+import net.thevpc.nuts.text.NMsg;
 import net.thevpc.nuts.util.*;
 
 import java.awt.*;
