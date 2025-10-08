@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.Timer;
 
 import net.thevpc.nuts.io.NPath;
-import net.thevpc.nuts.util.NMsg;
+import net.thevpc.nuts.text.NMsg;
 
 public class DocumentView {
 
