@@ -3,7 +3,7 @@ package net.thevpc.ntexup.engine.log;
 import net.thevpc.ntexup.api.log.NTxLogger;
 import net.thevpc.ntexup.api.log.NTxMsg;
 import net.thevpc.ntexup.api.source.NTxSource;
-import net.thevpc.nuts.util.NMsg;
+import net.thevpc.nuts.text.NMsg;
 
 import java.util.ArrayList;
 import java.util.List;
