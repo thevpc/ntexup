@@ -23,7 +23,7 @@ import net.thevpc.ntexup.api.util.NTxUtils;
 import net.thevpc.ntexup.api.util.NtxFontInfo;
 import net.thevpc.nuts.elem.NElement;
 import net.thevpc.nuts.io.NPath;
-import net.thevpc.nuts.util.NMsg;
+import net.thevpc.nuts.text.NMsg;
 
 import java.awt.*;
 
