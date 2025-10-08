@@ -5,7 +5,7 @@ import java.util.Objects;
 public class NTxStyleMagnitude implements Comparable<NTxStyleMagnitude> {
     private NTxStyleRuleSelector selector;
     private int distance;
-    private int support;
+    private int score;
 
     public NTxStyleMagnitude(int distance, NTxStyleRuleSelector selector) {
         this.distance = distance;
@@ -16,8 +16,8 @@ public class NTxStyleMagnitude implements Comparable<NTxStyleMagnitude> {
         return selector;
     }
 
-    public int getSupportLevel() {
-        return support;
+    public int getScore() {
+        return score;
     }
 
     public int getDistance() {
@@ -38,9 +38,9 @@ public class NTxStyleMagnitude implements Comparable<NTxStyleMagnitude> {
                 return u;
             }
         }
-        if (this.support != o.support) {
+        if (this.score != o.score) {
             // bigger is first!
-            int u = -Integer.compare(this.support, o.support);
+            int u = -Integer.compare(this.score, o.score);
             if (u != 0) {
                 return u;
             }
@@ -55,12 +55,12 @@ public class NTxStyleMagnitude implements Comparable<NTxStyleMagnitude> {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         NTxStyleMagnitude that = (NTxStyleMagnitude) o;
-        return distance == that.distance && support == that.support && Objects.equals(selector, that.selector);
+        return distance == that.distance && score == that.score && Objects.equals(selector, that.selector);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(selector, distance, support);
+        return Objects.hash(selector, distance, score);
     }
 
     @Override
@@ -68,7 +68,7 @@ public class NTxStyleMagnitude implements Comparable<NTxStyleMagnitude> {
         return "HStyleMagnitude{" +
                 "selector=" + selector +
                 ", distance=" + distance +
-                ", support=" + support +
+                ", support=" + score +
                 '}';
     }
 }
