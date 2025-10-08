@@ -13,7 +13,7 @@ import net.thevpc.ntexup.api.renderer.text.NTxTextRendererFlavorParseContext;
 import net.thevpc.ntexup.api.renderer.text.NTxTextToken;
 import net.thevpc.ntexup.api.renderer.text.NTxTextOptions;
 import net.thevpc.ntexup.api.renderer.text.NTxTextRendererBuilder;
-import net.thevpc.nuts.concurrent.NCallableSupport;
+import net.thevpc.nuts.concurrent.NScorableCallable;
 import net.thevpc.nuts.elem.NElement;
 
 import java.util.List;
@@ -68,7 +68,7 @@ public interface NTxNodeBuilderContext {
 
 
     interface NTxItemSpecialParser {
-        NCallableSupport<NTxItem> parseElement(String id, NElement element, NTxNodeFactoryParseContext context);
+        NScorableCallable<NTxItem> parseElement(String id, NElement element, NTxNodeFactoryParseContext context);
     }
 
     interface RenderTextAction {
