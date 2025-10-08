@@ -11,7 +11,7 @@ import net.thevpc.ntexup.api.util.NTxUtils;
 import net.thevpc.ntexup.engine.renderer.DefaultNTxNodeRendererContext;
 import net.thevpc.nuts.time.NChronometer;
 import net.thevpc.nuts.util.NMaps;
-import net.thevpc.nuts.util.NMsg;
+import net.thevpc.nuts.text.NMsg;
 import net.thevpc.nuts.util.NRef;
 
 import javax.swing.*;
