@@ -7,7 +7,7 @@ import net.thevpc.ntexup.api.renderer.NTxDocumentStreamRenderer;
 import net.thevpc.ntexup.api.renderer.NTxDocumentStreamRendererConfig;
 import net.thevpc.ntexup.api.renderer.NTxPageOrientation;
 import net.thevpc.nuts.io.NPath;
-import net.thevpc.nuts.nswing.GBC;
+import net.thevpc.nuts.swing.GBC;
 import net.thevpc.nuts.util.NLiteral;
 
 import javax.swing.*;
@@ -15,7 +15,6 @@ import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
-import java.util.function.Consumer;
 
 public class PdfConfigDialog extends JDialog {
     private JRadioButton portraitRadioButton;
