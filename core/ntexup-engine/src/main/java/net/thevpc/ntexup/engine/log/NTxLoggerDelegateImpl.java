@@ -4,8 +4,7 @@ import net.thevpc.ntexup.api.log.NTxMsg;
 import net.thevpc.ntexup.api.log.NTxLogger;
 import net.thevpc.ntexup.api.source.NTxSource;
 import net.thevpc.nuts.log.NLog;
-import net.thevpc.nuts.log.NMsgIntent;
-import net.thevpc.nuts.util.NMsg;
+import net.thevpc.nuts.text.NMsg;
 
 import java.time.Instant;
 import java.util.logging.Level;
