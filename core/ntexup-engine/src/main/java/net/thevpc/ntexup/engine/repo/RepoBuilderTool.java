@@ -7,7 +7,7 @@ import net.thevpc.ntexup.engine.impl.NTxTemplateInfoImpl;
 import net.thevpc.ntexup.engine.impl.NTxTemplateInfoLoader;
 import net.thevpc.nuts.artifact.NVersion;
 import net.thevpc.nuts.io.NPath;
-import net.thevpc.nuts.util.NMsg;
+import net.thevpc.nuts.text.NMsg;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
