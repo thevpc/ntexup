@@ -7,11 +7,11 @@ import net.thevpc.ntexup.api.document.node.NTxNodeType;
 import net.thevpc.ntexup.api.parser.NTxNodeFactoryParseContext;
 import net.thevpc.ntexup.api.util.NTxUtils;
 import net.thevpc.ntexup.engine.parser.ctrlnodes.CtrlNTxNodeFor;
-import net.thevpc.nuts.concurrent.NCallableSupport;
+import net.thevpc.nuts.concurrent.NScorableCallable;
 import net.thevpc.nuts.elem.NElement;
 import net.thevpc.nuts.elem.NObjectElement;
 import net.thevpc.nuts.elem.NUpletElement;
-import net.thevpc.nuts.util.NMsg;
+import net.thevpc.nuts.text.NMsg;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,13 +22,13 @@ public class ForSpecialParser extends NTxNodeParserBase {
     }
 
     @Override
-    public NCallableSupport<NTxItem> parseNode(NTxNodeFactoryParseContext context) {
+    public NScorableCallable<NTxItem> parseNode(NTxNodeFactoryParseContext context) {
         NElement tsonElement = context.element();
         switch (tsonElement.type()) {
             case NAMED_PARAMETRIZED_OBJECT: {
                 NObjectElement obj = tsonElement.asObject().get();
                 if(obj.isNamed(id())) {
-                    return NCallableSupport.ofValid(()-> {
+                    return NScorableCallable.ofValid(()-> {
                         NElement __varName = null;
                         NElement __varDomain = null;
                         List<NElement> block = new ArrayList<>();
@@ -53,7 +53,7 @@ public class ForSpecialParser extends NTxNodeParserBase {
             case NAMED_OBJECT: {
                 NObjectElement obj = tsonElement.asObject().get();
                 if (obj.isNamed(id())) {
-                    return NCallableSupport.ofValid( () -> {
+                    return NScorableCallable.ofValid( () -> {
                         _logError(NMsg.ofC("missing for condition from %s", NTxUtils.snippet(tsonElement)), context);
                         return new NTxItemList();
                     });
@@ -63,7 +63,7 @@ public class ForSpecialParser extends NTxNodeParserBase {
             case NAMED_UPLET: {
                 NUpletElement obj = tsonElement.asUplet().get();
                 if (obj.isNamed(id())) {
-                    return NCallableSupport.ofValid( () -> {
+                    return NScorableCallable.ofValid( () -> {
                         _logError(NMsg.ofC("missing for body from %s", NTxUtils.snippet(tsonElement)), context);
                         return new NTxItemList();
                     });
@@ -71,7 +71,7 @@ public class ForSpecialParser extends NTxNodeParserBase {
                 break;
             }
         }
-        return NCallableSupport.ofInvalid(NMsg.ofC("missing for construct from %s", NTxUtils.snippet(tsonElement)).asError());
+        return NScorableCallable.ofInvalid(NMsg.ofC("missing for construct from %s", NTxUtils.snippet(tsonElement)).asError());
     }
 
 
