@@ -7,7 +7,7 @@ import net.thevpc.ntexup.api.document.elem2d.NTxImageOptions;
 import net.thevpc.ntexup.api.renderer.NTxImageTypeRendererFactory;
 import net.thevpc.ntexup.api.renderer.NTxGraphics;
 import net.thevpc.ntexup.api.renderer.NTxGraphicsImageDrawer;
-import net.thevpc.nuts.concurrent.NScorableCallable;
+import net.thevpc.nuts.concurrent.NScoredCallable;
 import net.thevpc.nuts.io.NPath;
 import net.thevpc.nuts.text.NMsg;
 
@@ -18,15 +18,15 @@ import java.net.URL;
 
 public class NTxImageTypeRendererFactorySalamanderForSVG implements NTxImageTypeRendererFactory {
     @Override
-    public NScorableCallable<NTxGraphicsImageDrawer> resolveRenderer(NPath path, NTxImageOptions options, NTxGraphics graphics) {
+    public NScoredCallable<NTxGraphicsImageDrawer> resolveRenderer(NPath path, NTxImageOptions options, NTxGraphics graphics) {
         if (path.getName().toLowerCase().endsWith(".svg")) {
-            return NScorableCallable.ofValid(
+            return NScoredCallable.ofValid(
                     () -> {
                         return new SvgNTxImageByTypeRenderer(path);
                     }
             );
         }
-        return NScorableCallable.ofInvalid(() -> NMsg.ofC("not supported %s", path));
+        return NScoredCallable.ofInvalid(() -> NMsg.ofC("not supported %s", path));
     }
 
     private static SVGIcon createSVGIconFromBytes(byte[] svgBytes) {
