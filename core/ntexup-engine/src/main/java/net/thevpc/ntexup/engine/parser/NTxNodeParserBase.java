@@ -7,7 +7,7 @@ import net.thevpc.ntexup.api.util.NTxUtils;
 import net.thevpc.ntexup.engine.util.ToElementHelper;
 import net.thevpc.ntexup.api.eval.NTxValue;
 import net.thevpc.ntexup.api.document.node.*;
-import net.thevpc.nuts.concurrent.NScorableCallable;
+import net.thevpc.nuts.concurrent.NScoredCallable;
 import net.thevpc.nuts.elem.*;
 import net.thevpc.nuts.util.NBlankable;
 import net.thevpc.nuts.text.NMsg;
@@ -158,12 +158,12 @@ public abstract class NTxNodeParserBase implements NTxNodeParser {
     }
 
     @Override
-    public NScorableCallable<NTxItem> parseNode(NTxNodeFactoryParseContext context) {
+    public NScoredCallable<NTxItem> parseNode(NTxNodeFactoryParseContext context) {
         NElement e = context.element();
 
         String s = acceptTypeName(e);
         if (s != null) {
-            return NScorableCallable.ofValid(
+            return NScoredCallable.ofValid(
                     () -> {
                         NOptional<NTxItem> o = parseItem(s, e, context);
                         if (!o.isPresent()) {
@@ -174,7 +174,7 @@ public abstract class NTxNodeParserBase implements NTxNodeParser {
             );
         }
         //context.messages().addError(NMsg.ofC("invalid %s : %s", id(), e), context.source());
-        return NScorableCallable.ofInvalid(() -> NMsg.ofC("invalid %s : %s", id(), e));
+        return NScoredCallable.ofInvalid(() -> NMsg.ofC("invalid %s : %s", id(), e));
     }
 
     public String resolveEffectiveId(String id) {
@@ -330,10 +330,10 @@ public abstract class NTxNodeParserBase implements NTxNodeParser {
         return false;
     }
 
-    protected NScorableCallable<NTxItem> _invalidSupport(NMsg msg, NTxNodeFactoryParseContext context) {
+    protected NScoredCallable<NTxItem> _invalidSupport(NMsg msg, NTxNodeFactoryParseContext context) {
         msg = msg.asError();
         context.messages().log(msg.asError());
-        return NScorableCallable.ofInvalid(msg);
+        return NScoredCallable.ofInvalid(msg);
     }
 
     protected void _logError(NMsg nMsg, NTxNodeFactoryParseContext context) {
