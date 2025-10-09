@@ -3,7 +3,7 @@ package net.thevpc.ntexup.api.parser;
 import net.thevpc.ntexup.api.document.node.NTxItem;
 import net.thevpc.ntexup.api.document.node.NTxNode;
 import net.thevpc.ntexup.api.engine.NTxEngine;
-import net.thevpc.nuts.concurrent.NScorableCallable;
+import net.thevpc.nuts.concurrent.NScoredCallable;
 import net.thevpc.nuts.elem.NElement;
 
 public interface NTxNodeParser {
@@ -15,7 +15,7 @@ public interface NTxNodeParser {
 
     String[] aliases();
 
-    NScorableCallable<NTxItem> parseNode(NTxNodeFactoryParseContext context);
+    NScoredCallable<NTxItem> parseNode(NTxNodeFactoryParseContext context);
 
     NElement toElem(NTxNode item);
 
