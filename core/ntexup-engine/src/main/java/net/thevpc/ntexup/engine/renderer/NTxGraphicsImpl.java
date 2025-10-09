@@ -20,10 +20,10 @@ import net.thevpc.ntexup.api.eval.NTxValue;
 import net.thevpc.ntexup.api.renderer.NTxGraphics;
 import net.thevpc.ntexup.api.renderer.NTxGraphicsImageDrawer;
 import net.thevpc.ntexup.api.renderer.text.NTxTextOptions;
-import net.thevpc.nuts.concurrent.NScorableCallable;
+import net.thevpc.nuts.concurrent.NScoredCallable;
 import net.thevpc.nuts.elem.NElement;
 import net.thevpc.nuts.io.NPath;
-import net.thevpc.nuts.spi.NScorable;
+import net.thevpc.nuts.util.NScorable;
 import net.thevpc.nuts.text.NMsg;
 import net.thevpc.ntexup.api.document.elem2d.primitives.*;
 import net.thevpc.ntexup.api.document.elem2d.*;
@@ -592,7 +592,7 @@ public class NTxGraphicsImpl implements NTxGraphics {
     public void drawImage(NPath nPath, double x, double y, NTxImageOptions options) {
         NTxGraphicsImageDrawer o = imageCache.get(nPath);
         if (o == null) {
-            NOptional<NTxGraphicsImageDrawer> tr = NScorable.<NScorableCallable<NTxGraphicsImageDrawer>>query()
+            NOptional<NTxGraphicsImageDrawer> tr = NScorable.<NScoredCallable<NTxGraphicsImageDrawer>>query()
                             .withName(NMsg.ofC("support for image %s ", nPath))
                                     .fromStream(engine.imageTypeRendererFactories().stream()
                                     .map(n -> n.resolveRenderer(nPath, options, NTxGraphicsImpl.this))
