@@ -10,7 +10,7 @@ import net.thevpc.ntexup.engine.parser.NTxNodeParserBase;
 import net.thevpc.ntexup.api.document.node.NTxNode;
 import net.thevpc.ntexup.engine.util.ToElementHelper;
 import net.thevpc.ntexup.engine.parser.NTxParseHelper;
-import net.thevpc.nuts.concurrent.NScorableCallable;
+import net.thevpc.nuts.concurrent.NScoredCallable;
 import net.thevpc.nuts.elem.NElement;
 import net.thevpc.nuts.text.NMsg;
 import net.thevpc.nuts.util.NOptional;
@@ -60,11 +60,11 @@ class CustomNTxNodeParserFromBuilder extends NTxNodeParserBase {
     }
 
     @Override
-    public NScorableCallable<NTxItem> parseNode(NTxNodeFactoryParseContext context) {
+    public NScoredCallable<NTxItem> parseNode(NTxNodeFactoryParseContext context) {
         NElement e = context.element();
         String s = acceptTypeName(e);
         if (s != null) {
-            return NScorableCallable.ofValid(
+            return NScoredCallable.ofValid(
                     () -> {
                         NOptional<NTxItem> o = parseItem(s, e, context);
                         if (!o.isPresent()) {
@@ -79,7 +79,7 @@ class CustomNTxNodeParserFromBuilder extends NTxNodeParserBase {
             if (ctx.extraElementSupportByPredicate.test(e)) {
                 pp = new NTxNodeBuilderContext.NTxItemSpecialParser() {
                     @Override
-                    public NScorableCallable<NTxItem> parseElement(String id, NElement element, NTxNodeFactoryParseContext context) {
+                    public NScoredCallable<NTxItem> parseElement(String id, NElement element, NTxNodeFactoryParseContext context) {
                         NTxNode p = context.documentFactory().of(resolveEffectiveId(id));
                         String compilerDeclarationPath = NTxUtils.getCompilerDeclarationPath(element);
                         NTxSource source = context.source();
@@ -104,19 +104,19 @@ class CustomNTxNodeParserFromBuilder extends NTxNodeParserBase {
                         processArguments(info);
                         processImplicitStyles(info);
                         onFinishParsingItem(info);
-                        return NScorableCallable.ofValid(ctx.extraElementSupportByPredicateSupport, p);
+                        return NScoredCallable.ofValid(ctx.extraElementSupportByPredicateSupport, p);
                     }
                 };
             }
         }
         if (pp != null) {
-            NScorableCallable<NTxItem> y = pp.parseElement(id(), e, context);
+            NScoredCallable<NTxItem> y = pp.parseElement(id(), e, context);
             if (y != null) {
                 return y;
             }
         }
         //context.messages().addError(NMsg.ofC("invalid %s : %s", id(), e), context.source());
-        return NScorableCallable.ofInvalid(() -> NMsg.ofC("invalid %s : %s", id(), e));
+        return NScoredCallable.ofInvalid(() -> NMsg.ofC("invalid %s : %s", id(), e));
     }
 
     @Override
