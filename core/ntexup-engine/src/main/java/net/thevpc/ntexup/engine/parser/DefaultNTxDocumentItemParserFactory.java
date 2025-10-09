@@ -14,11 +14,10 @@ import net.thevpc.ntexup.api.eval.NTxValue;
 import net.thevpc.ntexup.api.parser.NTxNodeParser;
 import net.thevpc.ntexup.engine.parser.ctrlnodes.CtrlNTxNodeName;
 import net.thevpc.ntexup.engine.document.NTxItemBag;
-import net.thevpc.nuts.concurrent.DefaultNScorableCallable;
-import net.thevpc.nuts.concurrent.NScorableCallable;
+import net.thevpc.nuts.concurrent.NScoredCallable;
 import net.thevpc.nuts.elem.*;
 import net.thevpc.nuts.io.NPath;
-import net.thevpc.nuts.spi.NScorableContext;
+import net.thevpc.nuts.util.NScorableContext;
 import net.thevpc.nuts.text.NMsg;
 import net.thevpc.nuts.util.*;
 
@@ -37,13 +36,13 @@ public class DefaultNTxDocumentItemParserFactory
     }
 
     @Override
-    public NScorableCallable<NTxItem> parseNode(NTxNodeFactoryParseContext context) {
+    public NScoredCallable<NTxItem> parseNode(NTxNodeFactoryParseContext context) {
         NElement c = context.element();
         NTxEngine engine = context.engine();
         if (c.annotations().stream().anyMatch(x -> NTxNodeType.CTRL_DEFINE.equals(x.name()))) {
             //this is a node definition
             if (c.isAnyObject() || c.isNamed()) {
-                return NScorableCallable.ofValid(() -> {
+                return NScoredCallable.ofValid(() -> {
                     NObjectElement object = c.asObject().get();
                     String templateName = object.name().get();
                     List<NTxNodeDefParam> params;
@@ -70,13 +69,13 @@ public class DefaultNTxDocumentItemParserFactory
                         params = new ArrayList<>();
                     }
                     NTxSource source = context.source();
-                    List<NTxNode> defBody=new ArrayList<>();
+                    List<NTxNode> defBody = new ArrayList<>();
                     for (NElement child : object.children()) {
                         NTxItem item = engine.newNode(child, context).get();
-                        NTxItemBag b=new NTxItemBag(Arrays.asList(item));
-                        if(b.isNodes()){
+                        NTxItemBag b = new NTxItemBag(Arrays.asList(item));
+                        if (b.isNodes()) {
                             defBody.addAll(b.nodes());
-                        }else{
+                        } else {
                             context.messages().log(NMsg.ofC("expected nodes, but got other items when creating node from %s", NTxUtils.snippet(child)).asError());
                         }
                     }
@@ -105,7 +104,7 @@ public class DefaultNTxDocumentItemParserFactory
                             NOptional<String> nn = kh.asStringOrName();
                             if (nn.isPresent()) {
                                 String nnn = NStringUtils.trim(nn.get());
-                                return NScorableCallable.ofValid(() -> DefaultNTxNode.ofAssign(nnn, v, context.source()));
+                                return NScoredCallable.ofValid(() -> DefaultNTxNode.ofAssign(nnn, v, context.source()));
                             } else {
                                 return _invalidSupport(NMsg.ofC("unable to interpret left hand of assignment as a valid var : %s", k), context);
                             }
@@ -122,7 +121,7 @@ public class DefaultNTxDocumentItemParserFactory
                             NOptional<String> nn = kh.asStringOrName();
                             if (nn.isPresent()) {
                                 String nnn = NStringUtils.trim(nn.get());
-                                return NScorableCallable.ofValid(() -> DefaultNTxNode.ofAssignIfEmpty(nnn, v, context.source()));
+                                return NScoredCallable.ofValid(() -> DefaultNTxNode.ofAssignIfEmpty(nnn, v, context.source()));
                             } else {
                                 return _invalidSupport(NMsg.ofC("unable to interpret left hand of assignment as a valid var : %s", k), context);
                             }
@@ -133,8 +132,8 @@ public class DefaultNTxDocumentItemParserFactory
                 }
                 NOptional<NTxNodeParser> ff = engine.nodeTypeParser(c.type().opSymbol());
                 if (ff.isPresent()) {
-                    NScorableCallable<NTxItem> uu = ff.get().parseNode(context);
-                    if (uu.isValid(NScorableContext.of())) {
+                    NScoredCallable<NTxItem> uu = ff.get().parseNode(context);
+                    if (NScorable.isValidScore(uu, NScorableContext.of())) {
                         return uu;
                     }
                 }
@@ -143,8 +142,7 @@ public class DefaultNTxDocumentItemParserFactory
             case CONTAINER: {
                 switch (c.type()) {
                     case OBJECT:
-                    case ARRAY:
-                    {
+                    case ARRAY: {
                         return parseNoNameBloc(context);
                     }
                     case UPLET: {
@@ -163,7 +161,7 @@ public class DefaultNTxDocumentItemParserFactory
                             return p.parseNode(context);
                         }
                         if (c.isNamedUplet() || c.isAnyObject()) {
-                            return NScorableCallable.ofValid(() -> createCtrlNodeCall(c, context));
+                            return NScoredCallable.ofValid(() -> createCtrlNodeCall(c, context));
                         }
                         return _invalidSupport(NMsg.ofC("[%s] unable to resolve node : %s", NTxUtils.shortName(context.source()), NTxUtils.snippet(c)), context);
                     }
@@ -173,8 +171,8 @@ public class DefaultNTxDocumentItemParserFactory
                             String name = p.key().asStringValue().get();
                             NOptional<NTxNodeParser> ff = engine.nodeTypeParser(name);
                             if (ff.isPresent()) {
-                                NScorableCallable<NTxItem> uu = ff.get().parseNode(context);
-                                if (uu.isValid(NScorableContext.of())) {
+                                NScoredCallable<NTxItem> uu = ff.get().parseNode(context);
+                                if (NScorable.isValidScore(uu, NScorableContext.of())) {
                                     return uu;
                                 }
                             }
@@ -199,16 +197,16 @@ public class DefaultNTxDocumentItemParserFactory
                 break;
             }
             case NAME: {
-                return NScorableCallable.ofValid(()->new CtrlNTxNodeName(context.source(),c));
+                return NScoredCallable.ofValid(() -> new CtrlNTxNodeName(context.source(), c));
             }
         }
         return _invalidSupport(NMsg.ofC("[%s] unable to resolve node : %s", NTxUtils.shortName(context.source()), NTxUtils.snippet(c)), context);
     }
 
-    private NScorableCallable<NTxItem> _invalidSupport(NMsg msg, NTxNodeFactoryParseContext context) {
+    private NScoredCallable<NTxItem> _invalidSupport(NMsg msg, NTxNodeFactoryParseContext context) {
         msg = msg.asError();
         context.messages().log(msg.asError());
-        return NScorableCallable.ofInvalid(msg);
+        return NScoredCallable.ofInvalid(msg);
     }
 
 
@@ -363,7 +361,7 @@ public class DefaultNTxDocumentItemParserFactory
         return false;
     }
 
-    private NScorableCallable<NTxItem> parseNoNameBloc(NTxNodeFactoryParseContext context) {
+    private NScoredCallable<NTxItem> parseNoNameBloc(NTxNodeFactoryParseContext context) {
         NElement c = context.element();
         NTxEngine engine = context.engine();
         NTxDocumentFactory f = engine.documentFactory();
@@ -408,7 +406,7 @@ public class DefaultNTxDocumentItemParserFactory
                     ), context);
                 }
             }
-            return NScorableCallable.ofValid(pg);
+            return NScoredCallable.ofValid(pg);
         } else {
             NTxItemList pg = new NTxItemList();
             for (NElement child : ee.body()) {
@@ -422,7 +420,7 @@ public class DefaultNTxDocumentItemParserFactory
                     ), context);
                 }
             }
-            return NScorableCallable.ofValid(pg);
+            return NScoredCallable.ofValid(pg);
         }
     }
 
