@@ -7,7 +7,7 @@ package net.thevpc.ntexup.engine.renderer.html;
 import net.thevpc.ntexup.api.renderer.NTxDocumentRenderer;
 import net.thevpc.ntexup.api.renderer.NTxDocumentRendererFactory;
 import net.thevpc.ntexup.api.renderer.NTxDocumentRendererFactoryContext;
-import net.thevpc.nuts.concurrent.NScorableCallable;
+import net.thevpc.nuts.concurrent.NScoredCallable;
 import net.thevpc.nuts.text.NMsg;
 
 /**
@@ -15,12 +15,12 @@ import net.thevpc.nuts.text.NMsg;
  */
 public class NTxHtmlDocumentStreamRendererFactory implements NTxDocumentRendererFactory {
     @Override
-    public NScorableCallable<NTxDocumentRenderer> createDocumentRenderer(NTxDocumentRendererFactoryContext context) {
+    public NScoredCallable<NTxDocumentRenderer> createDocumentRenderer(NTxDocumentRendererFactoryContext context) {
         switch (String.valueOf(context.rendererType()).toLowerCase()) {
             case "html":
-                return NScorableCallable.ofValid( () -> new NTxHtmlDocumentRenderer(context.engine()));
+                return NScoredCallable.ofValid( () -> new NTxHtmlDocumentRenderer(context.engine()));
             default:
-                return NScorableCallable.ofInvalid(() -> NMsg.ofPlain("factory"));
+                return NScoredCallable.ofInvalid(() -> NMsg.ofPlain("factory"));
         }
     }
 
