@@ -8,7 +8,7 @@ import net.thevpc.ntexup.api.document.style.NTxStyleRule;
 import net.thevpc.ntexup.api.parser.NTxNodeFactoryParseContext;
 import net.thevpc.ntexup.api.util.NTxUtils;
 import net.thevpc.ntexup.engine.parser.NTxStyleParser;
-import net.thevpc.nuts.concurrent.NScorableCallable;
+import net.thevpc.nuts.concurrent.NScoredCallable;
 import net.thevpc.nuts.elem.NArrayElement;
 import net.thevpc.nuts.elem.NObjectElement;
 import net.thevpc.nuts.elem.NPairElement;
@@ -26,7 +26,7 @@ public class StylesSpecialParser extends NTxNodeParserBase {
     }
 
     @Override
-    public NScorableCallable<NTxItem> parseNode(NTxNodeFactoryParseContext context) {
+    public NScoredCallable<NTxItem> parseNode(NTxNodeFactoryParseContext context) {
         List<NTxItem> styles = new ArrayList<>();
         NElement tsonElement = context.element();
         NTxDocumentFactory f = context.documentFactory();
@@ -35,7 +35,7 @@ public class StylesSpecialParser extends NTxNodeParserBase {
             case NAMED_OBJECT: {
                 NObjectElement obj = tsonElement.toObject().get();
                 if (obj.isNamed(id())) {
-                    return NScorableCallable.ofValid(() -> {
+                    return NScoredCallable.ofValid(() -> {
                         for (NElement yy : obj.children()) {
                             NOptional<NTxStyleRule[]> u = NTxStyleParser.parseStyleRule(yy, f, context);
                             if (!u.isPresent()) {
@@ -56,7 +56,7 @@ public class StylesSpecialParser extends NTxNodeParserBase {
             case NAMED_ARRAY: {
                 NArrayElement obj = tsonElement.toArray().get();
                 if (obj.isNamed(id())) {
-                    return NScorableCallable.ofValid(() -> {
+                    return NScoredCallable.ofValid(() -> {
                         for (NElement yy : obj.children()) {
                             NOptional<NTxStyleRule[]> u = NTxStyleParser.parseStyleRule(yy, f, context);
                             if (!u.isPresent()) {
@@ -75,7 +75,7 @@ public class StylesSpecialParser extends NTxNodeParserBase {
             case PAIR: {
                 NPairElement obj = tsonElement.toNamedPair().get();
                 if (obj.isNamedPair() && NNameFormat.equalsIgnoreFormat(obj.key().asStringValue().get(), id())) {
-                    return NScorableCallable.ofValid(() -> {
+                    return NScoredCallable.ofValid(() -> {
                         if (obj.value().isAnyObject()) {
                             for (NElement yy : obj.value().asObject().get().children()) {
                                 NOptional<NTxStyleRule[]> u = NTxStyleParser.parseStyleRule(yy, f, context);
@@ -96,7 +96,7 @@ public class StylesSpecialParser extends NTxNodeParserBase {
                 break;
             }
         }
-        return NScorableCallable.ofInvalid(NMsg.ofC("missing style construct from %s", NTxUtils.snippet(tsonElement)).asError());
+        return NScoredCallable.ofInvalid(NMsg.ofC("missing style construct from %s", NTxUtils.snippet(tsonElement)).asError());
     }
 
 }
