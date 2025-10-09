@@ -49,13 +49,13 @@ import net.thevpc.ntexup.engine.renderer.NTxGraphicsImpl;
 import net.thevpc.nuts.app.NApp;
 import net.thevpc.nuts.artifact.NDefinition;
 import net.thevpc.nuts.artifact.NDependency;
-import net.thevpc.nuts.concurrent.NScorableCallable;
+import net.thevpc.nuts.concurrent.NScoredCallable;
 import net.thevpc.nuts.core.NMutableClassLoader;
 import net.thevpc.nuts.elem.*;
 import net.thevpc.nuts.ext.NExtensions;
 import net.thevpc.nuts.io.NPath;
 import net.thevpc.nuts.platform.NStoreType;
-import net.thevpc.nuts.spi.NScorable;
+import net.thevpc.nuts.util.NScorable;
 import net.thevpc.nuts.text.NMsg;
 import net.thevpc.nuts.util.*;
 
@@ -243,7 +243,7 @@ public class DefaultNTxEngine implements NTxEngine {
                 Arrays.asList(ctx.nodePath())
                 , ctx.source()
         );
-        NOptional<NTxItem> optional = NScorable.<NScorableCallable<NTxItem>>query()
+        NOptional<NTxItem> optional = NScorable.<NScoredCallable<NTxItem>>query()
                 .withName(NMsg.ofC("support for node from type '%s' value '%s'", element.type().id(), NTxUtils.snippet(element)))
                 .fromStream(
                         nodeParserFactories.list().stream()
@@ -301,7 +301,7 @@ public class DefaultNTxEngine implements NTxEngine {
     @Override
     public NOptional<NTxDocumentRenderer> newRenderer(String type) {
         NTxDocumentRendererFactoryContext ctx = new NTxDocumentRendererFactoryContextImpl(this, type);
-        return NScorable.<NScorableCallable<NTxDocumentRenderer>>query()
+        return NScorable.<NScoredCallable<NTxDocumentRenderer>>query()
                 .withName(NMsg.ofC("StreamRenderer %s", type))
                         .fromStream(
                         documentRendererFactories().stream()
