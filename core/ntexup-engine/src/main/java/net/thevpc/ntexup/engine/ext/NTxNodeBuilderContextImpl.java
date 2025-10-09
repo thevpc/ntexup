@@ -12,7 +12,7 @@ import net.thevpc.ntexup.api.extension.NTxNodeBuilder;
 import net.thevpc.ntexup.api.renderer.*;
 import net.thevpc.ntexup.api.util.NTxUtils;
 import net.thevpc.ntexup.engine.util.ToElementHelper;
-import net.thevpc.nuts.spi.NScorable;
+import net.thevpc.nuts.util.NScorable;
 import net.thevpc.nuts.util.NIllegalArgumentException;
 import net.thevpc.nuts.elem.NElement;
 import net.thevpc.nuts.util.NAssert;
