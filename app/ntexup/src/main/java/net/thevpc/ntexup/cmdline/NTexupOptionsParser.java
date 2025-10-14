@@ -21,15 +21,15 @@ public class NTexupOptionsParser {
                             options.setGuiMode(a.booleanValue());
                             NSession.of().setGui(a.booleanValue());
                         })
-                        .with("--reopen").matchTrueFlag(a -> {
+                        .with("reopen").matchTrueFlag(a -> {
                             options.reopen = true;
                             continueParsingReopen(cmdLine, options);
                         })
-                        .with("--build-repo").matchTrueFlag(a -> {
+                        .with("build-repo").matchTrueFlag(a -> {
                             options.setTerminalMode(true);
                             continueParsingBuildRepository(cmdLine, options);
                         })
-                        .with("--list-templates").matchFlag(a -> {
+                        .with("list-templates").matchFlag(a -> {
                             options.setTerminalMode(true);
                             continueParsingListTemplates(cmdLine, options);
                         })
@@ -42,7 +42,8 @@ public class NTexupOptionsParser {
                             options.setTerminalMode(true);
                             options.output = NPath.of(a.stringValue());
                         })
-                        .with("--open").matchEntry(a -> {
+                        .with("open").matchEntry(a -> {
+                            options.action = Action.OPEN;
                             if (a.getStringValue().isPresent()) {
                                 options.paths.add(NPath.of(a.stringValue()));
                             } else {
@@ -50,11 +51,11 @@ public class NTexupOptionsParser {
                             }
                             continueParsingOpen(cmdLine, options);
                         })
-                        .with("--pdf").matchFlag(a -> {
+                        .with("pdf").matchFlag(a -> {
                             options.setTerminalMode(true);
                             continueParsingPdf(cmdLine, options);
                         })
-                        .with("--new").matchTrueFlag(a -> {
+                        .with("new").matchTrueFlag(a -> {
                             continueParsingNew(cmdLine, options);
                         })
                         .withNonOption().matchAny(a -> options.paths.add(NPath.of(a.image())))
@@ -133,6 +134,7 @@ public class NTexupOptionsParser {
     }
 
     private void continueParsingOpen(NCmdLine cmdLine, Options options) {
+        options.action = Action.OPEN;
         while (!cmdLine.isEmpty()) {
             cmdLine.matcher()
                     .with("--dump").matchFlag(a -> {
