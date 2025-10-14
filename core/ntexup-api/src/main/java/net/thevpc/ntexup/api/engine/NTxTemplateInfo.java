@@ -19,6 +19,7 @@ public interface NTxTemplateInfo {
 
     NTxTemplateInfo withRepoName(String repoName);
 
+    String id();
     String repoUrl();
 
     String repoName();
