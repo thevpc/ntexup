@@ -12,6 +12,7 @@ import net.thevpc.ntexup.api.document.style.NTxPropName;
 import net.thevpc.ntexup.api.document.style.NTxProperties;
 import net.thevpc.ntexup.api.engine.NTxNodeBuilderContext;
 import net.thevpc.ntexup.api.extension.NTxNodeBuilder;
+import net.thevpc.ntexup.api.parser.NTxAllArgumentReader;
 import net.thevpc.ntexup.api.renderer.NTxNodeRendererContext;
 import net.thevpc.ntexup.engine.base.nodes.container.util.NTxGridRendererHelper;
 import net.thevpc.nuts.elem.NElement;
@@ -35,6 +36,9 @@ public class NTxRowBuilder implements NTxNodeBuilder {
                     }else{
                         return false;
                     }
+                })
+                .afterParsingAllParams((NTxAllArgumentReader info, NTxNodeBuilderContext buildContext)->{
+                    info.node().setProperty(NTxProp.of(NTxPropName.ROWS,NElement.ofInt(1)));
                 })
                 .selfBounds(this::selfBounds)
                 .renderComponent(this::renderMain)
