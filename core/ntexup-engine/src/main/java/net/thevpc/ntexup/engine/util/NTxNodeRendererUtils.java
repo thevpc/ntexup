@@ -145,7 +145,7 @@ public class NTxNodeRendererUtils {
         if (force || NTxValueByName.isDebug(node, ctx)) {
             g.setColor(NTxValueByName.getDebugColor(node, ctx));
             g.drawRect(a);
-            NTxBounds2 b = NTxValueByName.getNodeCommonNoCache(node, ctx).parentBoundsWithMargin;
+            NTxBounds2 b = NTxValueByName.getNodeSizeNoCache(node, ctx).parentBoundsWithMargin;
             g.drawRect(b);
             NTxDouble2 origin = NTxValueByName.getOrigin(node, ctx,new NTxDouble2(a.getWidth(),a.getHeight()));
             double x = origin.getX() + a.getX();
