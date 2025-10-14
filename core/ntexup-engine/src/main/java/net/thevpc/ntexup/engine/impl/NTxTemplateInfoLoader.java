@@ -3,6 +3,7 @@ package net.thevpc.ntexup.engine.impl;
 import net.thevpc.ntexup.api.engine.NTxTemplateInfo;
 import net.thevpc.ntexup.api.log.NTxLogger;
 import net.thevpc.ntexup.engine.eval.NTxGitHelper;
+import net.thevpc.nuts.log.NMsgIntent;
 import net.thevpc.nuts.util.NIllegalArgumentException;
 import net.thevpc.nuts.elem.NElement;
 import net.thevpc.nuts.elem.NElementParser;
@@ -28,7 +29,7 @@ public class NTxTemplateInfoLoader {
                         log.log(NMsg.ofC("unable to parse repository templates '%s' at '%s' : %s", name, path, e).asError());
                     }
                 } else {
-                    log.log(NMsg.ofC("repository template not found '%s' at '%s'", name, path).asWarning());
+                    log.log(NMsg.ofC("repository template not found '%s' at '%s'", name, path).asDebug().withIntent(NMsgIntent.INIT));
                 }
             } else if (path.isLocal()) {
                 if (path.resolve("ntexup-repository.tson").isRegularFile()) {
@@ -38,13 +39,13 @@ public class NTxTemplateInfoLoader {
                         log.log(NMsg.ofC("unable to parse repository templates '%s' at '%s' : %s", name, path, e).asError());
                     }
                 } else {
-                    log.log(NMsg.ofC("repository template not found '%s' at '%s'", name, path).asWarning());
+                    log.log(NMsg.ofC("repository template not found '%s' at '%s'", name, path).asDebug().withIntent(NMsgIntent.INIT));
                 }
             } else {
-                log.log(NMsg.ofC("unable to parse repository templates '%s' at '%s'", name, path).asWarning());
+                log.log(NMsg.ofC("unable to parse repository templates '%s' at '%s'", name, path).asDebug().withIntent(NMsgIntent.INIT));
             }
         } catch (Exception e) {
-            log.log(NMsg.ofC("unable to load repository '%s' at '%s' : %s", name, path, e).asError());
+            log.log(NMsg.ofC("unable to load repository '%s' at '%s' : %s", name, path, e).asDebug().withIntent(NMsgIntent.FAIL));
         }
         return allTemplates;
     }
