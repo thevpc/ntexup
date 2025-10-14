@@ -106,11 +106,12 @@ public class NTxTemplateInfoLoader {
             }
             allTemplates.add(
                     new NTxTemplateInfoImpl(
+                            null,
                             NStringUtils.trim(name),
-                            layout, version, repoPath.resolveChild(NMsg.ofC("$s/v$s/templates/$s", name, version, layout).toString()).toString(),
+                            layout, version, repoPath.resolveChild(NMsg.ofC("%s/v%s/templates/%s", name, version, layout).toString()).toString(),
                             recommended,
                             repoName, repoPath.toString(),
-                            NStringUtils.trim(NMsg.ofC("/$s/v$s/templates/$s", name, version, layout).toString()),
+                            NStringUtils.trim(NMsg.ofC("/%s/v%s/templates/%s", name, version, layout).toString()),
                             binaries.toArray(new String[0])
                     )
             );
@@ -203,11 +204,12 @@ public class NTxTemplateInfoLoader {
             }
             allTemplates.add(
                     new NTxTemplateInfoImpl(
+                            null,
                             NStringUtils.trim(name),
-                            layout, version, repoPath.resolveChild(NMsg.ofC("$s/v$s/templates/$s", name, version, layout).toString()).toString(),
+                            layout, version, repoPath.resolveChild(NMsg.ofC("%s/v%s/templates/%s", name, version, layout).toString()).toString(),
                             recommended,
                             repoName, repoPath.toString(),
-                            NStringUtils.trim(NMsg.ofC("/$s/v$s/templates/$s", name, version, layout).toString()),
+                            NStringUtils.trim(NMsg.ofC("/%s/v%s/templates/%s", name, version, layout).toString()),
                             binaries.toArray(new String[0])
                     )
             );
