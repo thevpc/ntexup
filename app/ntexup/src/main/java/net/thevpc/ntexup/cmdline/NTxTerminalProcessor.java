@@ -8,20 +8,19 @@ import net.thevpc.ntexup.api.renderer.NTxDocumentStreamRenderer;
 import net.thevpc.ntexup.api.renderer.NTxDocumentStreamRendererConfig;
 import net.thevpc.ntexup.engine.impl.DefaultNTxEngine;
 import net.thevpc.ntexup.engine.repo.RepoBuilderTool;
+import net.thevpc.nuts.artifact.NId;
 import net.thevpc.nuts.io.NAsk;
 import net.thevpc.nuts.io.NOut;
 import net.thevpc.nuts.core.NSession;
-import net.thevpc.nuts.text.NMsg;
+import net.thevpc.nuts.text.*;
 import net.thevpc.nuts.util.NValidationException;
 import net.thevpc.nuts.io.NPath;
 import net.thevpc.nuts.io.NPathRenameOptions;
-import net.thevpc.nuts.text.NText;
-import net.thevpc.nuts.text.NTextBuilder;
-import net.thevpc.nuts.text.NTextStyle;
 import net.thevpc.nuts.util.*;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.OptionalInt;
 import java.util.stream.Collectors;
 
 public class NTxTerminalProcessor {
@@ -70,17 +69,30 @@ public class NTxTerminalProcessor {
                 if (options.dump) {
                     engine.dump();
                 }
+                NTxTemplateInfo[] templates = engine.getTemplates();
                 if (NSession.of().isPlainOut()) {
-                    for (NTxTemplateInfo template : engine.getTemplates()) {
-                        NOut.println(NMsg.ofC("%s %s %s",
-                                NMsg.ofStyledPath(template.id()),
-                                NMsg.ofStyledPath(template.url()),
-                                NMsg.ofStyledPrimary1(template.name()),
-                                template.recommended() ? NMsg.ofStyledError(" (*)") : ""
-                        ));
+                    int idLayoutWidth = Math.max(Arrays.stream(templates).mapToInt(x -> x.id().length()).max().orElse(0),3);
+                    int nameLayoutWidth = Math.max(Arrays.stream(templates).mapToInt(x -> NStringUtils.trim(x.name()).length()).max().orElse(0),3);
+                    for (NTxTemplateInfo template : templates) {
+                        NId id = NId.get(template.id()).orNull();
+                        if(id!=null) {
+                            NOut.println(NMsg.ofC("%-"+idLayoutWidth+"s %-"+nameLayoutWidth+"s %-3s %s",
+                                    id,
+                                    NMsg.ofStyledPrimary3(NStringUtils.trim(template.name())),
+                                    template.recommended() ? NMsg.ofStyledError(" (*)") : "",
+                                    NMsg.ofStyledPath(template.url())
+                            ));
+                        }else{
+                            NOut.println(NMsg.ofC("%-"+idLayoutWidth+"s %-"+nameLayoutWidth+"s %-3s %s",
+                                    NMsg.ofStyledPrimary1(template.id()),
+                                    NMsg.ofStyledPrimary3(NStringUtils.trim(template.name())),
+                                    template.recommended() ? NMsg.ofStyledError(" (*)") : "",
+                                    NMsg.ofStyledPath(template.url())
+                            ));
+                        }
                     }
                 } else {
-                    NOut.println(engine.getTemplates());
+                    NOut.println(templates);
                 }
                 break;
             }
