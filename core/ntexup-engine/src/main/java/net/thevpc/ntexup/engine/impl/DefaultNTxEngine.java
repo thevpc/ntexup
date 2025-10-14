@@ -698,7 +698,7 @@ public class DefaultNTxEngine implements NTxEngine {
         NAssert.requireNonNull(path, "path");
         NAssert.requireNonNull(projectUrl, "projectUrl");
         if (NTxGitHelper.isGithubFolder(projectUrl.toString())) {
-            projectUrl = NTxGitHelper.resolveGithubPath(path.toString(), null);
+            projectUrl = NTxGitHelper.resolveGithubPath(projectUrl.toString(), null);
         }
         if (!projectUrl.exists()) {
             throw new IllegalArgumentException("invalid project " + projectUrl);
