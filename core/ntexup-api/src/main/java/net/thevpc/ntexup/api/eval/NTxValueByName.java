@@ -24,11 +24,11 @@ public class NTxValueByName {
     }
 
     protected static boolean isPreserveShapeRatio(NTxNode t, NTxNodeRendererContext ctx) {
-        return getNodeCommonCache(t, ctx).preserveRatio;
+        return getNodeSizeCache(t, ctx).preserveRatio;
     }
 
     private static NTxDouble2 getSize(NTxNode t, NTxDouble2 minSize, NTxNodeRendererContext ctx) {
-        NTxDouble2 size = getNodeCommonCache(t, ctx).componentSize;
+        NTxDouble2 size = getNodeSizeCache(t, ctx).componentSize;
 
         boolean shapeRatio = isPreserveShapeRatio(t, ctx);
         //ratio depends on the smallest
@@ -57,7 +57,7 @@ public class NTxValueByName {
     }
 
     public static NTxDouble2 getOrigin(NTxNode t, NTxNodeRendererContext ctx, NTxDouble2 a) {
-        NTxElemNumber2 double2OrHAlign = getNodeCommonCache(t, ctx).origin;
+        NTxElemNumber2 double2OrHAlign = getNodeSizeCache(t, ctx).origin;
         NTxSizeRef sr = new NTxSizeRef(a.getX(), a.getY(), ctx.getGlobalBounds().getWidth(), ctx.getGlobalBounds().getHeight());
         return new NTxDouble2(
                 sr.x(double2OrHAlign.getX()).get(),
@@ -70,7 +70,7 @@ public class NTxValueByName {
     }
 
     public static NTxDouble2 getPosition(NTxNode t, NTxNodeRendererContext ctx, NTxDouble2 a) {
-        NTxElemNumber2 double2OrHAlign = getNodeCommonCache(t, ctx).position;
+        NTxElemNumber2 double2OrHAlign = getNodeSizeCache(t, ctx).position;
         NTxSizeRef sr = new NTxSizeRef(a.getX(), a.getY(), ctx.getGlobalBounds().getWidth(), ctx.getGlobalBounds().getHeight());
         return new NTxDouble2(
                 sr.x(double2OrHAlign.getX()).get(),
@@ -84,8 +84,8 @@ public class NTxValueByName {
 
     public static NTxBounds2 selfBounds(NTxNode t, NTxDouble2 selfSize, NTxDouble2 minSize, NTxNodeRendererContext ctx) {
 //        NTxBounds2 parentBounds = ctx.parentBounds();
-        NTxSizeRef parentWithMarginRef = getNodeCommonCache(t, ctx).parentWithMarginRef;
-        NTxBounds2 parentBoundsWithMargin = getNodeCommonCache(t, ctx).parentBoundsWithMargin;
+        NTxSizeRef parentWithMarginRef = getNodeSizeCache(t, ctx).parentWithMarginRef;
+        NTxBounds2 parentBoundsWithMargin = getNodeSizeCache(t, ctx).parentBoundsWithMargin;
 
         if (selfSize == null) {
             selfSize = getSize(t, minSize, ctx);
@@ -131,66 +131,50 @@ public class NTxValueByName {
     }
 
     public static double getFontSize(NTxNode t, NTxNodeRendererContext ctx) {
-        NTxValueCommonCache c = getNodeCommonCache(t, ctx);
+        NTxValueFontCache c = getNodeFontCache(t, ctx);
         return Math.min(c.fontXSize, c.fontYSize);
     }
 
     public static String getFontFamily(NTxNode t, NTxNodeRendererContext ctx) {
-        return getNodeCommonCache(t, ctx).fontFamily;
+        return getNodeFontCache(t, ctx).fontFamily;
     }
 
     public static boolean isFontUnderlined(NTxNode t, NTxNodeRendererContext ctx) {
-        return getNodeCommonCache(t, ctx).fontUnderline;
+        return getNodeFontCache(t, ctx).fontUnderline;
     }
 
     public static boolean isFontStrike(NTxNode t, NTxNodeRendererContext ctx) {
-        return getNodeCommonCache(t, ctx).fontStrike;
+        return getNodeFontCache(t, ctx).fontStrike;
     }
 
     public static boolean isFontBold(NTxNode t, NTxNodeRendererContext ctx) {
-        return getNodeCommonCache(t, ctx).fontBold;
+        return getNodeFontCache(t, ctx).fontBold;
     }
 
     public static boolean isFontItalic(NTxNode t, NTxNodeRendererContext ctx) {
-        return getNodeCommonCache(t, ctx).fontItalic;
+        return getNodeFontCache(t, ctx).fontItalic;
     }
 
     public static NTxValueCommonCache getNodeCommonNoCache(NTxNode node, NTxNodeRendererContext ctx) {
         NTxValueCommonCache renderInfo = new NTxValueCommonCache();
         NElement e = NTxValueByType.getElement(node, ctx, NTxPropName.FONT_SIZE).orNull();
         NTxSizeRef sr = ctx.sizeRef();
-        NOptional<Double> srpx = sr.x(e);
-        NOptional<Double> srpy = sr.y(e);
-        renderInfo.fontSize = NTxSize.ofElement(NTxValueByType.getElement(node, ctx, NTxPropName.FONT_SIZE).orNull());
-        renderInfo.fontXSize = srpx.orElse(16.0);
-        renderInfo.fontYSize = srpy.orElse(16.0);
-        renderInfo.fontItalic = NTxValueByType.getBoolean(node, ctx, NTxPropName.FONT_ITALIC, "italic").orElse(false);
-        renderInfo.fontStrike = NTxValueByType.getBoolean(node, ctx, NTxPropName.FONT_STRIKE, "strike").orElse(false);
-        renderInfo.fontUnderline = NTxValueByType.getBoolean(node, ctx, NTxPropName.FONT_UNDERLINED, "underlined").orElse(false);
-        renderInfo.fontBold = NTxValueByType.getBoolean(node, ctx, NTxPropName.FONT_BOLD, "bold").orElse(false);
-        renderInfo.fontFamily = NTxValueByType.getStringOrName(node, ctx, NTxPropName.FONT_FAMILY).orElse("Serif");
-        renderInfo.font = NTxFontBySizeResolver.INSTANCE.getFont(renderInfo.fontFamily, Font.PLAIN | (renderInfo.fontItalic ? Font.ITALIC : 0) | (renderInfo.fontBold ? Font.BOLD : 0),
-                srpx.orElse(16.0),
-                srpy.orElse(16.0),
-                ctx.graphics()
-        );
-
-
         renderInfo.stroke = NTxValueByType.getElement(node, ctx, NTxPropName.STROKE).orNull();
-        renderInfo.preserveRatio = NTxValue.of(ctx.computePropertyValue(node, NTxPropName.PRESERVE_ASPECT_RATIO).orNull()).asBoolean().orElse(false);
 
-        NtxFontInfo f = new NtxFontInfo();
-        f.size = renderInfo.fontSize;
-        f.italic = renderInfo.fontItalic;
-        f.bold = renderInfo.fontBold;
-        f.family = renderInfo.fontFamily;
-        renderInfo.fontInfo = f;
 
         renderInfo.foregroundColor = NTxValueByType.getPaint(node, ctx, NTxPropName.FOREGROUND_COLOR, "foreground", "color", "fg").orElse(null);
         renderInfo.backgroundColor = NTxValueByType.getPaint(node, ctx, NTxPropName.BACKGROUND_COLOR, "background", "bg").orNull();
         renderInfo.fillBackground = NTxValueByType.getBoolean(node, ctx, NTxPropName.FILL_BACKGROUND, "fill").orElse(false);
         renderInfo.debugLevel = NTxValueByType.getIntOrBoolean(node, ctx, NTxPropName.DEBUG).orElse(0);
         renderInfo.debugColor = (Color) NTxValueByType.getPaint(node, ctx, NTxPropName.DEBUG_COLOR).orElse(Color.GRAY);
+        renderInfo.drawContour = NTxValueByType.getBoolean(node, ctx, NTxPropName.DRAW_CONTOUR, "contour").orElse(false);
+        return renderInfo;
+    }
+    public static NTxValueSizeCache getNodeSizeNoCache(NTxNode node, NTxNodeRendererContext ctx) {
+        NTxValueSizeCache renderInfo = new NTxValueSizeCache();
+        NElement e = NTxValueByType.getElement(node, ctx, NTxPropName.FONT_SIZE).orNull();
+        NTxSizeRef sr = ctx.sizeRef();
+        renderInfo.preserveRatio = NTxValue.of(ctx.computePropertyValue(node, NTxPropName.PRESERVE_ASPECT_RATIO).orNull()).asBoolean().orElse(false);
 
         {
 
@@ -283,9 +267,35 @@ public class NTxValueByName {
                 );
             }
         }
-        renderInfo.drawContour = NTxValueByType.getBoolean(node, ctx, NTxPropName.DRAW_CONTOUR, "contour").orElse(false);
+        return renderInfo;
+    }
+    public static NTxValueFontCache getNodeFontNoCache(NTxNode node, NTxNodeRendererContext ctx) {
+        NTxValueFontCache renderInfo = new NTxValueFontCache();
+        NElement e = NTxValueByType.getElement(node, ctx, NTxPropName.FONT_SIZE).orNull();
+        NTxSizeRef sr = ctx.sizeRef();
+        NOptional<Double> srpx = sr.x(e);
+        NOptional<Double> srpy = sr.y(e);
+        renderInfo.fontSize = NTxSize.ofElement(NTxValueByType.getElement(node, ctx, NTxPropName.FONT_SIZE).orNull());
+        renderInfo.fontXSize = srpx.orElse(16.0);
+        renderInfo.fontYSize = srpy.orElse(16.0);
+        renderInfo.fontItalic = NTxValueByType.getBoolean(node, ctx, NTxPropName.FONT_ITALIC, "italic").orElse(false);
+        renderInfo.fontStrike = NTxValueByType.getBoolean(node, ctx, NTxPropName.FONT_STRIKE, "strike").orElse(false);
+        renderInfo.fontUnderline = NTxValueByType.getBoolean(node, ctx, NTxPropName.FONT_UNDERLINED, "underlined").orElse(false);
+        renderInfo.fontBold = NTxValueByType.getBoolean(node, ctx, NTxPropName.FONT_BOLD, "bold").orElse(false);
+        renderInfo.fontFamily = NTxValueByType.getStringOrName(node, ctx, NTxPropName.FONT_FAMILY).orElse("Serif");
+        renderInfo.font = NTxFontBySizeResolver.INSTANCE.getFont(renderInfo.fontFamily, Font.PLAIN | (renderInfo.fontItalic ? Font.ITALIC : 0) | (renderInfo.fontBold ? Font.BOLD : 0),
+                srpx.orElse(16.0),
+                srpy.orElse(16.0),
+                ctx.graphics()
+        );
 
 
+        NtxFontInfo f = new NtxFontInfo();
+        f.size = renderInfo.fontSize;
+        f.italic = renderInfo.fontItalic;
+        f.bold = renderInfo.fontBold;
+        f.family = renderInfo.fontFamily;
+        renderInfo.fontInfo = f;
         return renderInfo;
     }
 
@@ -295,12 +305,24 @@ public class NTxValueByName {
         ).get();
     }
 
+    public static NTxValueSizeCache getNodeSizeCache(NTxNode node, NTxNodeRendererContext ctx) {
+        return node.getAndSetRenderCache(NTxValueSizeCache.class, false,
+                () -> getNodeSizeNoCache(node, ctx)
+        ).get();
+    }
+
+    public static NTxValueFontCache getNodeFontCache(NTxNode node, NTxNodeRendererContext ctx) {
+        return node.getAndSetRenderCache(NTxValueFontCache.class, false,
+                () -> getNodeFontNoCache(node, ctx)
+        ).get();
+    }
+
     public static Font getFont(NTxNode node, NTxNodeRendererContext ctx) {
-        return getNodeCommonCache(node, ctx).font;
+        return getNodeFontCache(node, ctx).font;
     }
 
     public static NtxFontInfo getFontInfo(NTxNode t, NTxNodeRendererContext ctx) {
-        return getNodeCommonCache(t, ctx).fontInfo;
+        return getNodeFontCache(t, ctx).fontInfo;
     }
 
     public static NTxDouble2 getRoundCornerArcs(NTxNode t, NTxNodeRendererContext ctx) {
