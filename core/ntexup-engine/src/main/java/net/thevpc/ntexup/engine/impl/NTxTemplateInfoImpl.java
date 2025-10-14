@@ -3,6 +3,7 @@ package net.thevpc.ntexup.engine.impl;
 import net.thevpc.ntexup.api.engine.NTxTemplateInfo;
 import net.thevpc.nuts.elem.NElement;
 import net.thevpc.nuts.elem.NPrimitiveElementBuilder;
+import net.thevpc.nuts.text.NMsg;
 import net.thevpc.nuts.util.NBlankable;
 
 import java.util.Arrays;
@@ -11,6 +12,7 @@ import java.util.Objects;
 import java.util.stream.Stream;
 
 public class NTxTemplateInfoImpl implements NTxTemplateInfo {
+    private String id;
     private String name;
     private String layout;
     private String version;
@@ -21,7 +23,8 @@ public class NTxTemplateInfoImpl implements NTxTemplateInfo {
     private String[] binaryVersions;
     private boolean recommended;
 
-    public NTxTemplateInfoImpl(String name, String layout, String version, String url, boolean recommended, String repoName, String repoUrl, String localPath, String[] binaryVersions) {
+    public NTxTemplateInfoImpl(String id, String name, String layout, String version, String url, boolean recommended, String repoName, String repoUrl, String localPath, String[] binaryVersions) {
+        this.id = id;
         this.name = name;
         this.localPath = localPath;
         this.repoUrl = repoUrl;
@@ -33,39 +36,46 @@ public class NTxTemplateInfoImpl implements NTxTemplateInfo {
         this.version = version;
     }
 
+    public String id() {
+        if (id == null) {
+            return NMsg.ofC("%s:%s-%s#%s", repoName, name, layout, version).toString();
+        }
+        return id;
+    }
+
     @Override
     public NTxTemplateInfo withName(String name) {
-        return new NTxTemplateInfoImpl(name, layout, version, url, recommended, repoName, repoUrl, localPath, binaryVersions);
+        return new NTxTemplateInfoImpl(id, name, layout, version, url, recommended, repoName, repoUrl, localPath, binaryVersions);
     }
 
     @Override
     public NTxTemplateInfo withRecommended(boolean recommended) {
-        return new NTxTemplateInfoImpl(name, layout, version, url, recommended, repoName, repoUrl, localPath, binaryVersions);
+        return new NTxTemplateInfoImpl(id, name, layout, version, url, recommended, repoName, repoUrl, localPath, binaryVersions);
     }
 
     @Override
     public NTxTemplateInfo withBinaryVersions(String[] binaryVersions) {
-        return new NTxTemplateInfoImpl(name, layout, version, url, recommended, repoName, repoUrl, localPath, binaryVersions);
+        return new NTxTemplateInfoImpl(id, name, layout, version, url, recommended, repoName, repoUrl, localPath, binaryVersions);
     }
 
     @Override
     public NTxTemplateInfo withLocalPath(String localPath) {
-        return new NTxTemplateInfoImpl(name, layout, version, url, recommended, repoName, repoUrl, localPath, binaryVersions);
+        return new NTxTemplateInfoImpl(id, name, layout, version, url, recommended, repoName, repoUrl, localPath, binaryVersions);
     }
 
     @Override
     public NTxTemplateInfo withUrl(String url) {
-        return new NTxTemplateInfoImpl(name, layout, version, url, recommended, repoName, repoUrl, localPath, binaryVersions);
+        return new NTxTemplateInfoImpl(id, name, layout, version, url, recommended, repoName, repoUrl, localPath, binaryVersions);
     }
 
     @Override
     public NTxTemplateInfo withRepoUrl(String repoUrl) {
-        return new NTxTemplateInfoImpl(name, layout, version, url, recommended, repoName, repoUrl, localPath, binaryVersions);
+        return new NTxTemplateInfoImpl(id, name, layout, version, url, recommended, repoName, repoUrl, localPath, binaryVersions);
     }
 
     @Override
     public NTxTemplateInfo withRepoName(String repoName) {
-        return new NTxTemplateInfoImpl(name, layout, version, url, recommended, repoName, repoUrl, localPath, binaryVersions);
+        return new NTxTemplateInfoImpl(id, name, layout, version, url, recommended, repoName, repoUrl, localPath, binaryVersions);
     }
 
     @Override
@@ -127,7 +137,6 @@ public class NTxTemplateInfoImpl implements NTxTemplateInfo {
         }
         return sb.toString();
     }
-
 
 
     @Override
