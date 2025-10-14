@@ -17,6 +17,16 @@ public class NTexupOptionsParser {
                         .with("--view").matchTrueFlag(a -> {
                             options.setGuiMode(true);
                         })
+                        .with("show-doc").matchTrueFlag(a -> {
+                            options.setGuiMode(true);
+                            options.documentation = true;
+                            cmdLine.skipAll();
+                        })
+                        .with("generate-doc-pdf").matchTrueFlag(a -> {
+                            options.documentation = true;
+                            continueParsingPdf(cmdLine, options);
+                            cmdLine.skipAll();
+                        })
                         .with("--gui").matchFlag(a -> {
                             options.setGuiMode(a.booleanValue());
                             NSession.of().setGui(a.booleanValue());
@@ -51,7 +61,7 @@ public class NTexupOptionsParser {
                             }
                             continueParsingOpen(cmdLine, options);
                         })
-                        .with("pdf").matchFlag(a -> {
+                        .with("generate-pdf").matchFlag(a -> {
                             options.setTerminalMode(true);
                             continueParsingPdf(cmdLine, options);
                         })
