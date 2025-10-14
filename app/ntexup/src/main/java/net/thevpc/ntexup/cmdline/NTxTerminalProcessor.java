@@ -2,6 +2,7 @@ package net.thevpc.ntexup.cmdline;
 
 import net.thevpc.ntexup.api.engine.NTxCompiledDocument;
 import net.thevpc.ntexup.api.engine.NTxEngine;
+import net.thevpc.ntexup.api.engine.NTxTemplateFilter;
 import net.thevpc.ntexup.api.engine.NTxTemplateInfo;
 import net.thevpc.ntexup.api.renderer.NTxDocumentStreamRenderer;
 import net.thevpc.ntexup.api.renderer.NTxDocumentStreamRendererConfig;
@@ -34,64 +35,27 @@ public class NTxTerminalProcessor {
                 if (options.dump) {
                     engine.dump();
                 }
+                NTxTemplateInfo[] templates = engine.getTemplates();
                 if (NBlankable.isBlank(options.templateUrl)) {
                     NTextBuilder sb = NTextBuilder.of();
                     sb.append("Enter template url. You can choose from the following :").newLine();
-                    NTxTemplateInfo[] templates = engine.getTemplates();
                     for (int i = 0; i < templates.length; i++) {
                         NTxTemplateInfo template = templates[i];
-                        sb.append(NMsg.ofC("[%-3s] %-25s : %s",NText.ofStyled("#"+(i+1),NTextStyle.number()), NMsg.ofStyledPrimary1(template.name()),NMsg.ofStyledPath(template.url())))
-                        .newLine();
+                        sb.append(NMsg.ofC("[%-3s] %-25s : %s", NText.ofStyled("#" + (i + 1), NTextStyle.number()), NMsg.ofStyledPrimary1(template.id()), NMsg.ofStyledPath(template.url())))
+                                .newLine();
                     }
                     String value = NAsk.of().forString(NMsg.ofC("%s", sb))
-                            .setValidator((sval,a)->{
-                                NTxTemplateInfo ok=null;
-                                List<NTxTemplateInfo> found = Arrays.stream(templates).filter(x -> x.url().equals(sval)).collect(Collectors.toList());
-                                if(!found.isEmpty()){
-                                    ok = found.get(0);
-                                }else{
-                                    found = Arrays.stream(templates).filter(x -> NStringUtils.trim(x.name()).equalsIgnoreCase(NStringUtils.trim(sval))).collect(Collectors.toList());
-                                    if(!found.isEmpty()) {
-                                        ok = found.get(0);
-                                    }else{
-                                        if(sval.startsWith("#")){
-                                            NOptional<Integer> z = NLiteral.of(sval.substring(1).trim()).asInt();
-                                            if(z.isPresent()){
-                                                int zi = z.get();
-                                                if(zi>=1 && zi<=templates.length){
-                                                    ok=templates[zi-1];
-                                                }
-                                            }
-                                        }
-                                        if(ok==null){
-                                            NOptional<Integer> z = NLiteral.of(sval.trim()).asInt();
-                                            if(z.isPresent()){
-                                                int zi = z.get();
-                                                if(zi>=1 && zi<=templates.length){
-                                                    ok=templates[zi-1];
-                                                }
-                                            }
-                                        }
-                                        if(ok==null){
-                                            found = Arrays.stream(templates).filter(x -> NStringUtils.trim(x.name()).contains(NStringUtils.trim(sval))).collect(Collectors.toList());
-                                            if(found.size()==1){
-                                                ok=found.get(0);
-                                            }else if(found.size()>1){
-                                                throw new NValidationException(NMsg.ofC("ambiguous selection matches : %s", found.stream().map(Object::toString).collect(Collectors.joining(", "))));
-                                            }
-                                        }
-                                    }
-                                }
-                                if(ok!=null){
-                                    return ok.url();
-                                }
-                                throw new NValidationException(NMsg.ofC("Invalid template url: %s", sval));
+                            .setValidator((sval, a) -> {
+                                NOptional<NTxTemplateInfo> u = NTxTemplateFilter.of(templates).selectOne(sval);
+                                return u.get().url();
                             })
                             .getValue();
-                    if(value==null){
+                    if (value == null) {
                         throw new NValidationException(NMsg.ofC("Invalid template url: %s", value));
                     }
-                    options.templateUrl=value;
+                    options.templateUrl = value;
+                } else {
+                    options.templateUrl = NTxTemplateFilter.of(templates).selectOne(options.templateUrl).get().url();
                 }
                 if (options.paths.isEmpty()) {
                     options.paths.add(NPath.ofUserDirectory());
@@ -108,10 +72,10 @@ public class NTxTerminalProcessor {
                 }
                 if (NSession.of().isPlainOut()) {
                     for (NTxTemplateInfo template : engine.getTemplates()) {
-                        NOut.println(NMsg.ofC("%s (%s @ %s) %s",
+                        NOut.println(NMsg.ofC("%s %s %s",
+                                NMsg.ofStyledPath(template.id()),
                                 NMsg.ofStyledPath(template.url()),
                                 NMsg.ofStyledPrimary1(template.name()),
-                                NMsg.ofStyledPrimary2(template.repoName()),
                                 template.recommended() ? NMsg.ofStyledError(" (*)") : ""
                         ));
                     }
