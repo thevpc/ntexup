@@ -1,6 +1,8 @@
 package net.thevpc.ntexup;
 
 import net.thevpc.ntexup.cmdline.*;
+import net.thevpc.ntexup.cmdline.options.Options;
+import net.thevpc.ntexup.engine.impl.DefaultNTxEngine;
 import net.thevpc.nuts.app.NApp;
 import net.thevpc.nuts.app.NAppDefinition;
 import net.thevpc.nuts.app.NAppRunner;
@@ -24,11 +26,8 @@ public class NTexupMain {
         NCmdLine cmdLine = NApp.of().getCmdLine();
         cmdLine.setCommandName("ntexup");
         new NTexupOptionsParser().parse(cmdLine, options);
-        if(options.terminalMode){
-            new NTxTerminalProcessor().runTerminal(options);
-        }else{
-            new NTxViewerProcessor().runViewer(options);
-        }
+        DefaultNTxEngine engine = new DefaultNTxEngine();
+        new NTexupOptionsProcessor().process(options, engine);
     }
 
 
