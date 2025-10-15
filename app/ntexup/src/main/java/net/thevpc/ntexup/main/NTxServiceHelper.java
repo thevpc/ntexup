@@ -51,9 +51,9 @@ public class NTxServiceHelper {
     NTxDocumentRendererListenerList currListeners = new NTxDocumentRendererListenerList();
     NTxDebugFrame debugFrame;
 
-    public NTxServiceHelper(MainFrame mainFrame) {
+    public NTxServiceHelper(MainFrame mainFrame,NTxEngine engine) {
         this.mainFrame = mainFrame;
-        this.engine = new DefaultNTxEngine();
+        this.engine = engine;
 //        this.engine.importDefaultDependencies();
         this.debugFrame = new NTxDebugFrame(engine);
         this.engine.addLog(debugFrame.messages());
@@ -88,11 +88,7 @@ public class NTxServiceHelper {
     }
 
     public NPath getLatestProjectPath() {
-        NTxProject[] p = config().getRecentProjects();
-        if (p != null && p.length > 0) {
-            return NPath.of(p[0].getPath());
-        }
-        return null;
+        return config().getLatestProjectPath();
     }
 
     public NTxViewerConfigManager config() {
