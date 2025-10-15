@@ -126,7 +126,9 @@ public interface NTxEngine {
 
     NTxGraphics createGraphics(Graphics2D g2d);
 
-    void createProject(NPath path, NPath projectUrl, Function<String, String> vars);
+    boolean isNtxProject(NPath path);
+
+    void createProject(NPath path, NPath templateUrl, Function<String, String> vars);
 
     NTxTemplateInfo[] getTemplates();
 
