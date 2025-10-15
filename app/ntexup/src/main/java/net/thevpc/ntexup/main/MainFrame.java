@@ -1,6 +1,7 @@
 package net.thevpc.ntexup.main;
 
 import net.thevpc.ntexup.api.engine.NTxEngine;
+import net.thevpc.ntexup.engine.impl.DefaultNTxEngine;
 import net.thevpc.ntexup.main.components.EntryComponent;
 import net.thevpc.ntexup.engine.util.NTxUtilsImages;
 import net.thevpc.nuts.io.NPath;
@@ -15,8 +16,8 @@ public class MainFrame extends JFrame {
     private NTxServiceHelper serviceHelper;
     private EntryComponent entryComponent;
 
-    public MainFrame() {
-        serviceHelper = new NTxServiceHelper(this);
+    public MainFrame(NTxEngine engine) {
+        serviceHelper = new NTxServiceHelper(this,engine==null?new DefaultNTxEngine() :  engine);
         setTitle("Ntexup Viewer");
         this.setIconImage(
                 NTxUtilsImages.resizeImage(
