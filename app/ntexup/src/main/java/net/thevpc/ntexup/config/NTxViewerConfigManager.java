@@ -37,7 +37,13 @@ public class NTxViewerConfigManager {
         }
         this.viewerConfigFile = viewerConfigFile;
     }
-
+    public NPath getLatestProjectPath() {
+        NTxProject[] p = getRecentProjects();
+        if (p != null && p.length > 0) {
+            return NPath.of(p[0].getPath());
+        }
+        return null;
+    }
     public void markAccessed(NPath path) {
         NTxViewerConfig config = loadViewerConfig();
         List<NTxProject> old = new ArrayList<>();
