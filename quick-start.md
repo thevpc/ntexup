@@ -104,15 +104,6 @@ You’ll see a list similar to this:
 Already up to date.
 [2025-10-14T21:22:45.597Z] [WARNING] [] took 2s 594ms 719us 267ns to pull repo git@github.com:thevpc/ntexup-templates.git to /home/vpc/.nuts/ws/default-workspace/cache/id/net/thevpc/ntexup/ntexup/0.8.7.0/ntexup/github/thevpc/ntexup-templates
 took 2s 594ms 719us 267ns to pull repo git@github.com:thevpc/ntexup-templates.git to /home/vpc/.nuts/ws/default-workspace/cache/id/net/thevpc/ntexup/ntexup/0.8.7.0/ntexup/github/thevpc/ntexup-templates
-dev:ibtihel-small#1.0 ibtihel         /home/vpc/xprojects/nuts-world/nuts-productivity/ntexup-templates/ibtihel/v1.0/templates/small
-dev:ibtihel-medium#1.0 ibtihel  (*)    /home/vpc/xprojects/nuts-world/nuts-productivity/ntexup-templates/ibtihel/v1.0/templates/medium
-dev:ibtihel-large#1.0 ibtihel         /home/vpc/xprojects/nuts-world/nuts-productivity/ntexup-templates/ibtihel/v1.0/templates/large
-dev:classic-small#1.0 classic         /home/vpc/xprojects/nuts-world/nuts-productivity/ntexup-templates/classic/v1.0/templates/small
-dev:classic-medium#1.0 classic  (*)    /home/vpc/xprojects/nuts-world/nuts-productivity/ntexup-templates/classic/v1.0/templates/medium
-dev:classic-large#1.0 classic         /home/vpc/xprojects/nuts-world/nuts-productivity/ntexup-templates/classic/v1.0/templates/large
-dev:eniso-small#1.0 eniso         /home/vpc/xprojects/nuts-world/nuts-productivity/ntexup-templates/eniso/v1.0/templates/small
-dev:eniso-medium#1.0 eniso  (*)    /home/vpc/xprojects/nuts-world/nuts-productivity/ntexup-templates/eniso/v1.0/templates/medium
-dev:eniso-large#1.0 eniso         /home/vpc/xprojects/nuts-world/nuts-productivity/ntexup-templates/eniso/v1.0/templates/large
 central-github:ibtihel-small#1.0 ibtihel         github://thevpc/ntexup-templates/ibtihel/v1.0/templates/small
 central-github:ibtihel-medium#1.0 ibtihel  (*)    github://thevpc/ntexup-templates/ibtihel/v1.0/templates/medium
 central-github:ibtihel-large#1.0 ibtihel         github://thevpc/ntexup-templates/ibtihel/v1.0/templates/large
@@ -126,7 +117,7 @@ central-github:eniso-large#1.0 eniso         github://thevpc/ntexup-templates/en
 
 You can specify a different template when creating a project, for example:
 ```
-nuts ntexup new --template=central-github:ibtihel-medium
+nuts ntexup new --template=classic
 ```
 
 ## Run the NTexUp Viewer
@@ -143,13 +134,19 @@ Open the generated .ntx files in your favorite text editor and make modification
 NTexUp automatically detects changes and updates the rendered output in the viewer.
 You can adjust styles, layouts, and page content to fully customize your document.
 
+## Advanced command
+
+```bash
+nuts ntexup new --template=classic --view --view-doc
+```
+
 ## Viewing Documentation
 
 NTexUp includes built-in command-line documentation and examples.
 
 To explore the documentation interactively, run:
 ```bash
-nuts ntexup show-doc
+nuts ntexup view-doc
 ```
 
 You can also browse official .ntx documentation files at:
