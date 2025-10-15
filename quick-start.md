@@ -158,6 +158,39 @@ You can also browse official .ntx documentation files at:
 
 These examples demonstrate NTexUp’s syntax, presentation structure, and integration capabilities.
 
+## Running in a containerized environment (Docker)
+
+NTexUp (and any Nuts-based application) can run directly inside a Docker container or cloud IDEs like Gitpod without needing to build a custom Docker image.
+
+### Step 1: Launch a Docker container with Java
+
+On your terminal, run:
+```bash
+docker run -it --rm openjdk:8 bash -c "$(curl -sSL https://thevpc.net/nuts/bootstrap-container-latest.sh)"
+```
+
+Notes:
+* This command pulls the OpenJDK 8 image (you can choose another version if needed) and bootstraps the container with Nuts.
+* The script will create a non-root user (nuts by default), detect Java, and install the latest version of Nuts inside the container.
+* After the script finishes, you’ll drop into an interactive bash shell inside the container, ready to run Nuts commands.
+
+### Step 2: Run NTexUp
+
+Once inside the container shell, you can launch NTexUp (or any Nuts app) with:
+```bash
+nuts -y ntexup <your-arguments>
+```
+The -y option automatically confirms any prompts.
+
+Any additional arguments you pass will be forwarded directly to NTexUp.
+
+#### Optional: Enable technical/debug messages
+To see detailed technical information during container bootstrap, you can set the TECH_ECHO environment variable when starting the container:
+
+```bash
+docker run -it --rm -e NUTS_CONTAINER_VERBOSE=1 openjdk:8 bash -c "$(curl -sSL https://thevpc.net/nuts/bootstrap-container-latest.sh)"
+```
+
 ## Conclusion
 You’ve now installed Nuts, set up NTexUp, and created your first document project.
 Explore available templates, experiment with layouts, and build professional documents effortlessly.
