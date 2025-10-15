@@ -162,14 +162,14 @@ public class DefaultNTxEngine implements NTxEngine {
     @Override
     public boolean importDefaultDependencies() {
         return importDependencies(
-                "net.thevpc.ntexup:ntexup-extension-plantuml:"+NTxEngine.CURRENT_VERSION,
-                "net.thevpc.ntexup:ntexup-extension-animated-gif:"+NTxEngine.CURRENT_VERSION,
-                "net.thevpc.ntexup:ntexup-extension-svg:"+NTxEngine.CURRENT_VERSION,
-                "net.thevpc.ntexup:ntexup-extension-shapes2d:"+NTxEngine.CURRENT_VERSION,
-                "net.thevpc.ntexup:ntexup-extension-shapes3d:"+NTxEngine.CURRENT_VERSION,
-                "net.thevpc.ntexup:ntexup-extension-plot2d:"+NTxEngine.CURRENT_VERSION,
-                "net.thevpc.ntexup:ntexup-extension-presenters:"+NTxEngine.CURRENT_VERSION,
-                "net.thevpc.ntexup:ntexup-extension-latex:"+NTxEngine.CURRENT_VERSION
+                "net.thevpc.ntexup:ntexup-extension-plantuml:" + NTxEngine.CURRENT_VERSION,
+                "net.thevpc.ntexup:ntexup-extension-animated-gif:" + NTxEngine.CURRENT_VERSION,
+                "net.thevpc.ntexup:ntexup-extension-svg:" + NTxEngine.CURRENT_VERSION,
+                "net.thevpc.ntexup:ntexup-extension-shapes2d:" + NTxEngine.CURRENT_VERSION,
+                "net.thevpc.ntexup:ntexup-extension-shapes3d:" + NTxEngine.CURRENT_VERSION,
+                "net.thevpc.ntexup:ntexup-extension-plot2d:" + NTxEngine.CURRENT_VERSION,
+                "net.thevpc.ntexup:ntexup-extension-presenters:" + NTxEngine.CURRENT_VERSION,
+                "net.thevpc.ntexup:ntexup-extension-latex:" + NTxEngine.CURRENT_VERSION
         );
     }
 
@@ -248,8 +248,8 @@ public class DefaultNTxEngine implements NTxEngine {
                 .fromStream(
                         nodeParserFactories.list().stream()
                                 .map(x -> x.parseNode(newContext))
-                        )
-                .getBest().map(x->x.call());
+                )
+                .getBest().map(x -> x.call());
         if (optional.isPresent()) {
             NTxItem nTxItem = optional.get();
             if (nTxItem instanceof NTxNode) {
@@ -303,11 +303,11 @@ public class DefaultNTxEngine implements NTxEngine {
         NTxDocumentRendererFactoryContext ctx = new NTxDocumentRendererFactoryContextImpl(this, type);
         return NScorable.<NScoredCallable<NTxDocumentRenderer>>query()
                 .withName(NMsg.ofC("StreamRenderer %s", type))
-                        .fromStream(
+                .fromStream(
                         documentRendererFactories().stream()
                                 .map(x -> x.<NTxDocumentStreamRenderer>createDocumentRenderer(ctx))
-                        )
-                .getBest().map(x->x.call());
+                )
+                .getBest().map(x -> x.call());
     }
 
     private List<NTxDocumentRendererFactory> documentRendererFactories() {
@@ -693,17 +693,57 @@ public class DefaultNTxEngine implements NTxEngine {
         return new NTxGraphicsImpl(g2d, this);
     }
 
+    public boolean isNtxProject(NPath path) {
+        try (NStream<NPath> stream = path.stream()) {
+            return stream.anyMatch(x -> x.getName().endsWith(".ntx"));
+        }
+    }
+
     @Override
-    public void createProject(NPath path, NPath projectUrl, Function<String, String> vars) {
+    public void createProject(NPath path, NPath templateUrl, Function<String, String> vars) {
         NAssert.requireNonNull(path, "path");
-        NAssert.requireNonNull(projectUrl, "projectUrl");
-        if (NTxGitHelper.isGithubFolder(projectUrl.toString())) {
-            projectUrl = NTxGitHelper.resolveGithubPath(projectUrl.toString(), null);
+        if(NBlankable.isBlank(templateUrl)) {
+            if(path.isDirectory()) {
+                NPath main = path.resolve("main.ntx");
+                if(!main.exists()){
+                    main.mkParentDirs().writeString(resolveEmptyNtxContent());
+                }else{
+                    log().log(NMsg.ofC("file already exists %s", main).asSevere());
+                    throw new NIllegalArgumentException(NMsg.ofC("file already exists %s", main).asSevere());
+                }
+            }else if(path.isRegularFile()){
+                if(!path.exists()){
+                    path.writeString(resolveEmptyNtxContent());
+                }else{
+                    log().log(NMsg.ofC("file already exists %s", path).asSevere());
+                    throw new NIllegalArgumentException(NMsg.ofC("file already exists %s", path).asSevere());
+                }
+            }else if(path.exists()){
+                log().log(NMsg.ofC("file already exists %s", path).asSevere());
+                throw new NIllegalArgumentException(NMsg.ofC("file already exists %s", path).asSevere());
+            }else{
+                if(path.getName().endsWith(".ntx")) {
+                    path.mkParentDirs().writeString(resolveEmptyNtxContent());
+                }else{
+                    NPath main = path.resolve("main.ntx");
+                    if(!main.exists()){
+                        main.mkParentDirs().writeString(resolveEmptyNtxContent());
+                    }else{
+                        log().log(NMsg.ofC("file already exists %s", main).asSevere());
+                        throw new NIllegalArgumentException(NMsg.ofC("file already exists %s", main).asSevere());
+                    }
+                }
+            }
+            return;
         }
-        if (!projectUrl.exists()) {
-            throw new IllegalArgumentException("invalid project " + projectUrl);
+        NAssert.requireNonNull(templateUrl, "projectUrl");
+        if (NTxGitHelper.isGithubFolder(templateUrl.toString())) {
+            templateUrl = NTxGitHelper.resolveGithubPath(templateUrl.toString(), null);
         }
-        NPath finalProjectUrl = projectUrl;
+        if (!templateUrl.exists()) {
+            throw new IllegalArgumentException("invalid project " + templateUrl);
+        }
+        NPath finalProjectUrl = templateUrl;
         Function<String, String> vars2 = m -> {
             switch (m) {
                 case "template.templateBootUrl":
@@ -745,11 +785,17 @@ public class DefaultNTxEngine implements NTxEngine {
             return null;
         };
         try {
-            copyTemplate(projectUrl, path, vars2,true,false);
-        }catch (Exception ex) {
-            throw new NIllegalArgumentException(NMsg.ofC("cannot create project at %s. folder not empty",path));
+            copyTemplate(templateUrl, path, vars2, true, false);
+        } catch (Exception ex) {
+            throw new NIllegalArgumentException(NMsg.ofC("cannot create project at %s. folder not empty", path));
         }
-        copyTemplate(projectUrl, path, vars2,false,true);
+        copyTemplate(templateUrl, path, vars2, false, true);
+    }
+
+    private static String resolveEmptyNtxContent() {
+        return "page{\n" +
+                "  ¶ Hello World\n"+
+                "}";
     }
 
     @Override
