@@ -85,8 +85,7 @@ public class NTxGitHelper {
                 Instant last = (Instant) NApp.of().getProperty("resolveGithubPath.lastPull",NScopeType.WORKSPACE).orNull();
                 if (last == null || now.toEpochMilli() - last.toEpochMilli() > (1000 * 60 * 5)) {
                     pulling = true;
-                    NExecCmd.of()
-                            .addCommand("git", "pull")
+                    NExecCmd.ofSystem("git", "pull")
                             .setDirectory(localRepo)
                             .failFast()
                             .run();
@@ -101,8 +100,7 @@ public class NTxGitHelper {
                 }
                 NApp.of().setProperty("resolveGithubPath.lastPull", NScopeType.WORKSPACE, now);
             } else {
-                NExecCmd.of()
-                        .addCommand("git", "clone", githubPath)
+                NExecCmd.ofSystem("git", "clone", githubPath)
                         .setDirectory(userConfHome.resolve(user))
                         .failFast()
                         .run();
