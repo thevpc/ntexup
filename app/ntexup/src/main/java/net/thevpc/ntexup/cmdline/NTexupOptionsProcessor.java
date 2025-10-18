@@ -8,7 +8,6 @@ import net.thevpc.ntexup.api.engine.NTxTemplateInfo;
 import net.thevpc.ntexup.api.renderer.NTxDocumentStreamRenderer;
 import net.thevpc.ntexup.api.renderer.NTxDocumentStreamRendererConfig;
 import net.thevpc.ntexup.cmdline.options.*;
-import net.thevpc.ntexup.config.NTxViewerConfigManager;
 import net.thevpc.ntexup.engine.repo.RepoBuilderTool;
 import net.thevpc.ntexup.main.MainFrame;
 import net.thevpc.ntexup.util.NTexupUtils;
@@ -18,6 +17,7 @@ import net.thevpc.nuts.io.NOut;
 import net.thevpc.nuts.core.NSession;
 import net.thevpc.nuts.swing.NSwingUtils;
 import net.thevpc.nuts.text.*;
+import net.thevpc.nuts.time.NChronometer;
 import net.thevpc.nuts.util.NValidationException;
 import net.thevpc.nuts.io.NPath;
 import net.thevpc.nuts.io.NPathRenameOptions;
@@ -62,13 +62,13 @@ public class NTexupOptionsProcessor {
             switch (a.getKey()) {
                 case DUMP:
                 case LIST_TEMPLATES:
-                case BUILD_REPO:{
+                case BUILD_REPO: {
                     //wil be handled later!
                     break;
                 }
-                case VIEW_FRAME: {
+                case SHOW_FRAME: {
                     optionsMap.remove(a.getKey());
-                    runViewFrame(info);
+                    runActionShowFrame(info);
                     break;
                 }
                 case NEW: {
@@ -76,13 +76,9 @@ public class NTexupOptionsProcessor {
                     runActionNew(info);
                     break;
                 }
-                case OPEN: {
+                case SHOW_DOCUMENT: {
                     optionsMap.remove(a.getKey());
-                    if (info.mainFrame == null) {
-                        runActionGenerate(info);
-                    } else {
-                        runActionOpenInViewer(info);
-                    }
+                    runActionOpenInViewer(info);
                     break;
                 }
                 case GENERATE: {
@@ -94,7 +90,7 @@ public class NTexupOptionsProcessor {
         }
     }
 
-    private void runViewFrame(Info info) {
+    private void runActionShowFrame(Info info) {
         if (info.mainFrame == null) {
             NSwingUtils.setSharedWorkspaceInstance();
             FlatLightLaf.setup(new com.formdev.flatlaf.FlatDarculaLaf());
@@ -103,8 +99,8 @@ public class NTexupOptionsProcessor {
                 info.mainFrame.setVisible(true);
             });
         }
-        ViewFrameActionOptions viewFrameActionOptions = info.options.getOrCreate(ViewFrameActionOptions.class);
-        if (viewFrameActionOptions!=null && viewFrameActionOptions.viewLog) {
+        ShowFrameActionOptions showFrameActionOptions = info.options.getOrCreate(ShowFrameActionOptions.class);
+        if (showFrameActionOptions != null && showFrameActionOptions.viewLog) {
             info.mainFrame.getService().showDebug();
         }
     }
@@ -150,11 +146,12 @@ public class NTexupOptionsProcessor {
         }
     }
 
-    private void runActionGenerate(List<NPath> paths,NPath expecteOutput,Info info) {
+    private void runActionGenerate(List<NPath> paths, NPath expecteOutput, Info info) {
         if (expecteOutput == null) {
             expecteOutput = NPath.of(".");
         }
         for (NPath path : paths) {
+            NChronometer ch = NChronometer.startNow();
             NTxCompiledDocument doc = info.engine.loadCompiledDocument(path);
             if (doc.pages().isEmpty()) {
                 info.engine.log().log(NMsg.ofC("no pages to render : %s", path.normalize().toAbsolute()).asError());
@@ -175,8 +172,12 @@ public class NTexupOptionsProcessor {
             }
             renderer.setOutput(output);
             renderer.render(doc);
+            ch.stop();
+            info.engine.log().log(NMsg.ofC("generated : %s (%s) in %s", output.normalize().toAbsolute(),NMemorySizeFormat.DEFAULT.format(NMemorySize.ofBytes(output.contentLength()).normalize()),ch).asInfo().withDurationMillis(ch.getDurationMs()));
+
         }
     }
+
     private void runActionGenerate(Info info) {
         List<NPath> paths = new ArrayList<>();
 
@@ -184,8 +185,8 @@ public class NTexupOptionsProcessor {
         if (newActionOptions != null) {
             paths.addAll(newActionOptions.paths);
         }
-        if (info.options.get(OpenActionOptions.class) != null) {
-            paths.addAll(info.options.get(OpenActionOptions.class).paths);
+        if (info.options.get(ShowActionOptions.class) != null) {
+            paths.addAll(info.options.get(ShowActionOptions.class).paths);
         }
         paths.addAll(info.options.get(GenerateActionOptions.class).paths);
 
@@ -196,7 +197,7 @@ public class NTexupOptionsProcessor {
         if (expecteOutput == null) {
             expecteOutput = NPath.of(".");
         }
-        runActionGenerate(paths,expecteOutput,info);
+        runActionGenerate(paths, expecteOutput, info);
     }
 
     private void runActionNew(Info info) {
@@ -221,26 +222,17 @@ public class NTexupOptionsProcessor {
                 }
                 String value = NAsk.of().forString(NMsg.ofC("%s", sb))
                         .setValidator((sval, a) -> {
-                            NOptional<NTxTemplateInfo> u = NTxTemplateFilter.of(templates).selectOne(sval);
-                            return u.get().url();
+                            return NTxTemplateFilter.of(templates).selectOneUrl(sval);
                         })
                         .getValue();
                 if (value == null) {
                     throw new NValidationException(NMsg.ofC("Invalid template url: %s", value));
                 }
-                templateUrl = value;
             } else {
-                if ("none".equalsIgnoreCase(templateUrl) || "na".equalsIgnoreCase(templateUrl) || "n/a".equalsIgnoreCase(templateUrl)) {
-                    templateUrl = null;
-                } else if (templateUrl.contains("/") || templateUrl.contains("\\") || templateUrl.equals(".")) {
-                    // do nothing...
-                } else {
-                    NTxTemplateInfo[] templates = info.engine.getTemplates();
-                    templateUrl = NTxTemplateFilter.of(templates).selectOne(templateUrl).get().url();
-                }
+                templateUrl= NTxTemplateFilter.of(()->info.engine.getTemplates()).selectOneUrl(templateUrl);
             }
             for (NPath f : info.options.get(NewActionOptions.class).paths) {
-                info.engine.createProject(f, templateUrl == null ? null : NPath.of(templateUrl), x -> info.options.vars.get(x));
+                info.engine.createProject(f, NBlankable.isBlank(templateUrl) ? null : NPath.of(templateUrl), x -> info.options.vars.get(x));
             }
         } else {
             if (info.options.get(NewActionOptions.class).paths.isEmpty()) {
@@ -251,28 +243,32 @@ public class NTexupOptionsProcessor {
                 }
             }
         }
-        if(info.options.get(NewActionOptions.class).openViewer){
+        if (info.options.get(NewActionOptions.class).openViewer) {
             if (info.mainFrame == null) {
-                runViewFrame(info);
+                runActionShowFrame(info);
             }
             for (NPath path : info.options.get(NewActionOptions.class).paths) {
                 info.mainFrame.getService().openProject(path);
             }
         }
-        if(info.options.get(NewActionOptions.class).generatePdf){
-            runActionGenerate(info.options.get(NewActionOptions.class).paths,null,info);
+        if (info.options.get(NewActionOptions.class).generatePdf) {
+            runActionGenerate(info.options.get(NewActionOptions.class).paths, null, info);
         }
     }
 
+
     private void runActionOpenInViewer(Info info) {
         List<NPath> paths = new ArrayList<>();
+        if (info.mainFrame == null) {
+            runActionShowFrame(info);
+        }
 
-        if (info.options.get(OpenActionOptions.class) != null) {
-            paths.addAll(info.options.get(OpenActionOptions.class).paths);
+        if (info.options.get(ShowActionOptions.class) != null) {
+            paths.addAll(info.options.get(ShowActionOptions.class).paths);
         }
 
         if (paths.isEmpty()) {
-            if (info.options.get(ViewFrameActionOptions.class).ifNoProjectViewCurrentDirectory) {
+            if (info.options.get(ShowFrameActionOptions.class).ifNoProjectViewCurrentDirectory) {
                 paths.add(NPath.ofUserDirectory());
             }
         }
