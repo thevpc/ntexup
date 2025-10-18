@@ -816,7 +816,7 @@ public class DefaultNTxEngine implements NTxEngine {
                 new Repo("local", NApp.of().getSharedConfFolder().resolve("templates")),
                 new Repo("user", NPath.ofUserStore(NStoreType.CONF).resolve("ntexup/templates")),
                 new Repo("system", NPath.ofSystemStore(NStoreType.CONF).resolve("ntexup/templates")),
-                new Repo("central-github", NPath.of("github://thevpc/ntexup-templates"))
+                new Repo("central-github", NPath.of("https://github.com/thevpc/ntexup-templates.git"))
         }) {
             allTemplates.addAll(loader.loadTemplateInfo(repo.name, repo.path, log()));
         }
