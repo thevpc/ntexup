@@ -1,8 +1,8 @@
 package net.thevpc.ntexup.cmdline.options;
 
 public enum Action {
-    VIEW_FRAME,
-    OPEN,
+    SHOW_FRAME,
+    SHOW_DOCUMENT,
     NEW,
     GENERATE,
     LIST_TEMPLATES,
