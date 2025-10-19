@@ -13,4 +13,8 @@ public class GenerateActionOptions extends ActionOptions {
     public GenerateActionOptions() {
         super(Action.GENERATE);
     }
+    public GenerateActionOptions addPath(NPath path) {
+        paths.add(path);
+        return this;
+    }
 }
