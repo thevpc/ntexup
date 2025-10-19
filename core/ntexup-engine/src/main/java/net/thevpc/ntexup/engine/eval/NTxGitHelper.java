@@ -95,6 +95,7 @@ public class NTxGitHelper {
                 Instant last = (Instant) NApp.of().getProperty("resolveGithubPath.lastPull",NScopeType.WORKSPACE).orNull();
                 if (last == null || now.toEpochMilli() - last.toEpochMilli() > (1000 * 60 * 5)) {
                     pulling = true;
+                    messages.log(NMsg.ofC("pull repo at %s", localRepo));
                     NExecCmd.ofSystem("git", "pull")
                             .setDirectory(localRepo)
                             .failFast()
@@ -112,6 +113,7 @@ public class NTxGitHelper {
             } else {
                 RuntimeException rex=null;
                 for (int i = 0; i < githubPaths.length; i++) {
+                    messages.log(NMsg.ofC("cloning repo %s to %s", githubPaths[i], userConfHome.resolve(user)));
                     rex=null;
                     try {
                         NExecCmd.ofSystem("git", "clone", githubPaths[i])
