@@ -29,11 +29,11 @@ public class NTexupOptionsParser {
                         })
                         .with("show-doc").matchTrueFlag(a -> {
                             options.getOrCreate(ShowFrameActionOptions.class);
-                            options.getOrCreate(ShowActionOptions.class).paths.add(NPath.of("github://thevpc/ntexup-doc-slides/"));
+                            options.getOrCreate(ShowActionOptions.class).paths.add(NPath.of("https://github.com/thevpc/ntexup-doc-slides.git"));
                             continueShowDoc(cmdLine,options);
                         })
                         .with("generate-doc").matchTrueFlag(a -> {
-                            options.getOrCreate(GenerateActionOptions.class).paths.add(NPath.of("github://thevpc/ntexup-doc-slides/"));
+                            options.getOrCreate(GenerateActionOptions.class).paths.add(NPath.of("https://github.com/thevpc/ntexup-doc-slides.git"));
                             continueParsingGeneratePdfDoc(cmdLine, options);
                         })
                         .with("--gui").matchFlag(a -> {
@@ -74,7 +74,7 @@ public class NTexupOptionsParser {
             }
         }
 //        if (options.documentation) {
-//            options.paths.add(NPath.of("github://thevpc/ntexup-doc-slides/"));
+//            options.paths.add(NPath.of("https://github.com/thevpc/ntexup-doc-slides.git"));
 //        }
 //        if (!options.guiMode && !options.terminalMode) {
 //            options.guiMode = NSession.of().isGui();
@@ -98,7 +98,7 @@ public class NTexupOptionsParser {
                     })
                     .with("--view-doc").matchFlag(a -> {
                         options.getOrCreate(ShowFrameActionOptions.class);
-                        options.getOrCreate(ShowActionOptions.class).paths.add(NPath.of("github://thevpc/ntexup-doc-slides/"));
+                        options.getOrCreate(ShowActionOptions.class).paths.add(NPath.of("https://github.com/thevpc/ntexup-doc-slides.git"));
                     })
                     .with("--generate-pdf").matchFlag(a -> {
                         options.getOrCreate(NewActionOptions.class).generatePdf = true;
@@ -108,7 +108,7 @@ public class NTexupOptionsParser {
                     })
                     .with("--generate-doc-pdf").matchFlag(a -> {
                         options.getOrCreate(GenerateActionOptions.class).outputFormat=OutputFormat.PDF;
-                        options.getOrCreate(GenerateActionOptions.class).paths.add(NPath.of("github://thevpc/ntexup-doc-slides/"));
+                        options.getOrCreate(GenerateActionOptions.class).paths.add(NPath.of("https://github.com/thevpc/ntexup-doc-slides.git"));
                         if(a.getStringValue().isPresent()) {
                             options.getOrCreate(GenerateActionOptions.class).output=NPath.of(a.stringValue());
                         }
@@ -125,7 +125,7 @@ public class NTexupOptionsParser {
                     .with("--dump").matchFlag(a -> options.getOrCreate(DumpDocumentOptions.class))
                     .with("--view-doc").matchFlag(a -> {
                         options.getOrCreate(ShowFrameActionOptions.class);
-                        options.getOrCreate(ShowActionOptions.class).paths.add(NPath.of("github://thevpc/ntexup-doc-slides/"));
+                        options.getOrCreate(ShowActionOptions.class).paths.add(NPath.of("https://github.com/thevpc/ntexup-doc-slides.git"));
                     })
                     .withNonOption().matchAny(a -> options.getOrCreate(ShowActionOptions.class).paths.add(NPath.of(a.image())))
                     .requireDefaults();
