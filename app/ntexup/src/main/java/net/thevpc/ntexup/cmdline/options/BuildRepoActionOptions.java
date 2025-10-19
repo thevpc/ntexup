@@ -10,4 +10,10 @@ public class BuildRepoActionOptions extends ActionOptions {
     public BuildRepoActionOptions() {
         super(Action.BUILD_REPO);
     }
+
+    public BuildRepoActionOptions addPath(NPath path) {
+        paths.add(path);
+        return this;
+    }
+
 }
