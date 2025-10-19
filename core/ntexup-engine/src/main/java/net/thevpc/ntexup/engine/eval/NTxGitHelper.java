@@ -43,7 +43,10 @@ public class NTxGitHelper {
                 String user = matcher.group("user");
                 String repo = matcher.group("repo");
                 String path = NStringUtils.trim(matcher.group("path"));
-                cloneOrPull(userConfHome, user, repo, "git@github.com:" + user + "/" + repo + ".git", messages);
+                cloneOrPull(userConfHome, user, repo, new String[]{
+                        "git@github.com:" + user + "/" + repo + ".git",
+                        "https://github.com/" + user + "/" + repo + ".git"
+                }, messages);
                 return userConfHome.resolve(user + "/" + repo + "/" + path);
             }
         } else if (githubPath.startsWith("git@")) {
@@ -53,7 +56,11 @@ public class NTxGitHelper {
                 String user = matcher.group("user");
                 String repo = matcher.group("repo");
                 String path = NStringUtils.trim(matcher.group("path"));
-                cloneOrPull(userConfHome, user, repo, "git@github.com:" + user + "/" + repo + ".git", messages);
+                //always consider https because we assume it is a public repo
+                cloneOrPull(userConfHome, user, repo, new String[]{
+                        "git@github.com:" + user + "/" + repo + ".git",
+                        "https://github.com/" + user + "/" + repo + ".git"
+                }, messages);
                 return userConfHome.resolve(user + "/" + repo + "/" + path);
             }
         } else if (githubPath.startsWith("https://github.com")) {
@@ -64,14 +71,17 @@ public class NTxGitHelper {
                 String user = matcher.group("user");
                 String repo = matcher.group("repo");
                 String path = NStringUtils.trim(matcher.group("path"));
-                cloneOrPull(userConfHome, user, repo, "https://github.com/" + user + "/" + repo + ".git", messages);
+                cloneOrPull(userConfHome, user, repo, new String[]{
+                        "https://github.com/" + user + "/" + repo + ".git",
+                        "git@github.com:" + user + "/" + repo + ".git",
+                }, messages);
                 return userConfHome.resolve(user + "/" + repo + "/" + path);
             }
         }
         throw new IllegalArgumentException("invalid github path : " + githubPath);
     }
 
-    private static void cloneOrPull(NPath userConfHome, String user, String repo, String githubPath, NTxLogger messages) {
+    private static void cloneOrPull(NPath userConfHome, String user, String repo, String[] githubPaths, NTxLogger messages) {
         userConfHome.resolve(user).mkdirs();
         NPath localRepo = userConfHome.resolve(user).resolve(repo);
         boolean pulling = false;
@@ -90,7 +100,7 @@ public class NTxGitHelper {
                             .failFast()
                             .run();
                 } else {
-                    NMsg message = NMsg.ofC("ignored pull repo %s to %s", NPath.of(githubPath), localRepo).asWarning();
+                    NMsg message = NMsg.ofC("ignored pull repo %s to %s", NPath.of(githubPaths[0]), localRepo).asWarning();
                     if (messages != null) {
                         messages.log(message);
                     }
@@ -100,10 +110,22 @@ public class NTxGitHelper {
                 }
                 NApp.of().setProperty("resolveGithubPath.lastPull", NScopeType.WORKSPACE, now);
             } else {
-                NExecCmd.ofSystem("git", "clone", githubPath)
-                        .setDirectory(userConfHome.resolve(user))
-                        .failFast()
-                        .run();
+                RuntimeException rex=null;
+                for (int i = 0; i < githubPaths.length; i++) {
+                    rex=null;
+                    try {
+                        NExecCmd.ofSystem("git", "clone", githubPaths[i])
+                                .setDirectory(userConfHome.resolve(user))
+                                .failFast()
+                                .run();
+                        break;
+                    }catch (RuntimeException ex) {
+                        rex=ex;
+                    }
+                }
+                if(rex!=null){
+                    throw rex;
+                }
             }
             succeeded = true;
         } catch (RuntimeException e) {
@@ -112,7 +134,7 @@ public class NTxGitHelper {
         } finally {
             c.stop();
             if (!succeeded) {
-                NMsg message = NMsg.ofC("took %s and failed to %s repo %s to %s : %s", c, pulling ? "pull" : "clone", NPath.of(githubPath), localRepo, errorMessage)
+                NMsg message = NMsg.ofC("took %s and failed to %s repo %s to %s : %s", c, pulling ? "pull" : "clone", NPath.of(githubPaths[0]), localRepo, errorMessage)
                         .asSevere();
                 if (messages != null) {
                     messages.log(message);
@@ -121,7 +143,7 @@ public class NTxGitHelper {
                     session.out().println(message);
                 }
             } else {
-                NMsg message = NMsg.ofC("took %s to %s repo %s to %s", c, pulling ? "pull" : "clone", NPath.of(githubPath), localRepo).asWarning();
+                NMsg message = NMsg.ofC("took %s to %s repo %s to %s", c, pulling ? "pull" : "clone", NPath.of(githubPaths[0]), localRepo).asWarning();
                 if (messages != null) {
                     messages.log(message);
                 }
