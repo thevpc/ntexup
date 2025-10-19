@@ -51,7 +51,7 @@ public class NTxServiceHelper {
     NTxDocumentRendererListenerList currListeners = new NTxDocumentRendererListenerList();
     NTxDebugFrame debugFrame;
 
-    public NTxServiceHelper(MainFrame mainFrame,NTxEngine engine) {
+    public NTxServiceHelper(MainFrame mainFrame, NTxEngine engine) {
         this.mainFrame = mainFrame;
         this.engine = engine;
 //        this.engine.importDefaultDependencies();
@@ -103,6 +103,22 @@ public class NTxServiceHelper {
         configManager.markAccessed(path);
         NTxDocumentScreenRenderer renderer = engine.newScreenRenderer().get();
         renderer.addRendererListener(currListeners);
+        renderer.addRendererListener(new NTxDocumentRendererListener() {
+            MainFrame.ProgressItem o;
+
+            @Override
+            public void onStartLoadingDocument() {
+                o = mainFrame.addProgressItem();
+            }
+
+
+            @Override
+            public void onEndLoadingDocument() {
+                if (o != null) {
+                    o.dispose();
+                }
+            }
+        });
         renderer.renderPath(path);
     }
 
@@ -128,7 +144,7 @@ public class NTxServiceHelper {
     }
 
     public void showNewProject(String rootFolder) {
-        NTexupUtils.runUiAsync(()->{
+        NTexupUtils.runUiAsync(() -> {
             NewProjectPanel projectPanel = new NewProjectPanel(this);
             projectPanel.setSelectedRootFolder(rootFolder);
             if (projectPanel.showDialog(mainFrame.getContentPane())) {
