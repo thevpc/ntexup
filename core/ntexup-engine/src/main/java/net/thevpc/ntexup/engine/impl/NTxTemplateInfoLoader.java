@@ -21,6 +21,7 @@ public class NTxTemplateInfoLoader {
         List<NTxTemplateInfo> allTemplates = new ArrayList<>();
         try {
             if (NTxGitHelper.isGithubFolder(path.toString())) {
+                log.log(NMsg.ofC("loading repository template '%s' from %s", name, path).withIntent(NMsgIntent.INIT));
                 NPath nPath1 = NTxGitHelper.resolveGithubPath(path.toString(), log);
                 if (nPath1.resolve("ntexup-repository.tson").isRegularFile()) {
                     try {
