@@ -173,7 +173,7 @@ public class NTexupOptionsProcessor {
             renderer.setOutput(output);
             renderer.render(doc);
             ch.stop();
-            info.engine.log().log(NMsg.ofC("generated : %s (%s) in %s", output.normalize().toAbsolute(),NMemorySizeFormat.DEFAULT.format(NMemorySize.ofBytes(output.contentLength()).normalize()),ch).asInfo().withDurationMillis(ch.getDurationMs()));
+            info.engine.log().log(NMsg.ofC("generated : %s (%s) in %s", output.normalize().toAbsolute(), NMemorySizeFormat.DEFAULT.format(NMemorySize.ofBytes(output.contentLength()).normalize()), ch).asInfo().withDurationMillis(ch.getDurationMs()));
 
         }
     }
@@ -208,7 +208,7 @@ public class NTexupOptionsProcessor {
             }
             for (NPath f : info.options.get(NewActionOptions.class).paths) {
                 if (info.engine.isNtxProject(f)) {
-                    throw new NIllegalArgumentException(NMsg.ofC("cannot create project. Project file or folder already exists at %s", f.normalize().toAbsolute()));
+                    throw new NIllegalArgumentException(NMsg.ofC("unable to create ntexup project. Project file or folder already exists at %s", f.normalize().toAbsolute()));
                 }
             }
             if (NBlankable.isBlank(templateUrl)) {
@@ -217,7 +217,9 @@ public class NTexupOptionsProcessor {
                 sb.append("Enter template url. You can choose from the following :").newLine();
                 for (int i = 0; i < templates.length; i++) {
                     NTxTemplateInfo template = templates[i];
-                    sb.append(NMsg.ofC("[%-3s] %-25s : %s", NText.ofStyled("#" + (i + 1), NTextStyle.number()), NMsg.ofStyledPrimary1(template.id()), NMsg.ofStyledPath(template.url())))
+                    sb.append(NMsg.ofC("[%-3s] %s %-25s : %s", NText.ofStyled("#" + (i + 1), NTextStyle.number()),
+                                    template.recommended() ? NMsg.ofStyledError("*") : " ",
+                                    NMsg.ofStyledPrimary1(template.id()), NMsg.ofStyledPath(template.url())))
                             .newLine();
                 }
                 String value = NAsk.of().forString(NMsg.ofC("%s", sb))
@@ -228,8 +230,9 @@ public class NTexupOptionsProcessor {
                 if (value == null) {
                     throw new NValidationException(NMsg.ofC("Invalid template url: %s", value));
                 }
+                templateUrl = value;
             } else {
-                templateUrl= NTxTemplateFilter.of(()->info.engine.getTemplates()).selectOneUrl(templateUrl);
+                templateUrl = NTxTemplateFilter.of(() -> info.engine.getTemplates()).selectOneUrl(templateUrl);
             }
             for (NPath f : info.options.get(NewActionOptions.class).paths) {
                 info.engine.createProject(f, NBlankable.isBlank(templateUrl) ? null : NPath.of(templateUrl), x -> info.options.vars.get(x));
