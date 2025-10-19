@@ -43,7 +43,7 @@ public class DefaultNTxLogger implements NTxLogger {
             source = defaultSource;
         }
         NOut.resetLine().println(NMsg.ofC("[%s] [%s] [%s] %s", time, type,
-                source == null ? null : source.shortName(),
+                source == null ? "engine" : source.shortName(),
                 nmsg
         ));
         if (error != null) {
