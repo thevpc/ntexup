@@ -426,6 +426,7 @@ public class DefaultNTxEngine implements NTxEngine {
             if (NTxGitHelper.isGithubFolder(path.toString())) {
                 path = NTxGitHelper.resolveGithubPath(path.toString(), log());
             }
+            path=path.normalize().toAbsolute();
             NTxSource source = NTxSourceFactory.of(path);
             if (path.exists()) {
                 if (path.isRegularFile()) {
@@ -746,7 +747,7 @@ public class DefaultNTxEngine implements NTxEngine {
         NAssert.requireNonNull(templateUrl, "projectUrl");
         if (NTxGitHelper.isGithubFolder(templateUrl.toString())) {
             try {
-                templateUrl = NTxGitHelper.resolveGithubPath(templateUrl.toString(), null);
+                templateUrl = NTxGitHelper.resolveGithubPath(templateUrl.toString(), log());
             } catch (Exception ex) {
                 NMsg msg = NMsg.ofC("unable to create project from template. invalid location %s", templateUrl).asSevere();
                 log().log(msg);
