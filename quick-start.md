@@ -18,7 +18,7 @@ Then reopen a new terminal session.
 ## Install NTexUp
 Once Nuts is installed, use it to install NTexUp:
 ```bash
-nuts -ZyS install ntexup
+nuts install ntexup
 ```
 This command downloads and installs the latest stable version of NTexUp and its dependencies.
 
@@ -30,7 +30,7 @@ Create a new workspace for your first project:
 cd ~
 mkdir my-first-document
 cd my-first-document
-nuts ntexup new --template=central-github:classic-large
+nuts ntexup new -t=classic
 ```
 
 When executed, NTexUp initializes a new document project using the selected template.
@@ -123,7 +123,7 @@ nuts ntexup new --template=classic
 ## Run the NTexUp Viewer
 To preview your project and view changes in real-time, use the viewer command:
 ```bash
-nuts ntexup view .
+nuts ntexup show .
 ```
 This launches a local viewer that automatically refreshes as you modify your .ntx files.
 
@@ -137,7 +137,7 @@ You can adjust styles, layouts, and page content to fully customize your documen
 ## Advanced command
 
 ```bash
-nuts ntexup new --template=classic --view --view-doc
+nuts ntexup new -t=classic --show --show-doc
 ```
 
 ## Viewing Documentation
@@ -158,6 +158,8 @@ These examples demonstrate NTexUp’s syntax, presentation structure, and integr
 ## Running in a containerized environment (Docker)
 
 NTexUp (and any Nuts-based application) can run directly inside a Docker container or cloud IDEs like Gitpod without needing to build a custom Docker image.
+Note that only pdf generation would work because ntexup viewer need display manager to work.
+besides, you container should include git (for now git is not bundled with texup) if you want to use git hosted templates. 
 
 ### Step 1: Launch a Docker container with Java
 
