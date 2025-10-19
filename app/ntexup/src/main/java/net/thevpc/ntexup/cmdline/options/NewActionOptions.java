@@ -14,4 +14,10 @@ public class NewActionOptions extends ActionOptions {
     public NewActionOptions() {
         super(Action.NEW);
     }
+
+
+    public NewActionOptions addPath(NPath path) {
+        paths.add(path);
+        return this;
+    }
 }
