@@ -10,4 +10,9 @@ public class ShowActionOptions extends ActionOptions {
     public ShowActionOptions() {
         super(Action.SHOW_DOCUMENT);
     }
+
+    public ShowActionOptions addPath(NPath path) {
+        paths.add(path);
+        return this;
+    }
 }
