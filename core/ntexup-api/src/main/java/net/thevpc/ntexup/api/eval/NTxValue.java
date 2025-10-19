@@ -570,9 +570,9 @@ public class NTxValue {
                 if (color.isPresent()) {
                     return NOptional.of(color.get());
                 }
-                NOptional<NNamedColor> nc = NColors.ofName(s);
+                NOptional<NColor> nc = NColor.ofName(s);
                 if(nc.isPresent()) {
-                    return NOptional.of(nc.get().getColor());
+                    return NOptional.of(nc.get().toColor());
                 }
                 try {
                     int z = Integer.parseInt(s, 16);
@@ -707,9 +707,9 @@ public class NTxValue {
                 if (color.isPresent()) {
                     return color;
                 }
-                NOptional<NNamedColor> nc = NColors.ofName(s);
+                NOptional<NColor> nc = NColor.ofName(s);
                 if(nc.isPresent()) {
-                    return NOptional.of(nc.get().getColor());
+                    return NOptional.of(nc.get().toColor());
                 }
                 try {
                     int z = Integer.parseInt(s, 16);
