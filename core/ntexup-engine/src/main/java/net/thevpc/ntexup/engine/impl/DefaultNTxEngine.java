@@ -702,35 +702,42 @@ public class DefaultNTxEngine implements NTxEngine {
     @Override
     public void createProject(NPath path, NPath templateUrl, Function<String, String> vars) {
         NAssert.requireNonNull(path, "path");
-        if(NBlankable.isBlank(templateUrl)) {
-            if(path.isDirectory()) {
+        if (NBlankable.isBlank(templateUrl)) {
+            if (path.isDirectory()) {
                 NPath main = path.resolve("main.ntx");
-                if(!main.exists()){
+                if (!main.exists()) {
+                    log().log(NMsg.ofC("create no-template one-file ntexup project : %s", main.normalize().toAbsolute()));
                     main.mkParentDirs().writeString(resolveEmptyNtxContent());
-                }else{
-                    log().log(NMsg.ofC("file already exists %s", main).asSevere());
-                    throw new NIllegalArgumentException(NMsg.ofC("file already exists %s", main).asSevere());
+                } else {
+                    NMsg msg = NMsg.ofC("unable to create no-template one-file ntexup project. file already exists %s", main).asSevere();
+                    log().log(msg);
+                    throw new NIllegalArgumentException(msg);
                 }
-            }else if(path.isRegularFile()){
-                if(!path.exists()){
+            } else if (path.isRegularFile()) {
+                if (!path.exists()) {
+                    log().log(NMsg.ofC("create no-template one-file ntexup project : ", path.normalize().toAbsolute()));
                     path.writeString(resolveEmptyNtxContent());
-                }else{
-                    log().log(NMsg.ofC("file already exists %s", path).asSevere());
-                    throw new NIllegalArgumentException(NMsg.ofC("file already exists %s", path).asSevere());
+                } else {
+                    NMsg msg = NMsg.ofC("unable to create no-template one-file ntexup project. file already exists %s", path).asSevere();
+                    log().log(msg);
+                    throw new NIllegalArgumentException(msg);
                 }
-            }else if(path.exists()){
-                log().log(NMsg.ofC("file already exists %s", path).asSevere());
-                throw new NIllegalArgumentException(NMsg.ofC("file already exists %s", path).asSevere());
-            }else{
-                if(path.getName().endsWith(".ntx")) {
+            } else if (path.exists()) {
+                NMsg msg = NMsg.ofC("unable to create no-template one-file ntexup project. file already exists %s", path).asSevere();
+                log().log(msg);
+                throw new NIllegalArgumentException(msg);
+            } else {
+                if (path.getName().endsWith(".ntx")) {
                     path.mkParentDirs().writeString(resolveEmptyNtxContent());
-                }else{
+                } else {
                     NPath main = path.resolve("main.ntx");
-                    if(!main.exists()){
+                    if (!main.exists()) {
+                        log().log(NMsg.ofC("create no-template one-file ntexup project : ", main.normalize().toAbsolute()));
                         main.mkParentDirs().writeString(resolveEmptyNtxContent());
-                    }else{
-                        log().log(NMsg.ofC("file already exists %s", main).asSevere());
-                        throw new NIllegalArgumentException(NMsg.ofC("file already exists %s", main).asSevere());
+                    } else {
+                        NMsg msg = NMsg.ofC("unable to create no-template one-file ntexup project. file already exists %s", main).asSevere();
+                        log().log(msg);
+                        throw new NIllegalArgumentException(msg);
                     }
                 }
             }
@@ -738,11 +745,20 @@ public class DefaultNTxEngine implements NTxEngine {
         }
         NAssert.requireNonNull(templateUrl, "projectUrl");
         if (NTxGitHelper.isGithubFolder(templateUrl.toString())) {
-            templateUrl = NTxGitHelper.resolveGithubPath(templateUrl.toString(), null);
+            try {
+                templateUrl = NTxGitHelper.resolveGithubPath(templateUrl.toString(), null);
+            } catch (Exception ex) {
+                NMsg msg = NMsg.ofC("unable to create project from template. invalid location %s", templateUrl).asSevere();
+                log().log(msg);
+                throw new NIllegalArgumentException(msg);
+            }
         }
         if (!templateUrl.exists()) {
-            throw new IllegalArgumentException("invalid project " + templateUrl);
+            NMsg msg = NMsg.ofC("unable to create project from template. invalid location %s", templateUrl).asSevere();
+            log().log(msg);
+            throw new NIllegalArgumentException(msg);
         }
+        log().log(NMsg.ofC("create project %s from template %s", path.normalize().toAbsolute(), templateUrl));
         NPath finalProjectUrl = templateUrl;
         Function<String, String> vars2 = m -> {
             switch (m) {
@@ -787,14 +803,14 @@ public class DefaultNTxEngine implements NTxEngine {
         try {
             copyTemplate(templateUrl, path, vars2, true, false);
         } catch (Exception ex) {
-            throw new NIllegalArgumentException(NMsg.ofC("cannot create project at %s. folder not empty", path));
+            throw new NIllegalArgumentException(NMsg.ofC("unable to create ntexup project at %s. folder not empty", path));
         }
         copyTemplate(templateUrl, path, vars2, false, true);
     }
 
     private static String resolveEmptyNtxContent() {
         return "page{\n" +
-                "  ¶ Hello World\n"+
+                "  ¶ Hello World\n" +
                 "}";
     }
 
