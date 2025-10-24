@@ -179,7 +179,7 @@ nuts -y install ntexup
 now you can try if it is well working by showing documentation
 
 ```bash
-nuts ntexup --view --documentation
+nuts ntexup show-doc
 ```
 
 now lets try to make some changes and check for the results
@@ -190,7 +190,7 @@ cd ntexup-doc-slides
 # do your updates in this folder, it should be straightforward
 
 # finally render the folder
-nuts ntexup --view .
+nuts ntexup show .
 ```
 
 ---
