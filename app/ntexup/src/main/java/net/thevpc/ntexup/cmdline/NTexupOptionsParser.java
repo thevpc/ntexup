@@ -49,9 +49,6 @@ public class NTexupOptionsParser {
                         })
                         .with("generate").matchFlag(a -> {
                             options.getOrCreate(GenerateActionOptions.class);
-                            if (a.getStringValue().isPresent()) {
-                                options.getOrCreate(GenerateActionOptions.class).addPath(NPath.of(a.stringValue()));
-                            }
                             continueParsingGeneratePdf(cmdLine, options);
                         })
                         .with("new").matchTrueFlag(a -> {
