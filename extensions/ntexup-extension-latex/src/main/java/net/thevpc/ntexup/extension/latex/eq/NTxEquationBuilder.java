@@ -201,14 +201,9 @@ public class NTxEquationBuilder implements NTxNodeBuilder {
             formula = new TeXFormula("?error?");
             ctx.engine().log().log(NMsg.ofC("error evaluating latex formula %s : %s", tex, ex), NTxUtils.sourceOf(node));
         }
-        float size = (float) (fontSize / 2.0);
+        float size = (float) (fontSize);
         TeXIcon icon = formula.createTeXIcon(TeXConstants.STYLE_DISPLAY, size);
-
-        // insert a border
         icon.setInsets(new Insets(0, 0, 0, 0));
-//        if (error) {
-//            return null;
-//        }
         Color foregroundColor = null;
         if (options.foregroundColorIndex != null) {
             foregroundColor = NTxColors.resolveDefaultColorByIndex(options.foregroundColorIndex, null,node,ctx);
@@ -226,14 +221,12 @@ public class NTxEquationBuilder implements NTxNodeBuilder {
         return new NTxTextRendererBuilder.ImagePainter() {
             @Override
             public void paint(NTxGraphics g, double x, double y) {
-                Font plainFont = g.getFont().deriveFont(g.getFont().getSize() / 2f);
-                g.setFont(plainFont);
-                FontMetrics fontMetrics = g.getFontMetrics(plainFont);
-                double xx = x;
-                double yy = y;//+ascent-descent;
+                FontMetrics fm = g.getFontMetrics(g.getFont());
+                int texDepth = icon.getIconDepth(); // depth below baseline
+                int texAscent = icon.getIconHeight() - texDepth;     // ascent above baseline
+                double baseline = y + fm.getAscent();
                 icon.setForeground(finalForegroundColor);
-                icon.paintIcon(null, g.graphics2D(), (int) x, (int) y /*- icon.getIconHeight()*/);
-                //g.drawRect(xx, yy, icon.getIconWidth(), icon.getIconHeight());
+                icon.paintIcon(null, g.graphics2D(), (int) x, (int) (baseline - texAscent));
             }
 
             public NTxDouble2 size() {
