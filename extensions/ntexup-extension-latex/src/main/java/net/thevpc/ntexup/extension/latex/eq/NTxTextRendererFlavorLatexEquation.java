@@ -31,7 +31,7 @@ public class NTxTextRendererFlavorLatexEquation implements NTxTextRendererFlavor
                     NTxRichTextTokenType.IMAGE_PAINTER,
                     text.toString()
             );
-            double fontSize = NTxValueByName.getFontSize(node, ctx);
+            double fontSize = NTxValueByName.getFontSize(node, ctx)*3;
             r.imagePainter = this.createLatex(text, fontSize, options, node, ctx);
             NTxDouble2 size = r.imagePainter.size();
             r.bounds = new Rectangle2D.Double(0, 0, size.getX(), size.getX());
