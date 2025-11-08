@@ -1,38 +1,22 @@
+import(
+    "net.thevpc.ntexup:ntexup-extension-plantuml:0.8.8.0"
+    "net.thevpc.ntexup:ntexup-extension-animated-gif:0.8.8.0"
+    "net.thevpc.ntexup:ntexup-extension-svg:0.8.8.0"
+    "net.thevpc.ntexup:ntexup-extension-shapes2d:0.8.8.0"
+    "net.thevpc.ntexup:ntexup-extension-shapes3d:0.8.8.0"
+    "net.thevpc.ntexup:ntexup-extension-plot2d:0.8.8.0"
+    "net.thevpc.ntexup:ntexup-extension-presenters:0.8.8.0"
+    "net.thevpc.ntexup:ntexup-extension-latex:0.8.8.0"
+)
 page{
-   text(
-    "Hello ####World####
-    of strange things"
-    //"Hello World"
-    font-size:10%P
-    shadow:(alpha:0.5,color:yellow)
-    at:top,font-bold,font-italic
-    text-path:{(0,0),(20,20),(80,50)}
-   )
-   text(
-    "Hello ####World####"
-    //"Hello World"
-    font-size:10%P
-    shadow:(alpha:0.5,color:yellow)
-    at:top,font-bold,font-italic
-    text-path:{arc(x:50,y:50,rx:40,ry:40,to:210)}
-    debug
-   )
-   text(
-    "Strange Things..."
-    //"Hello World"
-    font-size:10%P
-    shadow:(alpha:0.5,color:yellow)
-    at:top,font-bold,font-italic
-    text-path:{arc(x:50,y:50,rx:30,ry:30,to:180)}
-    debug
-   )
-   text(
-    "Always happen..."
-    //"Hello World"
-    font-size:10%P
-    shadow:(alpha:0.5,color:yellow)
-    at:top,font-bold,font-italic
-    text-path:{arc(x:50,y:50,rx:20,ry:20,to:140)}
-    debug
-   )
+    styles:{
+        "*" :{
+            font-size:20%P
+        }
+    }
+    column{
+       ¶ Hello [[eq:x^2]]
+       text("Helloj [[eq:x^2]]",debug)
+       text("Helloj [[eq:a_j^F]]",debug)
+   }
 }
