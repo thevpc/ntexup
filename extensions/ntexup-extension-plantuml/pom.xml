@@ -2,7 +2,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>net.thevpc.ntexup</groupId>
     <artifactId>ntexup-extension-plantuml</artifactId>
-    <version>0.8.7.0</version>
+    <version>0.8.8.0</version>
     <packaging>jar</packaging>
     <name>ntexup :: Extension PlantUML</name>
     <properties>
@@ -51,7 +51,7 @@
     </licenses>
 
     <dependencies>
-        <dependency><groupId>net.thevpc.ntexup</groupId><artifactId>ntexup-api</artifactId><version>0.8.7</version></dependency>
+        <dependency><groupId>net.thevpc.ntexup</groupId><artifactId>ntexup-api</artifactId><version>0.8.8</version></dependency>
         <dependency><groupId>net.sourceforge.plantuml</groupId><artifactId>plantuml</artifactId><version>1.2024.5</version></dependency>
         <dependency><groupId>com.google.guava</groupId><artifactId>guava</artifactId><version>31.0.1-jre</version></dependency>
     </dependencies>
