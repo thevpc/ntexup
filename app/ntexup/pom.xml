@@ -2,7 +2,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>net.thevpc.ntexup</groupId>
     <artifactId>ntexup</artifactId>
-    <version>0.8.7.0</version>
+    <version>0.8.8.0</version>
     <packaging>jar</packaging>
     <name>ntexup :: App Viewer</name>
     <properties>
@@ -51,11 +51,11 @@
     </licenses>
 
     <dependencies>
-        <dependency><groupId>net.thevpc.ntexup</groupId><artifactId>ntexup-engine</artifactId><version>0.8.7.0</version></dependency>
-        <dependency><groupId>net.thevpc.nuts</groupId><artifactId>nuts-swing</artifactId><version>0.8.7.0</version></dependency>
-        <dependency><groupId>net.thevpc.ntexup</groupId><artifactId>ntexup-renderer-pdf</artifactId><version>0.8.7.0</version></dependency>
-        <dependency><groupId>net.thevpc.ntexup</groupId><artifactId>ntexup-renderer-screen</artifactId><version>0.8.7.0</version></dependency>
-        <dependency><groupId>net.thevpc.ntexup</groupId><artifactId>ntexup-renderer-html</artifactId><version>0.8.7.0</version></dependency>
+        <dependency><groupId>net.thevpc.ntexup</groupId><artifactId>ntexup-engine</artifactId><version>0.8.8.0</version></dependency>
+        <dependency><groupId>net.thevpc.nuts</groupId><artifactId>nuts-swing</artifactId><version>0.8.8.0</version></dependency>
+        <dependency><groupId>net.thevpc.ntexup</groupId><artifactId>ntexup-renderer-pdf</artifactId><version>0.8.8.0</version></dependency>
+        <dependency><groupId>net.thevpc.ntexup</groupId><artifactId>ntexup-renderer-screen</artifactId><version>0.8.8.0</version></dependency>
+        <dependency><groupId>net.thevpc.ntexup</groupId><artifactId>ntexup-renderer-html</artifactId><version>0.8.8.0</version></dependency>
         <dependency><groupId>com.formdev</groupId><artifactId>flatlaf</artifactId><version>3.5.4</version></dependency>
     </dependencies>
     <build>
