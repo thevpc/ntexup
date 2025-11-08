@@ -2,7 +2,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>net.thevpc.ntexup</groupId>
     <artifactId>ntexup-engine</artifactId>
-    <version>0.8.7.0</version>
+    <version>0.8.8.0</version>
     <packaging>jar</packaging>
     <name>ntexup :: Engine</name>
     <properties>
@@ -51,8 +51,8 @@
     </licenses>
 
     <dependencies>
-        <dependency><groupId>net.thevpc.ntexup</groupId><artifactId>ntexup-api</artifactId><version>0.8.7</version></dependency>
-        <dependency><groupId>net.thevpc.nuts</groupId><artifactId>nuts</artifactId><version>0.8.7</version></dependency>
+        <dependency><groupId>net.thevpc.ntexup</groupId><artifactId>ntexup-api</artifactId><version>0.8.8</version></dependency>
+        <dependency><groupId>net.thevpc.nuts</groupId><artifactId>nuts</artifactId><version>0.8.8</version></dependency>
 <!--        <dependency><groupId>org.scilab.forge</groupId><artifactId>jlatexmath</artifactId><version>1.0.7</version></dependency>-->
         <!--delauney 3D-->
 <!--        <dependency><groupId>org.locationtech.jts</groupId><artifactId>jts-core</artifactId><version>1.18.2</version>&lt;!&ndash; Replace with the latest version &ndash;&gt;</dependency>-->
