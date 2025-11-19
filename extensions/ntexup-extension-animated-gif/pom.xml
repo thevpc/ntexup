@@ -2,7 +2,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>net.thevpc.ntexup</groupId>
     <artifactId>ntexup-extension-animated-gif</artifactId>
-    <version>0.8.8.0</version>
+    <version>0.8.9.0</version>
     <packaging>jar</packaging>
     <name>ntexup :: Extension Animated GIF</name>
     <description>Animated GIF</description>
@@ -52,7 +52,7 @@
     </licenses>
 
     <dependencies>
-        <dependency><groupId>net.thevpc.ntexup</groupId><artifactId>ntexup-api</artifactId><version>0.8.8</version></dependency>
+        <dependency><groupId>net.thevpc.ntexup</groupId><artifactId>ntexup-api</artifactId><version>0.8.9</version></dependency>
         <dependency><groupId>com.madgag</groupId><artifactId>animated-gif-lib</artifactId><version>1.4</version></dependency>
     </dependencies>
     <build>
