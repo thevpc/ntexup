@@ -115,8 +115,11 @@ public class NScoreboard implements Cloneable{
     public NScoreboard setIcon(URL url) {
         if(url!=null) {
             try {
-                Image bgImage = ImageIO.read(url);
-                setIcon(bgImage);
+                Image img = ImageIO.read(url);
+
+                Image scaled = img.getScaledInstance(200, 200, Image.SCALE_SMOOTH);
+
+                setIcon(scaled);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -248,7 +251,11 @@ public class NScoreboard implements Cloneable{
             Color bg = new Color(colors[index]);
             c[i].background = NColorApplier.ofGradient(bg,bg.darker());
             c[i].border = NColorApplier.of(bg.darker());
-            c[i].foreground = NColorApplier.of(new Color(255 - bg.getRed(), 255 - bg.getGreen(), 255 - bg.getBlue()));
+//            c[i].foreground = NColorApplier.of(new Color(255 - bg.getRed(), 255 - bg.getGreen(), 255 - bg.getBlue()));
+            c[i].foreground = (cc->{
+                    int brightness = (bg.getRed() * 299 + bg.getGreen() * 587 + bg.getBlue() * 114) / 1000;
+                    cc.graphics().setColor((brightness < 128) ? Color.WHITE : Color.BLACK);
+            });
         }
         NScoreboard copy = copy();
         copy.scores=c;
