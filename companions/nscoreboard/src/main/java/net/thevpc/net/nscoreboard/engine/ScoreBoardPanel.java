@@ -21,36 +21,16 @@ import javax.swing.*;
  */
 public class ScoreBoardPanel extends JPanel {
 
+    public static final String DEFAULT_TITLE_FONT_NAME = "Linux Biolinum Keyboard O";
     public HorizontalScoreBoard board;
-    public JLabel label;
     public ScoreModelAnimator animator;
 
     public ScoreBoardPanel() {
         super(new BorderLayout());
-        add(label = new JLabel(""), BorderLayout.NORTH);
-        add(board = new HorizontalScoreBoard(), BorderLayout.CENTER);
-        addComponentListener(new ComponentListener() {
-            @Override
-            public void componentResized(ComponentEvent e) {
-                prepareAgain();
-            }
-
-            @Override
-            public void componentMoved(ComponentEvent e) {
-                prepareAgain();
-            }
-
-            @Override
-            public void componentShown(ComponentEvent e) {
-                prepareAgain();
-            }
-
-            @Override
-            public void componentHidden(ComponentEvent e) {
-                prepareAgain();
-            }
-        });
-        prepareAgain();
+        board = new HorizontalScoreBoard();
+        ScoreBoardPanelHeader comp = new ScoreBoardPanelHeader(board);
+        add(comp, BorderLayout.NORTH);
+        add(board, BorderLayout.CENTER);
         addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
@@ -74,19 +54,14 @@ public class ScoreBoardPanel extends JPanel {
     }
     @Override
     protected void paintComponent(Graphics g) {
-        NScoreboard model = board.getModel();
-        label.setText("        "+model.getTitle());
+        Graphics2D g2d = (Graphics2D) g;
+        g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
+                RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+        g2d.setRenderingHint(RenderingHints.KEY_RENDERING,
+                RenderingHints.VALUE_RENDER_QUALITY);
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+                RenderingHints.VALUE_ANTIALIAS_ON);
         super.paintComponent(g);
-        Image icon = model.getIcon();
-        if(icon != null) {
-            g.drawImage(icon, 0, 0, this);
-        }
-    }
-
-    public void prepareAgain() {
-        Dimension s = getSize();
-        label.setForeground(Color.BLACK);
-        label.setFont(Utils.prepareFont("ARIAL", 0, s.getHeight() / 10).deriveFont(Font.BOLD));
     }
 
     public void setModel(NScoreboard NScoreboard) {
