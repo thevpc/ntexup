@@ -6,6 +6,12 @@ package net.thevpc.net.nscoreboard;
 import net.thevpc.net.nscoreboard.engine.NScoreboardFrame;
 import net.thevpc.net.nscoreboard.model.NScore;
 import net.thevpc.net.nscoreboard.util.Colors;
+import net.thevpc.nuts.Nuts;
+import net.thevpc.nuts.io.NPath;
+import net.thevpc.nuts.util.NLiteral;
+import net.thevpc.nuts.util.NStringUtils;
+
+import java.util.List;
 
 /**
  * @author vpc
@@ -13,17 +19,18 @@ import net.thevpc.net.nscoreboard.util.Colors;
 public class NScoreboard {
 
     public static void main(String[] args) {
+        Nuts.require();
+        List<String> lines = NStringUtils.split(NPath.of(NScoreboard.class.getResource("/names.csv")).readString(),"\n",true,true);
+
         new NScoreboardFrame(new net.thevpc.net.nscoreboard.model.NScoreboard()
-                .setTitle("Avidea Student Challenge 2024")
-                .setScores(new NScore("dhiaeddine_raha1", "cpp", 4 * 1000 + (3000 - 103)),
-                        new NScore("mohamed_gharab", "cpp", 4 * 1000 + (3000 - 2321)),
-                        new NScore("wissem_yousfi", "python/print", 1 * 1000 + (3000 - 2371)),
-                        new NScore("bensassiamine275", "bot/java", 4 * 1000 + (3000 - 92) - 3000),
-                        new NScore("ahmedaziz_rezgu1", "cpp", 4 * 1000 + (3000 - 101)),
-                        new NScore("master_ganso", "python", 4 * 1000 + (3000 - 2179)),
-                        new NScore("yasserchouket011", "cpp", 3 * 1000 + (3000 - 210))
+                .setTitle("<html>ENISo MIDNIGHT AI <br>2025</html>")
+                .setScores(
+                        lines.stream().map(line->{
+                            List<String> cols= NStringUtils.split(line,",",true,false);
+                            return new NScore(cols.get(0),cols.get(1),cols.get(2), NLiteral.of(cols.get(3)).asDouble().get());
+                        }).toArray(NScore[]::new)
                 )
-                .setIcon(NScoreboard.class.getResource("/avidea.png"))
+                .setIcon(NScoreboard.class.getResource("/eniso.png"))
                 .withColors(Colors.PALLET_1)
                 .setFps(60)
                 .setDurationSeconds(60)
