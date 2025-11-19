@@ -5,7 +5,7 @@
     <groupId>net.thevpc.xprojects.builders</groupId>
     <artifactId>ntexup-builder</artifactId>
     <name>ntexup :: All Builder</name>
-    <version>0.8.8.0</version>
+    <version>0.8.9.0</version>
     <packaging>pom</packaging>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
