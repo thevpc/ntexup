@@ -38,7 +38,7 @@ import net.thevpc.nuts.util.NOptional;
  * @author vpc
  */
 public interface NTxEngine {
-    String CURRENT_VERSION = "0.8.8.0";
+    String CURRENT_VERSION = "0.8.9.0";
     String FILE_EXT = "ntx";
     String FILE_DOT_EXT = ".ntx";
 
