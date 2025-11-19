@@ -55,8 +55,11 @@ public class ScoreModelAnimator {
 
     public void tic() {
         double step = computeStep();
+        boolean finished = false;
         if (currentPos < 1) {
             currentPos += step;
+        }else{
+            finished=true;
         }
         NScoreboard cc = model.copy();
         for (NScore s : cc.scores()) {
@@ -73,6 +76,11 @@ public class ScoreModelAnimator {
             sortSpeed=1;
         }
         currentModel = cc.step(currentPos, step*sortSpeed*100);
+        for (int i = 0; i < currentModel.scores().length; i++) {
+            NScore score = currentModel.scores()[i];
+            score.finished = finished;
+        }
+
         for (Consumer<NScoreboard> listener : listeners) {
             listener.accept(currentModel);
         }
