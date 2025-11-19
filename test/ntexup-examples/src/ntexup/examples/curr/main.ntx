@@ -1,12 +1,12 @@
 import(
-    "net.thevpc.ntexup:ntexup-extension-plantuml:0.8.8.0"
-    "net.thevpc.ntexup:ntexup-extension-animated-gif:0.8.8.0"
-    "net.thevpc.ntexup:ntexup-extension-svg:0.8.8.0"
-    "net.thevpc.ntexup:ntexup-extension-shapes2d:0.8.8.0"
-    "net.thevpc.ntexup:ntexup-extension-shapes3d:0.8.8.0"
-    "net.thevpc.ntexup:ntexup-extension-plot2d:0.8.8.0"
-    "net.thevpc.ntexup:ntexup-extension-presenters:0.8.8.0"
-    "net.thevpc.ntexup:ntexup-extension-latex:0.8.8.0"
+    "net.thevpc.ntexup:ntexup-extension-plantuml:0.8.9.0"
+    "net.thevpc.ntexup:ntexup-extension-animated-gif:0.8.9.0"
+    "net.thevpc.ntexup:ntexup-extension-svg:0.8.9.0"
+    "net.thevpc.ntexup:ntexup-extension-shapes2d:0.8.9.0"
+    "net.thevpc.ntexup:ntexup-extension-shapes3d:0.8.9.0"
+    "net.thevpc.ntexup:ntexup-extension-plot2d:0.8.9.0"
+    "net.thevpc.ntexup:ntexup-extension-presenters:0.8.9.0"
+    "net.thevpc.ntexup:ntexup-extension-latex:0.8.9.0"
 )
 page{
     styles:{
