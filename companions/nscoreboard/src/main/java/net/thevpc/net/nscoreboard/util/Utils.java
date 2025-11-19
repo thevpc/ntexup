@@ -51,16 +51,17 @@ public class Utils {
         if (h <= 0 && w <= 0) {
             return f;
         }
+        int extra=10;
         while (true) {
             f=f.deriveFont(Font.PLAIN, size);
             int[] curr = fontSize(f);
-            if (h > 0 && curr[1] > h) {
+            if (h > 0 && curr[1] > h+extra) {
                 if (last == null) {
                     return f;
                 }
                 return lastFont;
             }
-            if (w > 0 && curr[0] > w) {
+            if (w > 0 && curr[0] > w+extra) {
                 if (last == null) {
                     return f;
                 }
