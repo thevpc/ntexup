@@ -173,7 +173,7 @@ public class NTexupOptionsProcessor {
             renderer.setOutput(output);
             renderer.render(doc);
             ch.stop();
-            info.engine.log().log(NMsg.ofC("generated : %s (%s) in %s", output.normalize().toAbsolute(), NMemorySizeFormat.DEFAULT.format(NMemorySize.ofBytes(output.contentLength()).normalize()), ch).asInfo().withDurationMillis(ch.getDurationMs()));
+            info.engine.log().log(NMsg.ofC("generated : %s (%s) in %s", output.normalize().toAbsolute(), NMemorySizeFormat.DEFAULT.format(NMemorySize.ofBytes(output.getContentLength()).normalize()), ch).asInfo().withDurationMillis(ch.getDurationMs()));
 
         }
     }
