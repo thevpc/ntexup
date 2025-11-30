@@ -56,8 +56,8 @@ public class NTxSourceFromNPath extends NTxSourceWithState {
         value.put("dir", path.isDirectory());
         boolean file = path.isFile();
         value.put("file", file);
-        value.put("contentLength", path.contentLength());
-        Instant lastModifiedInstant = path.lastModifiedInstant();
+        value.put("contentLength", path.getContentLength());
+        Instant lastModifiedInstant = path.getLastModifiedInstant();
         value.put("lastModifiedInstant", lastModifiedInstant == null ? -1 : lastModifiedInstant.getEpochSecond());
         if (path.toString().contains("*")) {
             value.put("children",
