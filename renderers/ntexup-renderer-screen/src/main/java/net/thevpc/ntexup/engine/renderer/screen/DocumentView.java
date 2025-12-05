@@ -9,9 +9,11 @@ import net.thevpc.ntexup.api.renderer.*;
 
 
 import net.thevpc.ntexup.engine.impl.NTxCompiledDocumentImpl;
+import net.thevpc.ntexup.engine.renderer.screen.components.RatioPanel;
 import net.thevpc.ntexup.engine.util.NTxUtilsImages;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
 import java.util.List;
@@ -19,6 +21,7 @@ import java.util.Timer;
 
 import net.thevpc.nuts.io.NPath;
 import net.thevpc.nuts.text.NMsg;
+import net.thevpc.nuts.util.NColor;
 
 public class DocumentView {
 
@@ -38,6 +41,8 @@ public class DocumentView {
     NTxDocumentRendererListener listener;
     private NTxDocumentRendererContext rendererContext = new NTxDocumentRendererContextImpl();
     private boolean isShown;
+    public float defaultDocumentRatio = 842.0F / 595.0F;
+    public float documentRatio = defaultDocumentRatio;
 
     public DocumentView(NTxDocumentRendererSupplier documentSupplier,
                         NTxEngine engine, NTxDocumentRendererListener listener) {
@@ -249,7 +254,7 @@ public class DocumentView {
                 pageViews.add(createPageView(compiledDocument.pages().get(i)));
             }
             for (PageView pageView : pageViews) {
-                contentPane.add(pageView.component(), pageView.id());
+                contentPane.add(new RatioPanel(pageView.component(), documentRatio, new Color(NColor.GRAY_15.getRGB())), pageView.id());
                 pagesMapById.put(pageView.id(), pageView);
                 pagesMapByIndex.put(pageView.index(), pageView);
             }
@@ -273,6 +278,14 @@ public class DocumentView {
             listener.onEndLoadingDocument();
         }
         return true;
+    }
+
+    public void applyRatio(double ratio) {
+        for (Component component : contentPane.getComponents()) {
+            if (component instanceof RatioPanel) {
+                ((RatioPanel) component).setRatio(ratio);
+            }
+        }
     }
 
     void lastPage() {
