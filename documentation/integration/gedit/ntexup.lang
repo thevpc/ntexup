@@ -67,6 +67,8 @@
             <keyword>polyline</keyword>
             <keyword>points</keyword>
             <keyword>grid</keyword>
+            <keyword>column</keyword>
+            <keyword>row</keyword>
             <keyword>group</keyword>
             <keyword>flow</keyword>
             <keyword>gantt</keyword>
