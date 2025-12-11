@@ -6,6 +6,7 @@ import net.thevpc.nuts.core.NSession;
 import net.thevpc.nuts.cmdline.NArg;
 import net.thevpc.nuts.cmdline.NCmdLine;
 import net.thevpc.nuts.io.NPath;
+import net.thevpc.nuts.util.NStringUtils;
 
 public class NTexupOptionsParser {
     public void parse(NCmdLine cmdLine, Options options) {
@@ -61,13 +62,13 @@ public class NTexupOptionsParser {
                         })
                         .with("--install-syntax").matchEntry(a -> {
                             EditorActionOptions w = options.getOrCreate(EditorActionOptions.class);
-                            w.withEditor(a.stringValue());
+                            w.getSyntaxInfo().addEditor(NStringUtils.firstNonBlank(a.getStringValue().orNull(), "all"));
                             while (!cmdLine.isEmpty()) {
                                 cmdLine.matcher()
                                         .with("--force").matchFlag(aa -> {
-                                            w.force = aa.booleanValue();
+                                            w.getSyntaxInfo().setForce(aa.booleanValue());
                                         })
-                                        .withNonOption().matchAny(aa -> w.withEditor(aa.stringValue()))
+                                        .withNonOption().matchAny(aa -> w.getSyntaxInfo().addEditor(aa.asString().orNull()))
                                         .requireDefaults();
                             }
                         })
