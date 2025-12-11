@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<MODE NAME="NTexUp" FILE_NAME_GLOB="*.ntx" COMMENT="//" MULTILINE_COMMENT="/*|*/">
+    <KEYWORDS>
+        <KEYWORD>page</KEYWORD>
+        <KEYWORD>rectangle</KEYWORD>
+        <KEYWORD>ellipse</KEYWORD>
+        <KEYWORD>styles</KEYWORD>
+        <KEYWORD>template</KEYWORD>
+        <KEYWORD>color</KEYWORD>
+        <!-- add all your keywords -->
+    </KEYWORDS>
+
+    <RULES>
+        <!-- numbers -->
+        <DIGIT color="blue"/>
+        <!-- strings -->
+        <STRING color="green" DELIMITER='"'/>
+        <STRING color="green" DELIMITER="'" />
+
+        <!-- comments -->
+        <COMMENT color="gray" MULTILINE="true" START="/*" END="*/"/>
+        <COMMENT color="gray" MULTILINE="false" START="//"/>
+    </RULES>
+
+    <PROPERTIES>
+        <PROPERTY NAME="IGNORE_CASE" VALUE="false"/>
+    </PROPERTIES>
+</MODE>
