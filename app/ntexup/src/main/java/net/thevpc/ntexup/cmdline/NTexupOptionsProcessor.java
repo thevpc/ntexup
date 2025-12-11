@@ -12,8 +12,6 @@ import net.thevpc.ntexup.engine.repo.RepoBuilderTool;
 import net.thevpc.ntexup.main.MainFrame;
 import net.thevpc.ntexup.util.NTexupUtils;
 import net.thevpc.nuts.artifact.NId;
-import net.thevpc.nuts.artifact.NVersion;
-import net.thevpc.nuts.core.NWorkspace;
 import net.thevpc.nuts.io.NAsk;
 import net.thevpc.nuts.io.NOut;
 import net.thevpc.nuts.core.NSession;
@@ -90,8 +88,12 @@ public class NTexupOptionsProcessor {
                 }
                 case EDITOR: {
                     EditorActionOptions v = (EditorActionOptions) a.getValue();
-                    new EditorActionOptionsProcessor(v)
-                            .process();
+                    new NEditorSyntaxInstaller(
+                            v.getSyntaxInfo()
+                                    .copy()
+                                    .setRepoFolder("https://github.com/thevpc/ntexup/raw/refs/heads/main/documentation/integration")
+                                    .setLangId("ntexup")
+                    ).run();
                     break;
                 }
             }
