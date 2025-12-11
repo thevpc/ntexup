@@ -1,6 +1,6 @@
 # auto install
 ```bash
-nuts ntexup --add-syntax-highlighting-kate
+nuts ntexup --install-syntax=kate
 ```
 
 # manual install
