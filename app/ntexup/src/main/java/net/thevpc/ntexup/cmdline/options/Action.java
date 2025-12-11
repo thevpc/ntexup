@@ -8,4 +8,5 @@ public enum Action {
     LIST_TEMPLATES,
     BUILD_REPO,
     DUMP,
+    EDITOR,
 }
