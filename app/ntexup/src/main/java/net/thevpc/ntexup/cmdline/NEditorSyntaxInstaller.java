@@ -6,7 +6,18 @@ import net.thevpc.nuts.io.NOut;
 import net.thevpc.nuts.io.NPath;
 import net.thevpc.nuts.text.NMsg;
 import net.thevpc.nuts.util.NCopiable;
+import net.thevpc.nuts.util.NIllegalArgumentException;
 import net.thevpc.nuts.util.NStringUtils;
+import org.w3c.dom.*;
+import org.xml.sax.SAXException;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.*;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+import java.io.IOException;
 
 public class NEditorSyntaxInstaller {
     Info info;
@@ -14,6 +25,7 @@ public class NEditorSyntaxInstaller {
     public static class Info implements NCopiable, Cloneable {
         private String langId;
         private String repoFolder = "https://github.com/thevpc/ntexup/raw/refs/heads/main/documentation/integration";
+        private String fileExtension = "ntx";
         private boolean idea;
         private boolean kate;
         private boolean gedit;
@@ -22,6 +34,16 @@ public class NEditorSyntaxInstaller {
         private boolean vscode;
         private boolean notepadPlusPlus;
         private boolean force;
+
+
+        public String getFileExtension() {
+            return fileExtension;
+        }
+
+        public Info setFileExtension(String fileExtension) {
+            this.fileExtension = fileExtension;
+            return this;
+        }
 
         public String getLangId() {
             return langId;
@@ -230,8 +252,8 @@ public class NEditorSyntaxInstaller {
                 return -NVersion.of(resolveJetbrainsVersion(a.getName()))
                         .compareTo(resolveJetbrainsVersion(b.getName()));
             }).findFirst().orElse(null);
-            if(local!=null){
-                local=local.resolve("filetypes").resolve(info.getLangId() + ".xml");
+            if (local != null) {
+                local = local.resolve("filetypes").resolve(info.getLangId() + ".xml");
             }
         }
         if (local == null) {
@@ -246,12 +268,12 @@ public class NEditorSyntaxInstaller {
                 return;
             }
         }
-        NPath remote = NPath.of(info.getRepoFolder()).resolve( "/intellij/" + info.getLangId() + ".xml");
+        NPath remote = NPath.of(info.getRepoFolder()).resolve("/intellij/" + info.getLangId() + ".xml");
         remote.copyTo(local.mkParentDirs());
         if (doForce) {
-            NOut.println(NMsg.ofC("%s %s syntax highlighting re-installed successfully to %s. You might need to restart %s", styledLangId, app, local,app));
+            NOut.println(NMsg.ofC("%s %s syntax highlighting re-installed successfully to %s. You might need to restart %s", styledLangId, app, local, app));
         } else {
-            NOut.println(NMsg.ofC("%s %s syntax highlighting installed successfully to %s. You might need to restart %s", styledLangId, app, local,app));
+            NOut.println(NMsg.ofC("%s %s syntax highlighting installed successfully to %s. You might need to restart %s", styledLangId, app, local, app));
         }
     }
 
@@ -269,7 +291,7 @@ public class NEditorSyntaxInstaller {
         NMsg styledLangId = NMsg.ofStyledKeyword(info.getLangId());
         NMsg app = NMsg.ofStyledDate("kate");
         if (NWorkspace.of().getOsFamily().isPosix()) {
-            NPath local = NPath.ofUserHome().resolve(".local/share/org.kde.syntax-highlighting/syntax/"+info.getLangId() + ".xml");
+            NPath local = NPath.ofUserHome().resolve(".local/share/org.kde.syntax-highlighting/syntax/" + info.getLangId() + ".xml");
             boolean doForce = false;
             if (!local.isRegularFile()) {
             } else {
@@ -280,13 +302,13 @@ public class NEditorSyntaxInstaller {
                     return;
                 }
             }
-            NPath remote = NPath.of(info.getRepoFolder()).resolve( "/kate/" + info.getLangId() + ".xml");
+            NPath remote = NPath.of(info.getRepoFolder()).resolve("/kate/" + info.getLangId() + ".xml");
             remote.copyTo(local.mkParentDirs());
             NOut.println(NMsg.ofC("%s %s syntax highlighting installed successfully to %s", styledLangId, app, local));
             if (doForce) {
-                NOut.println(NMsg.ofC("%s %s syntax highlighting re-installed successfully to %s. You might need to restart %s", styledLangId, app, local,app));
+                NOut.println(NMsg.ofC("%s %s syntax highlighting re-installed successfully to %s. You might need to restart %s", styledLangId, app, local, app));
             } else {
-                NOut.println(NMsg.ofC("%s %s syntax highlighting installed successfully to %s. You might need to restart %s", styledLangId, app, local,app));
+                NOut.println(NMsg.ofC("%s %s syntax highlighting installed successfully to %s. You might need to restart %s", styledLangId, app, local, app));
             }
 
         } else {
@@ -314,15 +336,15 @@ public class NEditorSyntaxInstaller {
                 }
             }
 
-            NPath remote = NPath.of(info.getRepoFolder()).resolve( "/vim/syntax/" + info.getLangId() + ".vim");
+            NPath remote = NPath.of(info.getRepoFolder()).resolve("/vim/syntax/" + info.getLangId() + ".vim");
             remote.copyTo(local.resolve("syntax/" + info.getLangId() + ".vim").mkParentDirs());
-            remote = NPath.of(info.getRepoFolder()).resolve( "/vim/ftdetect/" + info.getLangId() + ".vim");
+            remote = NPath.of(info.getRepoFolder()).resolve("/vim/ftdetect/" + info.getLangId() + ".vim");
             remote.copyTo(local.resolve("ftdetect/" + info.getLangId() + ".vim").mkParentDirs());
 
             if (doForce) {
-                NOut.println(NMsg.ofC("%s %s syntax highlighting re-installed successfully to %s. You might need to restart %s", styledLangId, app, local,app));
+                NOut.println(NMsg.ofC("%s %s syntax highlighting re-installed successfully to %s. You might need to restart %s", styledLangId, app, local, app));
             } else {
-                NOut.println(NMsg.ofC("%s %s syntax highlighting installed successfully to %s. You might need to restart %s", styledLangId, app, local,app));
+                NOut.println(NMsg.ofC("%s %s syntax highlighting installed successfully to %s. You might need to restart %s", styledLangId, app, local, app));
             }
 
         } else {
@@ -351,15 +373,15 @@ public class NEditorSyntaxInstaller {
                 }
             }
 
-            NPath remote = NPath.of(info.getRepoFolder()).resolve( "/vscode/" + pluginName + "/package.json");
+            NPath remote = NPath.of(info.getRepoFolder()).resolve("/vscode/" + pluginName + "/package.json");
             remote.copyTo(local.resolve("package.json").mkParentDirs());
-            remote = NPath.of(info.getRepoFolder()).resolve( "/vscode/" + pluginName + "/syntaxes/" + info.getLangId() + ".tmLanguage.json");
+            remote = NPath.of(info.getRepoFolder()).resolve("/vscode/" + pluginName + "/syntaxes/" + info.getLangId() + ".tmLanguage.json");
             remote.copyTo(local.resolve("syntaxes/" + info.getLangId() + ".tmLanguage.json").mkParentDirs());
 
             if (doForce) {
-                NOut.println(NMsg.ofC("%s %s syntax highlighting re-installed successfully to %s. You might need to restart %s", styledLangId, app, local,app));
+                NOut.println(NMsg.ofC("%s %s syntax highlighting re-installed successfully to %s. You might need to restart %s", styledLangId, app, local, app));
             } else {
-                NOut.println(NMsg.ofC("%s %s syntax highlighting installed successfully to %s. You might need to restart %s", styledLangId, app, local,app));
+                NOut.println(NMsg.ofC("%s %s syntax highlighting installed successfully to %s. You might need to restart %s", styledLangId, app, local, app));
             }
 
         } else {
@@ -384,12 +406,12 @@ public class NEditorSyntaxInstaller {
                 }
             }
 
-            NPath remote = NPath.of(info.getRepoFolder()).resolve( "/gedit/" + info.getLangId() + ".lang");
+            NPath remote = NPath.of(info.getRepoFolder()).resolve("/gedit/" + info.getLangId() + ".lang");
             remote.copyTo(local.mkParentDirs());
             if (doForce) {
-                NOut.println(NMsg.ofC("%s %s syntax highlighting re-installed successfully to %s. You might need to restart %s", styledLangId, app, local,app));
+                NOut.println(NMsg.ofC("%s %s syntax highlighting re-installed successfully to %s. You might need to restart %s", styledLangId, app, local, app));
             } else {
-                NOut.println(NMsg.ofC("%s %s syntax highlighting installed successfully to %s. You might need to restart %s", styledLangId, app, local,app));
+                NOut.println(NMsg.ofC("%s %s syntax highlighting installed successfully to %s. You might need to restart %s", styledLangId, app, local, app));
             }
 
         } else {
@@ -414,12 +436,12 @@ public class NEditorSyntaxInstaller {
                 }
             }
 
-            NPath remote = NPath.of(info.getRepoFolder()).resolve( "/notepad-plus-plus/" + info.getLangId() + ".xml");
+            NPath remote = NPath.of(info.getRepoFolder()).resolve("/notepad-plus-plus/" + info.getLangId() + ".xml");
             remote.copyTo(local.mkParentDirs());
             if (doForce) {
-                NOut.println(NMsg.ofC("%s %s syntax highlighting re-installed successfully to %s. You might need to restart %s", styledLangId, app, local,app));
+                NOut.println(NMsg.ofC("%s %s syntax highlighting re-installed successfully to %s. You might need to restart %s", styledLangId, app, local, app));
             } else {
-                NOut.println(NMsg.ofC("%s %s syntax highlighting installed successfully to %s. You might need to restart %s", styledLangId, app, local,app));
+                NOut.println(NMsg.ofC("%s %s syntax highlighting installed successfully to %s. You might need to restart %s", styledLangId, app, local, app));
             }
         } else {
             NOut.println(NMsg.ofC("%s %s syntax highlighting for %s is not supported", styledLangId, app, NWorkspace.of().getOsFamily()));
@@ -442,13 +464,129 @@ public class NEditorSyntaxInstaller {
             }
         }
 
-        NPath remote = NPath.of(info.getRepoFolder()).resolve( "/jedit/" + info.getLangId() + ".xml");
+        NPath remote = NPath.of(info.getRepoFolder()).resolve("/jedit/" + info.getLangId() + ".xml");
         remote.copyTo(local.mkParentDirs());
+
+        // update catalog
+        try {
+            // Ensure parent directory exists
+            NPath catalog = local.resolveSibling("catalog");
+
+            Document doc;
+            Element modesElement;
+
+            if (catalog.isRegularFile()) {
+                DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+                factory.setIgnoringComments(true);
+                factory.setIgnoringElementContentWhitespace(true);
+
+                DocumentBuilder builder = factory.newDocumentBuilder();
+                doc = builder.parse(catalog.toFile().get());
+
+                modesElement = doc.getDocumentElement();
+
+                // Check if mode already exists
+                if (runActionInstallJEdit_modeExists(modesElement, info.getLangId())) {
+//                    System.out.println("Mode '" + info.getLangId() + "' already exists in catalog.");
+                    return;
+                }
+            } else {
+//                System.out.println("Creating new catalog file...");
+                doc = createNewCatalog();
+                modesElement = doc.getDocumentElement();
+            }
+
+            // Add the new mode
+            runActionInstallJEdit_addMode(doc, modesElement, info.getLangId(), info.getLangId()+".xml", "*."+info.getFileExtension());
+
+            // Write back to file
+            runActionInstallJEdit_writeCatalog(doc, catalog);
+
+            //System.out.println("Successfully updated catalog: " + catalogPath);
+        } catch (TransformerException e) {
+            throw new NIllegalArgumentException(NMsg.ofC("error : ", e), e);
+        } catch (ParserConfigurationException e) {
+            throw new NIllegalArgumentException(NMsg.ofC("error : ", e), e);
+        } catch (IOException e) {
+            throw new NIllegalArgumentException(NMsg.ofC("error : ", e), e);
+        } catch (SAXException e) {
+            throw new NIllegalArgumentException(NMsg.ofC("error : ", e), e);
+        }
+
         if (doForce) {
-            NOut.println(NMsg.ofC("%s %s syntax highlighting re-installed successfully to %s. You might need to restart %s", styledLangId, app, local,app));
+            NOut.println(NMsg.ofC("%s %s syntax highlighting re-installed successfully to %s. You might need to restart %s", styledLangId, app, local, app));
         } else {
-            NOut.println(NMsg.ofC("%s %s syntax highlighting installed successfully to %s. You might need to restart %s", styledLangId, app, local,app));
+            NOut.println(NMsg.ofC("%s %s syntax highlighting installed successfully to %s. You might need to restart %s", styledLangId, app, local, app));
         }
     }
 
+    /**
+     * Creates a new catalog document from scratch.
+     */
+    private static Document createNewCatalog() throws ParserConfigurationException {
+        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+        DocumentBuilder builder = factory.newDocumentBuilder();
+        Document doc = builder.newDocument();
+
+        // Add DOCTYPE
+        DOMImplementation domImpl = doc.getImplementation();
+        DocumentType doctype = domImpl.createDocumentType("MODES",
+                null, "catalog.dtd");
+
+        // Create root element
+        Element modesElement = doc.createElement("MODES");
+        doc.appendChild(modesElement);
+
+        return doc;
+    }
+
+    private static boolean runActionInstallJEdit_modeExists(Element modesElement, String modeName) {
+        NodeList modeNodes = modesElement.getElementsByTagName("MODE");
+        for (int i = 0; i < modeNodes.getLength(); i++) {
+            Element modeElement = (Element) modeNodes.item(i);
+            String name = modeElement.getAttribute("NAME");
+            if (modeName.equals(name)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Adds a new MODE element to the catalog.
+     */
+    private static void runActionInstallJEdit_addMode(Document doc, Element modesElement,
+                                                      String name, String file, String fileGlob) {
+        Element modeElement = doc.createElement("MODE");
+        modeElement.setAttribute("NAME", name);
+        modeElement.setAttribute("FILE", file);
+        modeElement.setAttribute("FILE_NAME_GLOB", fileGlob);
+
+        // Add with proper indentation
+        Text indent = doc.createTextNode("\n  ");
+        modesElement.appendChild(indent);
+        modesElement.appendChild(modeElement);
+
+        // Add final newline before closing tag
+        Text finalNewline = doc.createTextNode("\n");
+        modesElement.appendChild(finalNewline);
+    }
+
+    /**
+     * Writes the document back to the catalog file with proper formatting.
+     */
+    private static void runActionInstallJEdit_writeCatalog(Document doc, NPath catalogPath) throws TransformerException {
+        TransformerFactory transformerFactory = TransformerFactory.newInstance();
+        Transformer transformer = transformerFactory.newTransformer();
+
+        // Set output properties for nice formatting
+        transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+        transformer.setOutputProperty(OutputKeys.DOCTYPE_SYSTEM, "catalog.dtd");
+        transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
+        transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
+
+        DOMSource source = new DOMSource(doc);
+        StreamResult result = new StreamResult(catalogPath.toFile().get());
+        transformer.transform(source, result);
+    }
 }
