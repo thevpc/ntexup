@@ -1,7 +1,7 @@
 # auto install
 
 ```bash
-nuts ntexup --add-syntax-highlighting-intellij
+nuts ntexup --install-syntax=intellij
 ```
 
 # manual install
