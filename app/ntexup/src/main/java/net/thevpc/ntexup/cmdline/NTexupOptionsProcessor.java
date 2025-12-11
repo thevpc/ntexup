@@ -93,6 +93,7 @@ public class NTexupOptionsProcessor {
                                     .copy()
                                     .setRepoFolder("https://github.com/thevpc/ntexup/raw/refs/heads/main/documentation/integration")
                                     .setLangId("ntexup")
+                                    .setFileExtension("ntx")
                     ).run();
                     break;
                 }
