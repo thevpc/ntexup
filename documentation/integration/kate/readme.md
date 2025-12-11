@@ -1,4 +1,9 @@
-# install
+# auto install
+```bash
+nuts ntexup --add-syntax-highlighting-kate
+```
+
+# manual install
     put under $HOME/.local/share/org.kde.syntax-highlighting/syntax/
 
 ## README
