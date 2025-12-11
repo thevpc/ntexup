@@ -1,7 +1,7 @@
 # auto install
 
 ```bash
-nuts ntexup --add-syntax-highlighting-gedit
+nuts ntexup --install-syntax=gedit
 ```
 
 # manual install
