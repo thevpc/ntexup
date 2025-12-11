@@ -1,6 +1,6 @@
 # auto install
 ```bash
-nuts ntexup --add-syntax-highlighting-vim
+nuts ntexup --install-syntax=vim
 ```
 
 # manual install
