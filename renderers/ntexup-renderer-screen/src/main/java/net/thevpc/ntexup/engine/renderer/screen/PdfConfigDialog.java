@@ -7,7 +7,9 @@ import net.thevpc.ntexup.api.renderer.NTxDocumentStreamRenderer;
 import net.thevpc.ntexup.api.renderer.NTxDocumentStreamRendererConfig;
 import net.thevpc.ntexup.api.renderer.NTxPageOrientation;
 import net.thevpc.nuts.io.NPath;
+import net.thevpc.nuts.log.NLog;
 import net.thevpc.nuts.swing.GBC;
+import net.thevpc.nuts.text.NMsg;
 import net.thevpc.nuts.util.NLiteral;
 
 import javax.swing.*;
@@ -254,8 +256,8 @@ public class PdfConfigDialog extends JDialog {
                     if (Desktop.isDesktopSupported()) {
                         try {
                             Desktop.getDesktop().open(sf);
-                        } catch (IOException e) {
-                            e.printStackTrace();
+                        } catch (IOException ex) {
+                            NLog.of(PdfConfigDialog.class).log(NMsg.ofC("failed : %s", ex).asFinestFail(ex));
                         }
                     } else {
                         System.out.println("Desktop is not supported on this system.");
