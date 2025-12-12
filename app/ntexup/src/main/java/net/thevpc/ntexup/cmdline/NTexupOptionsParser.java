@@ -63,7 +63,7 @@ public class NTexupOptionsParser {
                             options.getOrCreate(ShowFrameActionOptions.class);
                             NSession.of().setGui(a.booleanValue());
                         })
-                        .with("--install-editor-syntax").matchEntry(a -> {
+                        .with("install-editor-syntax").matchEntry(a -> {
                             EditorActionOptions w = options.getOrCreate(EditorActionOptions.class);
                             String s = NStringUtils.firstNonBlank(a.getStringValue().orNull(), "all");
                             if (NStringUtils.trim(s).equalsIgnoreCase("all")) {
@@ -73,7 +73,7 @@ public class NTexupOptionsParser {
                             }
                             while (!cmdLine.isEmpty()) {
                                 cmdLine.matcher()
-                                        .with("--force").matchFlag(aa -> {
+                                        .with("--force","-f").matchFlag(aa -> {
                                             w.setForce(aa.booleanValue());
                                         })
                                         .withNonOption().matchAny(aa -> {
@@ -87,7 +87,7 @@ public class NTexupOptionsParser {
                                         .requireDefaults();
                             }
                         })
-                        .with("--dump").matchFlag(a -> {
+                        .with("dump").matchFlag(a -> {
                             options.getOrCreate(DumpDocumentOptions.class);
                         })
                         .withCondition(c -> {
