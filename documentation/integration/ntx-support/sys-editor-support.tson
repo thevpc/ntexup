@@ -1,0 +1,8 @@
+{
+    languageName:"NTexUp"
+    languageId:"ntexup"
+    languageVersion:"1.0.0"
+    languageGroupId:"thevpc"
+    fileName:"*.ntx"
+    fileExtension:"ntx"
+}
