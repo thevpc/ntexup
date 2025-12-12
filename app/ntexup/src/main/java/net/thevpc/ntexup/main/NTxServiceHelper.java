@@ -10,6 +10,7 @@ import net.thevpc.ntexup.config.NTxViewerConfigManager;
 import net.thevpc.ntexup.config.UserConfig;
 import net.thevpc.ntexup.config.UserConfigManager;
 import net.thevpc.ntexup.debug.NTxDebugFrame;
+import net.thevpc.ntexup.debug.NTxTsonPanel;
 import net.thevpc.ntexup.engine.impl.DefaultNTxEngine;
 import net.thevpc.ntexup.main.components.NewProjectPanel;
 import net.thevpc.ntexup.api.renderer.NTxDocumentRendererListener;
@@ -18,6 +19,8 @@ import net.thevpc.ntexup.api.renderer.NTxDocumentStreamRenderer;
 import net.thevpc.ntexup.api.renderer.NTxDocumentStreamRendererConfig;
 import net.thevpc.ntexup.util.NTexupUtils;
 import net.thevpc.nuts.io.NPath;
+import net.thevpc.nuts.log.NLog;
+import net.thevpc.nuts.text.NMsg;
 import net.thevpc.nuts.util.NBlankable;
 import net.thevpc.nuts.util.NStringUtils;
 
@@ -253,8 +256,8 @@ public class NTxServiceHelper {
                 if (Desktop.isDesktopSupported()) {
                     try {
                         Desktop.getDesktop().open(sf);
-                    } catch (IOException e) {
-                        e.printStackTrace();
+                    } catch (IOException ex) {
+                        NLog.of(NTxServiceHelper.class).log(NMsg.ofC("failed : %s", ex).asFinestFail(ex));
                     }
                 } else {
                     System.out.println("Desktop is not supported on this system.");
