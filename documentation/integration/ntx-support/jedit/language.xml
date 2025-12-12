@@ -1,0 +1,134 @@
+<?xml version="1.0"?>
+<!DOCTYPE MODE SYSTEM "xmode.dtd">
+
+<MODE>
+    <PROPS>
+        <PROPERTY NAME="commentStart" VALUE="/*" />
+        <PROPERTY NAME="commentEnd" VALUE="*/" />
+        <PROPERTY NAME="lineComment" VALUE="//" />
+
+        <PROPERTY NAME="file" VALUE="*.ntx" />
+        <PROPERTY NAME="firstlineGlob" VALUE="" />
+    </PROPS>
+
+    <RULES IGNORE_CASE="FALSE" HIGHLIGHT_DIGITS="TRUE">
+        <!-- Comments -->
+        <EOL_SPAN TYPE="COMMENT1">//</EOL_SPAN>
+        <SPAN TYPE="COMMENT1">
+            <BEGIN>/*</BEGIN>
+            <END>*/</END>
+        </SPAN>
+
+        <!-- Strings -->
+        <SPAN TYPE="LITERAL1" NO_LINE_BREAK="FALSE" ESCAPE="\">
+            <BEGIN>"</BEGIN>
+            <END>"</END>
+        </SPAN>
+        <SPAN TYPE="LITERAL1" NO_LINE_BREAK="FALSE" ESCAPE="\">
+            <BEGIN>'</BEGIN>
+            <END>'</END>
+        </SPAN>
+
+        <!-- Keywords (primary) -->
+        <KEYWORDS>
+            <KEYWORD1>page</KEYWORD1>
+            <KEYWORD1>page-group</KEYWORD1>
+            <KEYWORD1>import</KEYWORD1>
+            <KEYWORD1>include</KEYWORD1>
+            <KEYWORD1>if</KEYWORD1>
+            <KEYWORD1>else</KEYWORD1>
+            <KEYWORD1>true</KEYWORD1>
+            <KEYWORD1>false</KEYWORD1>
+            <KEYWORD1>styles</KEYWORD1>
+            <KEYWORD1>template</KEYWORD1>
+            <KEYWORD1>ntexup</KEYWORD1>
+            <KEYWORD1>json</KEYWORD1>
+            <KEYWORD1>xml</KEYWORD1>
+            <KEYWORD1>yaml</KEYWORD1>
+            <KEYWORD1>tson</KEYWORD1>
+            <KEYWORD1>arrayLeftRotate</KEYWORD1>
+            <KEYWORD1>arrayRightRotate</KEYWORD1>
+            <KEYWORD1>componentBody</KEYWORD1>
+            <KEYWORD1>either</KEYWORD1>
+            <KEYWORD1>eitherPath</KEYWORD1>
+            <KEYWORD1>rotateSinebowColor</KEYWORD1>
+            <KEYWORD1>lighterColor</KEYWORD1>
+            <KEYWORD1>darkerColor</KEYWORD1>
+
+            <!-- Drawing primitives -->
+            <KEYWORD2>arc</KEYWORD2>
+            <KEYWORD2>circle</KEYWORD2>
+            <KEYWORD2>ellipse</KEYWORD2>
+            <KEYWORD2>line</KEYWORD2>
+            <KEYWORD2>rectangle</KEYWORD2>
+            <KEYWORD2>polygon</KEYWORD2>
+            <KEYWORD2>polyline</KEYWORD2>
+            <KEYWORD2>points</KEYWORD2>
+            <KEYWORD2>grid</KEYWORD2>
+            <KEYWORD2>column</KEYWORD2>
+            <KEYWORD2>row</KEYWORD2>
+            <KEYWORD2>group</KEYWORD2>
+            <KEYWORD2>flow</KEYWORD2>
+            <KEYWORD2>gantt</KEYWORD2>
+            <KEYWORD2>sphere</KEYWORD2>
+            <KEYWORD2>cylinder</KEYWORD2>
+            <KEYWORD2>diamond</KEYWORD2>
+            <KEYWORD2>hexagon</KEYWORD2>
+            <KEYWORD2>pentagon</KEYWORD2>
+            <KEYWORD2>octagon</KEYWORD2>
+            <KEYWORD2>nonagon</KEYWORD2>
+            <KEYWORD2>trapezoid</KEYWORD2>
+            <KEYWORD2>triangle</KEYWORD2>
+            <KEYWORD2>triangle-full</KEYWORD2>
+            <KEYWORD2>oval-full</KEYWORD2>
+            <KEYWORD2>parallelogram</KEYWORD2>
+            <KEYWORD2>text</KEYWORD2>
+            <KEYWORD2>txt</KEYWORD2>
+            <KEYWORD2>image</KEYWORD2>
+            <KEYWORD2>img</KEYWORD2>
+            <KEYWORD2>plot2d</KEYWORD2>
+
+            <!-- Attributes -->
+            <KEYWORD3>at</KEYWORD3>
+            <KEYWORD3>anchor</KEYWORD3>
+            <KEYWORD3>position</KEYWORD3>
+            <KEYWORD3>top</KEYWORD3>
+            <KEYWORD3>bottom</KEYWORD3>
+            <KEYWORD3>left</KEYWORD3>
+            <KEYWORD3>right</KEYWORD3>
+            <KEYWORD3>center</KEYWORD3>
+            <KEYWORD3>size</KEYWORD3>
+            <KEYWORD3>width</KEYWORD3>
+            <KEYWORD3>height</KEYWORD3>
+            <KEYWORD3>columns</KEYWORD3>
+            <KEYWORD3>rows</KEYWORD3>
+            <KEYWORD3>color</KEYWORD3>
+            <KEYWORD3>bg</KEYWORD3>
+            <KEYWORD3>fg</KEYWORD3>
+            <KEYWORD3>stroke</KEYWORD3>
+            <KEYWORD3>fill</KEYWORD3>
+            <KEYWORD3>margin</KEYWORD3>
+            <KEYWORD3>font-bold</KEYWORD3>
+            <KEYWORD3>font-italic</KEYWORD3>
+            <KEYWORD3>font-size</KEYWORD3>
+            <KEYWORD3>font-underline</KEYWORD3>
+            <KEYWORD3>font-family</KEYWORD3>
+            <KEYWORD3>debug</KEYWORD3>
+            <KEYWORD3>hide</KEYWORD3>
+            <KEYWORD3>show</KEYWORD3>
+            <KEYWORD3>start-arrow</KEYWORD3>
+            <KEYWORD3>end-arrow</KEYWORD3>
+
+            <!-- Document metadata -->
+            <KEYWORD4>documentTitle</KEYWORD4>
+            <KEYWORD4>documentSubtitle</KEYWORD4>
+            <KEYWORD4>documentAuthor</KEYWORD4>
+            <KEYWORD4>documentSection</KEYWORD4>
+            <KEYWORD4>documentSubsection</KEYWORD4>
+            <KEYWORD4>agenda-slide</KEYWORD4>
+            <KEYWORD4>cover-slide</KEYWORD4>
+            <KEYWORD4>content-slide</KEYWORD4>
+            <KEYWORD4>thankyou-slide</KEYWORD4>
+        </KEYWORDS>
+    </RULES>
+</MODE>
