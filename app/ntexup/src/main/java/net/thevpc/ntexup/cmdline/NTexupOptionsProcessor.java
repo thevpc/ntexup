@@ -93,7 +93,7 @@ public class NTexupOptionsProcessor {
                     NSysEditorSupportCmd.of()
                             .setSource(NPath.of("https://github.com/thevpc/ntexup/raw/refs/heads/main/documentation/integration/ntx-support"))
                             .setLanguageId("ntexup")
-                            .setLanguageId("NTexUp")
+                            .setLanguageName("NTexUp")
                             .setLanguageVersion("1.0.0")
                             .setFileExtension("ntx")
                             .setFileName("*.ntx")
