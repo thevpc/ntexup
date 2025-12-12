@@ -2,11 +2,14 @@ package net.thevpc.ntexup.cmdline;
 
 import net.thevpc.ntexup.cmdline.options.*;
 import net.thevpc.ntexup.config.NTxViewerConfigManager;
+import net.thevpc.nuts.command.NSysEditorFamily;
 import net.thevpc.nuts.core.NSession;
 import net.thevpc.nuts.cmdline.NArg;
 import net.thevpc.nuts.cmdline.NCmdLine;
 import net.thevpc.nuts.io.NPath;
 import net.thevpc.nuts.util.NStringUtils;
+
+import java.util.Arrays;
 
 public class NTexupOptionsParser {
     public void parse(NCmdLine cmdLine, Options options) {
@@ -60,15 +63,27 @@ public class NTexupOptionsParser {
                             options.getOrCreate(ShowFrameActionOptions.class);
                             NSession.of().setGui(a.booleanValue());
                         })
-                        .with("--install-syntax").matchEntry(a -> {
+                        .with("--install-editor-syntax").matchEntry(a -> {
                             EditorActionOptions w = options.getOrCreate(EditorActionOptions.class);
-                            w.getSyntaxInfo().addEditor(NStringUtils.firstNonBlank(a.getStringValue().orNull(), "all"));
+                            String s = NStringUtils.firstNonBlank(a.getStringValue().orNull(), "all");
+                            if (NStringUtils.trim(s).equalsIgnoreCase("all")) {
+                                w.getSyntaxInfo().addAll(Arrays.asList(NSysEditorFamily.values()));
+                            } else {
+                                w.getSyntaxInfo().addAll(NSysEditorFamily.parseSet(s).get());
+                            }
                             while (!cmdLine.isEmpty()) {
                                 cmdLine.matcher()
                                         .with("--force").matchFlag(aa -> {
-                                            w.getSyntaxInfo().setForce(aa.booleanValue());
+                                            w.setForce(aa.booleanValue());
                                         })
-                                        .withNonOption().matchAny(aa -> w.getSyntaxInfo().addEditor(aa.asString().orNull()))
+                                        .withNonOption().matchAny(aa -> {
+                                            String ss = NStringUtils.trim(aa.asString().orNull());
+                                            if (NStringUtils.trim(ss).equalsIgnoreCase("all")) {
+                                                w.getSyntaxInfo().addAll(Arrays.asList(NSysEditorFamily.values()));
+                                            } else {
+                                                w.getSyntaxInfo().addAll(NSysEditorFamily.parseSet(ss).get());
+                                            }
+                                        })
                                         .requireDefaults();
                             }
                         })
