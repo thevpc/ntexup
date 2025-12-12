@@ -228,7 +228,8 @@ Developed and maintained by [thevpc](https://github.com/thevpc).
 
 ## Best practices
 ### add Idea Syntax Highlighting
-If you are using IntelliJ Idea, you would find it interesting to consider syntax highlighting of hd files.
-You need to copy `GIHUB_ROOT/documentation/integration/ntexup.xml` under your home folder
-`~/.config/JetBrains/IntelliJIdea2024.1/filetypes/`
-(assuming you have IntelliJIdea2024.1 version installed, otherwise you need to consider to correct folder name)
+If you are using one of the main editors, you would find it interesting to consider syntax highlighting of ntx files.
+run the following (you can retain only the editor you are using)
+```bash
+nuts ntexup --install-editor-syntax vim kate intellij gedit vscode notepad++ 
+```
