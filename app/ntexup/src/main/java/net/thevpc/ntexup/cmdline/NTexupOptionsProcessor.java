@@ -12,6 +12,8 @@ import net.thevpc.ntexup.engine.repo.RepoBuilderTool;
 import net.thevpc.ntexup.main.MainFrame;
 import net.thevpc.ntexup.util.NTexupUtils;
 import net.thevpc.nuts.artifact.NId;
+import net.thevpc.nuts.command.NSysEditorFamily;
+import net.thevpc.nuts.command.NSysEditorSupportCmd;
 import net.thevpc.nuts.io.NAsk;
 import net.thevpc.nuts.io.NOut;
 import net.thevpc.nuts.core.NSession;
@@ -88,13 +90,15 @@ public class NTexupOptionsProcessor {
                 }
                 case EDITOR: {
                     EditorActionOptions v = (EditorActionOptions) a.getValue();
-                    new NEditorSyntaxInstaller(
-                            v.getSyntaxInfo()
-                                    .copy()
-                                    .setRepoFolder("https://github.com/thevpc/ntexup/raw/refs/heads/main/documentation/integration")
-                                    .setLangId("ntexup")
-                                    .setFileExtension("ntx")
-                    ).run();
+                    NSysEditorSupportCmd.of()
+                            .setSource(NPath.of("https://github.com/thevpc/ntexup/raw/refs/heads/main/documentation/integration/ntx-support"))
+                            .setLanguageId("ntexup")
+                            .setLanguageId("NTexUp")
+                            .setLanguageVersion("1.0.0")
+                            .setFileExtension("ntx")
+                            .setFileName("*.ntx")
+                            .addEditorFamilies(v.getSyntaxInfo().toArray(new NSysEditorFamily[0]))
+                            .run();
                     break;
                 }
             }
