@@ -2,6 +2,8 @@ package net.thevpc.ntexup.debug;
 
 import net.thevpc.ntexup.api.document.NTxDocument;
 import net.thevpc.nuts.elem.NElement;
+import net.thevpc.nuts.log.NLog;
+import net.thevpc.nuts.text.NMsg;
 
 import javax.swing.*;
 import java.awt.*;
@@ -28,7 +30,7 @@ public abstract class NTxTsonPanel extends JPanel {
             }
         } catch (Exception ex) {
             txt = "ERROR EVALUATION TSON : "+ex.toString();
-            ex.printStackTrace();
+            NLog.of(NTxTsonPanel.class).log(NMsg.ofC("failed : %s", ex).asFinestFail(ex));
         }
         String finalTxt = txt;
         if (SwingUtilities.isEventDispatchThread()) {
