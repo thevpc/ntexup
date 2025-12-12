@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<language id="ntexup" _name="NTexUp" version="1.0"
+          _section="Sources" _mimetypes="text/x-ntx"
+          globs="*.ntx;*.ndoc">
+
+    <metadata>
+        <property name="comment" value="//"/>
+    </metadata>
+
+    <!-- Comments -->
+    <definitions>
+        <comment start="//" end="\n"/>
+        <comment start="/*" end="*/"/>
+
+        <!-- Strings -->
+        <string>
+            <start>"</start>
+            <end>"</end>
+            <escape>\</escape>
+        </string>
+        <string>
+            <start>'</start>
+            <end>'</end>
+            <escape>\</escape>
+        </string>
+
+        <!-- Numbers -->
+        <number>
+            \b\d+(\.\d+)?([eE][+-]?\d+)?\b
+        </number>
+
+        <!-- Keywords category 1 -->
+        <keyword-list id="keywords1">
+            <keyword>page</keyword>
+            <keyword>page-group</keyword>
+            <keyword>import</keyword>
+            <keyword>include</keyword>
+            <keyword>if</keyword>
+            <keyword>else</keyword>
+            <keyword>true</keyword>
+            <keyword>false</keyword>
+            <keyword>styles</keyword>
+            <keyword>template</keyword>
+            <keyword>ntexup</keyword>
+            <keyword>json</keyword>
+            <keyword>xml</keyword>
+            <keyword>yaml</keyword>
+            <keyword>tson</keyword>
+            <keyword>arrayLeftRotate</keyword>
+            <keyword>arrayRightRotate</keyword>
+            <keyword>componentBody</keyword>
+            <keyword>either</keyword>
+            <keyword>eitherPath</keyword>
+            <keyword>rotateSinebowColor</keyword>
+            <keyword>lighterColor</keyword>
+            <keyword>darkerColor</keyword>
+        </keyword-list>
+
+        <!-- Keywords category 2: shapes / drawing primitives -->
+        <keyword-list id="keywords2">
+            <keyword>arc</keyword>
+            <keyword>circle</keyword>
+            <keyword>ellipse</keyword>
+            <keyword>line</keyword>
+            <keyword>rectangle</keyword>
+            <keyword>polygon</keyword>
+            <keyword>polyline</keyword>
+            <keyword>points</keyword>
+            <keyword>grid</keyword>
+            <keyword>column</keyword>
+            <keyword>row</keyword>
+            <keyword>group</keyword>
+            <keyword>flow</keyword>
+            <keyword>gantt</keyword>
+            <keyword>sphere</keyword>
+            <keyword>cylinder</keyword>
+            <keyword>diamond</keyword>
+            <keyword>hexagon</keyword>
+            <keyword>pentagon</keyword>
+            <keyword>octagon</keyword>
+            <keyword>nonagon</keyword>
+            <keyword>trapezoid</keyword>
+            <keyword>triangle</keyword>
+            <keyword>triangle-full</keyword>
+            <keyword>oval-full</keyword>
+            <keyword>parallelogram</keyword>
+            <keyword>text</keyword>
+            <keyword>txt</keyword>
+            <keyword>image</keyword>
+            <keyword>img</keyword>
+            <keyword>plot2d</keyword>
+        </keyword-list>
+
+        <!-- Keywords category 3: attributes -->
+        <keyword-list id="keywords3">
+            <keyword>at</keyword>
+            <keyword>anchor</keyword>
+            <keyword>position</keyword>
+            <keyword>top</keyword>
+            <keyword>bottom</keyword>
+            <keyword>left</keyword>
+            <keyword>right</keyword>
+            <keyword>center</keyword>
+            <keyword>size</keyword>
+            <keyword>width</keyword>
+            <keyword>height</keyword>
+            <keyword>columns</keyword>
+            <keyword>rows</keyword>
+            <keyword>color</keyword>
+            <keyword>bg</keyword>
+            <keyword>fg</keyword>
+            <keyword>stroke</keyword>
+            <keyword>fill</keyword>
+            <keyword>margin</keyword>
+            <keyword>font-bold</keyword>
+            <keyword>font-italic</keyword>
+            <keyword>font-size</keyword>
+            <keyword>font-underline</keyword>
+            <keyword>font-family</keyword>
+            <keyword>debug</keyword>
+            <keyword>hide</keyword>
+            <keyword>show</keyword>
+            <keyword>start-arrow</keyword>
+            <keyword>end-arrow</keyword>
+        </keyword-list>
+
+        <!-- Keywords category 4: document metadata -->
+        <keyword-list id="keywords4">
+            <keyword>documentTitle</keyword>
+            <keyword>documentSubtitle</keyword>
+            <keyword>documentAuthor</keyword>
+            <keyword>documentSection</keyword>
+            <keyword>documentSubsection</keyword>
+            <keyword>agenda-slide</keyword>
+            <keyword>cover-slide</keyword>
+            <keyword>content-slide</keyword>
+            <keyword>thankyou-slide</keyword>
+        </keyword-list>
+
+    </definitions>
+
+    <styles>
+        <style name="comment"       foreground="#008000" />
+        <style name="string"        foreground="#B22222" />
+        <style name="number"        foreground="#0000FF" />
+        <style name="keyword1"      foreground="#0000FF" weight="bold" />
+        <style name="keyword2"      foreground="#2E8B57" weight="bold" />
+        <style name="keyword3"      foreground="#8B008B" />
+        <style name="keyword4"      foreground="#FF4500" />
+    </styles>
+
+    <contexts>
+        <context id="main">
+            <include ref="comment"/>
+            <include ref="string"/>
+            <include ref="number"/>
+            <keyword ref="keywords1" style="keyword1"/>
+            <keyword ref="keywords2" style="keyword2"/>
+            <keyword ref="keywords3" style="keyword3"/>
+            <keyword ref="keywords4" style="keyword4"/>
+        </context>
+    </contexts>
+</language>
