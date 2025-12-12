@@ -4,73 +4,109 @@
 
 ### INSTALL
 
-```
+```sh
 nuts install ntexup
 ```
 
 ##) EXAMPLE OF USAGE
 
-```
-nuts ntexup show  file.ntexup
+```sh
+nuts ntexup show  file.ntx
 ```
 
 ###) SYNOPSYS (CMD MODE)
 
-```
-nuts ntexup <option> file.ntexup
+```sh
+nuts ntexup <option> file.ntx
 ```
 
 Commands are :
 
-```reopen```
+```sh
+nuts ntexup reopen
+```
 reopen last file/folder
 
-```build-repo --dump```
+```sh
+nuts ntexup build-repo --dump
+```
 build repository
 
-```list-templates```
+```sh
+nuts ntexup list-templates
+```
 list available templates
 
-```generate-doc```
+```sh
+nuts ntexup generate-doc
+```
 build documentation
 
-```generate <path>```
+```sh
+nuts ntexup generate <path>
+```
 generate file ntexup file/folder
 
 ```--output=<path>```
 generated file output file/folder path
 
 
-```--pdf```
+```sh
+nuts ntexup pdf
+```
 generate pf
 
-```--dump```
+
+```sh
+nuts ntexup dump
+```
 show dump
+
+```sh
+nuts ntexup dump
+```
+show dump
+
+
+```sh
+nuts ntexup install-editor-syntax [--force|-f] all|gedit|intellij|jedit|kate|notepad++|vim|vscode...
+```
+install NTexUp format (ntx) syntax highlighting for the given editors.
 
 
 ###) SYNOPSYS (UI MODE)
 
-```
+```sh
 nuts ntexup show <option>
 ```
 
 
 Options are :
 
-```new```
+```sh
+nuts ntexup new
+```
 create new project
 
-```new --show```
+```sh
+nuts ntexup new --show
+```
 create new project and show it
 
-```--show-log```
+```sh
+nuts ntexup --show-log
+```
 show log panel
 
 
-```show-doc```
+```sh
+   nuts ntexup show-doc
+```
 show documentation
 
-```show <path>```
+```sh
+   nuts ntexup show <path>
+```
 
 
 ##) EXAMPLES:
