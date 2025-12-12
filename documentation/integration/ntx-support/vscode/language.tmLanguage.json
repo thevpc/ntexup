@@ -1,0 +1,109 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "NTexUp",
+  "scopeName": "source.ntexup",
+  "patterns": [
+    {
+      "include": "#comments"
+    },
+    {
+      "include": "#strings"
+    },
+    {
+      "include": "#numbers"
+    },
+    {
+      "include": "#keywords"
+    },
+    {
+      "include": "#primitives"
+    },
+    {
+      "include": "#attributes"
+    },
+    {
+      "include": "#document"
+    }
+  ],
+  "repository": {
+    "comments": {
+      "patterns": [
+        {
+          "name": "comment.line.double-slash.ntexup",
+          "match": "//.*$"
+        },
+        {
+          "name": "comment.block.ntexup",
+          "begin": "/\\*",
+          "end": "\\*/"
+        }
+      ]
+    },
+    "strings": {
+      "patterns": [
+        {
+          "name": "string.quoted.double.ntexup",
+          "begin": "\"",
+          "end": "\"",
+          "patterns": [
+            {
+              "name": "constant.character.escape.ntexup",
+              "match": "\\\\."
+            }
+          ]
+        },
+        {
+          "name": "string.quoted.single.ntexup",
+          "begin": "'",
+          "end": "'",
+          "patterns": [
+            {
+              "name": "constant.character.escape.ntexup",
+              "match": "\\\\."
+            }
+          ]
+        }
+      ]
+    },
+    "numbers": {
+      "patterns": [
+        {
+          "name": "constant.numeric.ntexup",
+          "match": "\\b(\\d+(\\.\\d*)?|\\.\\d+)([eE][+-]?\\d+)?\\b"
+        }
+      ]
+    },
+    "keywords": {
+      "patterns": [
+        {
+          "name": "keyword.control.ntexup",
+          "match": "\\b(page|page-group|import|include|if|else|true|false|styles|template|ntexup|json|xml|yaml|tson|arrayLeftRotate|arrayRightRotate|componentBody|either|eitherPath|rotateSinebowColor|lighterColor|darkerColor)\\b"
+        }
+      ]
+    },
+    "primitives": {
+      "patterns": [
+        {
+          "name": "entity.name.type.ntexup",
+          "match": "\\b(arc|circle|ellipse|line|rectangle|polygon|polyline|points|grid|group|flow|gantt|sphere|cylinder|diamond|hexagon|pentagon|octagon|nonagon|trapezoid|triangle|triangle-full|oval-full|parallelogram|text|txt|image|img|plot2d)\\b"
+        }
+      ]
+    },
+    "attributes": {
+      "patterns": [
+        {
+          "name": "variable.parameter.ntexup",
+          "match": "\\b(at|anchor|position|top|bottom|left|right|center|size|width|height|columns|rows|color|bg|fg|stroke|fill|margin|font-bold|font-italic|font-size|font-underline|font-family|debug|hide|show|start-arrow|end-arrow)\\b"
+        }
+      ]
+    },
+    "document": {
+      "patterns": [
+        {
+          "name": "support.class.ntexup",
+          "match": "\\b(documentTitle|documentSubtitle|documentAuthor|documentSection|documentSubsection|agenda-slide|cover-slide|content-slide|thankyou-slide)\\b"
+        }
+      ]
+    }
+  }
+}
