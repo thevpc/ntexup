@@ -8,6 +8,8 @@ import net.thevpc.ntexup.api.source.NTxSource;
 import net.thevpc.ntexup.api.renderer.NTxDocumentStreamRendererConfig;
 import net.thevpc.ntexup.engine.renderer.screen.utils.JPopupMenuHelper;
 import net.thevpc.nuts.io.NPath;
+import net.thevpc.nuts.log.NLog;
+import net.thevpc.nuts.text.NMsg;
 import net.thevpc.nuts.util.NLiteral;
 
 import javax.swing.*;
@@ -41,7 +43,7 @@ public class DocumentPopupMenu {
                                 try {
                                     Desktop.getDesktop().open(file);
                                 } catch (IOException ex) {
-                                    ex.printStackTrace();
+                                    NLog.of(DocumentPopupMenu.class).log(NMsg.ofC("failed : %s", ex).asFinestFail(ex));
                                 }
                             });
                 }
