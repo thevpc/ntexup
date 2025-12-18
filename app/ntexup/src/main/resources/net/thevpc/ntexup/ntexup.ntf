@@ -1,0 +1,454 @@
+##:7:NTexUp## - Declarative Document & Presentation Generator
+
+```sh NTexUp``` is an open-source, text-based document and presentation generator designed to make the creation of professional, math-heavy, and reusable teaching materials effortless.
+
+##) INSTALLATION
+
+```sh
+nuts install ntexup
+```
+
+##) QUICK START
+
+```sh
+# Create a new project (interactive)
+nuts ntexup new myproject
+cd myproject
+
+# Open project in the viewer (uses current directory)
+nuts ntexup show
+
+# Generate a PDF from current directory
+nuts ntexup generate
+```
+
+---
+
+##) COMMAND REFERENCE
+
+###) Document Viewing & Editing
+
+####) ```sh show | open [path]```
+Open a document or project in the GUI viewer. If no path is specified, opens the current directory.
+
+```sh
+# Open current directory (most common usage)
+cd myproject
+nuts ntexup show
+
+# Open a specific document
+nuts ntexup show document.ntx
+
+# Open a project from another location
+nuts ntexup show ./myproject
+
+# Open with GUI explicitly enabled
+nuts ntexup show --gui
+```
+
+When opening a directory, NTexUp automatically detects the project structure and loads all pages from the project's main file.
+
+
+####) ```sh reopen```
+Reopen the last opened file or folder from your history.
+
+```sh
+nuts ntexup reopen
+```
+
+####) ```sh show-doc```
+Open the official NTexUp documentation and tutorial slides.
+
+```sh
+nuts ntexup show-doc
+```
+
+---
+
+###) Project Creation
+
+####) ```sh new [path] [options]```sh
+Create a new NTexUp project from a template.
+
+```sh
+# Create a new project (interactive template selection)
+nuts ntexup new myproject
+
+# Create with a specific template
+nuts ntexup new myproject --template slides-basic
+
+# Create and immediately open in viewer
+nuts ntexup new myproject --show
+
+# Create and generate PDF
+nuts ntexup new myproject --generate-pdf
+
+# Create and generate PDF with custom output
+nuts ntexup new myproject --generate-pdf=output.pdf
+```
+
+###Options:###
+- ```sh --template=<url> | -t <url>``` : Specify template URL or ID
+- ```sh --show``` : Open the project in the viewer after creation
+- ```sh --generate-pdf[=path]``` : Generate PDF immediately after creation
+- ```sh --generate-doc-pdf[=path]``` : Generate documentation PDF
+- ```sh --show-doc``` : Open documentation in viewer
+
+---
+
+###) PDF Generation
+
+####) ```sh generate | pdf [path] [options]```
+Create a new NTexUp project from a template. If no template is specified, presents an interactive menu of available templates.
+
+```sh
+# Create a new project with interactive template selection
+nuts ntexup new myproject
+
+# Create with a specific template by ID
+nuts ntexup new myproject --template classic-medium
+
+# Create with a specific template by number (from list)
+nuts ntexup new myproject --template 5
+
+# Create with a template URL
+nuts ntexup new myproject --template https://github.com/user/template.git
+
+# Create and immediately open in viewer
+nuts ntexup new myproject --show
+
+# Create and generate PDF
+nuts ntexup new myproject --generate-pdf
+
+# Create and generate PDF with custom output
+nuts ntexup new myproject --generate-pdf=output.pdf
+```
+
+Interactive Template Selection:
+When you run nuts ntexup new myproject without specifying a template, you'll see a menu like:
+
+```
+Enter template url. You can choose from the following :
+[#1 ]   dev:ibtihel-small#1.0     : /path/to/template
+[#2 ] * dev:ibtihel-medium#1.0    : /path/to/template
+[#3 ]   dev:ibtihel-large#1.0     : /path/to/template
+[#4 ]   dev:classic-small#1.0     : /path/to/template
+[#5 ] * dev:classic-medium#1.0    : /path/to/template
+...
+ ? :
+```
+
+Templates marked with (*) are recommended for general use. Enter:
+- A number (e.g., 5) to select by position
+- A template ID (e.g., classic-medium)
+- A full template URL
+
+Project Structure:
+After creation, a typical project looks like:
+
+```
+myproject/
+├── main.ntx              # Main project file
+└── pages/                # Individual page files
+    ├── 0001-plan.ntx     # Introduction/plan
+    ├── 0010-slide.ntx    # Content slides
+    └── 9901-conclusion.ntx # Conclusion
+```
+
+###Options:###
+- ```sh --template=<url> | -t <url>``` : Specify template URL, ID, or number
+- ```sh --show``` : Open the project in the viewer after creation
+- ```sh --generate-pdf[=path]``` : Generate PDF immediately after creation
+- ```sh --generate-doc-pdf[=path]``` : Generate documentation PDF
+- ```sh --show-doc``` : Open documentation in viewer
+
+
+####) ```sh generate-doc|pdf [options]```
+Generate PDF from the official NTexUp documentation.
+
+```sh
+# Generate PDF from current directory
+nuts ntexup generate
+
+# Generate PDF from specific document
+nuts ntexup generate document.ntx
+
+# Generate PDF from specific project
+nuts ntexup generate myproject/
+
+# Generate with custom output path
+nuts ntexup generate document.ntx --output=output.pdf
+
+# Generate from multiple documents
+nuts ntexup generate doc1.ntx doc2.ntx --output=./pdfs/
+```
+
+Output Behavior:
+
+If --output specifies a directory, PDF names are derived from source files
+If --output specifies a file, that exact filename is used (single source only)
+Default output is the current directory with .pdf extension
+
+###Options:###
+- ```sh --output=<path>``` : Specify output file or directory
+- ```sh --var-<name>=<value>``` : Pass custom variables to the document template
+- ```sh --dump``` : Show debug information during generation
+
+---
+
+### Templates & Repository
+
+#### ```sh list-templates```
+Display all available project templates with their IDs and URLs.
+
+```sh
+nuts ntexup list-templates
+```
+
+Output shows:
+- Template ID
+- Template name
+- Recommended templates (marked with *)
+- Template URL
+
+####) ```sh build-repo  [path]```
+Build or update a template repository index. Used for maintaining template collections.
+
+```sh
+# Build repository in current directory
+nuts ntexup build-repo
+
+# Build repository at specific path
+nuts ntexup build-repo ./templates/
+
+# Build with debug output
+nuts ntexup build-repo --dump
+```
+
+---
+
+###) Editor Integration
+
+####) ```sh install-editor-syntax [editors] [options]```
+Install syntax highlighting support for NTexUp (.ntx) files in various text editors.
+
+```sh
+# Install for all supported editors
+nuts ntexup install-editor-syntax all
+
+# Install for specific editors
+nuts ntexup install-editor-syntax vscode intellij
+
+# Install with force overwrite
+nuts ntexup install-editor-syntax vim --force
+```
+
+###Supported Editors:###
+- ##:bold all## : Install for all supported editors
+- ##:bold vscode## : Visual Studio Code
+- ##:bold intellij## : IntelliJ IDEA
+- ##:bold vim## : Vim/NeoVim
+- ##:bold gedit## : GNOME Text Editor
+- ##:bold kate## : Kate Editor
+- ##:bold notepad## +`: Notepad++
+- ##:bold jedit## : jEdit
+
+####Options:####
+- ```sh --force | -f``` : Overwrite existing syntax files
+
+---
+
+###) Debugging & Utilities
+
+####) ```sh dump```
+Display detailed debug information about the current operation or document structure.
+
+```sh
+# Show debug info for any command
+nuts ntexup generate document.ntx --dump
+nuts ntexup new project --dump
+nuts ntexup build-repo --dump
+```
+
+####) ```sh --gui** | **--!gui```
+Force GUI mode on or off, overriding the default behavior.
+
+```sh
+# Force GUI mode
+nuts ntexup show document.ntx --gui
+
+# Force terminal mode
+nuts ntexup generate document.ntx --no-gui
+```
+
+---
+
+##) COMMON WORKFLOWS
+
+###) Creating Your First Presentation
+
+```nsh
+# Create a new presentation project
+nuts ntexup new my-presentation
+
+# When prompted, select a template (e.g., enter "5" for classic-medium)
+# The project structure is created automatically
+
+# Navigate to your project
+cd my-presentation
+
+# Edit your content (main.ntx and files in pages/)
+# Use your preferred editor
+
+# Preview in the viewer (opens current directory)
+nuts ntexup show
+
+# Generate PDF when ready (uses current directory)
+nuts ntexup generate --output=presentation.pdf
+```
+
+
+###) Working with Existing Projects
+
+```
+# Navigate to your project directory
+cd myproject
+
+# Open in viewer (uses current directory)
+nuts ntexup show
+
+# Or open from any location
+nuts ntexup show ~/Documents/myproject
+
+# Reopen last project
+nuts ntexup reopen
+
+# Generate PDF from current directory
+cd myproject
+nuts ntexup generate
+```
+
+###) Creating and Viewing a Presentation
+
+```sh
+# Create a new presentation project
+nuts ntexup new lecture01 --template slides-modern
+
+# Open it in the viewer
+nuts ntexup show lecture01
+
+# Generate PDF when ready
+nuts ntexup generate lecture01 --output=lecture01.pdf
+```
+
+###) Batch PDF Generation
+
+```sh
+# Generate PDFs for all documents in a folder
+nuts ntexup generate ./lectures/ --output=./pdfs/
+
+# Generate with custom variables
+nuts ntexup generate course.ntx \
+  --var-semester="Spring 2025" \
+  --var-instructor="Dr. Smith" \
+  --output=course-spring-2025.pdf
+```
+
+###) Setting Up Your Editor
+
+```sh
+# View available templates
+nuts ntexup list-templates
+
+# Install syntax highlighting for your editor
+nuts ntexup install-editor-syntax vscode
+
+# Or install for all editors at once
+nuts ntexup install-editor-syntax all --force
+
+# View documentation
+nuts ntexup show-doc
+```
+
+###) Template Repository Management
+
+```sh
+# Create your own template repository
+mkdir my-templates
+cd my-templates
+# (add your template folders)
+nuts ntexup build-repo
+
+# Use your custom template
+nuts ntexup new myproject --template /path/to/my-templates/my-template
+```
+
+---
+
+##) PATH ARGUMENTS
+
+Most commands accept path arguments that can be:
+- ##:+:Absolute paths## : `/home/user/documents/file.ntx`
+- ##:+:Relative paths## : `./myproject/main.ntx`
+- ##:+:Current directory## : `.` or omitted for commands that support it
+- ##:+:Git repositories## : `https://github.com/user/repo.git`
+- ##:+:Template IDs## : Recognized template identifiers from `list-templates`
+
+---
+
+##) GLOBAL OPTIONS
+
+These options can be used with any command:
+
+- ```sh --gui``` : Force graphical user interface mode
+- ```sh --no-gui``` : Force command-line/terminal mode
+- ```sh --dump``` : Enable debug output and detailed logging
+
+---
+
+##) EXAMPLES
+
+```sh
+# Example 1: Complete workflow for a new document
+nuts ntexup new thesis --template academic-paper
+nuts ntexup show thesis
+# (edit your document)
+nuts ntexup generate thesis --output=thesis-final.pdf
+
+# Example 2: Quick PDF generation
+nuts ntexup generate presentation.ntx --output=slides.pdf
+
+# Example 3: Working with templates
+nuts ntexup list-templates
+nuts ntexup new project --template slides-minimal --show
+
+# Example 4: Documentation workflow
+nuts ntexup show-doc
+nuts ntexup generate-doc --output=ntexup-manual.pdf
+
+# Example 5: Editor setup
+nuts ntexup install-editor-syntax vscode vim --force
+
+# Example 6: Repository management
+cd ~/ntexup-templates
+nuts ntexup build-repo
+```
+
+---
+
+##) GETTING HELP
+
+- ##:bold Documentation## : Run `nuts ntexup show-doc` to view the full tutorial
+- ##:bold Templates## : Run `nuts ntexup list-templates` to see all available templates
+- ##:bold Debug## : Add `--dump` to any command for detailed diagnostic output
+- ##:bold Source## : Visit https://github.com/thevpc/ntexup for source code and issues
+
+---
+
+##) NOTES
+
+- The viewer automatically detects changes and can reload documents
+- Templates marked with (*) in ```sh list-templates``` are recommended for beginners
+- Custom variables (```sh --var-*```) are passed to the document template engine
+- Syntax highlighting installation requires appropriate editor installation paths
+- PDF generation preserves all mathematical notation and formatting
