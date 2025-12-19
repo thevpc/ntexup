@@ -28,6 +28,11 @@ public class NtxElement3DPolygon extends AbstractNTxElement3DPrimitive {
     }
 
     @Override
+    public NTxPoint3D[] points() {
+        return nodes;
+    }
+
+    @Override
     public NTxElement3DPrimitiveType type() {
         return NTxElement3DPrimitiveType.POLYGON;
     }
