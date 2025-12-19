@@ -41,3 +41,4 @@ extensions/ntexup-extension-presenters/target
 
 /app/ntexup/target
 /tutorials/ntexup-extension-tutorial-myshape/target
+/extensions/ntexup-extension-common-functions/target/
