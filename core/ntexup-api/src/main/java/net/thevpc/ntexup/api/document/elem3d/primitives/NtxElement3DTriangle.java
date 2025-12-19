@@ -54,5 +54,9 @@ public class NtxElement3DTriangle extends AbstractNTxElement3DPrimitive {
         return NTxElement3DPrimitiveType.TRIANGLE;
     }
 
+    @Override
+    public NTxPoint3D[] points() {
+        return new NTxPoint3D[]{p1,p2,p3};
+    }
 
 }
