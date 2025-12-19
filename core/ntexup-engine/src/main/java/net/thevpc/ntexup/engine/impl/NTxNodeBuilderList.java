@@ -10,12 +10,15 @@ import net.thevpc.nuts.util.NNameFormat;
 
 import java.util.*;
 import java.util.function.Consumer;
+import net.thevpc.nuts.artifact.NId;
 
 public class NTxNodeBuilderList extends NtxServiceListImpl2<NTxNodeBuilder> {
     private List<NTxNodeBuilderContextImpl> customBuilderContexts = new ArrayList<>();
 
     public NTxNodeBuilderList(DefaultNTxEngine engine) {
         super("node builder", NTxNodeBuilder.class, engine);
+        //disable logging
+        setLogLoadFinished(false);
     }
 
     @Override
@@ -36,9 +39,8 @@ public class NTxNodeBuilderList extends NtxServiceListImpl2<NTxNodeBuilder> {
             }
         }
     }
-
     @Override
-    protected void onAfterNewService(NTxNodeBuilder h, boolean custom) {
+    protected void onAfterNewService(NTxNodeBuilder h, boolean custom, NId[] dependencies, NId preferredDependency) {
         NTxNodeBuilderContextImpl b = new NTxNodeBuilderContextImpl(h, engine);
         h.build(b);
         b.compile();
@@ -50,7 +52,7 @@ public class NTxNodeBuilderList extends NtxServiceListImpl2<NTxNodeBuilder> {
         NTxTextRendererFlavor f = b.createTextFlavor();
         if (f != null) {
             if (custom) {
-                engine.textFlavors.addCustom(f);
+                engine.textFlavors.addCustom(f, dependencies, preferredDependency);
             } else {
                 engine.textFlavors.addBase(f);
             }
@@ -58,7 +60,7 @@ public class NTxNodeBuilderList extends NtxServiceListImpl2<NTxNodeBuilder> {
         NTxNodeParser p = b.createParser();
         if (p != null) {
             if (custom) {
-                engine.nodeTypeFactories.addCustom(p);
+                engine.nodeTypeFactories.addCustom(p, dependencies, preferredDependency);
             } else {
                 engine.nodeTypeFactories.addBase(p);
             }
@@ -66,7 +68,7 @@ public class NTxNodeBuilderList extends NtxServiceListImpl2<NTxNodeBuilder> {
         NTxNodeRenderer r = b.createRenderer();
         if (r != null) {
             if (custom) {
-                engine.renderers.addCustom(r);
+                engine.renderers.addCustom(r, dependencies, preferredDependency);
             } else {
                 engine.renderers.addBase(r);
             }
