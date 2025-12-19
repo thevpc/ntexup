@@ -10,12 +10,14 @@
                 <goal>org.codehaus.mojo:exec-maven-plugin:3.1.0:exec</goal>
             </goals>
             <properties>
-                <exec.vmArgs>-Dsun.java2d.uiScale=2 -agentlib:jdwp=transport=dt_socket,server=n,address=${jpda.address}</exec.vmArgs>
-                <exec.args>${exec.vmArgs} -classpath %classpath ${exec.mainClass} ${exec.appArgs}</exec.args>
-                <exec.appArgs></exec.appArgs>
+                <nuts.args>-ZyS\ --stacktrace</nuts.args>
+                <exec.vmArgs>-Dsun.java2d.uiScale=2 -Dnuts.args=${nuts.args} -agentlib:jdwp=transport=dt_socket,server=n,address=${jpda.address}</exec.vmArgs>
+                <exec.args>--noclose -e bash -lc "java ${exec.vmArgs} -classpath %classpath ${exec.mainClass} ${exec.appArgs}"</exec.args>
+                <exec.appArgs>open</exec.appArgs>
                 <exec.mainClass>net.thevpc.ntexup.NTexupMain</exec.mainClass>
-                <exec.executable>java</exec.executable>
+                <exec.executable>konsole</exec.executable>
                 <jpda.listen>true</jpda.listen>
+                <exec.workingdir>/home/vpc/research/research-docs/publications/2025-ntexup-article/latex/ntexup-simulation-example/</exec.workingdir>
             </properties>
         </action>
         <action>
@@ -30,9 +32,10 @@
             <properties>
                 <exec.vmArgs>-Dsun.java2d.uiScale=2</exec.vmArgs>
                 <exec.args>${exec.vmArgs} -classpath %classpath ${exec.mainClass} ${exec.appArgs}</exec.args>
-                <exec.appArgs></exec.appArgs>
+                <exec.appArgs>open</exec.appArgs>
                 <exec.mainClass>net.thevpc.ntexup.NTexupMain</exec.mainClass>
                 <exec.executable>java</exec.executable>
+                <exec.workingdir>/home/vpc/xprojects/nuts-world/nuts-productivity/ntexup/</exec.workingdir>
             </properties>
         </action>
         <action>
@@ -49,7 +52,8 @@
                 <exec.args>${exec.vmArgs} -classpath %classpath ${exec.mainClass} ${exec.appArgs}</exec.args>
                 <exec.mainClass>net.thevpc.ntexup.NTexupMain</exec.mainClass>
                 <exec.executable>java</exec.executable>
-                <exec.appArgs></exec.appArgs>
+                <exec.appArgs>open</exec.appArgs>
+                <exec.workingdir>/home/vpc/xprojects/nuts-world/nuts-productivity/ntexup/</exec.workingdir>
             </properties>
         </action>
     </actions>
