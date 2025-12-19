@@ -72,6 +72,7 @@ public class NTxPropName {
     public static final String INNER_RADIUS = "inner-radius" ;
     public static final String START_ANGLE = "start-angle" ;
     public static final String EXTENT_ANGLE = "extent-angle" ;
+    public static final String END_ANGLE = "end-angle" ;
     public static final String SLICE_COUNT = "slice-count" ;
     public static final String SLICES = "slices" ;
     public static final String DASH = "dash" ;
