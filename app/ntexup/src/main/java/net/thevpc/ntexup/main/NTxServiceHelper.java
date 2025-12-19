@@ -60,7 +60,7 @@ public class NTxServiceHelper {
 //        this.engine.importDefaultDependencies();
         this.debugFrame = new NTxDebugFrame(engine);
         this.engine.addLog(debugFrame.messages());
-        this.engine.dump();
+        //this.engine.dump();
 
         this.currListeners.add(new NTxDocumentRendererListener() {
 
