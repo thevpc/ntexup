@@ -3,6 +3,7 @@ package net.thevpc.ntexup.api.document.elem3d.primitives;
 import net.thevpc.ntexup.api.document.elem3d.AbstractNTxElement3DPrimitive;
 import net.thevpc.ntexup.api.document.elem3d.NTxElement3DPrimitiveType;
 import net.thevpc.ntexup.api.document.elem3d.NTxPoint3D;
+import net.thevpc.ntexup.api.document.elem3d.NtxElement3D;
 
 public class NtxElement3DArc extends AbstractNTxElement3DPrimitive {
     private NTxPoint3D from;
@@ -36,5 +37,10 @@ public class NtxElement3DArc extends AbstractNTxElement3DPrimitive {
     @Override
     public NTxElement3DPrimitiveType type() {
         return NTxElement3DPrimitiveType.ARC;
+    }
+
+    @Override
+    public NTxPoint3D[] points() {
+        return new NTxPoint3D[]{from,to};
     }
 }
