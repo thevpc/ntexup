@@ -1,0 +1,17 @@
+net.thevpc.ntexup.extension.commonfunctions.general.NTxFunctionArrayRightRotate
+net.thevpc.ntexup.extension.commonfunctions.general.NTxFunctionArrayLeftRotate
+
+
+net.thevpc.ntexup.extension.commonfunctions.colors.NTxFunctionInvertColor
+net.thevpc.ntexup.extension.commonfunctions.colors.NTxFunctionColorBrightness
+net.thevpc.ntexup.extension.commonfunctions.colors.NTxFunctionColorSaturation
+net.thevpc.ntexup.extension.commonfunctions.colors.NTxFunctionComplementaryColor
+net.thevpc.ntexup.extension.commonfunctions.colors.NTxFunctionGrayScaleColor
+net.thevpc.ntexup.extension.commonfunctions.colors.NTxFunctionRotateHueColor
+net.thevpc.ntexup.extension.commonfunctions.colors.NTxFunctionSinebowColor
+net.thevpc.ntexup.extension.commonfunctions.colors.NTxFunctionRotateSinebowColor
+net.thevpc.ntexup.extension.commonfunctions.colors.NTxFunctionRotateCubehelixColor
+net.thevpc.ntexup.extension.commonfunctions.colors.NTxFunctionCubehelixColor
+net.thevpc.ntexup.extension.commonfunctions.colors.NTxFunctionLighterColor
+net.thevpc.ntexup.extension.commonfunctions.colors.NTxFunctionDarkerColor
+net.thevpc.ntexup.extension.commonfunctions.colors.NTxFunctionLinearGradientColor
