@@ -29,6 +29,7 @@ import net.thevpc.ntexup.api.parser.NTxNodeFactoryParseContext;
 import net.thevpc.ntexup.api.parser.NTxNodeParser;
 import net.thevpc.ntexup.api.renderer.*;
 import net.thevpc.ntexup.api.renderer.text.NTxTextRendererFlavor;
+import net.thevpc.nuts.core.NMutableClassLoader;
 import net.thevpc.nuts.elem.NElement;
 import net.thevpc.nuts.io.NPath;
 import net.thevpc.nuts.text.NMsg;
@@ -50,6 +51,7 @@ public interface NTxEngine {
 
     boolean importDependencies(String... deps);
 
+    NMutableClassLoader getEngineClassLoader();
     <S> List<S> loadServices(Class<S> serviceClass);
 
     void addNTxDependencyLoadedListener(NTxDependencyLoadedListener listener);
@@ -149,4 +151,11 @@ public interface NTxEngine {
     byte[] renderImageBytes(NTxCompiledPage page, NTxNodeRendererConfig config);
 
     NOptional<NTxNodeRenderer> getRenderer(String type);
+
+
+    <T> NOptional<T> getEnv(String name);
+
+    <T> NOptional<T> computeIfAbsent(String name, Function<String, T> fct);
+
+    NTxEngine setEnv(String env, Object value);
 }
