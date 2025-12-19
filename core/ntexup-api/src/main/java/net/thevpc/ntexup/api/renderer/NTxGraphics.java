@@ -2,10 +2,6 @@ package net.thevpc.ntexup.api.renderer;
 
 import net.thevpc.ntexup.api.engine.NTxEngine;
 import net.thevpc.ntexup.api.document.NTxArrow;
-import net.thevpc.ntexup.api.document.elem3d.NtxElement3D;
-import net.thevpc.ntexup.api.document.elem3d.NTxLight3D;
-import net.thevpc.ntexup.api.document.elem3d.NTxMatrix3D;
-import net.thevpc.ntexup.api.document.elem3d.NTxProjection3D;
 import net.thevpc.ntexup.api.renderer.text.NTxTextOptions;
 import net.thevpc.nuts.elem.NElement;
 import net.thevpc.nuts.io.NPath;
@@ -24,10 +20,6 @@ public interface NTxGraphics {
     NTxEngine engine();
 
     NTxGraphics copy();
-
-    NTxLight3D getLight3D();
-
-    NTxLight3D setLight3D(NTxLight3D light3D);
 
     void drawArrayHead(NTxPoint2D origin, NTxVector2D direction, NTxArrow arrow);
 
@@ -116,13 +108,7 @@ public interface NTxGraphics {
 
     Stroke getStroke();
 
-    void draw3D(NtxElement3D element3D, NTxPoint2D origin);
-
     void draw2D(NtxElement2D element2D);
-
-    void transform3D(NTxMatrix3D transform3D);
-
-    void project3D(NTxProjection3D projection3D);
 
     void shear(double shx, double shy);
 
