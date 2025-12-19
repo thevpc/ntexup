@@ -56,6 +56,10 @@ public class NtxElement3DLine extends AbstractNTxElement3DPrimitive {
         NtxElement3DLine that = (NtxElement3DLine) o;
         return Objects.equals(from, that.from) && Objects.equals(to, that.to);
     }
+    @Override
+    public NTxPoint3D[] points() {
+        return new NTxPoint3D[]{from,to};
+    }
 
     @Override
     public int hashCode() {
