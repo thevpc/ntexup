@@ -1456,6 +1456,20 @@ public class NTxValue {
         return NOptional.ofNamedEmpty("Point2D from " + element);
     }
 
+    public NOptional<NTxPoint3D> asPoint3D() {
+        if (element instanceof NTxPoint3D) {
+            return NOptional.of((NTxPoint3D) element);
+        }
+        NOptional<double[]> d = asDoubleArray();
+        if (d.isPresent()) {
+            double[] dd = d.get();
+            if (dd.length == 3) {
+                return NOptional.of(new NTxPoint3D(dd[0], dd[1], dd[2]));
+            }
+        }
+        return NOptional.ofNamedEmpty("Point3D from " + element);
+    }
+
     public NOptional<NTxArrowType> asArrowType() {
         if (element instanceof NTxArrowType) {
             return NOptional.of((NTxArrowType) element);
