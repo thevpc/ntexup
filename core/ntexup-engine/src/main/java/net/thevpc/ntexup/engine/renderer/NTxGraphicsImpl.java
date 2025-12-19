@@ -3,19 +3,11 @@ package net.thevpc.ntexup.engine.renderer;
 import net.thevpc.ntexup.api.engine.NTxEngine;
 import net.thevpc.ntexup.api.document.NTxArrow;
 import net.thevpc.ntexup.api.document.NTxArrowType;
-import net.thevpc.ntexup.api.document.elem3d.primitives.NtxElement3DTriangle;
-import net.thevpc.ntexup.api.document.elem3d.primitives.NtxElement3DArc;
-import net.thevpc.ntexup.api.document.elem3d.primitives.NtxElement3DLine;
-import net.thevpc.ntexup.api.document.elem3d.primitives.NtxElement3DPolygon;
-import net.thevpc.ntexup.api.document.elem3d.primitives.NtxElement3DPolyline;
-import net.thevpc.ntexup.api.util.NTxColors;
 import net.thevpc.ntexup.api.util.NTxUtils;
 import net.thevpc.ntexup.engine.renderer.elem2d.Element2DUIFactory;
 import net.thevpc.ntexup.engine.renderer.elem2d.ShapeFactory;
-import net.thevpc.ntexup.engine.renderer.elem3d.NTxLight3DImpl;
 import net.thevpc.ntexup.engine.renderer.elem2d.strokes.CompositeStroke;
 import net.thevpc.ntexup.engine.renderer.elem2d.strokes.StrokeFactory;
-import net.thevpc.ntexup.engine.renderer.elem3d.Element3DUIFactory;
 import net.thevpc.ntexup.api.eval.NTxValue;
 import net.thevpc.ntexup.api.renderer.NTxGraphics;
 import net.thevpc.ntexup.api.renderer.NTxGraphicsImageDrawer;
@@ -47,24 +39,9 @@ public class NTxGraphicsImpl implements NTxGraphics {
     private Graphics2D g;
     private NTxEngine engine;
     private Color secondaryColor;
-    private NTxProjection3D projection3D = new NTxProjection3D(1000);
-    private NTxMatrix3D transform3D = NTxMatrix3D.identity();
-    private NTxLight3DImpl light3D = new NTxLight3DImpl();
     private Element2DUIFactory element2DUIFactory = new Element2DUIFactory();
-    private Element3DUIFactory element3DUIFactory = new Element3DUIFactory();
     private Map<Object, NTxGraphicsImageDrawer> imageCache = new HashMap<>();
 
-    private NTxRenderState3D state = new NTxRenderState3D() {
-        @Override
-        public NTxVector3D lightOrientation() {
-            return light3D.orientation();
-        }
-
-        @Override
-        public NtxElement3DPrimitive[] toPrimitives(NtxElement3D e) {
-            return element3DUIFactory.toPrimitives(e, this);
-        }
-    };
 
     public NTxGraphicsImpl(Graphics2D g, NTxEngine engine) {
         this.g = g;
@@ -79,26 +56,15 @@ public class NTxGraphicsImpl implements NTxGraphics {
     @Override
     public NTxGraphics copy() {
         NTxGraphicsImpl hGraphics = new NTxGraphicsImpl((Graphics2D) g.create(),engine);
-        hGraphics.transform3D = transform3D;
-        hGraphics.light3D = light3D;
-        hGraphics.projection3D = projection3D;
+//        hGraphics.transform3D = transform3D;
+//        hGraphics.light3D = light3D;
+//        hGraphics.projection3D = projection3D;
         return hGraphics;
     }
 
     @Override
     public Font getFont() {
         return g.getFont();
-    }
-
-
-    @Override
-    public NTxLight3D getLight3D() {
-        return light3D;
-    }
-
-    @Override
-    public NTxLight3D setLight3D(NTxLight3D light3D) {
-        return light3D;
     }
 
     @Override
@@ -346,37 +312,6 @@ public class NTxGraphicsImpl implements NTxGraphics {
         }
     }
 
-    @Override
-    public void draw3D(NtxElement3D element3D, NTxPoint2D origin) {
-        NtxElement3DPrimitive[] primitives = element3DUIFactory.toPrimitives(element3D, state);
-        double x = origin.x;
-        double y = origin.y;
-        for (NtxElement3DPrimitive primitive : primitives) {
-            switch (primitive.type()) {
-                case LINE: {
-                    draw3DElement3DLine((NtxElement3DLine) primitive, origin);
-                    break;
-                }
-                case ARC: {
-                    draw3DElement3DArc((NtxElement3DArc) primitive, origin);
-                    break;
-                }
-                case POLYGON: {
-                    draw3DElement3DPolygon((NtxElement3DPolygon) primitive, origin);
-                    break;
-                }
-
-                case POLYLINE: {
-                    draw3DElement3DPolyline((NtxElement3DPolyline) primitive, origin);
-                    break;
-                }
-                case TRIANGLE: {
-                    draw3DElement3DTriangle((NtxElement3DTriangle) primitive, origin);
-                    break;
-                }
-            }
-        }
-    }
 
     @Override
     public void fillOval(double x, double y, double w, double h) {
@@ -674,231 +609,9 @@ public class NTxGraphicsImpl implements NTxGraphics {
     }
 
 
-    public void transform3D(NTxMatrix3D transform3D) {
-        if (transform3D != null) {
-            this.transform3D = this.transform3D.multiply(transform3D);
-        }
-    }
-
-    @Override
-    public void project3D(NTxProjection3D projection3D) {
-        if (projection3D != null) {
-            this.projection3D = projection3D;
-        }
-    }
-
     public void shear(double shx, double shy) {
         g.shear(shx, shy);
     }
-
-
-    /// ////////////////////////////////////////////////////
-
-
-    private void draw3DElement3DLine(NtxElement3DLine pr, NTxPoint2D origin) {
-        NTxPoint3D p1 = pr.getFrom().transform(transform3D);
-        NTxPoint3D p2 = pr.getTo().transform(transform3D);
-
-        NTxPoint2D point1 = projection3D.project(p1).plus(origin);
-        NTxPoint2D point2 = projection3D.project(p2).plus(origin);
-
-        draw2D(
-                new NtxElement2DLine(point1, point2)
-                        .setStartArrow(pr.getStartArrow())
-                        .setEndArrow(pr.getEndArrow())
-                        .setComposite(pr.getComposite())
-                        .setBackgroundPaint(pr.getBackgroundPaint())
-                        .setLinePaint(pr.getLinePaint())
-                        .setLineStroke(pr.getLineStroke())
-        );
-    }
-
-    private void draw3DElement3DArc(NtxElement3DArc pr, NTxPoint2D origin) {
-        double x = origin.x;
-        double y = origin.y;
-        NTxPoint3D p1 = pr.getFrom().transform(transform3D);
-        NTxPoint3D p2 = pr.getTo().transform(transform3D);
-
-        NTxPoint2D point1 = projection3D.project(p1);
-        NTxPoint2D point2 = projection3D.project(p2);
-        double xmin = Math.min(point1.x + x, point2.x + x);
-        double w = Math.abs(point1.x - point2.x);
-        double ymin = Math.min(point1.y + y, point2.y + y);
-        double h = Math.abs(point1.y - point2.y);
-        Paint oldPaint = g.getPaint();
-        Stroke oldStroke = g.getStroke();
-        if (pr.getLinePaint() != null) {
-            setPaint(pr.getLinePaint());
-        }
-        if (pr.getLineStroke() != null) {
-            setStroke(pr.getLineStroke());
-        }
-        drawArc(
-                xmin, ymin,
-                w,
-                h,
-                pr.getStartAngle(),
-                pr.getEndAngle()
-        );
-        setPaint(oldPaint);
-        setStroke(oldStroke);
-    }
-
-    private void draw3DElement3DPolygon(NtxElement3DPolygon pr, NTxPoint2D origin) {
-        double x = origin.x;
-        double y = origin.y;
-        NTxPoint3D[] nodes = pr.getNodes();
-        double[] xx = new double[nodes.length];
-        double[] yy = new double[nodes.length];
-        for (int i = 0; i < xx.length; i++) {
-            NTxPoint3D p = nodes[i].transform(transform3D);
-            NTxPoint2D pp = projection3D.project(p);
-            xx[i] = (pp.x + x);
-            yy[i] = (pp.y + y);
-        }
-        double d = NTxD3Utils.surfaceNormal(nodes[0], nodes[1], nodes[2]).dot(getLight3D().orientation());
-        if (pr.isFill()) {
-
-            Paint oldPaint = g.getPaint();
-            Composite oldComposite = g.getComposite();
-
-            if (pr.getLinePaint() != null) {
-                setPaint(pr.getLinePaint());
-            }
-            if (pr.getLineStroke() != null) {
-                setStroke(pr.getLineStroke());
-            }
-
-            Paint bg = pr.getBackgroundPaint();
-            if (bg == null) {
-                bg = getColor();
-            }
-            if (bg instanceof Color) {
-                setColor(NTxColors.withB((Color) bg //                                        , Math.abs(1 - (float) d)
-                        ,
-                        Math.abs((float) d)
-                        //, Math.abs(Math.abs((float) d))
-                ));
-            } else {
-                setPaint(bg);
-            }
-            if (pr.getComposite() != null) {
-                setComposite(pr.getComposite());
-            }
-            fillPolygon(xx, yy, xx.length);
-            setPaint(oldPaint);
-            setComposite(oldComposite);
-        }
-        if (pr.isContour()) {
-            Paint oldPaint = g.getPaint();
-            Stroke oldStroke = g.getStroke();
-            if (pr.getLinePaint() != null) {
-                setPaint(pr.getLinePaint());
-            }
-            if (pr.getLineStroke() != null) {
-                setStroke(pr.getLineStroke());
-            }
-            drawPolygon(xx, yy, xx.length);
-            setPaint(oldPaint);
-            setStroke(oldStroke);
-        }
-    }
-
-    private void draw3DElement3DPolyline(NtxElement3DPolyline pr, NTxPoint2D origin) {
-        double x = origin.x;
-        double y = origin.y;
-        NTxPoint3D[] nodes = pr.getNodes();
-        double[] xx = new double[nodes.length];
-        double[] yy = new double[nodes.length];
-        for (int i = 0; i < xx.length; i++) {
-            NTxPoint3D p = nodes[i].transform(transform3D);
-            NTxPoint2D pp = projection3D.project(p);
-            xx[i] = (pp.x + x);
-            yy[i] = (pp.y + y);
-        }
-        Paint oldPaint = g.getPaint();
-        Stroke oldStroke = g.getStroke();
-        if (pr.getLinePaint() != null) {
-            setPaint(pr.getLinePaint());
-        }
-        if (pr.getLineStroke() != null) {
-            setStroke(pr.getLineStroke());
-        }
-        drawPolyline(xx, yy, xx.length);
-        setPaint(oldPaint);
-        setStroke(oldStroke);
-    }
-
-    private void draw3DElement3DTriangle(NtxElement3DTriangle pr, NTxPoint2D origin) {
-        double x = origin.x;
-        double y = origin.y;
-        double[] xx = new double[3];
-        double[] yy = new double[3];
-
-        NTxPoint3D p1 = pr.getP1();
-        NTxPoint2D pp1 = projection3D.project(p1.transform(transform3D));
-        xx[0] = (pp1.x + x);
-        yy[0] = (pp1.y + y);
-
-        NTxPoint3D p2 = pr.getP2();
-        NTxPoint2D pp2 = projection3D.project(p2.transform(transform3D));
-        xx[1] = (pp2.x + x);
-        yy[1] = (pp2.y + y);
-
-        NTxPoint3D p3 = pr.getP3();
-        NTxPoint2D pp3 = projection3D.project(p3.transform(transform3D));
-        xx[2] = (pp3.x + x);
-        yy[2] = (pp3.y + y);
-
-        double d = NTxD3Utils.surfaceNormal(p1, p2, p3).dot(getLight3D().orientation());
-        if (true/*d < 0*/) {
-            if (pr.isFill()) {
-                Paint oldPaint = g.getPaint();
-                Composite oldComposite = g.getComposite();
-
-                if (pr.getLinePaint() != null) {
-                    setPaint(pr.getLinePaint());
-                }
-                if (pr.getLineStroke() != null) {
-                    setStroke(pr.getLineStroke());
-                }
-
-                Paint bg = pr.getBackgroundPaint();
-                if (bg == null) {
-                    bg = getColor();
-                }
-                if (bg instanceof Color) {
-                    setColor(NTxColors.withB((Color) bg //                                        , Math.abs(1 - (float) d)
-                            ,
-                            Math.abs((float) d)
-                            //, Math.abs(Math.abs((float) d))
-                    ));
-                } else {
-                    setPaint(bg);
-                }
-                if (pr.getComposite() != null) {
-                    setComposite(pr.getComposite());
-                }
-                fillPolygon(xx, yy, xx.length);
-                setPaint(oldPaint);
-                setComposite(oldComposite);
-            }
-            if (false && pr.isContour()) {
-                Paint oldPaint = g.getPaint();
-                Stroke oldStroke = g.getStroke();
-                if (pr.getLinePaint() != null) {
-                    setPaint(pr.getLinePaint());
-                }
-                if (pr.getLineStroke() != null) {
-                    setStroke(pr.getLineStroke());
-                }
-                drawPolygon(xx, yy, xx.length);
-                setPaint(oldPaint);
-                setStroke(oldStroke);
-            }
-        }
-    }
-
 
     private void draw2DHElement2DLine(NtxElement2DLine pr) {
         NTxPoint2D a = pr.getFrom();
