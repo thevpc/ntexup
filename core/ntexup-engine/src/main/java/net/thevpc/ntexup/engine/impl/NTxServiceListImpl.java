@@ -5,6 +5,7 @@ import net.thevpc.ntexup.api.engine.NTxDependencyLoadedListener;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import net.thevpc.nuts.artifact.NId;
 
 public abstract class NTxServiceListImpl<T> implements NTxDependencyLoadedListener {
     private Class<T> serviceType;
@@ -18,20 +19,20 @@ public abstract class NTxServiceListImpl<T> implements NTxDependencyLoadedListen
         engine.addNTxDependencyLoadedListener(this);
     }
 
-    public void build(){
+    public void build(NId[] dependencies){
         List<T> newServices = engine.loadServices(serviceType);
         for (T newService : newServices) {
             if (!alreadyLoaded.contains(newService.getClass())) {
                 alreadyLoaded.add(serviceType);
-                onNewService(newService);
+                onNewService(newService, dependencies);
             }
         }
     }
 
     @Override
-    public void onLoadDependencyLoaded() {
-        build();
+    public void onLoadDependencyLoaded(NId[] dependencies) {
+        build(dependencies);
     }
 
-    protected abstract void onNewService(T newService);
+    protected abstract void onNewService(T newService, NId[] dependencies);
 }
