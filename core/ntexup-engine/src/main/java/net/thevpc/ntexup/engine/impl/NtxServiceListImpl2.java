@@ -3,19 +3,24 @@ package net.thevpc.ntexup.engine.impl;
 import net.thevpc.ntexup.api.engine.NTxDependencyLoadedListener;
 import net.thevpc.ntexup.api.util.NTxUtils;
 import net.thevpc.nuts.text.NMsg;
+import net.thevpc.nuts.text.NTextBuilder;
 import net.thevpc.nuts.util.NOptional;
 
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import net.thevpc.nuts.artifact.NId;
+import net.thevpc.nuts.io.NLibPaths;
 
 public abstract class NtxServiceListImpl2<T> implements NTxDependencyLoadedListener {
+
     protected DefaultNTxEngine engine;
     private Class<T> serviceType;
     private Map<String, T> map = new LinkedHashMap<>();
     private Map<String, T> map2 = new LinkedHashMap<>();
     private Map<String, String> aliases = new LinkedHashMap<>();
     private String name;
+    private boolean logLoadFinished = true;
 
     public NtxServiceListImpl2(String name, Class<T> serviceType, DefaultNTxEngine engine) {
         this.engine = engine;
@@ -24,16 +29,25 @@ public abstract class NtxServiceListImpl2<T> implements NTxDependencyLoadedListe
         engine.addNTxDependencyLoadedListener(this);
     }
 
-    public void build() {
+    public boolean isLogLoadFinished() {
+        return logLoadFinished;
+    }
+
+    public NtxServiceListImpl2<T> setLogLoadFinished(boolean logLoadFinished) {
+        this.logLoadFinished = logLoadFinished;
+        return this;
+    }
+
+    public void build(NId[] dependencies, boolean custom) {
         List<T> newServices = engine.loadServices(serviceType);
         for (T newService : newServices) {
-            onNewService(newService, false);
+            onNewService(newService, custom, dependencies, null);
         }
     }
 
     @Override
-    public void onLoadDependencyLoaded() {
-        build();
+    public void onLoadDependencyLoaded(NId[] dependencies) {
+        build(dependencies, true);
     }
 
     protected List<String> aliasesOf(T t) {
@@ -63,7 +77,8 @@ public abstract class NtxServiceListImpl2<T> implements NTxDependencyLoadedListe
             }
         }
     }
-    private NMsg formattedClass(Class a){
+
+    private NMsg formattedClass(Class a) {
         return NMsg.ofC("%s.%s", NMsg.ofStyledComments(a.getPackage().getName()), NMsg.ofStyledConfig(a.getSimpleName()));
     }
 
@@ -73,11 +88,12 @@ public abstract class NtxServiceListImpl2<T> implements NTxDependencyLoadedListe
         return aliases.keySet().stream().filter(x -> Objects.equals(finalA, aliases.get(x))).collect(Collectors.toSet());
     }
 
-    protected void onNewService(T h, boolean custom) {
+    protected void onNewService(T h, boolean custom, NId[] dependencies, NId preferredDependency) {
         LinkedHashSet<String> set = new LinkedHashSet<>();
         String id = NTxUtils.uid(idOf(h));
         set.add(id);
-        set.addAll(aliasesOf(h));
+        List<String> hAliases = aliasesOf(h);
+        set.addAll(hAliases);
         try {
             for (String s : set) {
                 requireNotExists(s, h, false);
@@ -95,26 +111,41 @@ public abstract class NtxServiceListImpl2<T> implements NTxDependencyLoadedListe
                 aliases.put(NTxUtils.uid(s), id);
             }
         }
-        onAfterNewService(h, false);
-        update();
+        NId sourceId = preferredDependency;
+        if (preferredDependency == null) {
+            if (custom) {
+                sourceId = NLibPaths.of().resolveId(h.getClass()).orNull();
+            }
+        }
+        if(logLoadFinished){
+            ArrayList<String> hAliases2 = new ArrayList<>(hAliases);
+            hAliases2.remove(id);
+            if (hAliases2.isEmpty()) {
+                engine.log().log(NMsg.ofC("[%s] loaded %s : %s", custom ? sourceId : "BASE", NMsg.ofStyledPrimary1(name), NMsg.ofStyledPrimary2(id)));
+            } else if (hAliases2.size() == 1) {
+                engine.log().log(NMsg.ofC("[%s] loaded %s : %s , alias %s", custom ? sourceId : "BASE", NMsg.ofStyledPrimary1(name), NMsg.ofStyledPrimary2(id), NMsg.ofStyledPrimary2(hAliases2.get(0))));
+            } else {
+                engine.log().log(NMsg.ofC("[%s] loaded %s : %s , aliases : %s", custom ? sourceId : "BASE", NMsg.ofStyledPrimary1(name), NMsg.ofStyledPrimary2(id),
+                        NTextBuilder.of().appendAll(hAliases2.stream().map(x -> NMsg.ofStyledPrimary2(x)).collect(Collectors.toList())).build()
+                ));
+            }
+        }
+        
+        onAfterNewService(h, custom, dependencies, sourceId);
     }
 
-
-    public void addCustom(T h) {
-        onNewService(h, true);
+    public void addCustom(T h, NId[] dependencies, NId preferredDependency) {
+        onNewService(h, true, dependencies, preferredDependency);
     }
 
     public void addBase(T h) {
-        onNewService(h, false);
+        onNewService(h, false, null, null);
     }
 
-    protected void onAfterNewService(T h, boolean custom) {
+    protected void onAfterNewService(T h, boolean custom, NId[] dependencies, NId preferredDependency) {
 
     }
 
-    public void update() {
-
-    }
 
     public void requireNotExists(String id, T h, boolean custom) {
         id = NTxUtils.uid(id);
@@ -177,6 +208,5 @@ public abstract class NtxServiceListImpl2<T> implements NTxDependencyLoadedListe
         a.putAll(map2);
         return a;
     }
-
 
 }
