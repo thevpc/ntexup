@@ -96,7 +96,7 @@ public class NTxClassLoader extends URLClassLoader {
                 continue;
             }
             if (isLoaded(id.getId())) {
-                engine.log().log(NMsg.ofC("dependency already loaded %s...", id.getId()).asWarning());
+                engine.log().log(NMsg.ofC("dependency already loaded %s...", id.getId()).asFineAlert());
                 continue;
             }
             URL u = id.getContent().map(x -> x.toURL().orNull()).orNull();
