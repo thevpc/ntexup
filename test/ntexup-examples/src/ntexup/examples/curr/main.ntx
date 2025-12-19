@@ -1,4 +1,5 @@
 import(
+    "net.thevpc.ntexup:ntexup-extension-common-functions:0.8.9.0"
     "net.thevpc.ntexup:ntexup-extension-plantuml:0.8.9.0"
     "net.thevpc.ntexup:ntexup-extension-animated-gif:0.8.9.0"
     "net.thevpc.ntexup:ntexup-extension-svg:0.8.9.0"
