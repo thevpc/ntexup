@@ -1,3 +1,4 @@
-net.thevpc.ntexup.extension.simple3d.box.Element3DBoxPrimitiveBuilder
-net.thevpc.ntexup.extension.simple3d.surface.Element3DSurfacePrimitiveBuilder
-net.thevpc.ntexup.extension.simple3d.sphere.Element3DUVSpherePrimitiveBuilder
+net.thevpc.ntexup.extension.simple3d.shapes.Element3DBoxPrimitiveBuilder
+net.thevpc.ntexup.extension.simple3d.shapes.Element3DSurfacePrimitiveBuilder
+net.thevpc.ntexup.extension.simple3d.shapes.Element3DUVSpherePrimitiveBuilder
+net.thevpc.ntexup.extension.simple3d.shapes.Element3DGroupPrimitiveBuilder
