@@ -5,6 +5,7 @@ import net.thevpc.ntexup.api.document.elem3d.NTxPoint3D;
 import net.thevpc.ntexup.api.document.node.NTxNode;
 import net.thevpc.ntexup.api.document.style.NTxPropName;
 import net.thevpc.ntexup.api.eval.NTxValue;
+import net.thevpc.ntexup.api.util.NTxElementUtils;
 import net.thevpc.nuts.util.NOptional;
 
 import java.util.ArrayList;
