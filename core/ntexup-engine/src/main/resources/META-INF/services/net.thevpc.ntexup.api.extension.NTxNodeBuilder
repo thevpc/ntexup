@@ -1,43 +1,5 @@
-net.thevpc.ntexup.engine.base.nodes.container.NTxFlowContainerBuilder
-net.thevpc.ntexup.engine.base.nodes.container.NTxColumnBuilder
-net.thevpc.ntexup.engine.base.nodes.container.NTxGridBuilder
-net.thevpc.ntexup.engine.base.nodes.container.NTxRowBuilder
-net.thevpc.ntexup.engine.base.nodes.container.NTxOrderedListBuilder
-net.thevpc.ntexup.engine.base.nodes.container.NTxGroupBuilder
-net.thevpc.ntexup.engine.base.nodes.container.NTxUnorderedListBuilder
 
-net.thevpc.ntexup.engine.base.nodes.filler.NTxFillerBuilder
-net.thevpc.ntexup.engine.base.nodes.filler.NTxVoidBuilder
-
-net.thevpc.ntexup.engine.base.nodes.image.NTxImageBuilder
-
-net.thevpc.ntexup.engine.base.nodes.line.NTxArcBuilder
-net.thevpc.ntexup.engine.base.nodes.line.NTxCubicCurveBuilder
-net.thevpc.ntexup.engine.base.nodes.line.NTxLineBuilder
-net.thevpc.ntexup.engine.base.nodes.line.NTxQuadCurveBuilder
-net.thevpc.ntexup.engine.base.nodes.line.NTxPolylineBuilder
-
-net.thevpc.ntexup.engine.base.nodes.shape.NTxCircleBuilder
-net.thevpc.ntexup.engine.base.nodes.shape.NTxEllipseBuilder
-net.thevpc.ntexup.engine.base.nodes.shape.NTxEllipsoidBuilder
-net.thevpc.ntexup.engine.base.nodes.shape.NTxSphereBuilder
-net.thevpc.ntexup.engine.base.nodes.shape.NTxDecagonBuilder
-net.thevpc.ntexup.engine.base.nodes.shape.NTxHeptagonBuilder
-net.thevpc.ntexup.engine.base.nodes.shape.NTxHexagonBuilder
-net.thevpc.ntexup.engine.base.nodes.shape.NTxNovagonBuilder
-net.thevpc.ntexup.engine.base.nodes.shape.NTxOctagonBuilder
-net.thevpc.ntexup.engine.base.nodes.shape.NTxParallelogramBuilder
-net.thevpc.ntexup.engine.base.nodes.shape.NTxPentagonBuilder
-net.thevpc.ntexup.engine.base.nodes.shape.NTxPolygonBuilder
-net.thevpc.ntexup.engine.base.nodes.shape.NTxRectangleBuilder
-net.thevpc.ntexup.engine.base.nodes.shape.NTxTriangleBuilder
-net.thevpc.ntexup.engine.base.nodes.shape.NTxRhombusBuilder
-net.thevpc.ntexup.engine.base.nodes.shape.NTxSquareBuilder
-net.thevpc.ntexup.engine.base.nodes.shape.NTxTrapezoidBuilder
-
-net.thevpc.ntexup.engine.base.nodes.text.NTxNtfBuilder
 net.thevpc.ntexup.engine.base.nodes.text.NTxPlainTextBuilder
-net.thevpc.ntexup.engine.base.nodes.text.NTxSourceBuilder
 net.thevpc.ntexup.engine.base.nodes.text.NTxTextBuilder
 
 
