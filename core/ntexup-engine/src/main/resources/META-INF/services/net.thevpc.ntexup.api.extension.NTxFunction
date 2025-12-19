@@ -1,21 +1,6 @@
-net.thevpc.ntexup.engine.base.functions.general.NTxFunctionArrayRightRotate
-net.thevpc.ntexup.engine.base.functions.general.NTxFunctionArrayLeftRotate
 net.thevpc.ntexup.engine.base.functions.general.NTxFunctionEither
 net.thevpc.ntexup.engine.base.functions.general.NTxFunctionEitherPath
 net.thevpc.ntexup.engine.base.functions.general.NTxFunctionStringJoin
 net.thevpc.ntexup.engine.base.functions.general.NTxFunctionDsteps
 net.thevpc.ntexup.engine.base.functions.general.NTxFunctionDtimes
 
-net.thevpc.ntexup.engine.base.functions.colors.NTxFunctionInvertColor
-net.thevpc.ntexup.engine.base.functions.colors.NTxFunctionColorBrightness
-net.thevpc.ntexup.engine.base.functions.colors.NTxFunctionColorSaturation
-net.thevpc.ntexup.engine.base.functions.colors.NTxFunctionComplementaryColor
-net.thevpc.ntexup.engine.base.functions.colors.NTxFunctionGrayScaleColor
-net.thevpc.ntexup.engine.base.functions.colors.NTxFunctionRotateHueColor
-net.thevpc.ntexup.engine.base.functions.colors.NTxFunctionSinebowColor
-net.thevpc.ntexup.engine.base.functions.colors.NTxFunctionRotateSinebowColor
-net.thevpc.ntexup.engine.base.functions.colors.NTxFunctionRotateCubehelixColor
-net.thevpc.ntexup.engine.base.functions.colors.NTxFunctionCubehelixColor
-net.thevpc.ntexup.engine.base.functions.colors.NTxFunctionLighterColor
-net.thevpc.ntexup.engine.base.functions.colors.NTxFunctionDarkerColor
-net.thevpc.ntexup.engine.base.functions.colors.NTxFunctionLinearGradientColor
