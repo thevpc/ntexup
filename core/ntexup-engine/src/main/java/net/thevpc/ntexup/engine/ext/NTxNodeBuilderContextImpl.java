@@ -1,6 +1,7 @@
 package net.thevpc.ntexup.engine.ext;
 
 import net.thevpc.ntexup.api.engine.NTxNodeBuilderContext;
+import net.thevpc.ntexup.api.log.NTxLogger;
 import net.thevpc.ntexup.api.parser.*;
 import net.thevpc.ntexup.api.renderer.text.NTxTextRendererFlavor;
 import net.thevpc.ntexup.engine.parser.NTxNodeParserBase;
@@ -247,6 +248,11 @@ public class NTxNodeBuilderContextImpl implements NTxNodeBuilderContext {
     public NTxNodeBuilderContext processChildren(ProcessNodeAction processChildren) {
         this.processChildren = processChildren;
         return this;
+    }
+
+    @Override
+    public NTxLogger log() {
+        return engine.log();
     }
 
     @Override
