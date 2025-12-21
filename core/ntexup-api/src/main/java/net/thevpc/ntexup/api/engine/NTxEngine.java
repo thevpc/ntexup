@@ -52,6 +52,7 @@ public interface NTxEngine {
     boolean importDependencies(String... deps);
 
     NMutableClassLoader getEngineClassLoader();
+
     <S> List<S> loadServices(Class<S> serviceClass);
 
     void addNTxDependencyLoadedListener(NTxDependencyLoadedListener listener);
@@ -134,11 +135,14 @@ public interface NTxEngine {
 
     NTxTemplateInfo[] getTemplates();
 
-    NElement evalExpression(NElement expression, NTxNode node, NTxVarProvider varProvider);
+    NOptional<NElement> evalExpression(NElement expression, NTxNode node, NTxVarProvider varProvider);
 
-    NElement resolveVarValue(String varName, NTxNode node, NTxVarProvider varProvider);
+    NOptional<NElement> resolveVarValue(String varName, NTxNode node);
+    NOptional<NElement> resolveVarValue(String varName, NTxNode node, NTxVarProvider varProvider);
 
     NOptional<NTxVar> findVar(String varName, NTxNode node, NTxVarProvider varProvider);
+
+    NOptional<NTxNode> findNodeByProperty(String varName, String varValue, NTxNode node, NTxVarProvider varProvider);
 
     NPath resolvePath(NElement path, NTxNode node);
 
