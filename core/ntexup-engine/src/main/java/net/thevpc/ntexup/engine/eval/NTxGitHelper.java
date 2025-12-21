@@ -3,7 +3,7 @@ package net.thevpc.ntexup.engine.eval;
 import net.thevpc.ntexup.api.log.NTxLogger;
 import net.thevpc.nuts.app.NApp;
 import net.thevpc.nuts.artifact.NId;
-import net.thevpc.nuts.command.NExecCmd;
+import net.thevpc.nuts.command.NExec;
 import net.thevpc.nuts.core.NSession;
 import net.thevpc.nuts.io.NPath;
 import net.thevpc.nuts.platform.NStoreType;
@@ -96,7 +96,7 @@ public class NTxGitHelper {
                 if (last == null || now.toEpochMilli() - last.toEpochMilli() > (1000 * 60 * 5)) {
                     pulling = true;
                     messages.log(NMsg.ofC("pull repo at %s", localRepo));
-                    NExecCmd.ofSystem("git", "pull")
+                    NExec.ofSystem("git", "pull")
                             .setDirectory(localRepo)
                             .failFast()
                             .run();
@@ -116,7 +116,7 @@ public class NTxGitHelper {
                     messages.log(NMsg.ofC("cloning repo %s to %s", githubPaths[i], userConfHome.resolve(user)));
                     rex=null;
                     try {
-                        NExecCmd.ofSystem("git", "clone", githubPaths[i])
+                        NExec.ofSystem("git", "clone", githubPaths[i])
                                 .setDirectory(userConfHome.resolve(user))
                                 .failFast()
                                 .run();
