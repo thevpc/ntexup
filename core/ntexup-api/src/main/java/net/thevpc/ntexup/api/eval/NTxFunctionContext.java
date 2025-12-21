@@ -11,6 +11,6 @@ public interface NTxFunctionContext {
     NTxLogger log();
     NTxEngine engine();
     NTxNode node();
-    NElement eval(NElement expr);
+    NOptional<NElement> eval(NElement expr);
     NOptional<NTxVar> findVar(String varName);
 }
