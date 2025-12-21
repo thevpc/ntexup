@@ -74,6 +74,7 @@ public class NTxNodeEval implements NTxObjectEvalContext {
         return NOptional.ofNamedEmpty("var " + varName);
     }
 
+
     public NElement evalVar(NTxNode node, String varName) {
         NOptional<NTxVar> v = findVar(varName, node);
         if (v.isPresent()) {
@@ -313,4 +314,28 @@ public class NTxNodeEval implements NTxObjectEvalContext {
         return null;
     }
 
+    public NOptional<NTxNode> findNodeByProperty(String propertyName, String propertyValue, NTxNode node) {
+        NTxItem nn = (node);
+        while (nn != null) {
+            if (nn instanceof NTxNode) {
+                NTxNode nd = (NTxNode) nn;
+                NOptional<NElement> v = nd.getPropertyValue(propertyName);
+                if (v.isPresent()) {
+                    NElement vv = v.get();
+                    String vvn=vv.asStringValue().orNull();
+                    if(vvn!=null && vvn.equals(propertyValue)){
+                        return NOptional.of(nd);
+                    }
+                }
+                if (NTxUtils.isAnyDefVarName(propertyName)) {
+                    if (nd.templateDefinition() != null) {
+                        // do not go up in hierarchy
+                        break;
+                    }
+                }
+            }
+            nn = nn.parent();
+        }
+        return NOptional.ofNamedEmpty("node with propertyName " + propertyName);
+    }
 }
