@@ -5,6 +5,7 @@ import net.thevpc.ntexup.api.document.node.NTxItem;
 import net.thevpc.ntexup.api.document.node.NTxNode;
 import net.thevpc.ntexup.api.document.style.NTxProp;
 import net.thevpc.ntexup.api.document.NTxSizeRequirements;
+import net.thevpc.ntexup.api.log.NTxLogger;
 import net.thevpc.ntexup.api.parser.NTxAllArgumentReader;
 import net.thevpc.ntexup.api.parser.NTxArgumentReader;
 import net.thevpc.ntexup.api.parser.NTxNodeFactoryParseContext;
@@ -56,6 +57,7 @@ public interface NTxNodeBuilderContext {
 
     NTxNodeBuilderContext processChildren(ProcessNodeAction e);
 
+    NTxLogger log();
     NTxEngine engine();
 
     boolean isAncestorScene3D(NTxNode p0);
