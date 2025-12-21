@@ -298,7 +298,7 @@ public class NTxCompiler {
 
     private List<NTxItem> compileNodeTree_expr(NTxNode node, NodeHierarchy h) {
         NElement varExpr = node.getProperty(NTxPropName.VALUE).get().getValue();
-        NElement element = engine.evalExpression(varExpr, node, varProvider);
+        NElement element = engine.evalExpression(varExpr, node, varProvider).get();
         NTxItem h2 = engine.newNode(element, createParseContext(
                 varExpr,
                 node,
@@ -316,10 +316,10 @@ public class NTxCompiler {
         if(ifempty) {
             NElement old = n.getVar(varName).orNull();
             if(old==null || old.isNull()) {
-                n.setVar(varName, engine.evalExpression(varExpr, node, varProvider));
+                n.setVar(varName, engine.evalExpression(varExpr, node, varProvider).orNull());
             }
         }else{
-            n.setVar(varName, engine.evalExpression(varExpr, node, varProvider));
+            n.setVar(varName, engine.evalExpression(varExpr, node, varProvider).orNull());
         }
         return new ArrayList<>();
     }
@@ -468,7 +468,7 @@ public class NTxCompiler {
             CtrlNTxNodeInclude c = (CtrlNTxNodeInclude) node;
             List<NTxItem> loaded = new ArrayList<>();
             for (NElement callArg : c.getCallArgs()) {
-                NElement r = engine.evalExpression(NTxUtils.addCompilerDeclarationPath(callArg, NTxUtils.sourceOf(c)), c, varProvider);
+                NElement r = engine.evalExpression(NTxUtils.addCompilerDeclarationPath(callArg, NTxUtils.sourceOf(c)), c, varProvider).orNull();
                 NPath path = engine.resolvePath(r, c);
                 if (path.isDirectory()) {
                     path = path.resolve(NTxEngineUtils.NTEXUP_EXT_STAR_STAR);
@@ -505,7 +505,7 @@ public class NTxCompiler {
             CtrlNTxNodeImport c = (CtrlNTxNodeImport) node;
             List<String> toImport = new ArrayList<>();
             for (NElement callArg : c.getCallArgs()) {
-                NElement r = engine.evalExpression(NTxUtils.addCompilerDeclarationPath(callArg, NTxUtils.sourceOf(c)), c, varProvider);
+                NElement r = engine.evalExpression(NTxUtils.addCompilerDeclarationPath(callArg, NTxUtils.sourceOf(c)), c, varProvider).orNull();
                 String s = NTxValue.of(r).asString().orNull();
                 toImport.add(s);
             }
@@ -520,7 +520,7 @@ public class NTxCompiler {
             CtrlNTxNodeIf c = (CtrlNTxNodeIf) node;
             if (!h.isInPage || (h.isInPage && h.processPages)) {
                 NElement cond = c.getCond();
-                NElement r = engine.evalExpression(cond, c, varProvider);
+                NElement r = engine.evalExpression(cond, c, varProvider).orNull();
                 boolean b = NTxUtils.asBoolean(r);
                 if (b) {
                     List<NTxNode> tb = c.getTrueBloc();
@@ -563,7 +563,7 @@ public class NTxCompiler {
                 } else {
                     throw new NIllegalArgumentException(NMsg.ofC("expected varName in for contruct : %s", node));
                 }
-                NElement anyVal = engine.evalExpression(varExpr, node, varProvider);
+                NElement anyVal = engine.evalExpression(varExpr, node, varProvider).orNull();
                 List<NElement> b = new ArrayList<>();
                 if (anyVal.isAnyArray()) {
                     b.addAll(anyVal.asArray().get().children());
