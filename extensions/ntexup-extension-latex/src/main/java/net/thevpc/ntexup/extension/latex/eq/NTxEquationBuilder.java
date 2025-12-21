@@ -84,7 +84,7 @@ public class NTxEquationBuilder implements NTxNodeBuilder {
                 formula = new TeXFormula(tex);
             } catch (Exception ex) {
                 formula = new TeXFormula("?error?");
-                rendererContext.engine().log().log(NMsg.ofC("error evaluating latex formula %s : %s", tex, ex), NTxUtils.sourceOf(node));
+                rendererContext.log().log(NMsg.ofC("error evaluating latex formula %s : %s", tex, ex), NTxUtils.sourceOf(node));
             }
             float size = (float) NTxValueByName.getFontSize(node, rendererContext);
             TeXIcon icon = formula.createTeXIcon(TeXConstants.STYLE_DISPLAY, size);
@@ -99,7 +99,7 @@ public class NTxEquationBuilder implements NTxNodeBuilder {
     public void renderMain(NTxNodeRendererContext rendererContext, NTxNodeBuilderContext builderContext) {
         NTxNode node = rendererContext.node();
         NElement vElemExpr = node.getPropertyValue(NTxPropName.VALUE).orNull();
-        NElement vElemValue = rendererContext.engine().evalExpression(vElemExpr, node, rendererContext.varProvider());
+        NElement vElemValue = rendererContext.evalExpression(vElemExpr, node).orNull();
         String text = NTxValue.of(vElemValue).asStringOrName().orElse("");
 
         NTxGraphics g = rendererContext.graphics();
@@ -123,7 +123,7 @@ public class NTxEquationBuilder implements NTxNodeBuilder {
             } catch (Exception ex) {
                 error = true;
                 formula = new TeXFormula("?error?");
-                builderContext.engine().log().log(NMsg.ofC("error evaluating latex formula %s : %s", tex, ex), NTxUtils.sourceOf(node));
+                rendererContext.log().log(NMsg.ofC("error evaluating latex formula %s : %s", tex, ex), NTxUtils.sourceOf(node));
             }
 
             NTxTextOptions oo=new NTxTextOptions();
@@ -199,7 +199,7 @@ public class NTxEquationBuilder implements NTxNodeBuilder {
         } catch (Exception ex) {
             error = true;
             formula = new TeXFormula("?error?");
-            ctx.engine().log().log(NMsg.ofC("error evaluating latex formula %s : %s", tex, ex), NTxUtils.sourceOf(node));
+            ctx.log().log(NMsg.ofC("error evaluating latex formula %s : %s", tex, ex), NTxUtils.sourceOf(node));
         }
         float size = (float) (fontSize);
         TeXIcon icon = formula.createTeXIcon(TeXConstants.STYLE_DISPLAY, size);
