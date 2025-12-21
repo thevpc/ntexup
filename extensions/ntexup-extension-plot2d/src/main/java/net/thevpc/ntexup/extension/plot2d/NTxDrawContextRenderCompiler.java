@@ -20,7 +20,8 @@ import java.util.List;
 
 class NTxDrawContextRenderCompiler {
     public static NTxDrawContext compile(NTxNode p, NTxNodeRendererContext rendererContext){
-        double[] xValues = NTxValue.of(rendererContext.engine().evalExpression(p.getPropertyValue("x").orElse(NElement.ofDoubleArray(NTxNumberUtils.dsteps(100,-100,1))), p, rendererContext.varProvider())).asDoubleArray().orElse(NTxNumberUtils.dsteps(100,-100,1));
+        double[] xValues = NTxValue.of(rendererContext.evalExpression(p.getPropertyValue("x").orElse(NElement.ofDoubleArray(NTxNumberUtils.dsteps(100,-100,1))), p).orNull())
+                .asDoubleArray().orElse(NTxNumberUtils.dsteps(100,-100,1));
         double minY = -100;
         double maxY = 100;
         boolean zoom = true;
@@ -40,15 +41,15 @@ class NTxDrawContextRenderCompiler {
                 pd.color = (Color) color;
             }
             if (pld.color != null) {
-                NElement ev = rendererContext.engine().evalExpression(pld.color, p, rendererContext.varProvider());
+                NElement ev = rendererContext.evalExpression(pld.color, p).orNull();
                 pd.color = NTxValue.of(ev).asColor().orElse(pd.color);
             }
             if (pld.title != null) {
-                NElement ev = rendererContext.engine().evalExpression(pld.title, p, rendererContext.varProvider());
+                NElement ev = rendererContext.evalExpression(pld.title, p).orNull();
                 pd.title = NTxValue.of(ev).asString().orNull();
             }
             if (pld.stroke != null) {
-                NElement ev = rendererContext.engine().evalExpression(pld.color, p, rendererContext.varProvider());
+                NElement ev = rendererContext.evalExpression(pld.color, p).orNull();
                 if (ev != null && !ev.isNull()) {
                     Stroke stroke = rendererContext.graphics().createStroke(ev);
                     if (stroke != null) {
@@ -64,7 +65,7 @@ class NTxDrawContextRenderCompiler {
                         NChronometer c = NChronometer.startNow();
                         pd.prepareX(ff, xValues, minMaxY);
                         c.stop();
-                        rendererContext.engine().log().log(NMsg.ofC("FUNCTION_X : %s",c));
+                        rendererContext.log().log(NMsg.ofC("FUNCTION_X : %s",c));
                         drawContext.allData.add(pd);
                     }
                     break;
