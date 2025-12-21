@@ -70,7 +70,7 @@ public class NTxFunctionPlotInfoLoader {
                         all.add(a);
                     }
                 }else{
-                    buildContext.engine().log().log(NMsg.ofC("unexpected plot child %s", NTxUtils.snippet(child)));
+                    buildContext.log().log(NMsg.ofC("unexpected plot child %s", NTxUtils.snippet(child)));
                 }
             }
         }
@@ -102,7 +102,7 @@ public class NTxFunctionPlotInfoLoader {
                 break;
             }
             default: {
-                buildContext.engine().log().log(NMsg.ofC("unexpected plot type %s", child.name().orNull()));
+                buildContext.log().log(NMsg.ofC("unexpected plot type %s", child.name().orNull()));
                 return null;
             }
         }
@@ -151,7 +151,7 @@ public class NTxFunctionPlotInfoLoader {
                         break;
                     }
                     default: {
-                        buildContext.engine().log().log(NMsg.ofC("unexpected function declaration %s", NTxUtils.snippet(e)));
+                        buildContext.log().log(NMsg.ofC("unexpected function declaration %s", NTxUtils.snippet(e)));
                     }
                 }
             } else if (e.isPair()) {
@@ -186,10 +186,10 @@ public class NTxFunctionPlotInfoLoader {
                         i.args = 4;
                         i.source = NTxPlotSource.FUNCTION_XYZT;
                     } else {
-                        buildContext.engine().log().log(NMsg.ofC("unexpected function declaration %s", NTxUtils.snippet(k)));
+                        buildContext.log().log(NMsg.ofC("unexpected function declaration %s", NTxUtils.snippet(k)));
                     }
                 } else {
-                    buildContext.engine().log().log(NMsg.ofC("unexpected function declaration %s", NTxUtils.snippet(k)));
+                    buildContext.log().log(NMsg.ofC("unexpected function declaration %s", NTxUtils.snippet(k)));
                 }
             }
         }
