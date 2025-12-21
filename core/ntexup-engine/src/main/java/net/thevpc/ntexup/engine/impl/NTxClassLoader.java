@@ -29,7 +29,7 @@ import net.thevpc.ntexup.api.engine.NTxEngine;
 import net.thevpc.nuts.artifact.NDefinition;
 import net.thevpc.nuts.artifact.NDependencyFilters;
 import net.thevpc.nuts.artifact.NId;
-import net.thevpc.nuts.command.NSearchCmd;
+import net.thevpc.nuts.command.NSearch;
 import net.thevpc.nuts.time.NChronometer;
 import net.thevpc.nuts.util.NBlankable;
 import net.thevpc.nuts.util.NCollections;
@@ -71,7 +71,7 @@ public class NTxClassLoader extends URLClassLoader {
             if (!NBlankable.isBlank(id.getGroupId())) {
                 NChronometer ch = NChronometer.startNow();
                 engine.log().log(NMsg.ofC("searching dependency %s...", id));
-                List<NDefinition> d = NSearchCmd.of(id).latest()
+                List<NDefinition> d = NSearch.of(id).latest()
                         .setInlineDependencies(true)
                         .setDependencyFilter(NDependencyFilters.of().byRunnable())
                         .getResultDefinitions().toList();
