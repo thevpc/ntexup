@@ -29,7 +29,7 @@ public class NTxTextRendererBase extends NTxTextBaseRenderer {
     public NTxTextRendererBuilder createRichTextHelper(NTxNodeRendererContext ctx) {
         NTxTextRendererFlavor f = ctx.engine().textRendererFlavor(flavor).orNull();
         if (f == null) {
-            ctx.engine().log().log(NMsg.ofC("TextRendererFlavor not found %s", flavor));
+            ctx.log().log(NMsg.ofC("TextRendererFlavor not found %s", flavor));
             f = ctx.engine().textRendererFlavor("text").get();
         }
         NTxNode node = ctx.node();
@@ -48,10 +48,10 @@ public class NTxTextRendererBase extends NTxTextBaseRenderer {
 
     public String resolveStringOrFileOr(NTxNode node, NElement str, NElement file, String defaultValue, NTxNodeRendererContext ctx) {
         if (str != null) {
-            NElement vElemValue = ctx.engine().evalExpression(str, node, ctx.varProvider());
+            NElement vElemValue = ctx.evalExpression(str, node).orNull();
             return NTxUtilsText.trimBloc(NTxValue.of(vElemValue).asStringOrName().orElse(""));
         } else {
-            NElement vElemValue = ctx.engine().evalExpression(file, node, ctx.varProvider());
+            NElement vElemValue = ctx.evalExpression(file, node).orNull();
             NPath nPath = ctx.engine().resolvePath(vElemValue, node);
             if (nPath != null) {
                 ctx.sourceMonitor().add(nPath);
@@ -59,7 +59,7 @@ public class NTxTextRendererBase extends NTxTextBaseRenderer {
                     try {
                         return nPath.readString().trim();
                     } catch (Exception e) {
-                        ctx.engine().log().log(NMsg.ofC("unable to read path %s : %s", nPath, e).asError(), NTxUtils.sourceOf(node));
+                        ctx.log().log(NMsg.ofC("unable to read path %s : %s", nPath, e).asError(), NTxUtils.sourceOf(node));
                     }
                 }
             }
