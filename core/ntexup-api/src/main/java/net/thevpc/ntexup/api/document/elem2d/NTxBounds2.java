@@ -8,6 +8,10 @@ public class NTxBounds2 {
     private Double w;
     private Double h;
 
+    public static  NTxBounds2 ofFull() {
+        return new NTxBounds2(0.0, 0.0, 100.0, 100.0);
+    }
+
     public NTxBounds2(Number x, Number y, Number w, Number h) {
         this.x = x == null ? null : x.doubleValue();
         this.y = y == null ? null : y.doubleValue();
