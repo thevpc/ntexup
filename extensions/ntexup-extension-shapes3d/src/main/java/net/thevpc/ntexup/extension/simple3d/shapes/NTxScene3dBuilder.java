@@ -352,8 +352,8 @@ public class NTxScene3dBuilder implements NTxNodeBuilder {
                 if (_angle != null) {
                     if ((_lineFrom != null || _lineTo != null) && _vector == null) {
                         return m.rotateLine(
-                                _lineFrom == null ? new NTxPoint3D(0, 0, 0) : _lineFrom,
-                                _lineTo == null ? new NTxPoint3D(0, 0, 0) : _lineTo,
+                                NTxPoint3D.denull(_lineFrom),
+                                NTxPoint3D.denull(_lineTo),
                                 _angle == null ? 0 : Math.toRadians(_angle.x)
                         );
                     }
