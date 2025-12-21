@@ -25,7 +25,7 @@ public class NTxColors {
 
     public static Color resolveDefaultColorByIndex(int index, Color[] colors, NTxNode node, NTxNodeRendererContext ctx) {
         if (colors == null || colors.length == 0) {
-            NElement v = ctx.engine().resolveVarValue("documentColors", node, ctx.varProvider());
+            NElement v = ctx.resolveVarValue("documentColors", node).orNull();
             if(v!=null && v.isArray()){
                 colors=NTxValue.of(v).asColorArray().orNull();
             }
