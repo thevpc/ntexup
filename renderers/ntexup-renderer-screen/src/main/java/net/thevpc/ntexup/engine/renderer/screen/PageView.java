@@ -122,7 +122,7 @@ public class PageView extends JComponent {
 //                renderPage(g2d, size.getWidth(), size.getHeight(), someChange, pageNode);
 //                g2d.setClip(oldClip);
 //            }else{
-                renderPage(g2d, size.getWidth(), size.getHeight(), someChange, pageNode);
+            renderPage(g2d, size.getWidth(), size.getHeight(), someChange, pageNode);
 //            }
             c.stop();
             if (someChange) {
@@ -131,7 +131,7 @@ public class PageView extends JComponent {
         }
     }
 
-    private void renderPage(Graphics2D g2d, double width, double height, boolean someChange,NRef<NTxNode> pageNode) {
+    private void renderPage(Graphics2D g2d, double width, double height, boolean someChange, NRef<NTxNode> pageNode) {
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
         g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
@@ -145,7 +145,8 @@ public class PageView extends JComponent {
 
 
         NTxBounds2 bounds = new NTxBounds2(0, 0, width, height);
-        NTxNodeRendererContext ctx = new DefaultNTxNodeRendererContext(p, engine,
+        NTxNodeRendererContext ctx = new DefaultNTxNodeRendererContext(page,
+                p, engine,
                 engine.createGraphics(g2d)
                 , bounds, bounds, bounds, page, someChange, pageStartTime, NMaps.of(NTxNodeRendererContext.CAPABILITY_ANIMATE, true), this, this::repaint, null, false);
         if (someChange) {
