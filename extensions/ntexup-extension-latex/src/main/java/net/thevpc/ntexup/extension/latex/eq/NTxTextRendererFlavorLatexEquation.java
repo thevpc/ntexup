@@ -74,7 +74,7 @@ public class NTxTextRendererFlavorLatexEquation implements NTxTextRendererFlavor
         } catch (Exception ex) {
             error = true;
             formula = new TeXFormula("?error?");
-            ctx.engine().log().log(NMsg.ofC("error evaluating latex formula %s : %s", tex, ex), NTxUtils.sourceOf(node));
+            ctx.log().log(NMsg.ofC("error evaluating latex formula %s : %s", tex, ex), NTxUtils.sourceOf(node));
         }
         float size = (float) (fontSize / 2.0);
         TeXIcon icon = formula.createTeXIcon(TeXConstants.STYLE_DISPLAY, size);
