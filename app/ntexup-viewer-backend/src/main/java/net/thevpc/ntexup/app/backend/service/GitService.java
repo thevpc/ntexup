@@ -3,7 +3,7 @@ package net.thevpc.ntexup.app.backend.service;
 import net.thevpc.ntexup.api.engine.NTxCompiledPage;
 import net.thevpc.ntexup.api.engine.NTxEngine;
 import net.thevpc.ntexup.api.renderer.NTxNodeRendererConfig;
-import net.thevpc.nuts.command.NExecCmd;
+import net.thevpc.nuts.command.NExec;
 import net.thevpc.nuts.io.NPath;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -32,14 +32,14 @@ public class GitService {
 
         NPath baseFolder = NPath.ofUserHome().resolve(localFolderName);
         if (baseFolder.isDirectory()) {
-            NExecCmd.of()
+            NExec.of()
                     .system()
                     .setDirectory(baseFolder.resolve(n))
                     .addCommand("git", "pull")
                     .failFast()
                     .run();
         } else {
-            NExecCmd.of()
+            NExec.of()
                     .system()
                     .setDirectory(baseFolder)
                     .addCommand("git", "clone", url)
