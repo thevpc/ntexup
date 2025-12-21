@@ -70,7 +70,7 @@ public class NTxImageBuilder implements NTxNodeBuilder {
             cc.options.setSize(new Dimension(b.getWidth().intValue(), b.getHeight().intValue()));
             NElement eimg = node.getPropertyValue(NTxPropName.VALUE).orNull();
             if(eimg!=null){
-                NElement eimg2 = finalCtx.engine().evalExpression(eimg, node, finalCtx.varProvider());
+                NElement eimg2 = finalCtx.evalExpression(eimg, node).orNull();
                 cc.img = finalCtx.engine().resolvePath(eimg2, node);
                 cc.img = resolveImagePath(cc.img);
             }
