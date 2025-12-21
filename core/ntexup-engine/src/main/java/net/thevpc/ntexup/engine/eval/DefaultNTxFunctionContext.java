@@ -20,7 +20,7 @@ public class DefaultNTxFunctionContext implements NTxFunctionContext {
         this.varProvider = varProvider;
     }
 
-    public NElement eval(NElement expr) {
+    public NOptional<NElement> eval(NElement expr) {
         return engine.evalExpression(expr, node, varProvider);
     }
 
