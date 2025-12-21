@@ -8,6 +8,17 @@ import java.util.Objects;
 public class NTxPoint3D implements NToElement {
     public double x, y, z;
 
+    public static NTxPoint3D denull(NTxPoint3D other) {
+        if(other == null) {
+            return NTxPoint3D.ofZeros();
+        }
+        return other;
+    }
+
+    public static NTxPoint3D ofZeros() {
+        return new NTxPoint3D(0.0, 0.0, 0.0);
+    }
+
     public NTxPoint3D(double x, double y, double z) {
         this.x = x;
         this.y = y;
