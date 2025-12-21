@@ -5,6 +5,7 @@ import net.thevpc.ntexup.api.document.elem2d.*;
 import net.thevpc.ntexup.api.engine.NTxCompiledDocument;
 import net.thevpc.ntexup.api.engine.NTxCompiledPage;
 import net.thevpc.ntexup.api.engine.NTxEngine;
+import net.thevpc.ntexup.api.eval.NTxVar;
 import net.thevpc.ntexup.api.eval.NTxVarProvider;
 import net.thevpc.ntexup.api.log.NTxLogger;
 import net.thevpc.ntexup.api.document.node.*;
@@ -57,6 +58,15 @@ public interface NTxNodeRendererContext {
     NTxBounds2 parentBounds();
 
     void render();
+
+    NOptional<NTxVar> findVar(String varName, NTxNode node);
+
+    NOptional<NElement> resolveVarValue(String varName, NTxNode node);
+
+    NOptional<NElement> evalExpression(NElement expression, NTxNode node);
+
+
+    NOptional<NTxNode> findNodeByProperty(String varName, String varValue, NTxNode node);
 
     NTxEngine engine();
 
@@ -191,4 +201,8 @@ public interface NTxNodeRendererContext {
     NTxSourceMonitor sourceMonitor();
 
     void drawContour();
+
+    void renderDetachedNode(NElement childNode, NTxBounds2 relativeBounds);
+
+    void renderDetachedNode(NTxNode childNode, NTxBounds2 relativeBounds);
 }
