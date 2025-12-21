@@ -116,17 +116,17 @@ public class DefaultNTxEngine implements NTxEngine {
     }
 
     public <T> NOptional<T> getEnv(String name) {
-        return NOptional.ofNamed((T)env.get(name), name);
+        return NOptional.ofNamed((T) env.get(name), name);
     }
 
     public <T> NOptional<T> computeIfAbsent(String name, Function<String, T> fct) {
-        return NOptional.ofNamed((T)env.computeIfAbsent(name, fct == null ? s -> null : fct), name);
+        return NOptional.ofNamed((T) env.computeIfAbsent(name, fct == null ? s -> null : fct), name);
     }
 
     public DefaultNTxEngine setEnv(String env, Object value) {
-        if(value != null) {
+        if (value != null) {
             this.env.put(env, value);
-        }else{
+        } else {
             this.env.remove(env);
         }
         return this;
@@ -263,6 +263,7 @@ public class DefaultNTxEngine implements NTxEngine {
         }
         return factory;
     }
+
 
     @Override
     public NOptional<NTxItem> newNode(NElement element, NTxNodeFactoryParseContext ctx) {
@@ -896,7 +897,7 @@ public class DefaultNTxEngine implements NTxEngine {
     }
 
     @Override
-    public NElement evalExpression(NElement expression, NTxNode node, NTxVarProvider varProvider) {
+    public NOptional<NElement> evalExpression(NElement expression, NTxNode node, NTxVarProvider varProvider) {
         if (expression == null) {
             return null;
         }
@@ -909,11 +910,16 @@ public class DefaultNTxEngine implements NTxEngine {
         if (baseSrc != null) {
             u = NTxUtils.addCompilerDeclarationPath(u, baseSrc);
         }
-        return u;
+        return NOptional.ofNamed(u, "expression " + expression);
     }
 
     @Override
-    public NElement resolveVarValue(String varName, NTxNode node, NTxVarProvider varProvider) {
+    public NOptional<NElement> resolveVarValue(String varName, NTxNode node) {
+        return resolveVarValue(varName, node, null);
+    }
+
+    @Override
+    public NOptional<NElement> resolveVarValue(String varName, NTxNode node, NTxVarProvider varProvider) {
         NOptional<NTxVar> v = findVar(varName, node, varProvider);
         if (!v.isPresent()) {
             log().log(NMsg.ofC("var not found %s", varName).asWarning(), NTxUtils.sourceOf(node));
@@ -926,6 +932,12 @@ public class DefaultNTxEngine implements NTxEngine {
     public NOptional<NTxVar> findVar(String varName, NTxNode node, NTxVarProvider varProvider) {
         NTxNodeEval ne = new NTxNodeEval(this, varProvider);
         return ne.findVar(varName, node);
+    }
+
+    @Override
+    public NOptional<NTxNode> findNodeByProperty(String varName, String varValue, NTxNode node, NTxVarProvider varProvider) {
+        NTxNodeEval ne = new NTxNodeEval(this, varProvider);
+        return ne.findNodeByProperty(varName, varValue, node);
     }
 
     @Override
@@ -968,7 +980,9 @@ public class DefaultNTxEngine implements NTxEngine {
 
         NTxGraphics hg = this.createGraphics(g);
         NTxNodeRenderer renderer = getRenderer(node.type()).get();
-        DefaultNTxNodeRendererContext context = new DefaultNTxNodeRendererContext(node, this, hg, null,
+        DefaultNTxNodeRendererContext context = new DefaultNTxNodeRendererContext(
+                page,
+                node, this, hg, null,
                 new NTxBounds2(0, 0, dimension.getWidth(), dimension.getHeight()),
                 new NTxBounds2(0, 0, dimension.getWidth(), dimension.getHeight()),
                 page, true, System.currentTimeMillis(), capabilities, null, null, null, false);
