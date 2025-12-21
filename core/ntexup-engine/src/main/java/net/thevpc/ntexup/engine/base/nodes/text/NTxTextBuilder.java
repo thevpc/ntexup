@@ -51,7 +51,7 @@ public class NTxTextBuilder implements NTxNodeBuilder {
         } else {
             NTxTextTokenText b = (NTxTextTokenText) a;
             // apply interpolation
-            String txt2 = ctx.engine().evalExpression(NElement.ofString(b.value()), node, ctx.varProvider()).asStringValue().get();
+            String txt2 = ctx.evalExpression(NElement.ofString(b.value()), node).flatMap(NElement::asStringValue).get();
             builder.appendText(txt2, b.options(), node, ctx);
         }
     }
