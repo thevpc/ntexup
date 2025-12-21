@@ -25,8 +25,8 @@ public class NTxFunctionArgImpl implements NTxFunctionArg {
 
     @Override
     public NElement eval() {
-        NElement u = engine.evalExpression(expression, node, varProvider);
-        NElement u2 = engine.evalExpression(u, node, varProvider);
+        NElement u = engine.evalExpression(expression, node, varProvider).orNull();
+        NElement u2 = engine.evalExpression(u, node, varProvider).orNull();
         return u2;
     }
 
