@@ -14,15 +14,12 @@ import net.thevpc.ntexup.util.NTexupUtils;
 import net.thevpc.nuts.artifact.NId;
 import net.thevpc.nuts.command.NSysEditorFamily;
 import net.thevpc.nuts.command.NSysEditorSupportCmd;
-import net.thevpc.nuts.io.NAsk;
-import net.thevpc.nuts.io.NOut;
+import net.thevpc.nuts.io.*;
 import net.thevpc.nuts.core.NSession;
 import net.thevpc.nuts.swing.NSwingUtils;
 import net.thevpc.nuts.text.*;
 import net.thevpc.nuts.time.NChronometer;
 import net.thevpc.nuts.util.NValidationException;
-import net.thevpc.nuts.io.NPath;
-import net.thevpc.nuts.io.NPathRenameOptions;
 import net.thevpc.nuts.util.*;
 
 import java.util.*;
@@ -237,7 +234,7 @@ public class NTexupOptionsProcessor {
                                     NMsg.ofStyledPrimary1(template.id()), NMsg.ofStyledPath(template.url())))
                             .newLine();
                 }
-                String value = NAsk.of().forString(NMsg.ofC("%s", sb))
+                String value = NIn.ask().forString(NMsg.ofC("%s", sb))
                         .setValidator((sval, a) -> {
                             return NTxTemplateFilter.of(templates).selectOneUrl(sval);
                         })
