@@ -287,7 +287,21 @@ public class NTxCompiler {
         //enforce forward definition dependencies
         node.clearChildren();
         for (NTxNode child : initialChildren) {
-            newChildren.addAll(compileNodeTree(child, h.withParent(node)));
+            boolean componentBodyVar=(child instanceof CtrlNTxNodeName && Objects.equals(((CtrlNTxNodeName)child).getVarName().asStringValue().get(),NTxUtils.COMPONENT_BODY_VAR_NAME));
+            List<NTxItem> cc = compileNodeTree(child, h.withParent(node));
+            if(componentBodyVar && cc.size()>0){
+                List<NTxSource> sources=new ArrayList<>();
+                for (NTxItem nTxItem : cc) {
+                    NTxSource source = nTxItem.source();
+                    if(source!=null){
+                        if(!sources.contains(source)){
+                            sources.add(source);
+                        }
+                    }
+                }
+                System.out.println(sources);
+            }
+            newChildren.addAll(cc);
             // should update for each child, because second child my depend on
             // some include of the previous child
             node.clearChildren();
@@ -452,8 +466,9 @@ public class NTxCompiler {
                     if (t.isPresent()) {
                         return _process_call_fct(t.get(), c, h);
                     }
-                    h.messages().log(NMsg.ofC("undefined node %s", uid).asError(), c.source());
-                    NTxNode node2 = DefaultNTxNode.ofText((NMsg.ofC("undefined node %s", uid).toString()));
+                    NMsg errMsg = NMsg.ofC("undefined node %s", NMsg.ofStyledError(uid));
+                    h.messages().log(errMsg.asError(), c.source());
+                    NTxNode node2 = DefaultNTxNode.ofText((errMsg.toString()));
                     node2.setSource(node.source());
                     return new ArrayList<>(Arrays.asList(node2));
                 }
@@ -498,7 +513,7 @@ public class NTxCompiler {
             }
             return loaded;
         }
-        throw new NIllegalArgumentException(NMsg.ofC("expected 'include' node, got %s", node.type()));
+        throw new NIllegalArgumentException(NMsg.ofC("expected 'include' node, got %s", NMsg.ofStyledKeyword(node.type())));
     }
     private List<NTxItem> compileNodeTree_import(NTxNode node, NodeHierarchy h) {
         if (NTxNodeType.CTRL_IMPORT.equals(node.type())) {
@@ -512,7 +527,7 @@ public class NTxCompiler {
             engine.importDependencies(toImport.toArray(new String[0]));
             return new  ArrayList<>();
         }
-        throw new NIllegalArgumentException(NMsg.ofC("expected 'include' node, got %s", node.type()));
+        throw new NIllegalArgumentException(NMsg.ofC("expected 'include' node, got %s", NMsg.ofStyledKeyword(node.type())));
     }
 
     private List<NTxItem> compileNodeTree_if(NTxNode node, NodeHierarchy h) {
