@@ -1,11 +1,6 @@
 package net.thevpc.ntexup.engine.renderer.screen;
 
-import net.thevpc.ntexup.api.document.NTxDocument;
-import net.thevpc.ntexup.api.engine.NTxCompiledDocument;
-import net.thevpc.ntexup.api.engine.NTxEngine;
-import net.thevpc.ntexup.api.renderer.NTxDocumentStreamRenderer;
 import net.thevpc.ntexup.api.source.NTxSource;
-import net.thevpc.ntexup.api.renderer.NTxDocumentStreamRendererConfig;
 import net.thevpc.ntexup.engine.renderer.screen.utils.JPopupMenuHelper;
 import net.thevpc.nuts.io.NPath;
 import net.thevpc.nuts.log.NLog;
@@ -27,8 +22,19 @@ public class DocumentPopupMenu {
 
     void showPopupMenu(MouseEvent e) {
         JPopupMenuHelper popupMenu = new JPopupMenuHelper();
+        popupMenu.addMenuItem("Close", ev -> {
+            documentView.close();
+        });
+        if (documentView.documentViewManager != null) {
+            popupMenu.addMenuItem("Show Manager", ev -> {
+                documentView.documentViewManager.openMain();
+            });
+            popupMenu.addMenuItem("Exit", ev -> {
+                documentView.documentViewManager.exit();
+            });
+        }
         popupMenu.addMenuItem("Save as PDF", ev -> {
-            PdfConfigDialog configDialog = new PdfConfigDialog((Frame) SwingUtilities.getWindowAncestor((Component) e.getSource()),documentView);
+            PdfConfigDialog configDialog = new PdfConfigDialog((Frame) SwingUtilities.getWindowAncestor((Component) e.getSource()), documentView);
             configDialog.setVisible(true);
         });
 
