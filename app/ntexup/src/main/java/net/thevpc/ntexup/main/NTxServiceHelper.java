@@ -1,22 +1,15 @@
 package net.thevpc.ntexup.main;
 
 import net.thevpc.ntexup.api.document.NTxDocument;
-import net.thevpc.ntexup.api.document.NTxDocumentLoadingResult;
 import net.thevpc.ntexup.api.engine.NTxCompiledDocument;
 import net.thevpc.ntexup.api.engine.NTxEngine;
 import net.thevpc.ntexup.api.engine.NTxTemplateInfo;
-import net.thevpc.ntexup.config.NTxProject;
+import net.thevpc.ntexup.api.renderer.*;
 import net.thevpc.ntexup.config.NTxViewerConfigManager;
 import net.thevpc.ntexup.config.UserConfig;
 import net.thevpc.ntexup.config.UserConfigManager;
 import net.thevpc.ntexup.debug.NTxDebugFrame;
-import net.thevpc.ntexup.debug.NTxTsonPanel;
-import net.thevpc.ntexup.engine.impl.DefaultNTxEngine;
 import net.thevpc.ntexup.main.components.NewProjectPanel;
-import net.thevpc.ntexup.api.renderer.NTxDocumentRendererListener;
-import net.thevpc.ntexup.api.renderer.NTxDocumentScreenRenderer;
-import net.thevpc.ntexup.api.renderer.NTxDocumentStreamRenderer;
-import net.thevpc.ntexup.api.renderer.NTxDocumentStreamRendererConfig;
 import net.thevpc.ntexup.util.NTexupUtils;
 import net.thevpc.nuts.io.NPath;
 import net.thevpc.nuts.log.NLog;
@@ -105,6 +98,8 @@ public class NTxServiceHelper {
     public void openProject(NPath path) {
         configManager.markAccessed(path);
         NTxDocumentScreenRenderer renderer = engine.newScreenRenderer().get();
+        renderer.setProperty(MainFrame.class.getName(), mainFrame);
+        renderer.setProperty(NTxDocumentViewManager.class, mainFrame);
         renderer.addRendererListener(currListeners);
         renderer.addRendererListener(new NTxDocumentRendererListener() {
             MainFrame.ProgressItem o;
@@ -122,7 +117,7 @@ public class NTxServiceHelper {
                 }
             }
         });
-        renderer.renderPath(path);
+        mainFrame.openDocument(renderer.renderPath(path));
     }
 
     public void showOpenFile() {
