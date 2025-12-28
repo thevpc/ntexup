@@ -14,10 +14,7 @@ import net.thevpc.ntexup.api.engine.NTxEngine;
 import net.thevpc.ntexup.api.document.NTxDocument;
 import net.thevpc.ntexup.api.document.node.NTxNodeType;
 import net.thevpc.ntexup.api.document.node.NTxNode;
-import net.thevpc.ntexup.api.renderer.NTxDocumentStreamRendererBase;
-import net.thevpc.ntexup.api.renderer.NTxDocumentRendererContext;
-import net.thevpc.ntexup.api.renderer.NTxDocumentRendererSupplier;
-import net.thevpc.ntexup.api.renderer.NTxDocumentStreamRenderer;
+import net.thevpc.ntexup.api.renderer.*;
 import net.thevpc.nuts.io.NIOException;
 import net.thevpc.nuts.io.NPath;
 
@@ -46,7 +43,7 @@ public class NTxHtmlDocumentRenderer extends NTxDocumentStreamRendererBase imple
     }
 
     @Override
-    public void renderSupplier(NTxDocumentRendererSupplier document) {
+    public NTxDocumentView renderSupplier(NTxDocumentRendererSupplier document) {
         NTxCompiledDocument d = document.get(rendererContext);
         Object o = output;
         if (o == null) {
@@ -61,6 +58,7 @@ public class NTxHtmlDocumentRenderer extends NTxDocumentStreamRendererBase imple
         } else if (o instanceof OutputStream) {
             renderStream(d, (OutputStream) o);
         }
+        return null;
     }
 
     public PrintStream psOf(OutputStream out) {
