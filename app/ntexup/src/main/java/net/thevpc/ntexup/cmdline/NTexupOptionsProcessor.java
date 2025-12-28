@@ -107,13 +107,13 @@ public class NTexupOptionsProcessor {
             NSwingUtils.setSharedWorkspaceInstance();
             FlatLightLaf.setup(new com.formdev.flatlaf.FlatDarculaLaf());
             info.mainFrame = new MainFrame(info.engine);
-            NTexupUtils.runUiAsync(() -> {
-                info.mainFrame.setVisible(true);
-            });
         }
         ShowFrameActionOptions showFrameActionOptions = info.options.getOrCreate(ShowFrameActionOptions.class);
         if (showFrameActionOptions != null && showFrameActionOptions.viewLog) {
             info.mainFrame.getService().showDebug();
+        }
+        if(false){
+            info.mainFrame.displayFrame();
         }
     }
 
