@@ -26,7 +26,7 @@ public class NTxFunctionRotateCubehelixColor implements NTxFunction {
             return args.eval(0);
         }
         if (args.size() > 2) {
-            context.log().log(NMsg.ofC("%s: expected 2 arguments, got %s", name(), args.size()));
+            context.log().log(NMsg.ofC("%s: expected 2 arguments, got %s", NMsg.ofStyledKeyword(name()), args.size()));
         }
         Color c = NTxValue.of(args.eval(0)).asColor().get();
         float degrees = NTxValue.of(args.eval(1)).asFloat().get();
