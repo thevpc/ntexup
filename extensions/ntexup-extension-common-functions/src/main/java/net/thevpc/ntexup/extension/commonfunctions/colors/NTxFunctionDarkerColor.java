@@ -27,7 +27,7 @@ public class NTxFunctionDarkerColor implements NTxFunction {
             return NTxElementUtils.toElement(NTxColorUtils.darker(c));
         }
         if (args.size() > 2) {
-            context.log().log(NMsg.ofC("%s: expected 2 arguments, got %s", name(), args.size()));
+            context.log().log(NMsg.ofC("%s: expected 2 arguments, got %s", NMsg.ofStyledKeyword(name()), args.size()));
         }
         float degrees = NTxValue.of(args.eval(1)).asFloat().get();
         return NTxElementUtils.toElement(NTxColorUtils.darker(c, degrees));
