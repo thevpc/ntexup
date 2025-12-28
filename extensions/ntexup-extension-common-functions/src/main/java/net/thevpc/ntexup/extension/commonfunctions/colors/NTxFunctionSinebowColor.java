@@ -21,7 +21,7 @@ public class NTxFunctionSinebowColor implements NTxFunction {
             return NElement.ofNull();
         }
         if (args.size() > 1) {
-            context.log().log(NMsg.ofC("%s: expected 1 argument, got %s", name(), args.size()));
+            context.log().log(NMsg.ofC("%s: expected 1 argument, got %s", NMsg.ofStyledKeyword(name()), args.size()));
         }
         float c = NTxValue.of(args.eval(0)).asFloat().get();
         return NTxElementUtils.toElement(NTxColorUtils.sinebow(c));
