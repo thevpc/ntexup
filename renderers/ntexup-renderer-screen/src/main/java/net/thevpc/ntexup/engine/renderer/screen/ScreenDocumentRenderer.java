@@ -9,6 +9,7 @@ import net.thevpc.ntexup.api.renderer.NTxDocumentRendererBase;
 import net.thevpc.ntexup.api.renderer.NTxDocumentScreenRenderer;
 
 import net.thevpc.ntexup.api.renderer.NTxDocumentRendererSupplier;
+import net.thevpc.ntexup.api.renderer.NTxDocumentView;
 
 /**
  * @author vpc
@@ -20,7 +21,8 @@ public class ScreenDocumentRenderer extends NTxDocumentRendererBase implements N
     }
 
     @Override
-    public void renderSupplier(NTxDocumentRendererSupplier document) {
-        DocumentView dv = new DocumentView(document, engine, eventListenerDelegate);
+    public NTxDocumentView renderSupplier(NTxDocumentRendererSupplier document) {
+        DocumentView dv = new DocumentView(document, engine, eventListenerDelegate, this);
+        return dv;
     }
 }
