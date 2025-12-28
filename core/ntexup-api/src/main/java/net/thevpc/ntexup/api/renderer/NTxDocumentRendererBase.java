@@ -6,13 +6,17 @@ import net.thevpc.ntexup.api.engine.NTxEngine;
 import net.thevpc.ntexup.api.document.NTxDocument;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import net.thevpc.nuts.io.NPath;
+import net.thevpc.nuts.util.NOptional;
 
 public abstract class NTxDocumentRendererBase implements NTxDocumentRenderer {
 
     private List<NTxDocumentRendererListener> eventListeners = new ArrayList<>();
+    private Map<String, Object> props = new HashMap<>();
     protected NTxDocumentRendererListener eventListenerDelegate = new NTxDocumentRendererListener() {
         @Override
         public void onChangedCompiledDocument(NTxCompiledDocument compiledDocument) {
@@ -48,6 +52,32 @@ public abstract class NTxDocumentRendererBase implements NTxDocumentRenderer {
         this.engine = engine;
     }
 
+
+    @Override
+    public void setProperty(String name, Object value) {
+        props.put(name, value);
+    }
+
+    @Override
+    public <T> NOptional<T> getProperty(String name, Class<T> expectedType) {
+        return NOptional.ofNamed(props.get(name), name).instanceOf(expectedType);
+    }
+
+    @Override
+    public NOptional<Object> getProperty(String name) {
+        return NOptional.ofNamed(props.get(name), name);
+    }
+
+    @Override
+    public <T> void setProperty(Class<T> name, T value) {
+        setProperty(name.getName(), value);
+    }
+
+    @Override
+    public <T> NOptional<T> getProperty(Class<T> expectedType) {
+        return getProperty(expectedType.getName(), expectedType);
+    }
+
     @Override
     public void addRendererListener(NTxDocumentRendererListener listener) {
         if (listener != null) {
@@ -56,18 +86,18 @@ public abstract class NTxDocumentRendererBase implements NTxDocumentRenderer {
     }
 
     @Override
-    public void renderPath(NPath path) {
-        renderSupplier(r -> engine.loadCompiledDocument(path));
+    public NTxDocumentView renderPath(NPath path) {
+        return renderSupplier(r -> engine.loadCompiledDocument(path));
     }
 
     @Override
-    public void render(NTxDocument document) {
-        renderSupplier(e -> engine.asCompiledDocument(document));
+    public NTxDocumentView render(NTxDocument document) {
+        return renderSupplier(e -> engine.asCompiledDocument(document));
     }
 
     @Override
-    public void render(NTxCompiledDocument document) {
-        renderSupplier(e -> document);
+    public NTxDocumentView render(NTxCompiledDocument document) {
+        return renderSupplier(e -> document);
     }
 
 }
