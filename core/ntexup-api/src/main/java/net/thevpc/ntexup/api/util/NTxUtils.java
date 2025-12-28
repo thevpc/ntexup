@@ -117,10 +117,10 @@ public class NTxUtils {
         if (o.isPresent()) {
             return element;
         }
-        if (element.isString()) {
+        //if (element.isString()) {
             return element.builder().addAnnotation(COMPILER_DECLARATION_PATH, NElement.ofString(path)).build();
-        }
-        return element;
+        //}
+        //return element;
     }
 
     public static List<NTxNode> nodePath(NTxNode node) {
@@ -558,7 +558,8 @@ public class NTxUtils {
     }
 
     public static boolean isAnyDefVarName(String name) {
-        return NNameFormat.equalsIgnoreFormat(COMPONENT_BODY_VAR_NAME, name);
+        return NNameFormat.equalsIgnoreFormat(COMPONENT_BODY_VAR_NAME, name)
+                ;
     }
 
     public static NTxNode findRootNode(NTxItem bullet) {
