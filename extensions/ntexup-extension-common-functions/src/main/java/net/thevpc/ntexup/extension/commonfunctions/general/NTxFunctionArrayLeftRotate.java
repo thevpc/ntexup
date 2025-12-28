@@ -27,19 +27,19 @@ public class NTxFunctionArrayLeftRotate implements NTxFunction {
             return args.eval(0);
         }
         if (args.size() > 2) {
-            context.log().log(NMsg.ofC("%s: expected 2 arguments, got %s", name(), args.size()));
+            context.log().log(NMsg.ofC("%s: expected 2 arguments, got %s", NMsg.ofStyledKeyword(name()), args.size()));
         }
         NElement ue0 = args.eval(0);
         NOptional<NElement[]> uv0 = NTxValue.of(ue0).asElementArray();
         if (!uv0.isPresent()) {
-            context.log().log(NMsg.ofC("unable to call %s, first arg '%s' is not a color array", name(), NTxUtils.snippet(ue0)));
+            context.log().log(NMsg.ofC("unable to call %s, first arg '%s' is not a color array", NMsg.ofStyledKeyword(name()), NTxUtils.snippet(ue0)));
             return ue0;
         }
 
         NElement ue1 = args.eval(1);
         NOptional<Number> uv1 = NTxValue.of(ue1).asNumber();
         if (!uv1.isPresent()) {
-            context.log().log(NMsg.ofC("unable to call %s, second arg '%s' is not a number", name(), NTxUtils.snippet(ue1)));
+            context.log().log(NMsg.ofC("unable to call %s, second arg '%s' is not a number", NMsg.ofStyledKeyword(name()), NTxUtils.snippet(ue1)));
             return ue0;
         }
         if (uv0.get().length == 0) {
