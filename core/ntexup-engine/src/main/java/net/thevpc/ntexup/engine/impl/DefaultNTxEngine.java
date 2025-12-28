@@ -104,6 +104,7 @@ public class DefaultNTxEngine implements NTxEngine {
         renderers = new NTxNodeRendererList(this);
         imageTypeRendererFactoryList = new NTxImageTypeRendererFactoryList(this);
 
+        log().log(NMsg.ofC("bootstrap base components...").asFineAlert());
         textFlavors.build(new NId[0], false);
         functions.build(new NId[0], false);
         documentRendererFactories.build(new NId[0], false);
@@ -113,6 +114,7 @@ public class DefaultNTxEngine implements NTxEngine {
         nodeParserFactories.build(new NId[0], false);
         renderers.build(new NId[0], false);
         imageTypeRendererFactoryList.build(new NId[0], false);
+        log().log(NMsg.ofC("%s engine ready!", NMsg.ofStyledPrimary1("NTexUp")).asFineAlert());
     }
 
     public <T> NOptional<T> getEnv(String name) {
@@ -179,10 +181,14 @@ public class DefaultNTxEngine implements NTxEngine {
     public boolean importDependencies(String... deps) {
         NDependency[] okDeps = Arrays.stream(deps).map(x -> NDependency.of(x)).toArray(NDependency[]::new);
         if (okDeps.length > 0) {
-
+            log().log(NMsg.ofC("importing dependencies %s",
+                    NTextBuilder.of()
+                            .appendJoined(",", Arrays.asList(okDeps))
+                            .build()
+            ));
             NId[] u = classLoader.loadDependencies(okDeps);
             if (u.length > 0) {
-                log().log(NMsg.ofC("import dependencies %s",
+                log().log(NMsg.ofC("new dependencies %s",
                         NTextBuilder.of()
                                 .appendJoined(",", Arrays.asList(u))
                                 .build()
@@ -456,7 +462,10 @@ public class DefaultNTxEngine implements NTxEngine {
         NAssert.requireNonNull(path, "path");
         synchronized (this) {
             if (NTxGitHelper.isGithubFolder(path.toString())) {
+                log().log(NMsg.ofC("loading document : loading github repository for %s",path));
                 path = NTxGitHelper.resolveGithubPath(path.toString(), log());
+            }else{
+                log().log(NMsg.ofC("loading document : local file %s",path.toAbsolute()));
             }
             path = path.normalize().toAbsolute();
             NTxSource source = NTxSourceFactory.of(path);
@@ -770,29 +779,30 @@ public class DefaultNTxEngine implements NTxEngine {
             return;
         }
         NAssert.requireNonNull(templateUrl, "projectUrl");
+        NPath localTemplatePath=templateUrl;
         if (NTxGitHelper.isGithubFolder(templateUrl.toString())) {
             try {
-                templateUrl = NTxGitHelper.resolveGithubPath(templateUrl.toString(), log());
+                localTemplatePath = NTxGitHelper.resolveGithubPath(templateUrl.toString(), log());
             } catch (Exception ex) {
                 NMsg msg = NMsg.ofC("unable to create project from template. invalid location %s", templateUrl).asSevere();
                 log().log(msg);
                 throw new NIllegalArgumentException(msg);
             }
         }
-        if (!templateUrl.exists()) {
+        if (!localTemplatePath.exists()) {
             NMsg msg = NMsg.ofC("unable to create project from template. invalid location %s", templateUrl).asSevere();
             log().log(msg);
             throw new NIllegalArgumentException(msg);
         }
         log().log(NMsg.ofC("create project %s from template %s", path.normalize().toAbsolute(), templateUrl));
-        NPath finalProjectUrl = templateUrl;
+//        NPath finalProjectUrl = templateUrl;
         Function<String, String> vars2 = m -> {
             switch (m) {
                 case "template.templateBootUrl":
-                    return finalProjectUrl.toString();
+                    return templateUrl.toString();
                 case "template.templateUrl": {
                     try {
-                        NPath bp = finalProjectUrl;
+                        NPath bp = templateUrl;
                         NPath pp = bp.getParent();
                         if (pp != null && pp.getName().equals("templates")) {
                             pp = pp.getParent();
@@ -802,8 +812,8 @@ public class DefaultNTxEngine implements NTxEngine {
                             }
                         }
                     } catch (Exception ex) {
-                        log().log(NMsg.ofC("Failed to resolve template boot url from %s", finalProjectUrl, ex).asSevere());
-                        throw new IllegalArgumentException("Failed to resolve template boot url from " + finalProjectUrl);
+                        log().log(NMsg.ofC("Failed to resolve template boot url from %s", templateUrl, ex).asSevere());
+                        throw new IllegalArgumentException("Failed to resolve template boot url from " + templateUrl);
                     }
                 }
             }
@@ -826,12 +836,7 @@ public class DefaultNTxEngine implements NTxEngine {
             }
             return null;
         };
-        try {
-            copyTemplate(templateUrl, path, vars2, true, false);
-        } catch (Exception ex) {
-            throw new NIllegalArgumentException(NMsg.ofC("unable to create ntexup project at %s. folder not empty", path));
-        }
-        copyTemplate(templateUrl, path, vars2, false, true);
+        copyTexupProjectTemplate(localTemplatePath, path, vars2, true, false);
     }
 
     private static String resolveEmptyNtxContent() {
@@ -864,6 +869,15 @@ public class DefaultNTxEngine implements NTxEngine {
             allTemplates.addAll(loader.loadTemplateInfo(repo.name, repo.path, log()));
         }
         return allTemplates.toArray(new NTxTemplateInfo[0]);
+    }
+
+    private void copyTexupProjectTemplate(NPath from, NPath to, Function<String, String> vars, boolean dry, boolean acceptOverride) {
+        try {
+            copyTemplate(from, to, vars, true, false);
+        } catch (Exception ex) {
+            throw new NIllegalArgumentException(NMsg.ofC("unable to create ntexup project at %s. folder not empty", to));
+        }
+        copyTemplate(from, to, vars, false, true);
     }
 
     private void copyTemplate(NPath from, NPath to, Function<String, String> vars, boolean dry, boolean acceptOverride) {
