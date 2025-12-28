@@ -1,9 +1,13 @@
 package net.thevpc.ntexup.main;
 
 import net.thevpc.ntexup.api.engine.NTxEngine;
+import net.thevpc.ntexup.api.renderer.NTxDocumentView;
+import net.thevpc.ntexup.api.renderer.NTxDocumentViewListener;
+import net.thevpc.ntexup.api.renderer.NTxDocumentViewManager;
 import net.thevpc.ntexup.engine.impl.DefaultNTxEngine;
 import net.thevpc.ntexup.main.components.EntryComponent;
 import net.thevpc.ntexup.engine.util.NTxUtilsImages;
+import net.thevpc.ntexup.util.NTexupUtils;
 import net.thevpc.nuts.io.NPath;
 import net.thevpc.nuts.util.NBlankable;
 
@@ -11,15 +15,26 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MainFrame extends JFrame {
+public class MainFrame extends JFrame implements NTxDocumentViewManager {
 
     private NTxServiceHelper serviceHelper;
     private EntryComponent entryComponent;
-    private final List<ProgressItem> progressIems = new ArrayList<>();
+    private final List<ProgressItem> progressItems = new ArrayList<>();
     private final JProgressBar progressBar = new JProgressBar();
+    private java.util.List<NTxDocumentView> openDocuments=new ArrayList<>();
+    private NTxDocumentViewListener documentListener = new NTxDocumentViewListener() {
+        @Override
+        public void documentClosed(NTxDocumentView view) {
+            view.removeDocumentListener(this);
+            openDocuments.remove(view);
+            tryEffectiveExit();
+        }
+    };
 
     public MainFrame(NTxEngine engine) {
         serviceHelper = new NTxServiceHelper(this, engine == null ? new DefaultNTxEngine() : engine);
@@ -34,9 +49,69 @@ public class MainFrame extends JFrame {
 //        setJMenuBar(jmb);
         setPreferredSize(new Dimension(600, 400));
         pack();
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+        addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                // example: confirm, save, cleanup, etc.
+                if (canExit()) {
+                    hideFrame();
+                }
+            }
+        });
     }
 
+    private boolean canExit() {
+        return true;
+    }
+
+    @Override
+    public void exit() {
+        for (NTxDocumentView openDocument : this.openDocuments.toArray(new NTxDocumentView[0])) {
+            openDocument.close();
+        }
+        hideFrame();
+    }
+
+    protected void tryEffectiveExit() {
+        if(isVisible()) {
+           return;
+        }
+        if(!openDocuments.isEmpty()) {
+            return;
+        }
+        effectiveExit();
+    }
+
+    protected void effectiveExit() {
+        //this should be configurable
+        System.exit(0);
+    }
+
+    public void openDocument(NTxDocumentView view) {
+        if(view!=null){
+            this.openDocuments.add(view);
+            view.addDocumentListener(documentListener);
+        }
+    }
+
+    public void hideFrame() {
+        NTexupUtils.runUiAsync(() -> {
+            setVisible(false);
+            tryEffectiveExit();
+        });
+    }
+
+    public void displayFrame() {
+        NTexupUtils.runUiAsync(() -> {
+            setVisible(true);
+        });
+    }
+
+    @Override
+    public void openMain() {
+        displayFrame();
+    }
 
     private JMenuBar createMenu() {
         JMenuBar jmb = new JMenuBar();
@@ -140,7 +215,7 @@ public class MainFrame extends JFrame {
 
     public ProgressItem addProgressItem() {
         ProgressItem e = new MyProgressItem();
-        progressIems.add(e);
+        progressItems.add(e);
         return e;
     }
 
@@ -164,8 +239,8 @@ public class MainFrame extends JFrame {
 
         @Override
         public void dispose() {
-            synchronized (progressIems) {
-                progressIems.remove(this);
+            synchronized (progressItems) {
+                progressItems.remove(this);
                 doUpdateProgressBar();
             }
         }
@@ -184,12 +259,12 @@ public class MainFrame extends JFrame {
     }
 
     private ProgressInfo resolveProgressInfo() {
-        synchronized (progressIems) {
-            if (progressIems.isEmpty()) {
+        synchronized (progressItems) {
+            if (progressItems.isEmpty()) {
                 return new ProgressInfo("", false, 0);
             } else {
-                for (int i = progressIems.size() - 1; i >= 0; i--) {
-                    ProgressItem u = progressIems.get(i);
+                for (int i = progressItems.size() - 1; i >= 0; i--) {
+                    ProgressItem u = progressItems.get(i);
                     String t = u.text();
                     if (!NBlankable.isBlank(t)) {
                         progressBar.setIndeterminate(true);
