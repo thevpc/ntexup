@@ -23,7 +23,7 @@ import net.thevpc.nuts.io.NPath;
 import net.thevpc.nuts.text.NMsg;
 import net.thevpc.nuts.util.NColor;
 
-public class DocumentView {
+public class DocumentView implements NTxDocumentView {
 
     NTxCompiledDocument compiledDocument;
     private NTxDocumentRendererSupplier documentSupplier;
@@ -43,13 +43,17 @@ public class DocumentView {
     private boolean isShown;
     public float defaultDocumentRatio = 842.0F / 595.0F;
     public float documentRatio = defaultDocumentRatio;
+    public ScreenDocumentRenderer renderer;
+    public NTxDocumentViewManager documentViewManager;
+    public List<NTxDocumentViewListener> listeners = new ArrayList<>();
 
     public DocumentView(NTxDocumentRendererSupplier documentSupplier,
-                        NTxEngine engine, NTxDocumentRendererListener listener) {
+                        NTxEngine engine, NTxDocumentRendererListener listener, ScreenDocumentRenderer renderer) {
         this.documentSupplier = documentSupplier;
         this.listener = listener;
         this.engine = engine;
-
+        this.renderer = renderer;
+        documentViewManager = renderer.getProperty(NTxDocumentViewManager.class).orNull();
         frame = new JFrame();
         frame.setTitle("NTexup Viewer");
         frame.setIconImage(
@@ -77,6 +81,33 @@ public class DocumentView {
                 checkResourcesChanged();
             }
         }, 3000, 1000);
+    }
+
+    @Override
+    public void close() {
+        timer.cancel();
+        frame.setVisible(false);
+        for (NTxDocumentViewListener nTxDocumentViewListener : listeners.toArray(new NTxDocumentViewListener[0])) {
+            nTxDocumentViewListener.documentClosed(this);
+        }
+        frame.dispose();
+    }
+
+    @Override
+    public void addDocumentListener(NTxDocumentViewListener r) {
+        if (r != null) {
+            this.listeners.add(r);
+        }
+    }
+
+    @Override
+    public void removeDocumentListener(NTxDocumentViewListener r) {
+        this.listeners.remove(r);
+    }
+
+    @Override
+    public String getTitle() {
+        return frame.getTitle();
     }
 
     public NTxCompiledDocument compiledDocument() {
@@ -148,6 +179,10 @@ public class DocumentView {
         return currentShowingPage == null ? null : currentShowingPage.source();
     }
 
+    public JFrame getFrame() {
+        return frame;
+    }
+
     public void prepareContentPane() {
         contentPane.addMouseListener(new MouseAdapter() {
             @Override
@@ -208,7 +243,7 @@ public class DocumentView {
         }
         new Thread(() -> {
             reloadDocumentSync();
-            if (!isShown && getPagesCount()>0) {
+            if (!isShown && getPagesCount() > 0) {
                 isShown = true;
                 show();
             }
@@ -232,7 +267,7 @@ public class DocumentView {
             this.currentShowingPage = null;
             this.currentThrowable = null;
             try {
-                this.compiledDocument=documentSupplier.get(rendererContext);
+                this.compiledDocument = documentSupplier.get(rendererContext);
                 SwingUtilities.invokeLater(() -> {
                     frame.setTitle(this.compiledDocument.title());
                 });
@@ -241,7 +276,7 @@ public class DocumentView {
                 this.currentThrowable = ex;
             }
             if (compiledDocument == null) {
-                compiledDocument = new NTxCompiledDocumentImpl(engine.documentFactory().ofDocument(null),engine);
+                compiledDocument = new NTxCompiledDocumentImpl(engine.documentFactory().ofDocument(null), engine);
             }
             listener.onChangedCompiledDocument(compiledDocument);
 
@@ -331,8 +366,10 @@ public class DocumentView {
 
     public void showPage(int index) {
         int count = getPagesCount();
-        if(count<=0){
-            JOptionPane.showMessageDialog(contentPane,"No Pages to render","Error",JOptionPane.ERROR_MESSAGE);
+        if (count <= 0) {
+            //JOptionPane.showMessageDialog(contentPane,"No Pages to render","Error",JOptionPane.ERROR_MESSAGE);
+//            return;
+            this.showPage(null);
             return;
         }
         if (index > count) {
@@ -340,7 +377,7 @@ public class DocumentView {
         } else if (index < 1) {
             index = 1;
         }
-        PageView pageView = pageViews.get(index-1);
+        PageView pageView = pageViews.get(index - 1);
         this.showPage(pageView);
     }
 
