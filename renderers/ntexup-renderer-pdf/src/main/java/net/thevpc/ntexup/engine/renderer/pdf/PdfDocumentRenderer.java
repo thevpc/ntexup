@@ -47,7 +47,7 @@ public class PdfDocumentRenderer extends NTxDocumentStreamRendererBase implement
     }
 
     @Override
-    public void renderSupplier(NTxDocumentRendererSupplier documentSupplier) {
+    public NTxDocumentView renderSupplier(NTxDocumentRendererSupplier documentSupplier) {
         NTxCompiledDocument document = documentSupplier.get(rendererContext);
         Object outputTarget = output;
         if (outputTarget == null) {
@@ -62,6 +62,7 @@ public class PdfDocumentRenderer extends NTxDocumentStreamRendererBase implement
         } else if (outputTarget instanceof OutputStream) {
             renderStream(document, (OutputStream) outputTarget);
         }
+        return null;
     }
 
 
