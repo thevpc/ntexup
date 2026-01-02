@@ -1,7 +1,7 @@
 package net.thevpc.ntexup.config;
 
 import net.thevpc.nuts.artifact.NId;
-import net.thevpc.nuts.elem.NElementParser;
+import net.thevpc.nuts.elem.NElementReader;
 import net.thevpc.nuts.elem.NElementWriter;
 import net.thevpc.nuts.io.NPath;
 import net.thevpc.nuts.platform.NStoreType;
@@ -51,7 +51,7 @@ public class UserConfigManager {
     public UserConfigs loadUserConfigs() {
         UserConfigs config = null;
         if (userConfigFile.isRegularFile()) {
-            config = NElementParser.ofTson().parse(userConfigFile, UserConfigs.class);
+            config = NElementReader.ofTson().read(userConfigFile, UserConfigs.class);
         }
         config=validate(config);
         return config;
