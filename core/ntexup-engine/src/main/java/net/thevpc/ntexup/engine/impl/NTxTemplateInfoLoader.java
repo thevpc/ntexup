@@ -3,10 +3,10 @@ package net.thevpc.ntexup.engine.impl;
 import net.thevpc.ntexup.api.engine.NTxTemplateInfo;
 import net.thevpc.ntexup.api.log.NTxLogger;
 import net.thevpc.ntexup.engine.eval.NTxGitHelper;
+import net.thevpc.nuts.elem.NElementReader;
 import net.thevpc.nuts.log.NMsgIntent;
 import net.thevpc.nuts.util.NIllegalArgumentException;
 import net.thevpc.nuts.elem.NElement;
-import net.thevpc.nuts.elem.NElementParser;
 import net.thevpc.nuts.elem.NPairElement;
 import net.thevpc.nuts.io.NPath;
 import net.thevpc.nuts.text.NMsg;
@@ -25,7 +25,7 @@ public class NTxTemplateInfoLoader {
                 NPath nPath1 = NTxGitHelper.resolveGithubPath(path.toString(), log);
                 if (nPath1.resolve("ntexup-repository.tson").isRegularFile()) {
                     try {
-                        loadTemplateInfo(NElementParser.ofTson().parse(nPath1.resolve("ntexup-repository.tson")), name, path, allTemplates);
+                        loadTemplateInfo(NElementReader.ofTson().read(nPath1.resolve("ntexup-repository.tson")), name, path, allTemplates);
                     } catch (Exception e) {
                         log.log(NMsg.ofC("unable to parse repository templates '%s' at '%s' : %s", name, path, e).asError());
                     }
@@ -35,7 +35,7 @@ public class NTxTemplateInfoLoader {
             } else if (path.isLocal()) {
                 if (path.resolve("ntexup-repository.tson").isRegularFile()) {
                     try {
-                        loadTemplateInfo(NElementParser.ofTson().parse(path.resolve("ntexup-repository.tson")), name, path, allTemplates);
+                        loadTemplateInfo(NElementReader.ofTson().read(path.resolve("ntexup-repository.tson")), name, path, allTemplates);
                     } catch (Exception e) {
                         log.log(NMsg.ofC("unable to parse repository templates '%s' at '%s' : %s", name, path, e).asError());
                     }
@@ -131,7 +131,7 @@ public class NTxTemplateInfoLoader {
                     String layout = path.getParent().getName();
                     String version = path.getParent().getParent().getName();
                     try {
-                        loadTemplateInfoOwn(NElementParser.ofTson().parse(nPath1.resolve("ntexup-repository.tson")), name, path, allTemplates,version, layout);
+                        loadTemplateInfoOwn(NElementReader.ofTson().read(nPath1.resolve("ntexup-repository.tson")), name, path, allTemplates,version, layout);
                     } catch (Exception e) {
                         log.log(NMsg.ofC("unable to parse repository templates '%s' at '%s' : %s", name, path, e).asError());
                     }
@@ -143,7 +143,7 @@ public class NTxTemplateInfoLoader {
                     try {
                         String layout = path.getParent().getName();
                         String version = path.getParent().getParent().getName();
-                        loadTemplateInfoOwn(NElementParser.ofTson().parse(path.resolve("ntexup-repository.tson")), name, path, allTemplates, layout, version);
+                        loadTemplateInfoOwn(NElementReader.ofTson().read(path.resolve("ntexup-repository.tson")), name, path, allTemplates, layout, version);
                     } catch (Exception e) {
                         log.log(NMsg.ofC("unable to parse repository templates '%s' at '%s' : %s", name, path, e).asError());
                     }
