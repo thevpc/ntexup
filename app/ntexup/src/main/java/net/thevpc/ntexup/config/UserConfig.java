@@ -32,7 +32,7 @@ public class UserConfig implements Cloneable {
     }
 
     public String resolveFullName() {
-        return NStringUtils.firstNonBlank(
+        return NStringUtils.firstNonBlankTrimmed(
                 getFullName(),
                 NStringUtils.trimToNull(NStringUtils.trim(getFirstName()) + " " + NStringUtils.trim(getLastName())),
                 System.getProperty("user.name")
