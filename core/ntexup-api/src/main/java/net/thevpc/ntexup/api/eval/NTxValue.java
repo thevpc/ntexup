@@ -816,7 +816,7 @@ public class NTxValue {
     }
 
     public NOptional<Integer> asIntOrBoolean() {
-        return asInt().orElseUse(() -> asBoolean().map(x -> x ? 1 : 0));
+        return asInt().orElseGetOptionalFrom(() -> asBoolean().map(x -> x ? 1 : 0));
     }
 
     public NOptional<NElement> asElementInt() {
