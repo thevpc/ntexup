@@ -23,7 +23,7 @@ public class NTxJFreeChartHelper {
         XYSeriesCollection dataset = new XYSeriesCollection();
         for (int j = 0; j < drawContext.allData.size(); j++) {
             NTxPlot2DData pd = drawContext.allData.get(j);
-            XYSeries series = new XYSeries(NStringUtils.firstNonBlank(pd.title, "Curve " + (j+1)));
+            XYSeries series = new XYSeries(NStringUtils.firstNonBlankTrimmed(pd.title, "Curve " + (j+1)));
             double[] yy2 = pd.animatedYY(rendererContext);
             for (int i = 0; i < pd.xx.length; i++) {
                 series.add(pd.xx[i], yy2[i]);
@@ -32,9 +32,9 @@ public class NTxJFreeChartHelper {
         }
 
 
-        NumberAxis xAxis = new NumberAxis(NStringUtils.firstNonBlank(drawContext.xLabel,"X"));
+        NumberAxis xAxis = new NumberAxis(NStringUtils.firstNonBlankTrimmed(drawContext.xLabel,"X"));
         xAxis.setAutoRangeIncludesZero(false);
-        NumberAxis yAxis = new NumberAxis(NStringUtils.firstNonBlank(drawContext.yLabel,"Y"));
+        NumberAxis yAxis = new NumberAxis(NStringUtils.firstNonBlankTrimmed(drawContext.yLabel,"Y"));
         yAxis.setAutoRange(false); // disable auto-scaling
         yAxis.setRange(drawContext.gridMinY, drawContext.gridMaxY); // fixed min/max
         XYPlot plot = new XYPlot();
@@ -50,7 +50,7 @@ public class NTxJFreeChartHelper {
             NTxPlot2DData pd = drawContext.allData.get(i);
             if(pd.pld.plotType== NTxPlotType.CURVE) {
                 XYSeriesCollection dataset2 = new XYSeriesCollection();
-                XYSeries series = new XYSeries(NStringUtils.firstNonBlank(pd.title, "Curve " + (i+1)));
+                XYSeries series = new XYSeries(NStringUtils.firstNonBlankTrimmed(pd.title, "Curve " + (i+1)));
                 double[] yy2 = pd.animatedYY(rendererContext);
                 for (int jx = 0; jx < pd.xx.length; jx++) {
                     series.add(pd.xx[jx], yy2[jx]);
@@ -63,7 +63,7 @@ public class NTxJFreeChartHelper {
                 plot.setRenderer(i, renderer);
             }else if(pd.pld.plotType== NTxPlotType.BAR){
                 XYSeriesCollection dataset2 = new XYSeriesCollection();
-                XYSeries series = new XYSeries(NStringUtils.firstNonBlank(pd.title, "Bar " + (i+1)));
+                XYSeries series = new XYSeries(NStringUtils.firstNonBlankTrimmed(pd.title, "Bar " + (i+1)));
                 double[] yy2 = pd.animatedYY(rendererContext);
                 for (int jx = 0; jx < pd.xx.length; jx++) {
                     series.add(pd.xx[jx], yy2[jx]);
@@ -73,7 +73,7 @@ public class NTxJFreeChartHelper {
                 plot.setRenderer(i, new XYBarRenderer());
             }else if(pd.pld.plotType== NTxPlotType.AREA){
                 XYSeriesCollection dataset2 = new XYSeriesCollection();
-                XYSeries series = new XYSeries(NStringUtils.firstNonBlank(pd.title, "Area " + (i+1)));
+                XYSeries series = new XYSeries(NStringUtils.firstNonBlankTrimmed(pd.title, "Area " + (i+1)));
                 double[] yy2 = pd.animatedYY(rendererContext);
                 for (int jx = 0; jx < pd.xx.length; jx++) {
                     series.add(pd.xx[jx], yy2[jx]);
@@ -89,7 +89,7 @@ public class NTxJFreeChartHelper {
         }
         // Create chart
 
-        JFreeChart chart = new JFreeChart(NStringUtils.firstNonBlank(drawContext.title,null),
+        JFreeChart chart = new JFreeChart(NStringUtils.firstNonBlankTrimmed(drawContext.title,null),
                 JFreeChart.DEFAULT_TITLE_FONT,
                 plot,
                 drawContext.legend);
