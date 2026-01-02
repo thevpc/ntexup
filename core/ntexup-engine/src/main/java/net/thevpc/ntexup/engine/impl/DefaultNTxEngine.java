@@ -88,13 +88,30 @@ public class DefaultNTxEngine implements NTxEngine {
     private Map<String, Object> env = new HashMap<>();
 
     public DefaultNTxEngine() {
+        init();
+    }
+
+    public DefaultNTxEngine(NMutableClassLoader classLoader) {
+        if (classLoader != null) {
+            this.classLoader = classLoader;
+        }
+        init();
+    }
+
+    public DefaultNTxEngine(ClassLoader classLoader) {
+        if (classLoader != null) {
+            this.classLoader = NExtensions.of().createMutableClassLoader(classLoader);
+        }
+        init();
+    }
+
+    protected void init() {
         addLog(new DefaultNTxLogger());
-
+        if (classLoader == null) {
+            classLoader = NExtensions.of().createMutableClassLoader(Thread.currentThread().getContextClassLoader());
+        }
         log().log(NMsg.ofC("starting %s engine...", NMsg.ofStyledPrimary1("NTexUp")).asFineAlert());
-
         tools = new MyNTxEngineTools(this);
-
-        classLoader = NExtensions.of().createMutableClassLoader(Thread.currentThread().getContextClassLoader());
         textFlavors = new NtxTextFlavorList(this);
         functions = new NTxFunctionList(this);
         documentRendererFactories = new NTxDocumentRendererFactoryList(this);
@@ -462,10 +479,10 @@ public class DefaultNTxEngine implements NTxEngine {
         NAssert.requireNonNull(path, "path");
         synchronized (this) {
             if (NTxGitHelper.isGithubFolder(path.toString())) {
-                log().log(NMsg.ofC("loading document : loading github repository for %s",path));
+                log().log(NMsg.ofC("loading document : loading github repository for %s", path));
                 path = NTxGitHelper.resolveGithubPath(path.toString(), log());
-            }else{
-                log().log(NMsg.ofC("loading document : local file %s",path.toAbsolute()));
+            } else {
+                log().log(NMsg.ofC("loading document : local file %s", path.toAbsolute()));
             }
             path = path.normalize().toAbsolute();
             NTxSource source = NTxSourceFactory.of(path);
@@ -779,7 +796,7 @@ public class DefaultNTxEngine implements NTxEngine {
             return;
         }
         NAssert.requireNonNull(templateUrl, "projectUrl");
-        NPath localTemplatePath=templateUrl;
+        NPath localTemplatePath = templateUrl;
         if (NTxGitHelper.isGithubFolder(templateUrl.toString())) {
             try {
                 localTemplatePath = NTxGitHelper.resolveGithubPath(templateUrl.toString(), log());
