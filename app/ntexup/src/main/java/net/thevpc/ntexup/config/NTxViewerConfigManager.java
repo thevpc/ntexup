@@ -3,7 +3,7 @@ package net.thevpc.ntexup.config;
 import net.thevpc.nuts.app.NApp;
 import net.thevpc.nuts.artifact.NId;
 import net.thevpc.nuts.elem.NElement;
-import net.thevpc.nuts.elem.NElementParser;
+import net.thevpc.nuts.elem.NElementReader;
 import net.thevpc.nuts.elem.NElementWriter;
 import net.thevpc.nuts.elem.NElements;
 import net.thevpc.nuts.io.NPath;
@@ -131,7 +131,7 @@ public class NTxViewerConfigManager {
         NTxViewerConfig config = null;
         if (viewerConfigFile.isRegularFile()) {
             try (InputStream is = viewerConfigFile.getInputStream()) {
-                NElement d = NElementParser.ofTson().parse(is);
+                NElement d = NElementReader.ofTson().read(is);
                 config = NElements.of().fromElement(d, NTxViewerConfig.class);
             } catch (IOException ex) {
                 throw new UncheckedIOException(ex);
