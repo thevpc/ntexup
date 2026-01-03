@@ -5,6 +5,7 @@ import net.thevpc.nuts.app.NApp;
 import net.thevpc.nuts.artifact.NId;
 import net.thevpc.nuts.command.NExec;
 import net.thevpc.nuts.core.NSession;
+import net.thevpc.nuts.core.NWorkspace;
 import net.thevpc.nuts.io.NPath;
 import net.thevpc.nuts.platform.NStoreType;
 import net.thevpc.nuts.spi.NScopeType;
@@ -92,7 +93,7 @@ public class NTxGitHelper {
         try {
             if (localRepo.isDirectory()) {
                 Instant now = Instant.now();
-                Instant last = (Instant) NApp.of().getProperty("resolveGithubPath.lastPull",NScopeType.WORKSPACE).orNull();
+                Instant last = (Instant) NWorkspace.of().getProperty("resolveGithubPath.lastPull").orNull();
                 if (last == null || now.toEpochMilli() - last.toEpochMilli() > (1000 * 60 * 5)) {
                     pulling = true;
                     messages.log(NMsg.ofC("pull repo at %s", localRepo));
@@ -109,7 +110,7 @@ public class NTxGitHelper {
                         session.out().println(message);
                     }
                 }
-                NApp.of().setProperty("resolveGithubPath.lastPull", NScopeType.WORKSPACE, now);
+                NWorkspace.of().setProperty("resolveGithubPath.lastPull", now);
             } else {
                 RuntimeException rex=null;
                 for (int i = 0; i < githubPaths.length; i++) {
