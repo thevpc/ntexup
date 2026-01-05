@@ -1,0 +1,52 @@
+content-slide(title:"My Slide"){
+    body {
+            grid(){
+                scene3d(
+                    id:scene1
+                    draw-contour
+                    transform:{
+                        rotate(from:(0,0,0),to:(100,0,0),angle:-30)
+                        translate(10,10,0)
+                        scale:0.7
+                    },
+                    real-size:(5mm,3mm)
+                ){
+                    box(real-size:(95,10,2),origin:(5,45,-2), background:red, material:pec)
+                    box(real-size:(5,10,2),origin:(0,45,-2), background:yellow, material:source)
+                    box(real-size:(100,100,10),origin:(0,0,0), background:darkBlue,material:none)
+                }
+
+                hadruwaves(
+                    geometry:scene1,
+                    compute:s11
+                    sweep:frequency{
+                        range:(2.40_GHz,2.50_GHz)
+                        steps:150
+                    }
+                    test-functions:{
+                        type:sinus
+                        count:100
+                    }
+                    boundaries:{
+                        lateral:EEEE
+                        top:open
+                        bottom:shortcut
+                    }
+                    modes:2000
+                    material-bindings:{
+                        pec:pec,
+                        source:lumped-port(50_Ω,E:1_V)
+                        none:(permettivity:2.2)
+                    }
+                )
+            }
+//            scene3d(
+//                draw-contour
+//                transform:{
+//                    translate(0,0,10)
+//                }
+//            ){
+//                box(size:(10,10,10), background:red,origin:(45,45,0))
+//            }
+    }
+}
