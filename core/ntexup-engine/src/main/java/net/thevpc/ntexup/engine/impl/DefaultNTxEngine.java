@@ -954,7 +954,7 @@ public class DefaultNTxEngine implements NTxEngine {
         NOptional<NTxVar> v = findVar(varName, node, varProvider);
         if (!v.isPresent()) {
             log().log(NMsg.ofC("var not found %s", varName).asWarning(), NTxUtils.sourceOf(node));
-            return null;
+            return NOptional.ofNamedEmpty(NMsg.ofC("var %s", varName));
         }
         NElement ee = v.get().get();
         return evalExpression(ee, node, varProvider);
