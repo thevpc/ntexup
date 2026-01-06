@@ -1,0 +1,58 @@
+
+
+page{
+    styles:{
+        text:{
+            color:darkBlue
+        }
+        line:{
+            color:black
+        }
+    }
+        rectangle(background:white)
+        scene3d(
+            draw-contour
+            transform:{
+                rotate(from:(0,0,0),to:(100,0,0),angle:-30)
+                translate(10,10,0)
+                scale:0.7
+            }
+        ){
+            box(size:(100,100,10),origin:(0,0,0), background:"#00468B") // substrate
+            box(size:(10,10,2),origin:(25,25,-2), background:"#cb6d51") // left outlet 1
+            box(size:(10,10,2),origin:(25,65,-2), background:"#cb6d51") // left outlet 2
+            box(size:(30,50,2),origin:(35,25,-2), background:"#cb6d51") // patch
+            box(size:(10,10,2),origin:(65,25,-2), background:"#cb6d51") // left outlet 1
+            box(size:(10,10,2),origin:(65,65,-2), background:"#cb6d51") // left outlet 2
+            box(size:(30,10,2),origin:(5,45,-2), background:"#cb6d51") // line
+            box(size:(5,10,2),origin:(0,45,-2), background:yellow)
+        }
+
+        text("w", font-size:3%P , origin:(50,50), position:(16,31))
+        line((18,29),(19,34),start-arrow:simple(),end-arrow:simple(),stroke:basic(dashed))
+
+        text("L", font-size:3%P , origin:(50,50), position:(45,8),color:yellow)
+        line((18,10),(70,10),color:white,start-arrow:simple(),end-arrow:simple(),stroke:basic(dashed))
+
+        text("a", font-size:3%P , origin:(50,50), position:(45,15),color:yellow)
+        line((35,18),(63,18),color:white,start-arrow:simple(),end-arrow:simple(),stroke:basic(dashed))
+
+        text("b", font-size:3%P , origin:(50,50), position:(75,30),color:yellow)
+        line((66,20),(82,44),color:white,start-arrow:simple(),end-arrow:simple(),stroke:basic(dashed))
+
+        text("l", font-size:3%P , origin:(50,50), position:(32,23),color:yellow)
+        line((24,25),(42,25),color:white,start-arrow:simple(),end-arrow:simple(),stroke:basic(dashed))
+
+        text("s", font-size:3%P , origin:(50,50), position:(24,37),color:yellow)
+        line((22,35),(26,35),color:white,start-arrow:simple(),end-arrow:simple(),stroke:basic(dashed))
+
+        text("nx", font-size:3%P , origin:(50,50), position:(35,40),color:yellow)
+        line((38,38),(39.5,43),color:white,start-arrow:simple(),end-arrow:simple(),stroke:basic(dashed))
+
+        text("ny", font-size:3%P , origin:(50,50), position:(45,47),color:yellow)
+        line((42,45),(48,45),color:white,start-arrow:simple(),end-arrow:simple(),stroke:basic(dashed))
+
+
+        text("h", font-size:3%P , origin:(50,50), position:(20,60),color:yellow)
+        line((24,57),(23,65),color:white,start-arrow:simple(),end-arrow:simple(),stroke:basic(dashed))
+}
