@@ -86,6 +86,7 @@ public class DefaultNTxEngine implements NTxEngine {
     NTxNodeRendererList renderers;
     private NTxImageTypeRendererFactoryList imageTypeRendererFactoryList;
     private Map<String, Object> env = new HashMap<>();
+    private Set<String> dependenciesLoadingPerformed = new HashSet<>();
 
     public DefaultNTxEngine() {
         init();
@@ -196,8 +197,11 @@ public class DefaultNTxEngine implements NTxEngine {
     }
 
     public boolean importDependencies(String... deps) {
-        NDependency[] okDeps = Arrays.stream(deps).map(x -> NDependency.of(x)).toArray(NDependency[]::new);
+        NDependency[] okDeps = Arrays.stream(deps).map(x -> NDependency.of(x))
+                .filter(dep -> dep != null && !dependenciesLoadingPerformed.contains(dep.toString()))
+                .toArray(NDependency[]::new);
         if (okDeps.length > 0) {
+            dependenciesLoadingPerformed.addAll(Arrays.stream(deps).map(x->x.toString()).collect(Collectors.toList()));
             log().log(NMsg.ofC("importing dependencies %s",
                     NTextBuilder.of()
                             .appendJoined(",", Arrays.asList(okDeps))
