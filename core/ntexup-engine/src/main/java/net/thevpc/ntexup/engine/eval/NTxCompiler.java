@@ -21,6 +21,7 @@ import net.thevpc.ntexup.engine.parser.NTxNodeDefImpl;
 import net.thevpc.ntexup.engine.parser.NTxNodeDefParamImpl;
 import net.thevpc.ntexup.engine.document.DefaultNTxNode;
 import net.thevpc.ntexup.engine.parser.ctrlnodes.*;
+import net.thevpc.nuts.concurrent.NScoredCallable;
 import net.thevpc.nuts.text.NMsg;
 import net.thevpc.nuts.util.NIllegalArgumentException;
 import net.thevpc.nuts.elem.NElement;
@@ -457,6 +458,26 @@ public class NTxCompiler {
             CtrlNTxNodeCall c = (CtrlNTxNodeCall) node;
             if (!h.isInPage || (h.isInPage && h.processPages)) {
                 String uid = c.getCallName();
+                NTxNodeParser p = engine.nodeTypeParser(uid).orNull();
+                if (p != null) {
+                    NScoredCallable<NTxItem> n = p.parseNode(createParseContext(
+                            NElement.ofObjectBuilder()
+                                    .name(uid)
+                                    .addParams(c.getCallArgs())
+                                    .addAll(c.getCallBody())
+                                    .build()
+                            ,
+                            node,
+                            node.source(),
+                            h));
+                    NScorableContext scc = NScorableContext.of();
+                    if(NScorable.isValidScore(n,scc)) {
+                        NTxItem t = n.call();
+                        if(t!=null){
+                            return new ArrayList<>(Collections.singleton(t));
+                        }
+                    }
+                }
 //                NTxNode currNode = NTxUtils.firstNodeUp(node.parent());
                 NOptional<NTxNodeDef> dd = findDefinition(h.parent, uid);
                 if (dd.isPresent()) {
