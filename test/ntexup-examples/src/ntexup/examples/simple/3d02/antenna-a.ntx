@@ -1,0 +1,52 @@
+
+
+page{
+    styles:{
+        text:{
+            color:darkBlue
+        }
+        line:{
+            color:black
+        }
+    }
+        rectangle(background:white)
+        scene3d(
+            draw-contour,
+                transform:{
+//                    rotate(from:(0,0,0),to:(100,0,0),angle:-30)
+                    translate(10,10,0)
+//                    scale:0.7
+                }
+        ){
+//            box(size:(100,100,1),origin:(0,0,0), background:"#00468B") // substrate
+            box(size:(30,15,2),origin:(0,45,0), background:"violet") // violet
+//            box(size:(30,10,2),origin:(5,45,-12), background:"blue") // blue
+//            box(size:(30,10,2),origin:(5,45,12), background:"red") // red
+//            box(size:(30,10,2),origin:(5,45,-6), background:"green") // green
+//
+//            box(size:(30,10,2),origin:(5,45,2), background:"#cb6d51") // line
+//            box(size:(50,50,2),origin:(35,25,2), background:"#cb6d51") // patch
+            box(size:(5,10,2),origin:(0,45,2.3), background:yellow) // source
+        }
+
+        text("w", font-size:3%P , origin:(50,50), position:(16,31))
+        line((18,29),(19,34),start-arrow:simple(),end-arrow:simple(),stroke:basic(dashed))
+
+        text("L", font-size:3%P , origin:(50,50), position:(45,8))
+        line((18,10),(70,10),start-arrow:simple(),end-arrow:simple(),stroke:basic(dashed))
+
+        text("a", font-size:3%P , origin:(50,50), position:(45,15))
+        line((40,18),(68,18),start-arrow:simple(),end-arrow:simple(),stroke:basic(dashed))
+
+        text("b", font-size:3%P , origin:(50,50), position:(80,30))
+        line((71,20),(85,40),start-arrow:simple(),end-arrow:simple(),stroke:basic(dashed))
+
+        text("l", font-size:3%P , origin:(50,50), position:(32,23))
+        line((24,25),(40,25),start-arrow:simple(),end-arrow:simple(),stroke:basic(dashed))
+
+        text("s", font-size:3%P , origin:(50,50), position:(24,37))
+        line((22,35),(26,35),start-arrow:simple(),end-arrow:simple(),stroke:basic(dashed))
+
+        text("h", font-size:3%P , origin:(50,50), position:(20,60))
+        line((24,57),(23,65),start-arrow:simple(),end-arrow:simple(),stroke:basic(dashed))
+}
