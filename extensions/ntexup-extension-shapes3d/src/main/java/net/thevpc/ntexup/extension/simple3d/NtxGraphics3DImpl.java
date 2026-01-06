@@ -17,7 +17,7 @@ public class NtxGraphics3DImpl implements NtxGraphics3D {
     private NTxGraphics graphics;
     private NTxNodeRendererContext rendererContext;
     private NTxNodeBuilderContext buildContext;
-    private NTxProjection3D projection3D = new NTxProjection3D(1000);
+    //    private NTxProjection3D projection3D = new NTxProjection3D(1000);
     private NTxMatrix3D transform3D = NTxMatrix3D.identity();
     private NTxLight3DImpl light3D = new NTxLight3DImpl();
     private NTxCamera3D camera = NTxCamera3DImpl.defaultCamera();
@@ -37,19 +37,17 @@ public class NtxGraphics3DImpl implements NtxGraphics3D {
         this.graphics = graphics;
         this.rendererContext = rendererContext;
         this.buildContext = buildContext;
+
+        NTxPoint3D test = new NTxPoint3D(0,0,0);
+        NTxPoint3D pCam = camera.getViewMatrix().multiplyPoint(test);
+        System.out.println("World (0,0,0) → Camera: " + pCam);
+        System.out.println("World (0,0,0) → Screen: " + camera.projectFromWorldToScreen(test,new NTxPoint2D(0.0,0.0)));
     }
 
     @Override
     public void transform3D(NTxMatrix3D transform3D) {
         if (transform3D != null) {
             this.transform3D = this.transform3D.multiply(transform3D);
-        }
-    }
-
-    @Override
-    public void project3D(NTxProjection3D projection3D) {
-        if (projection3D != null) {
-            this.projection3D = projection3D;
         }
     }
 
@@ -63,48 +61,48 @@ public class NtxGraphics3DImpl implements NtxGraphics3D {
     public void draw3D(NtxElement3D element3D, NTxPoint2D origin) {
         NtxElement3DPrimitive[] primitives = getElement3DUIFactory().toPrimitives(element3D, state);
         NTxMatrix3D old = getTransform3D() == null ? NTxMatrix3D.identity() : getTransform3D();
-        DrawCommand[] commands= Arrays.stream(primitives).map(primitive->{
-            NTxMatrix3D n = primitive.getTransform();
-            DrawCommand c = new DrawCommand();
-            c.primitive = primitive;
-            c.transform = n == null ? old : old.multiply(n);
-            //c.transform.multiply() <-- ??
-            NTxPoint3D[] newPoints = Arrays.stream(primitive.points()).map(x -> {
-                NTxPoint3D pWorld = c.transform.multiplyPoint(x);
-                NTxPoint3D pCam = camera.getViewMatrix().multiplyPoint(pWorld);
-                return pCam;
-            }).toArray(NTxPoint3D[]::new);
-            c.depth = Arrays.stream(newPoints)
-                    .mapToDouble(p -> p.z)
-                    .max()
-                    .orElse(0);
-            return c;
-        })
-                .sorted(Comparator.comparingDouble(c -> -c.depth))
+        DrawCommand[] commands = Arrays.stream(primitives).map(primitive -> {
+                    NTxMatrix3D n = primitive.getTransform();
+                    DrawCommand c = new DrawCommand();
+                    c.primitive = primitive;
+                    c.transform = n == null ? old : old.multiply(n);
+                    //c.transform.multiply() <-- ??
+                    NTxPoint3D[] newPoints = Arrays.stream(primitive.points()).map(x -> {
+                        NTxPoint3D pWorld = c.transform.multiplyPoint(x);
+                        NTxPoint3D pCam = camera.getViewMatrix().multiplyPoint(pWorld);
+                        return pCam;
+                    }).toArray(NTxPoint3D[]::new);
+                    c.depth = Arrays.stream(newPoints)
+                            .mapToDouble(p -> p.z)
+                            .max()
+                            .orElse(0);
+                    return c;
+                })
+                .sorted(Comparator.comparingDouble(c -> c.depth))
                 .toArray(DrawCommand[]::new);
         try {
             for (DrawCommand cmd : commands) {
                 setTransform3D(cmd.transform);
                 switch (cmd.primitive.type()) {
                     case LINE: {
-                        draw3DElement3DLine((NtxElement3DLine) cmd.primitive, origin,cmd);
+                        draw3DElement3DLine((NtxElement3DLine) cmd.primitive, origin, cmd);
                         break;
                     }
                     case ARC: {
-                        draw3DElement3DArc((NtxElement3DArc) cmd.primitive, origin,cmd);
+                        draw3DElement3DArc((NtxElement3DArc) cmd.primitive, origin, cmd);
                         break;
                     }
                     case POLYGON: {
-                        draw3DElement3DPolygon((NtxElement3DPolygon) cmd.primitive, origin,cmd);
+                        draw3DElement3DPolygon((NtxElement3DPolygon) cmd.primitive, origin, cmd);
                         break;
                     }
 
                     case POLYLINE: {
-                        draw3DElement3DPolyline((NtxElement3DPolyline) cmd.primitive, origin,cmd);
+                        draw3DElement3DPolyline((NtxElement3DPolyline) cmd.primitive, origin, cmd);
                         break;
                     }
                     case TRIANGLE: {
-                        draw3DElement3DTriangle((NtxElement3DTriangle) cmd.primitive, origin,cmd);
+                        draw3DElement3DTriangle((NtxElement3DTriangle) cmd.primitive, origin, cmd);
                         break;
                     }
                 }
@@ -126,12 +124,9 @@ public class NtxGraphics3DImpl implements NtxGraphics3D {
     /// ////////////////////////////////////////////////////
 
 
-    private void draw3DElement3DLine(NtxElement3DLine pr, NTxPoint2D origin,DrawCommand cmd) {
-        NTxPoint3D p1 = pr.getFrom().transform(transform3D);
-        NTxPoint3D p2 = pr.getTo().transform(transform3D);
-
-        NTxPoint2D point1 = projection3D.project(p1).plus(origin);
-        NTxPoint2D point2 = projection3D.project(p2).plus(origin);
+    private void draw3DElement3DLine(NtxElement3DLine pr, NTxPoint2D origin, DrawCommand cmd) {
+        NTxPoint2D point1 = camera.projectFromLocalToScreen(pr.getFrom(), transform3D, origin);
+        NTxPoint2D point2 = camera.projectFromLocalToScreen(pr.getTo(), transform3D, origin);
         graphics.draw2D(
                 new NtxElement2DLine(point1, point2)
                         .setStartArrow(pr.getStartArrow())
@@ -143,14 +138,11 @@ public class NtxGraphics3DImpl implements NtxGraphics3D {
         );
     }
 
-    private void draw3DElement3DArc(NtxElement3DArc pr, NTxPoint2D origin,DrawCommand cmd) {
+    private void draw3DElement3DArc(NtxElement3DArc pr, NTxPoint2D origin, DrawCommand cmd) {
         double x = origin.x;
         double y = origin.y;
-        NTxPoint3D p1 = pr.getFrom().transform(transform3D);
-        NTxPoint3D p2 = pr.getTo().transform(transform3D);
-
-        NTxPoint2D point1 = projection3D.project(p1);
-        NTxPoint2D point2 = projection3D.project(p2);
+        NTxPoint2D point1 = camera.projectFromLocalToScreen(pr.getFrom(), transform3D, origin);
+        NTxPoint2D point2 = camera.projectFromLocalToScreen(pr.getTo(), transform3D, origin);
         double xmin = Math.min(point1.x + x, point2.x + x);
         double w = Math.abs(point1.x - point2.x);
         double ymin = Math.min(point1.y + y, point2.y + y);
@@ -175,17 +167,14 @@ public class NtxGraphics3DImpl implements NtxGraphics3D {
         graphics.setStroke(oldStroke);
     }
 
-    private void draw3DElement3DPolygon(NtxElement3DPolygon pr, NTxPoint2D origin,DrawCommand cmd) {
-        double x = origin.x;
-        double y = origin.y;
+    private void draw3DElement3DPolygon(NtxElement3DPolygon pr, NTxPoint2D origin, DrawCommand cmd) {
         NTxPoint3D[] nodes = pr.getNodes();
         double[] xx = new double[nodes.length];
         double[] yy = new double[nodes.length];
         for (int i = 0; i < xx.length; i++) {
-            NTxPoint3D p = nodes[i].transform(transform3D);
-            NTxPoint2D pp = projection3D.project(p);
-            xx[i] = (pp.x + x);
-            yy[i] = (pp.y + y);
+            NTxPoint2D pp = camera.projectFromLocalToScreen(nodes[i],transform3D,  origin);
+            xx[i] = pp.x;
+            yy[i] = pp.y;
         }
         double d = NTxD3Utils.surfaceNormal(nodes[0], nodes[1], nodes[2]).dot(getLight3D().orientation());
         Graphics2D g = graphics.graphics2D();
@@ -235,17 +224,14 @@ public class NtxGraphics3DImpl implements NtxGraphics3D {
         }
     }
 
-    private void draw3DElement3DPolyline(NtxElement3DPolyline pr, NTxPoint2D origin,DrawCommand cmd) {
-        double x = origin.x;
-        double y = origin.y;
+    private void draw3DElement3DPolyline(NtxElement3DPolyline pr, NTxPoint2D origin, DrawCommand cmd) {
         NTxPoint3D[] nodes = pr.getNodes();
         double[] xx = new double[nodes.length];
         double[] yy = new double[nodes.length];
         for (int i = 0; i < xx.length; i++) {
-            NTxPoint3D p = nodes[i].transform(transform3D);
-            NTxPoint2D pp = projection3D.project(camera.getViewMatrix().multiplyPoint(p));
-            xx[i] = (pp.x + x);
-            yy[i] = (pp.y + y);
+            NTxPoint2D pp = camera.projectFromLocalToScreen(nodes[i],transform3D,  origin);
+            xx[i] = pp.x;
+            yy[i] = pp.y;
         }
         Graphics2D g = graphics.graphics2D();
         Paint oldPaint = g.getPaint();
@@ -261,28 +247,23 @@ public class NtxGraphics3DImpl implements NtxGraphics3D {
         graphics.setStroke(oldStroke);
     }
 
-    private void draw3DElement3DTriangle(NtxElement3DTriangle pr, NTxPoint2D origin,DrawCommand cmd) {
-        double x = origin.x;
-        double y = origin.y;
+    private void draw3DElement3DTriangle(NtxElement3DTriangle pr, NTxPoint2D origin, DrawCommand cmd) {
         double[] xx = new double[3];
         double[] yy = new double[3];
 
-        NTxPoint3D p1 = pr.getP1();
-        NTxPoint2D pp1 = projection3D.project(p1.transform(transform3D));
-        xx[0] = (pp1.x + x);
-        yy[0] = (pp1.y + y);
+        NTxPoint2D pp1 = camera.projectFromLocalToScreen(pr.getP1(),transform3D,origin);
+        xx[0] = pp1.x;
+        yy[0] = pp1.y;
 
-        NTxPoint3D p2 = pr.getP2();
-        NTxPoint2D pp2 = projection3D.project(p2.transform(transform3D));
-        xx[1] = (pp2.x + x);
-        yy[1] = (pp2.y + y);
+        NTxPoint2D pp2 = camera.projectFromLocalToScreen(pr.getP2(),transform3D,origin);
+        xx[1] = pp2.x;
+        yy[1] = pp2.y;
 
-        NTxPoint3D p3 = pr.getP3();
-        NTxPoint2D pp3 = projection3D.project(p3.transform(transform3D));
-        xx[2] = (pp3.x + x);
-        yy[2] = (pp3.y + y);
+        NTxPoint2D pp3 = camera.projectFromLocalToScreen(pr.getP3(),transform3D,origin);
+        xx[2] = pp3.x;
+        yy[2] = pp3.y;
 
-        double d = NTxD3Utils.surfaceNormal(p1, p2, p3).dot(getLight3D().orientation());
+        double d = NTxD3Utils.surfaceNormal(pr.getP1(), pr.getP2(), pr.getP3()).dot(getLight3D().orientation());
         Graphics2D g = graphics.graphics2D();
         if (true/*d < 0*/) {
             if (pr.isFill()) {
