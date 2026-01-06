@@ -25,7 +25,7 @@ public class Element3DGroupPrimitiveBuilder implements NTxElement3DRenderer, NTx
     }
 
     public void render(NTxNodeRendererContext rendererContext, NTxNodeBuilderContext builderContext) {
-        //do nothing in 2D
+        // do nothing in 2D
     }
 
     @Override
