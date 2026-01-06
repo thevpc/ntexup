@@ -9,29 +9,35 @@ import net.thevpc.ntexup.api.document.elem3d.NTxVector3D;
 public class NTxCamera3DImpl implements NTxCamera3D {
     private NTxPoint3D position;
     private NTxPoint3D target;
-    private NTxVector3D up;
+    NTxVector3D worldUp = new NTxVector3D(0, 1, 0);
 
     public static NTxCamera3DImpl defaultCamera() {
-        return new NTxCamera3DImpl(new NTxPoint3D(0, 0, 1000),new NTxPoint3D(0, 0, 0),new NTxVector3D(0, 1, 0));
+        return new NTxCamera3DImpl(new NTxPoint3D(0, 0, 1000),new NTxPoint3D(0, 0, 0));
     }
 
     public NTxCamera3DImpl() {}
-    public NTxCamera3DImpl(NTxPoint3D position, NTxPoint3D target, NTxVector3D up) {
+    public NTxCamera3DImpl(NTxPoint3D position, NTxPoint3D target) {
         this.position = position;
         this.target = target;
-        this.up = up;
     }
 
     public NTxMatrix3D getViewMatrix() {
-//        NTxVector3D forward = target.asVector().minus(position.asVector()).normalize(); // -Z axis
-        NTxVector3D forward = position.asVector().minus(target.asVector()).normalize(); // -Z axis
-        NTxVector3D right = up.cross(forward).normalize(); // +X axis
-        NTxVector3D trueUp = forward.cross(right).normalize(); // +Y axis
-
+        NTxVector3D forward = target.asVector().minus(position.asVector()).normalize();
+        NTxVector3D right = forward.cross(worldUp).normalize();
+        NTxVector3D trueUp = right.cross(forward).normalize();
         double[][] m = new double[4][4];
-        m[0][0] = right.x; m[0][1] = right.y; m[0][2] = right.z; m[0][3] = -right.dot(position.asVector());
-        m[1][0] = trueUp.x; m[1][1] = trueUp.y; m[1][2] = trueUp.z; m[1][3] = -trueUp.dot(position.asVector());
-        m[2][0] = forward.x; m[2][1] = forward.y; m[2][2] = forward.z; m[2][3] = -forward.dot(position.asVector());
+
+        m[0][0] = right.x;   m[0][1] = right.y;   m[0][2] = right.z;
+        m[0][3] = -right.dot(position.asVector());
+
+        m[1][0] = trueUp.x; m[1][1] = trueUp.y; m[1][2] = trueUp.z;
+        m[1][3] = -trueUp.dot(position.asVector());
+
+        m[2][0] = -forward.x;
+        m[2][1] = -forward.y;
+        m[2][2] = -forward.z;
+        m[2][3] = forward.dot(position.asVector());
+
         m[3][0] = 0; m[3][1] = 0; m[3][2] = 0; m[3][3] = 1;
 
         return new NTxMatrix3D(m);
@@ -53,8 +59,7 @@ public class NTxCamera3DImpl implements NTxCamera3D {
     // Getters / setters
     public NTxPoint3D getPosition() { return position; }
     public NTxPoint3D getTarget() { return target; }
-    public NTxVector3D getUp() { return up; }
+    public NTxVector3D getUp() { return worldUp; }
     public void setPosition(NTxPoint3D position) { this.position = position; }
     public void setTarget(NTxPoint3D target) { this.target = target; }
-    public void setUp(NTxVector3D up) { this.up = up; }
 }

@@ -76,11 +76,10 @@ public class NtxGraphics3DImpl implements NtxGraphics3D {
             }).toArray(NTxPoint3D[]::new);
             c.depth = Arrays.stream(newPoints)
                     .mapToDouble(p -> p.z)
-                    .average()
+                    .max()
                     .orElse(0);
             return c;
         })
-                .sorted(Comparator.comparingDouble(c->c.depth))
                 .sorted(Comparator.comparingDouble(c -> -c.depth))
                 .toArray(DrawCommand[]::new);
         try {
@@ -244,7 +243,7 @@ public class NtxGraphics3DImpl implements NtxGraphics3D {
         double[] yy = new double[nodes.length];
         for (int i = 0; i < xx.length; i++) {
             NTxPoint3D p = nodes[i].transform(transform3D);
-            NTxPoint2D pp = projection3D.project(p);
+            NTxPoint2D pp = projection3D.project(camera.getViewMatrix().multiplyPoint(p));
             xx[i] = (pp.x + x);
             yy[i] = (pp.y + y);
         }

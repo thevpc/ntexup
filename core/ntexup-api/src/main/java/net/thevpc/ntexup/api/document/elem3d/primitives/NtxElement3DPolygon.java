@@ -4,6 +4,8 @@ import net.thevpc.ntexup.api.document.elem3d.AbstractNTxElement3DPrimitive;
 import net.thevpc.ntexup.api.document.elem3d.NTxElement3DPrimitiveType;
 import net.thevpc.ntexup.api.document.elem3d.NTxPoint3D;
 
+import java.util.Arrays;
+
 public class NtxElement3DPolygon extends AbstractNTxElement3DPrimitive {
     private NTxPoint3D[] nodes;
     private boolean fill;
@@ -35,5 +37,14 @@ public class NtxElement3DPolygon extends AbstractNTxElement3DPrimitive {
     @Override
     public NTxElement3DPrimitiveType type() {
         return NTxElement3DPrimitiveType.POLYGON;
+    }
+
+    @Override
+    public String toString() {
+        return "NtxElement3DPolygon{" +
+                "nodes=" + Arrays.toString(nodes) +
+                ", fill=" + fill +
+                ", contour=" + contour +
+                '}';
     }
 }

@@ -328,7 +328,7 @@ public class NTxDocStreamParser {
     public NOptional<NElement> parseInputStream(InputStream is, NTxSource source) {
         NElement u;
         try {
-            u = NElementParser.ofTson().parse(is);
+            u = NElementReader.ofTson().read(is);
             u = NTxUtils.addCompilerDeclarationPathAnnotations(u, source.path().map(NPath::toString).orNull());
         } catch (Exception ex) {
             engine.log().log(NMsg.ofC("error loading tson document %s", is).asError(),source);
@@ -340,7 +340,7 @@ public class NTxDocStreamParser {
     public NOptional<NElement> parsePath(NPath path, NTxSource source) {
         NElement u;
         try {
-            u = NElementParser.ofTson().parse(path);
+            u = NElementReader.ofTson().read(path);
             u = NTxUtils.addCompilerDeclarationPathAnnotations(u, source.path().map(NPath::toString).orNull());
         } catch (Exception ex) {
             engine.log().log(NMsg.ofC("error loading tson document %s : %s", path,ex).asError(),source);

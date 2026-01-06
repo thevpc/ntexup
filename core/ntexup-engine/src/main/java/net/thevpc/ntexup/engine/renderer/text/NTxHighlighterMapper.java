@@ -203,7 +203,7 @@ public class NTxHighlighterMapper {
         {
             NTxValue e = NTxValue.of(
                     ctx.computePropertyValue(node, prefix + "font-family")
-                            .orElseUse(() -> ctx.computePropertyValue(node, "font-family"))
+                            .orElseGetOptionalFrom(() -> ctx.computePropertyValue(node, "font-family"))
                             .orNull()
             );
             String value = NStringUtils.trimToNull(e.asStringOrName().orNull());
@@ -216,7 +216,7 @@ public class NTxHighlighterMapper {
         {
             NTxSize e = NTxSize.ofElement(
                     ctx.computePropertyValue(node, prefix + "font-family-size")
-                            .orElseUse(() -> ctx.computePropertyValue(node, "font-family-size"))
+                            .orElseGetOptionalFrom(() -> ctx.computePropertyValue(node, "font-family-size"))
                             .orNull()
             );
             if (e == null) {
@@ -227,11 +227,11 @@ public class NTxHighlighterMapper {
         }
         {
             ss.bold = NTxValue.of(ctx.computePropertyValue(node, prefix + "font-bold")
-                    .orElseUse(() -> ctx.computePropertyValue(node, "font-bold"))
+                    .orElseGetOptionalFrom(() -> ctx.computePropertyValue(node, "font-bold"))
                     .orNull()).asBoolean().orElse(false);
 
             ss.italic = NTxValue.of(ctx.computePropertyValue(node, prefix + "font-italic")
-                    .orElseUse(() -> ctx.computePropertyValue(node, "font-italic"))
+                    .orElseGetOptionalFrom(() -> ctx.computePropertyValue(node, "font-italic"))
                     .orNull()).asBoolean().orElse(false);
         }
         cache.put(nTextStyle.id(), ss);

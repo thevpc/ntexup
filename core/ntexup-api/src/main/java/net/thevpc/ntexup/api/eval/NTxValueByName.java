@@ -250,10 +250,10 @@ public class NTxValueByName {
                     Math.max(ph - renderInfo.margin.getTop() - renderInfo.margin.getBottom(), 0)
             );
             renderInfo.origin = NTxValueByType.getNNumberElement2Or1OrHAlign(node, ctx, NTxPropName.ORIGIN)
-                    .orElseUse(() -> NTxValueByType.getNNumberElement2Or1OrHAlign(node, ctx, NTxPropName.AT))
+                    .orElseGetOptionalFrom(() -> NTxValueByType.getNNumberElement2Or1OrHAlign(node, ctx, NTxPropName.AT))
                     .orElse(new NTxElemNumber2(NElement.ofDouble(0), NElement.ofDouble(0)));
             renderInfo.position = NTxValueByType.getNNumberElement2Or1OrHAlign(node, ctx, NTxPropName.POSITION)
-                    .orElseUse(() -> NTxValueByType.getNNumberElement2Or1OrHAlign(node, ctx, NTxPropName.AT))
+                    .orElseGetOptionalFrom(() -> NTxValueByType.getNNumberElement2Or1OrHAlign(node, ctx, NTxPropName.AT))
                     .orElse(new NTxElemNumber2(NElement.ofDouble(0), NElement.ofDouble(0)));
 
             {
