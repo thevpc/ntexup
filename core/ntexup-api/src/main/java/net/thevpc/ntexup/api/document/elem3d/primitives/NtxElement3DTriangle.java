@@ -59,4 +59,14 @@ public class NtxElement3DTriangle extends AbstractNTxElement3DPrimitive {
         return new NTxPoint3D[]{p1,p2,p3};
     }
 
+    @Override
+    public String toString() {
+        return "NtxElement3DTriangle{" +
+                "p1=" + p1 +
+                ", p2=" + p2 +
+                ", p3=" + p3 +
+                ", fill=" + fill +
+                ", contour=" + contour +
+                '}';
+    }
 }
