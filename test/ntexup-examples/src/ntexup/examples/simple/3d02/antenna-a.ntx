@@ -15,7 +15,7 @@ page{
                 transform:{
 //                    rotate(from:(0,0,0),to:(100,0,0),angle:-30)
                     translate(10,10,0)
-                    scale:0.9
+                    scale:0.7
                 }
         ){
             box(size:(100,100,2),origin:(0,0,-2), background:"#00468B") // substrate
