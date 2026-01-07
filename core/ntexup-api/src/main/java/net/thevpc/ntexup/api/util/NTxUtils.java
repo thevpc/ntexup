@@ -2,7 +2,6 @@ package net.thevpc.ntexup.api.util;
 
 import net.thevpc.ntexup.api.document.elem2d.NTxBounds2;
 import net.thevpc.ntexup.api.document.elem2d.NTxPoint2D;
-import net.thevpc.ntexup.api.document.elem3d.NTxPoint3D;
 import net.thevpc.ntexup.api.document.node.NTxItem;
 import net.thevpc.ntexup.api.document.node.NTxItemList;
 import net.thevpc.ntexup.api.document.node.NTxNode;
@@ -143,14 +142,6 @@ public class NTxUtils {
             item = item.parent();
         }
         return null;
-    }
-
-    public static final NTxMinMax minMaxZ(NTxPoint3D[] points) {
-        NTxMinMax m = new NTxMinMax();
-        for (NTxPoint3D point : points) {
-            m.registerValue(point.z);
-        }
-        return m;
     }
 
     public static final double[] dtimes(double min, double max, int times) {
