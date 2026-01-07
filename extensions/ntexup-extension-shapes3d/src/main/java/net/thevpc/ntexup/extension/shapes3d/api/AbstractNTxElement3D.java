@@ -16,6 +16,22 @@ public abstract class AbstractNTxElement3D implements NtxElement3D {
     private Paint contourPaint;
     private Composite composite;
 
+    @Override
+    public void copyStyle(NtxElement3D other) {
+        if(other!=null){
+            this.setBackgroundPaint(other.getBackgroundPaint());
+            this.setLinePaint(other.getLinePaint());
+            this.setLineStroke(other.getLineStroke());
+            this.setComposite(other.getComposite());
+            // If you have a contour paint/stroke, copy those too:
+            this.setContourPaint(other.getContourPaint());
+            this.setContourStroke(other.getContourStroke());
+            this.setTransform(other.getTransform());
+            this.setBackgroundPaint(other.getBackgroundPaint());
+            this.setComposite(other.getComposite());
+        }
+    }
+
     public Stroke getLineStroke() {
         return lineStroke;
     }
