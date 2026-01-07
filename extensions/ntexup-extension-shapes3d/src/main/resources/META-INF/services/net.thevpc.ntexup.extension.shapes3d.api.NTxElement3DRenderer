@@ -1,0 +1,4 @@
+net.thevpc.ntexup.extension.shapes3d.impl.builders.Element3DBoxPrimitiveBuilder
+net.thevpc.ntexup.extension.shapes3d.impl.builders.Element3DSurfacePrimitiveBuilder
+net.thevpc.ntexup.extension.shapes3d.impl.builders.Element3DUVSpherePrimitiveBuilder
+net.thevpc.ntexup.extension.shapes3d.impl.builders.Element3DGroupPrimitiveBuilder
