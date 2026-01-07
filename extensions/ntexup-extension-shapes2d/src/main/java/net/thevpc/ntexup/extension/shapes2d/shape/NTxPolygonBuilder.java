@@ -7,7 +7,6 @@ import net.thevpc.ntexup.api.engine.NTxNodeBuilderContext;
 import net.thevpc.ntexup.api.extension.NTxNodeBuilder;
 import net.thevpc.ntexup.api.parser.NTxArgumentReader;
 import net.thevpc.ntexup.api.document.elem2d.NTxPoint2D;
-import net.thevpc.ntexup.api.document.elem3d.NTxPoint3D;
 import net.thevpc.ntexup.api.document.node.NTxNodeType;
 import net.thevpc.ntexup.api.document.style.NTxPropName;
 import net.thevpc.ntexup.api.renderer.NTxNodeRendererContext;
@@ -39,16 +38,16 @@ public class NTxPolygonBuilder implements NTxNodeBuilder {
                                 String ks = kk.key().asStringValue().orNull();
                                 if (NTxPropName.POINT.equals(ks)) {
                                     buildContext.addParamName(NTxPropName.POINTS);
-                                    if (buildContext.isAncestorScene3D(info.node())) {
-                                        NOptional<NTxPoint3D> p2d = NTxValue.of(kk.value()).asHPoint3D();
-                                        if (p2d.isPresent()) {
-                                            tools.addPoint(info.node(), p2d.get());
-                                            info.read();
-                                            return true;
-                                        } else {
-                                            return false;
-                                        }
-                                    } else {
+//                                    if (buildContext.isAncestorScene3D(info.node())) {
+//                                        NOptional<NTxPoint3D> p2d = NTxValue.of(kk.value()).asHPoint3D();
+//                                        if (p2d.isPresent()) {
+//                                            tools.addPoint(info.node(), p2d.get());
+//                                            info.read();
+//                                            return true;
+//                                        } else {
+//                                            return false;
+//                                        }
+//                                    } else {
                                         NOptional<NTxPoint2D> p2d = NTxValue.of(kk.value()).asPoint2D();
                                         if (p2d.isPresent()) {
                                             tools.addPoint(info.node(), p2d.get());
@@ -57,19 +56,19 @@ public class NTxPolygonBuilder implements NTxNodeBuilder {
                                         } else {
                                             return false;
                                         }
-                                    }
+//                                    }
                                 } else if (NTxPropName.POINTS.equals(ks)) {
                                     buildContext.addParamName(NTxPropName.POINTS);
-                                    if (buildContext.isAncestorScene3D(info.node())) {
-                                        NOptional<NTxPoint3D[]> p2d = NTxValue.of(kk.value()).asPoint3DArray();
-                                        if (p2d.isPresent()) {
-                                            tools.addPoints(info.node(), p2d.get());
-                                            info.read();
-                                            return true;
-                                        } else {
-                                            return false;
-                                        }
-                                    } else {
+//                                    if (buildContext.isAncestorScene3D(info.node())) {
+//                                        NOptional<NTxPoint3D[]> p2d = NTxValue.of(kk.value()).asPoint3DArray();
+//                                        if (p2d.isPresent()) {
+//                                            tools.addPoints(info.node(), p2d.get());
+//                                            info.read();
+//                                            return true;
+//                                        } else {
+//                                            return false;
+//                                        }
+//                                    } else {
                                         NOptional<NTxPoint2D[]> p2d = NTxValue.of(kk.value()).asPoint2DArray();
                                         if (p2d.isPresent()) {
                                             info.read();
@@ -78,20 +77,20 @@ public class NTxPolygonBuilder implements NTxNodeBuilder {
                                         } else {
                                             return false;
                                         }
-                                    }
+//                                    }
                                 }
                             }else if(k.isUplet()){
-                                if (buildContext.isAncestorScene3D(info.node())) {
-                                    NOptional<NTxPoint3D> p2d = NTxValue.of(k).asHPoint3D();
-                                    if (p2d.isPresent()) {
-                                        buildContext.addParamName(NTxPropName.POINTS);
-                                        tools.addPoint(info.node(), p2d.get());
-                                        info.read();
-                                        return true;
-                                    } else {
-                                        return false;
-                                    }
-                                } else {
+//                                if (buildContext.isAncestorScene3D(info.node())) {
+//                                    NOptional<NTxPoint3D> p2d = NTxValue.of(k).asHPoint3D();
+//                                    if (p2d.isPresent()) {
+//                                        buildContext.addParamName(NTxPropName.POINTS);
+//                                        tools.addPoint(info.node(), p2d.get());
+//                                        info.read();
+//                                        return true;
+//                                    } else {
+//                                        return false;
+//                                    }
+//                                } else {
                                     NOptional<NTxPoint2D> p2d = NTxValue.of(k).asPoint2D();
                                     if (p2d.isPresent()) {
                                         buildContext.addParamName(NTxPropName.POINTS);
@@ -101,7 +100,7 @@ public class NTxPolygonBuilder implements NTxNodeBuilder {
                                     } else {
                                         return false;
                                     }
-                                }
+//                                }
                             }
                         }
                         return false;
