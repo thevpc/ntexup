@@ -2,7 +2,6 @@ package net.thevpc.ntexup.api.eval;
 
 import net.thevpc.ntexup.api.document.NTxArrow;
 import net.thevpc.ntexup.api.document.NTxArrowType;
-import net.thevpc.ntexup.api.document.elem3d.NTxPoint3D;
 import net.thevpc.ntexup.api.document.elem2d.NTxDouble2;
 import net.thevpc.ntexup.api.document.elem2d.*;
 import net.thevpc.ntexup.api.document.node.*;
@@ -1030,9 +1029,9 @@ public class NTxValue {
         if (element instanceof NTxPoint2D) {
             return NTxValue.of(new double[]{((NTxPoint2D) element).getX(), ((NTxPoint2D) element).getY()}).asElementArray();
         }
-        if (element instanceof NTxPoint3D) {
-            return NTxValue.of(new double[]{((NTxPoint3D) element).getX(), ((NTxPoint3D) element).getY(), ((NTxPoint3D) element).getZ()}).asElementArray();
-        }
+//        if (element instanceof NTxPoint3D) {
+//            return NTxValue.of(new double[]{((NTxPoint3D) element).getX(), ((NTxPoint3D) element).getY(), ((NTxPoint3D) element).getZ()}).asElementArray();
+//        }
         if (element instanceof NTxDouble4) {
             return NTxValue.of(new double[]{
                     ((NTxDouble4) element).getX1(),
@@ -1073,9 +1072,9 @@ public class NTxValue {
         if (element instanceof NTxPoint2D) {
             return NOptional.of(new double[]{((NTxPoint2D) element).getY(), ((NTxPoint2D) element).getY()});
         }
-        if (element instanceof NTxPoint3D) {
-            return NOptional.of(new double[]{((NTxPoint3D) element).getY(), ((NTxPoint3D) element).getY(), ((NTxPoint3D) element).getZ()});
-        }
+//        if (element instanceof NTxPoint3D) {
+//            return NOptional.of(new double[]{((NTxPoint3D) element).getY(), ((NTxPoint3D) element).getY(), ((NTxPoint3D) element).getZ()});
+//        }
         if (element instanceof NTxDouble4) {
             NTxDouble4 d = (NTxDouble4) element;
             return NOptional.of(new double[]{
@@ -1411,10 +1410,10 @@ public class NTxValue {
         if (element instanceof NTxDouble3) {
             return NOptional.of((NTxDouble3) element);
         }
-        if (element instanceof NTxPoint3D) {
-            NTxPoint3D p = (NTxPoint3D) element;
-            return NOptional.of(new NTxDouble3(p.x, p.y, p.z));
-        }
+//        if (element instanceof NTxPoint3D) {
+//            NTxPoint3D p = (NTxPoint3D) element;
+//            return NOptional.of(new NTxDouble3(p.x, p.y, p.z));
+//        }
         NOptional<double[]> d = asDoubleArray();
         if (d.isPresent()) {
             double[] dd = d.get();
@@ -1456,19 +1455,6 @@ public class NTxValue {
         return NOptional.ofNamedEmpty("Point2D from " + element);
     }
 
-    public NOptional<NTxPoint3D> asPoint3D() {
-        if (element instanceof NTxPoint3D) {
-            return NOptional.of((NTxPoint3D) element);
-        }
-        NOptional<double[]> d = asDoubleArray();
-        if (d.isPresent()) {
-            double[] dd = d.get();
-            if (dd.length == 3) {
-                return NOptional.of(new NTxPoint3D(dd[0], dd[1], dd[2]));
-            }
-        }
-        return NOptional.ofNamedEmpty("Point3D from " + element);
-    }
 
     public NOptional<NTxArrowType> asArrowType() {
         if (element instanceof NTxArrowType) {
@@ -1530,19 +1516,6 @@ public class NTxValue {
         return NOptional.ofNamedError("HArrow from " + element);
     }
 
-    public NOptional<NTxPoint3D> asHPoint3D() {
-        if (element instanceof NTxPoint3D) {
-            return NOptional.of((NTxPoint3D) element);
-        }
-        NOptional<double[]> d = asDoubleArray();
-        if (d.isPresent()) {
-            double[] dd = d.get();
-            if (dd.length == 2) {
-                return NOptional.of(new NTxPoint3D(dd[0], dd[1], dd[2]));
-            }
-        }
-        return NOptional.ofNamedEmpty("HPoint3D from " + element);
-    }
 
     public <T> NOptional<T> as(Class<T> type) {
         switch (type.getName()) {
@@ -1629,16 +1602,6 @@ public class NTxValue {
         }
     }
 
-    public NOptional<NTxPoint3D[]> asPoint3DArray() {
-        NOptional<NTxDouble3[]> u = asDouble3Array();
-        if (u.isPresent()) {
-            return NOptional.of(
-                    Arrays.stream(u.get()).map(x -> new NTxPoint3D(x.getX(), x.getY(), x.getZ())).toArray(NTxPoint3D[]::new)
-            );
-        } else {
-            return (NOptional) u;
-        }
-    }
 
     public NOptional<NTxDouble2[]> asDouble2Array() {
         if (element instanceof NTxDouble2[]) {
