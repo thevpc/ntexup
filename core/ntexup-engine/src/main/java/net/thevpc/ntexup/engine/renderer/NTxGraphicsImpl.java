@@ -19,7 +19,6 @@ import net.thevpc.nuts.util.NScorable;
 import net.thevpc.nuts.text.NMsg;
 import net.thevpc.ntexup.api.document.elem2d.primitives.*;
 import net.thevpc.ntexup.api.document.elem2d.*;
-import net.thevpc.ntexup.api.document.elem3d.*;
 import net.thevpc.nuts.util.NOptional;
 
 import java.awt.*;
