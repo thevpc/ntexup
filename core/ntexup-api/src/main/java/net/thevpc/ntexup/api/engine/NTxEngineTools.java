@@ -2,7 +2,6 @@ package net.thevpc.ntexup.api.engine;
 
 import net.thevpc.ntexup.api.document.NTxDocument;
 import net.thevpc.ntexup.api.document.elem2d.NTxPoint2D;
-import net.thevpc.ntexup.api.document.elem3d.NTxPoint3D;
 import net.thevpc.ntexup.api.document.node.NTxNode;
 import net.thevpc.ntexup.api.renderer.NTxDocumentStreamRendererConfig;
 
@@ -24,11 +23,7 @@ public interface NTxEngineTools {
     String trimBloc(String code);
     boolean addPoints(NTxNode line, NTxPoint2D[] points);
 
-    boolean addPoints(NTxNode line, NTxPoint3D[] points);
-
     boolean addPoint(NTxNode line, NTxPoint2D point);
-
-    boolean addPoint(NTxNode line, NTxPoint3D point);
 
     java.util.List<NTxNode> resolvePages(NTxDocument document);
 
