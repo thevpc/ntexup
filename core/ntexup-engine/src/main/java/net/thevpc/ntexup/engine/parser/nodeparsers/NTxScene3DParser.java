@@ -1,7 +1,7 @@
 //package net.thevpc.ntexup.engine.parser.nodeparsers;
 //
 //import net.thevpc.ntexup.api.parser.NTxArgumentReader;
-//import net.thevpc.ntexup.api.document.elem3d.NTxPoint3D;
+//import net.thevpc.ntexup.extension.shapes3d.api.NTxPoint3D;
 //import net.thevpc.ntexup.api.document.node.NTxNodeType;
 //import net.thevpc.ntexup.engine.parser.NTxNodeParserBase;
 //import net.thevpc.ntexup.api.eval.NTxValue;
