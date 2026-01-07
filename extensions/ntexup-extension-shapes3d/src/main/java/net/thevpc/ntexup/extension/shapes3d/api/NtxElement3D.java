@@ -15,12 +15,15 @@ public interface NtxElement3D extends NtxElement {
     NtxElement3D setLineStroke(Stroke stroke, String edge);
 
     Paint getBackgroundPaint();
+
     NtxElement3D setBackgroundPaint(Paint color);
 
     Paint getBackgroundPaint(String face);
+
     NtxElement3D setBackgroundPaint(Paint color, String face);
 
     Paint getForegroundPaint();
+
     NtxElement3D setForegroundPaint(Paint color);
 
     NTxMatrix3D getTransform();
@@ -37,10 +40,11 @@ public interface NtxElement3D extends NtxElement {
 
     Paint getContourPaint();
 
-    NtxElement3D setContourPaint(Paint contourPaint) ;
+    NtxElement3D setContourPaint(Paint contourPaint);
 
     Stroke getContourStroke();
 
-    NtxElement3D setContourStroke(Stroke contourPaint) ;
+    NtxElement3D setContourStroke(Stroke contourPaint);
 
+    void copyStyle(NtxElement3D other);
 }
