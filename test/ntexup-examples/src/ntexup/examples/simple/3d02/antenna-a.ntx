@@ -15,18 +15,18 @@ page{
                 transform:{
 //                    rotate(from:(0,0,0),to:(100,0,0),angle:-30)
                     translate(10,10,0)
-//                    scale:0.7
+                    scale:0.9
                 }
         ){
-//            box(size:(100,100,1),origin:(0,0,0), background:"#00468B") // substrate
-            box(size:(30,15,2),origin:(0,45,0), background:"violet") // violet
+            box(size:(100,100,2),origin:(0,0,-2), background:"#00468B") // substrate
+//            box(size:(30,15,1),origin:(0,45,0), background:"violet") // violet
 //            box(size:(30,10,2),origin:(5,45,-12), background:"blue") // blue
 //            box(size:(30,10,2),origin:(5,45,12), background:"red") // red
 //            box(size:(30,10,2),origin:(5,45,-6), background:"green") // green
 //
-//            box(size:(30,10,2),origin:(5,45,2), background:"#cb6d51") // line
-//            box(size:(50,50,2),origin:(35,25,2), background:"#cb6d51") // patch
-            box(size:(5,10,2),origin:(0,45,2.3), background:yellow) // source
+            box(size:(30,10,2),origin:(5,45,2), background:"#cb6d51") // line
+            box(size:(50,50,2),origin:(35,25,2), background:"#cb6d51") // patch
+            box(size:(5,10,2),origin:(0,45,2), background:yellow) // source
         }
 
         text("w", font-size:3%P , origin:(50,50), position:(16,31))
