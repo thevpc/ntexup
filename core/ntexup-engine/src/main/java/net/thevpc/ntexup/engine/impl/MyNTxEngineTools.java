@@ -2,7 +2,6 @@ package net.thevpc.ntexup.engine.impl;
 
 import net.thevpc.ntexup.api.document.NTxDocument;
 import net.thevpc.ntexup.api.document.elem2d.NTxPoint2D;
-import net.thevpc.ntexup.api.document.elem3d.NTxPoint3D;
 import net.thevpc.ntexup.api.document.node.NTxNode;
 import net.thevpc.ntexup.api.engine.NTxEngine;
 import net.thevpc.ntexup.api.engine.NTxEngineTools;
@@ -58,20 +57,12 @@ public class MyNTxEngineTools implements NTxEngineTools {
         return NTxUtilsPoints.addPoints(line, points);
     }
 
-    @Override
-    public boolean addPoints(NTxNode line, NTxPoint3D[] points) {
-        return NTxUtilsPoints.addPoints(line, points);
-    }
 
     @Override
     public boolean addPoint(NTxNode line, NTxPoint2D point) {
         return NTxUtilsPoints.addPoint(line, point);
     }
 
-    @Override
-    public boolean addPoint(NTxNode line, NTxPoint3D point) {
-        return NTxUtilsPoints.addPoint(line, point);
-    }
 
     @Override
     public java.util.List<NTxNode> resolvePages(NTxDocument document) {
