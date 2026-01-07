@@ -6,7 +6,6 @@ package net.thevpc.ntexup.api.document.style;
 
 import net.thevpc.ntexup.api.document.elem2d.NTxDouble2;
 import net.thevpc.ntexup.api.document.elem2d.NTxPoint2D;
-import net.thevpc.ntexup.api.document.elem3d.NTxPoint3D;
 import net.thevpc.ntexup.api.document.node.NTxItem;
 import net.thevpc.ntexup.api.source.NTxSource;
 import net.thevpc.ntexup.api.util.NTxUtils;
@@ -66,9 +65,6 @@ public class NTxProp implements NTxItem, NToElement {
         return of(name, d == null ? null : d.toElement());
     }
 
-    public static NTxProp ofHPoint3D(String name, NTxPoint3D d) {
-        return of(name, d == null ? null : d.toElement());
-    }
 
     public static NTxProp ofDouble2Array(String name, NTxDouble2... d) {
         return of(name, NElement.ofArray(Arrays.stream(d).map(NTxDouble2::toElement).toArray(NElement[]::new)));
@@ -86,9 +82,6 @@ public class NTxProp implements NTxItem, NToElement {
         return of(name, NElement.ofArray(Arrays.stream(d).map(NTxPoint2D::toElement).toArray(NElement[]::new)));
     }
 
-    public static NTxProp ofHPoint3DArray(String name, NTxPoint3D... d) {
-        return of(name, NElement.ofArray(Arrays.stream(d).map(NTxPoint3D::toElement).toArray(NElement[]::new)));
-    }
 
     public NTxProp(String name, NElement value, NTxItem parent) {
         this.name = name;
