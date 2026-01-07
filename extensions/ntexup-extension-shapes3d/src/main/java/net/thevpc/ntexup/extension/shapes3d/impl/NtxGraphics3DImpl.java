@@ -62,15 +62,15 @@ public class NtxGraphics3DImpl implements NtxGraphics3D {
     }
 
     public static class DrawCommand {
-        static NTxMatrix3D transform;
-        static NtxElement3DPrimitive primitive;
-        static double depth;
+        NTxMatrix3D transform;
+        NtxElement3DPrimitive primitive;
+        double depth;
     }
 
 
     private NTxPoint3D[] applyTransform(NTxPoint3D[] points, DrawCommand c) {
         NTxPoint3D[] r = new NTxPoint3D[points.length];
-        NTxMatrix3D nt = transform3D.multiply(c.transform);
+        NTxMatrix3D nt = c.transform==null?transform3D:transform3D.multiply(c.transform);
         for (int i = 0; i < r.length; i++) {
             r[i] = nt.multiplyPoint(points[i]);
         }
@@ -78,12 +78,15 @@ public class NtxGraphics3DImpl implements NtxGraphics3D {
     }
 
     private NTxPoint3D applyTransform(NTxPoint3D point, DrawCommand c) {
-        NTxMatrix3D nt = transform3D.multiply(c.transform);
+        NTxMatrix3D nt = c.transform==null?transform3D:transform3D.multiply(c.transform);
         return nt.multiplyPoint(point);
     }
 
     private NtxElement3DPrimitive[] toPrimitives(NtxElement3D element3D){
-        double maxEdge=25;
+//        if(true){
+//            return getElement3DUIFactory().toPrimitives(element3D, state);
+//        }
+        double maxEdge=100;
         java.util.List<NtxElement3DPrimitive> result=new ArrayList<>();
         for (NtxElement3DPrimitive p : getElement3DUIFactory().toPrimitives(element3D, state)) {
             switch (p.type()){
@@ -98,14 +101,20 @@ public class NtxGraphics3DImpl implements NtxGraphics3D {
                     for (NtxElement3DTriangle t : MeshHelper.initialTriangulation((NtxElement3DPolygon) p)) {
                         ArrayList<NtxElement3DTriangle> u = new ArrayList<>();
                         MeshHelper.refineTriangle(t, u,maxEdge);
-                        result.addAll(u);
+                        for (NtxElement3DTriangle u0 : u) {
+                            u0.copyStyle(p);
+                            result.add(u0);
+                        }
                     }
                     break;
                 }
                 case TRIANGLE:{
                     ArrayList<NtxElement3DTriangle> u = new ArrayList<>();
                     MeshHelper.refineTriangle((NtxElement3DTriangle) p, u,maxEdge);
-                    result.addAll(u);
+                    for (NtxElement3DTriangle u0 : u) {
+                        u0.copyStyle(p);
+                        result.add(u0);
+                    }
                     break;
                 }
                 default:{
@@ -113,34 +122,20 @@ public class NtxGraphics3DImpl implements NtxGraphics3D {
                 }
             }
         }
-        for (NtxElement3DPrimitive sub : result) {
-            // THIS PART IS MISSING IN YOUR CODE:
-            sub.setBackgroundPaint(element3D.getBackgroundPaint());
-            sub.setLinePaint(element3D.getLinePaint());
-            sub.setLineStroke(element3D.getLineStroke());
-            sub.setComposite(element3D.getComposite());
-            // If you have a contour paint/stroke, copy those too:
-            sub.setContourPaint(element3D.getContourPaint());
-            sub.setContourStroke(element3D.getContourStroke());
-            sub.setTransform(element3D.getTransform());
-            sub.setBackgroundPaint(element3D.getBackgroundPaint());
-            sub.setComposite(element3D.getComposite());
-        }
         return  result.toArray(new NtxElement3DPrimitive[0]);
     }
 
     @Override
     public void draw3D(NtxElement3D element3D, NTxPoint2D origin) {
         NtxElement3DPrimitive[] primitives = toPrimitives(element3D);
-        NTxMatrix3D old = getTransform3D() == null ? NTxMatrix3D.identity() : getTransform3D();
+        //NTxMatrix3D old = getTransform3D() == null ? NTxMatrix3D.identity() : getTransform3D();
         DrawCommand[] commands = Arrays.stream(primitives).map(primitive -> {
-                    NTxMatrix3D n = primitive.getTransform();
                     DrawCommand c = new DrawCommand();
                     c.primitive = primitive;
-                    c.transform = n == null ? old : old.multiply(n);
-                    //c.transform.multiply() <-- ??
+                    c.transform = primitive.getTransform();
+                    NTxMatrix3D t=c.transform==null?transform3D:transform3D.multiply(c.transform);
                     NTxPoint3D[] newPoints = Arrays.stream(primitive.points()).map(x -> {
-                        NTxPoint3D pWorld = c.transform.multiplyPoint(x);
+                        NTxPoint3D pWorld = t.multiplyPoint(x);
                         NTxPoint3D pCam = camera.getViewMatrix().multiplyPoint(pWorld);
                         return pCam;
                     }).toArray(NTxPoint3D[]::new);
@@ -154,7 +149,7 @@ public class NtxGraphics3DImpl implements NtxGraphics3D {
                 .toArray(DrawCommand[]::new);
         try {
             for (DrawCommand cmd : commands) {
-                setTransform3D(cmd.transform);
+//                setTransform3D(cmd.transform);
                 switch (cmd.primitive.type()) {
                     case LINE: {
                         draw3DElement3DLine((NtxElement3DLine) cmd.primitive, origin, cmd);
@@ -180,7 +175,7 @@ public class NtxGraphics3DImpl implements NtxGraphics3D {
                 }
             }
         } finally {
-            setTransform3D(old);
+//            setTransform3D(old);
         }
     }
 
