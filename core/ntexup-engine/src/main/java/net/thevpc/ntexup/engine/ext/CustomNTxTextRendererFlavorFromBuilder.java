@@ -32,7 +32,7 @@ class CustomNTxTextRendererFlavorFromBuilder implements NTxTextRendererFlavor {
     @Override
     public void buildText(String text, NTxTextOptions options, NTxNode p, NTxNodeRendererContext ctx, NTxTextRendererBuilder builder) {
         if (this.ctx.renderTextAction.buildAction != null) {
-            this.ctx.renderTextAction.buildAction.buildText(text, options, p, ctx, builder, this.ctx);
+            this.ctx.renderTextAction.buildAction.buildText(text, options, p, ctx.withBuilderContext(this.ctx), builder);
         }
     }
 
