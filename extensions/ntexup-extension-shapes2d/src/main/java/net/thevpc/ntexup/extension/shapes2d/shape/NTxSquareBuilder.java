@@ -1,6 +1,6 @@
 package net.thevpc.ntexup.extension.shapes2d.shape;
 
-import net.thevpc.ntexup.api.document.elem2d.NTxBounds2;
+import net.thevpc.ntexup.api.document.elem2d.NTxBounds2D;
 import net.thevpc.ntexup.api.document.elem2d.NTxDouble2;
 import net.thevpc.ntexup.api.document.node.NTxNode;
 import net.thevpc.ntexup.api.document.node.NTxNodeType;
@@ -20,15 +20,15 @@ public class NTxSquareBuilder implements NTxNodeBuilder {
         builderContext
                 .id(NTxNodeType.SQUARE)
                 .parseParam().matchesNamedPair(NTxPropName.ROUND_CORNER, NTxPropName.THEED, NTxPropName.RAISED).asFlags().then()
-                .renderComponent((rendererContext, builderContext1) -> renderMain(rendererContext, builderContext1))
+                .renderComponent(this::renderMain)
         ;
     }
 
 
-    public void renderMain(NTxNodeRendererContext rendererContext, NTxNodeBuilderContext builderContext) {
+    public void renderMain(NTxNodeRendererContext rendererContext) {
         rendererContext = rendererContext.withDefaultStyles(defaultStyles);
         NTxNode node = rendererContext.node();
-        NTxBounds2 b = rendererContext.selfBounds();
+        NTxBounds2D b = rendererContext.selfBounds();
         double x = b.getX();
         double y = b.getY();
         NTxGraphics g = rendererContext.graphics();
