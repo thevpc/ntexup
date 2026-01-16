@@ -1,6 +1,6 @@
 package net.thevpc.ntexup.api.eval;
 
-import net.thevpc.ntexup.api.document.elem2d.NTxBounds2;
+import net.thevpc.ntexup.api.document.elem2d.NTxBounds2D;
 import net.thevpc.ntexup.api.document.elem2d.NTxDouble2;
 import net.thevpc.ntexup.api.document.elem2d.*;
 import net.thevpc.ntexup.api.document.node.*;
@@ -82,10 +82,10 @@ public class NTxValueByName {
         return getNodeCommonCache(t, ctx).stroke;
     }
 
-    public static NTxBounds2 selfBounds(NTxNode t, NTxDouble2 selfSize, NTxDouble2 minSize, NTxNodeRendererContext ctx) {
+    public static NTxBounds2D selfBounds(NTxNode t, NTxDouble2 selfSize, NTxDouble2 minSize, NTxNodeRendererContext ctx) {
 //        NTxBounds2 parentBounds = ctx.parentBounds();
         NTxSizeRef parentWithMarginRef = getNodeSizeCache(t, ctx).parentWithMarginRef;
-        NTxBounds2 parentBoundsWithMargin = getNodeSizeCache(t, ctx).parentBoundsWithMargin;
+        NTxBounds2D parentBoundsWithMargin = getNodeSizeCache(t, ctx).parentBoundsWithMargin;
 
         if (selfSize == null) {
             selfSize = getSize(t, minSize, ctx);
@@ -99,7 +99,7 @@ public class NTxValueByName {
         double y = pos.getY() - origin.getY() + parentBoundsWithMargin.getY();
 
 
-        return new NTxBounds2(
+        return new NTxBounds2D(
                 x,
                 y,
                 selfSize.getX(),
@@ -234,7 +234,7 @@ public class NTxValueByName {
                 bottom = dv;
             }
             renderInfo.margin = new NTxMargin(left, top, right, bottom);
-            NTxBounds2 parentBounds = ctx.parentBounds();
+            NTxBounds2D parentBounds = ctx.parentBounds();
             double pw = parentBounds.getWidth();
             double ph = parentBounds.getHeight();
             renderInfo.parentWithMarginRef = new NTxSizeRef(
@@ -243,7 +243,7 @@ public class NTxValueByName {
                     ctx.getGlobalBounds().getWidth(),
                     ctx.getGlobalBounds().getHeight()
             );
-            renderInfo.parentBoundsWithMargin = new NTxBounds2(
+            renderInfo.parentBoundsWithMargin = new NTxBounds2D(
                     parentBounds.getX() + renderInfo.margin.getLeft(),
                     parentBounds.getY() + renderInfo.margin.getTop(),
                     Math.max(pw - renderInfo.margin.getLeft() - renderInfo.margin.getRight(), 0),
