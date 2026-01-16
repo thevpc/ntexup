@@ -1,12 +1,12 @@
 package net.thevpc.ntexup.extension.shapes2d.shape;
 
-import net.thevpc.ntexup.api.document.elem2d.NTxBounds2;
-import net.thevpc.ntexup.api.document.elem2d.NTxElement2DFactory;
+import net.thevpc.ntexup.api.document.elem2d.NTxBounds2D;
 import net.thevpc.ntexup.api.document.elem2d.NTxPoint2D;
 import net.thevpc.ntexup.api.document.node.NTxNode;
 import net.thevpc.ntexup.api.document.style.NTxProperties;
 import net.thevpc.ntexup.api.renderer.NTxGraphics;
 import net.thevpc.ntexup.api.renderer.NTxNodeRendererContext;
+import net.thevpc.ntexup.lib.geometry2d.NTxElement2DFactory;
 
 import java.awt.*;
 import java.util.Arrays;
@@ -35,7 +35,7 @@ public final class NTxPolygonHelper {
         renderPoints(points, ctx);
     }
     public static void renderPoints(NTxPoint2D[] points, NTxNodeRendererContext rendererContext) {
-        NTxBounds2 b = rendererContext.selfBounds();
+        NTxBounds2D b = rendererContext.selfBounds();
         NTxGraphics g = rendererContext.graphics();
         NTxNode node = rendererContext.node();
         if (!rendererContext.isDry()) {
