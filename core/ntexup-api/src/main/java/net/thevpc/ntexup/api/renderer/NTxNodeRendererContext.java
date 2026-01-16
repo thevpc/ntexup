@@ -5,6 +5,7 @@ import net.thevpc.ntexup.api.document.elem2d.*;
 import net.thevpc.ntexup.api.engine.NTxCompiledDocument;
 import net.thevpc.ntexup.api.engine.NTxCompiledPage;
 import net.thevpc.ntexup.api.engine.NTxEngine;
+import net.thevpc.ntexup.api.engine.NTxNodeBuilderContext;
 import net.thevpc.ntexup.api.eval.NTxVar;
 import net.thevpc.ntexup.api.eval.NTxVarProvider;
 import net.thevpc.ntexup.api.log.NTxLogger;
@@ -31,13 +32,14 @@ public interface NTxNodeRendererContext {
         return engine().getRenderer(p.type()).get().sizeRequirements(this);
     }
 
+    NTxNodeBuilderContext buildContext();
     NTxNode node();
 
     boolean isSomeChange();
 
-    NTxBounds2 selfBounds();
+    NTxBounds2D selfBounds();
 
-    NTxBounds2 defaultSelfBounds();
+    NTxBounds2D defaultSelfBounds();
 
     NTxLogger log();
 
@@ -51,11 +53,11 @@ public interface NTxNodeRendererContext {
 
     boolean isDry();
 
-    NTxBounds2 getGlobalBounds();
+    NTxBounds2D getGlobalBounds();
 
     NTxGraphics graphics();
 
-    NTxBounds2 parentBounds();
+    NTxBounds2D parentBounds();
 
     void render();
 
@@ -78,7 +80,8 @@ public interface NTxNodeRendererContext {
 
     List<NTxProp> computeProperties(NTxNode t);
 
-    NTxNodeRendererContext withChild(NTxNode node, NTxBounds2 parentBounds);
+    NTxNodeRendererContext withBuilderContext(NTxNodeBuilderContext builderContext);
+    NTxNodeRendererContext withChild(NTxNode node, NTxBounds2D parentBounds);
 
     NTxNodeRendererContext withChild(NTxNode node);
 
@@ -86,7 +89,7 @@ public interface NTxNodeRendererContext {
 
     NTxNodeRendererContext withDefaultStyles(NTxProperties defaultStyles);
 
-    NTxNodeRendererContext withParentBounds(NTxBounds2 bounds2);
+    NTxNodeRendererContext withParentBounds(NTxBounds2D bounds2);
 
     NTxNodeRendererContext withGraphics(NTxGraphics graphics);
 
@@ -114,7 +117,7 @@ public interface NTxNodeRendererContext {
 
     NElement getStroke(NTxNode t);
 
-    NTxBounds2 selfBounds(NTxNode t, NTxDouble2 selfSize, NTxDouble2 minSize);
+    NTxBounds2D selfBounds(NTxNode t, NTxDouble2 selfSize, NTxDouble2 minSize);
 
     boolean isVisible(NTxNode t);
 
@@ -180,7 +183,7 @@ public interface NTxNodeRendererContext {
 
     NTxSizeD mapDim(double w, double h);
 
-    NTxBounds2 bounds(NTxNode t, NTxNodeRendererContext ctx);
+    NTxBounds2D bounds(NTxNode t, NTxNodeRendererContext ctx);
 
     boolean applyForeground(NTxNode t, boolean force);
 
@@ -190,9 +193,9 @@ public interface NTxNodeRendererContext {
 
     NOptional<Color> colorFromPaint(Paint p);
 
-    void paintBorderLine(NTxNode t, NTxBounds2 a);
+    void paintBorderLine(NTxNode t, NTxBounds2D a);
 
-    void paintBackground(NTxNode t, NTxBounds2 a);
+    void paintBackground(NTxNode t, NTxBounds2D a);
 
     NTxCompiledPage compiledPage();
 
@@ -202,7 +205,7 @@ public interface NTxNodeRendererContext {
 
     void drawContour();
 
-    void renderDetachedNode(NElement childNode, NTxBounds2 relativeBounds);
+    void renderDetachedNode(NElement childNode, NTxBounds2D relativeBounds);
 
-    void renderDetachedNode(NTxNode childNode, NTxBounds2 relativeBounds);
+    void renderDetachedNode(NTxNode childNode, NTxBounds2D relativeBounds);
 }
