@@ -22,13 +22,13 @@ public class NTxPieBuilder implements NTxNodeBuilder {
                 .parseParam().matchesNamedPair(NTxPropName.SLICE_COUNT).then()
                 .parseParam().matchesNamedPair(NTxPropName.SLICES).then()
                 .parseParam().matchesNamedPair(NTxPropName.COLORS).then()
-                .renderComponent(this::render)
+                .renderComponent((rendererContext) -> render(rendererContext))
                 ;
     }
 
 
-    private void render(NTxNodeRendererContext rendererContext, NTxNodeBuilderContext builderContext) {
-        NTxDonutBuilder.renderDonutOrPie(rendererContext, builderContext, defaultStyles, false);
+    private void render(NTxNodeRendererContext rendererContext) {
+        NTxDonutBuilder.renderDonutOrPie(rendererContext, defaultStyles, false);
     }
 
 
