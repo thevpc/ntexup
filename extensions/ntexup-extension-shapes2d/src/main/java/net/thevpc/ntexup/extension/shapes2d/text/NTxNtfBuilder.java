@@ -22,7 +22,7 @@ public class NTxNtfBuilder implements NTxNodeBuilder {
         ;
     }
 
-    private void renderTextBuildText(String text, NTxTextOptions options, NTxNode p, NTxNodeRendererContext rendererContext, NTxTextRendererBuilder builder, NTxNodeBuilderContext buildContext) {
+    private void renderTextBuildText(String text, NTxTextOptions options, NTxNode p, NTxNodeRendererContext rendererContext, NTxTextRendererBuilder builder) {
         rendererContext.highlightNutsText("ntf", text, NTexts.of().of(text), p, builder);
     }
 
