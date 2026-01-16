@@ -1,23 +1,24 @@
 package net.thevpc.ntexup.extension.shapes3d.impl.builders;
 
-import net.thevpc.ntexup.extension.shapes3d.api.NtxElement3DPrimitive;
-import net.thevpc.ntexup.extension.shapes3d.api.NtxElement3D;
-import net.thevpc.ntexup.extension.shapes3d.api.NTxPoint3D;
-import net.thevpc.ntexup.extension.shapes3d.api.NTxRenderState3D;
-import net.thevpc.ntexup.extension.shapes3d.api.composite.NtxElement3DUVSphere;
-import net.thevpc.ntexup.extension.shapes3d.api.composite.NTxMesh3D;
-import net.thevpc.ntexup.extension.shapes3d.api.primitives.NtxElement3DTriangle;
+import net.thevpc.ntexup.api.document.elem2d.NTxBounds2D;
+import net.thevpc.ntexup.api.document.node.NTxNode;
+import net.thevpc.ntexup.api.document.style.NTxPropName;
+import net.thevpc.ntexup.api.eval.NTxValue;
+import net.thevpc.ntexup.extension.shapes3d.impl.NtxElement3DNodeParser;
+import net.thevpc.ntexup.extension.shapes3d.impl.NtxShapes3dUtils;
+import net.thevpc.ntexup.extension.shapes3d.impl.RealToRelativeMapper;
+import net.thevpc.ntexup.lib.geometry3d.*;
 import net.thevpc.ntexup.api.engine.NTxNodeBuilderContext;
 import net.thevpc.ntexup.api.extension.NTxNodeBuilder;
-import net.thevpc.ntexup.extension.shapes3d.api.NTxElement3DRenderer;
 import net.thevpc.ntexup.api.renderer.NTxNodeRendererContext;
-import net.thevpc.ntexup.extension.shapes3d.impl.NTx3DUtils;
+import net.thevpc.ntexup.lib.geometry3d.impl.NTx3DUtils;
+import net.thevpc.ntexup.lib.geometry3d.impl.composite.NTxMesh3D;
+import net.thevpc.ntexup.lib.geometry3d.impl.composite.NtxElement3DUVSphere;
+import net.thevpc.ntexup.lib.geometry3d.impl.primitives.NtxElement3DTriangle;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 
-public class Element3DUVSpherePrimitiveBuilder implements NTxElement3DRenderer , NTxNodeBuilder {
+public class Element3DUVSpherePrimitiveBuilder implements NTxElement3DRenderer, NTxNodeBuilder, NtxElement3DNodeParser {
     @Override
     public Class<? extends NtxElement3D> forType() {
         return NtxElement3DUVSphere.class;
@@ -32,14 +33,25 @@ public class Element3DUVSpherePrimitiveBuilder implements NTxElement3DRenderer ,
                 .renderComponent(this::render);
     }
 
-    public void render(NTxNodeRendererContext rendererContext, NTxNodeBuilderContext builderContext) {
+    @Override
+    public List<String> getId3d() {
+        return Arrays.asList(
+                "sphere",
+                "uvsphere",
+                "uv-sphere",
+                "sphere",
+                "sphere3d"
+        );
+    }
+
+    public void render(NTxNodeRendererContext rendererContext) {
         //do nothing in 2D
     }
 
     @Override
     public NtxElement3DPrimitive[] toPrimitives(NtxElement3D e, NTxRenderState3D renderState) {
         NtxElement3DUVSphere ee = (NtxElement3DUVSphere) e;
-        NTxPoint3D origin = ee.getOrigin();
+        NTxPoint3D origin = ee.getPosition();
         double radiusX = ee.getRadiusX();
         double radiusY = ee.getRadiusY();
         double radiusZ = ee.getRadiusZ();
@@ -98,7 +110,7 @@ public class Element3DUVSpherePrimitiveBuilder implements NTxElement3DRenderer ,
             tt.setContour(showMesh);
             tt.setFilled(true);
 
-            NTx3DUtils.copyProps(e,tt,"face"+(i+1));
+            NTx3DUtils.copyProps(e, tt, "face" + (i + 1));
 
             elements.add(tt);
             NTxPoint3D p1 = tt.getP1();
@@ -117,5 +129,16 @@ public class Element3DUVSpherePrimitiveBuilder implements NTxElement3DRenderer ,
 //            }
         }
         return elements.toArray(new NtxElement3DPrimitive[0]);
+    }
+
+    @Override
+    public NtxElement3D createElement3D(NTxNode node, NTxNodeRendererContext rendererContext, NTxBounds2D b, RealToRelativeMapper mapper, NtxElement3DNodeParserFactory parserFactory) {
+        NTxPoint3D position = NtxShapes3dUtils.resolvePoint(node, NTxPropName.POSITION, "real-position", NTxPoint3D::ofZero, b, mapper);
+        NTxPoint3D radius = NtxShapes3dUtils.resolvePoint(node, "radius", "real-radius", NTxPoint3D::ofOne, b, mapper);
+        int meridians = NTxValue.ofProp(node, "meridians").asInt().orElse(60);
+        int parallels = NTxValue.ofProp(node, "parallels").asInt().orElse(60);
+        NtxElement3D r = NTxElement3DFactory.sphereUV(position, radius.x, radius.y, radius.y, meridians, parallels);
+        NtxShapes3dUtils.apply3dProps(node, r, rendererContext, b);
+        return r;
     }
 }
