@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import net.thevpc.ntexup.api.document.NTxDocumentFactory;
-import net.thevpc.ntexup.api.document.elem2d.NTxBounds2;
+import net.thevpc.ntexup.api.document.elem2d.NTxBounds2D;
 import net.thevpc.ntexup.api.document.node.*;
 import net.thevpc.ntexup.api.document.style.DefaultNTxNodeSelector;
 import net.thevpc.ntexup.api.document.style.NTxProp;
@@ -49,11 +49,13 @@ import net.thevpc.ntexup.engine.renderer.NTxGraphicsImpl;
 import net.thevpc.nuts.app.NApp;
 import net.thevpc.nuts.artifact.NDefinition;
 import net.thevpc.nuts.artifact.NDependency;
+import net.thevpc.nuts.artifact.NDependencyBuilder;
 import net.thevpc.nuts.concurrent.NScoredCallable;
 import net.thevpc.nuts.core.NMutableClassLoader;
 import net.thevpc.nuts.elem.*;
 import net.thevpc.nuts.ext.NExtensions;
 import net.thevpc.nuts.io.NPath;
+import net.thevpc.nuts.io.NServiceLoader;
 import net.thevpc.nuts.platform.NStoreType;
 import net.thevpc.nuts.util.NScorable;
 import net.thevpc.nuts.text.NMsg;
@@ -184,12 +186,12 @@ public class DefaultNTxEngine implements NTxEngine {
     }
 
     @Override
-    public void addNTxDependencyLoadedListener(NTxDependencyLoadedListener listener) {
+    public void addDependencyLoadedListener(NTxDependencyLoadedListener listener) {
         this.dependencyLoadedListeners.add(listener);
     }
 
     public <S> List<S> loadServices(Class<S> serviceClass) {
-        return NCollections.list(ServiceLoader.load(serviceClass, classLoader.asClassLoader()));
+        return NCollections.list(NServiceLoader.of(serviceClass, null,classLoader.asClassLoader()).loadAll(null));
     }
 
     public NMutableClassLoader getEngineClassLoader() {
@@ -197,11 +199,34 @@ public class DefaultNTxEngine implements NTxEngine {
     }
 
     public boolean importDependencies(String... deps) {
-        NDependency[] okDeps = Arrays.stream(deps).map(x -> NDependency.of(x))
+        NDependency[] okDeps = Arrays.stream(deps)
+                .filter(x -> !NBlankable.isBlank(x))
+                .map(x -> NDependency.get(x).orNull())
+                .map(x -> {
+                    if (x == null) {
+                        return null;
+                    }
+                    NDependencyBuilder b = x.builder();
+                    if (NBlankable.isBlank(b.getArtifactId())) {
+                        return null;
+                    }
+                    if (NBlankable.isBlank(x.getGroupId())) {
+                        b.setGroupId("net.thevpc.ntexup");
+                        String r = b.getArtifactId();
+                        if (!r.startsWith("ntexup-extension-")) {
+                            b.setArtifactId("ntexup-extension-" + r);
+                        }
+                    }
+                    if (NBlankable.isBlank(x.getVersion())) {
+                        b.setVersion(NTxEngine.CURRENT_VERSION);
+                    }
+                    return b.build();
+                })
                 .filter(dep -> dep != null && !dependenciesLoadingPerformed.contains(dep.toString()))
                 .toArray(NDependency[]::new);
+
         if (okDeps.length > 0) {
-            dependenciesLoadingPerformed.addAll(Arrays.stream(deps).map(x->x.toString()).collect(Collectors.toList()));
+            dependenciesLoadingPerformed.addAll(Arrays.stream(deps).map(x -> x.toString()).collect(Collectors.toList()));
             log().log(NMsg.ofC("importing dependencies %s",
                     NTextBuilder.of()
                             .appendJoined(",", Arrays.asList(okDeps))
@@ -1018,9 +1043,9 @@ public class DefaultNTxEngine implements NTxEngine {
         DefaultNTxNodeRendererContext context = new DefaultNTxNodeRendererContext(
                 page,
                 node, this, hg, null,
-                new NTxBounds2(0, 0, dimension.getWidth(), dimension.getHeight()),
-                new NTxBounds2(0, 0, dimension.getWidth(), dimension.getHeight()),
-                page, true, System.currentTimeMillis(), capabilities, null, null, null, false);
+                new NTxBounds2D(0, 0, dimension.getWidth(), dimension.getHeight()),
+                new NTxBounds2D(0, 0, dimension.getWidth(), dimension.getHeight()),
+                page, true, System.currentTimeMillis(), capabilities, null, null, null, false, null);
         renderer.render(context);
         g.dispose();
         return newImage;
