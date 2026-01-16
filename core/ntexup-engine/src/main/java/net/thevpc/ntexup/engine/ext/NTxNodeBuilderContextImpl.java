@@ -111,6 +111,16 @@ public class NTxNodeBuilderContextImpl implements NTxNodeBuilderContext {
     }
 
     @Override
+    public NTxNodeBuilderContext ids(String... ids) {
+        requireNonCompiled();
+        if(ids.length>0){
+            this.id = ids[0];
+            this.aliases = Arrays.copyOfRange(ids, 1, ids.length - 1);
+        }
+        return this;
+    }
+
+    @Override
     public String[] aliases() {
         LinkedHashSet<String> s = new LinkedHashSet<>();
         if (aliases != null) {
