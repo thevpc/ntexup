@@ -1,6 +1,6 @@
 package net.thevpc.ntexup.api.document;
 
-import net.thevpc.ntexup.api.document.elem2d.NTxBounds2;
+import net.thevpc.ntexup.api.document.elem2d.NTxBounds2D;
 
 public class NTxSizeRequirements {
     public double minX;
@@ -23,14 +23,14 @@ public class NTxSizeRequirements {
         this.preferredY = preferredY;
     }
 
-    public NTxBounds2 toBounds2() {
-        return new NTxBounds2(
+    public NTxBounds2D toBounds2() {
+        return new NTxBounds2D(
                 minX, minY,
                 maxX, maxY
         );
     }
 
-    public NTxSizeRequirements(NTxBounds2 b) {
+    public NTxSizeRequirements(NTxBounds2D b) {
         this.minX = b.getMinX();
         this.maxX = b.getMaxX();
         this.minY = b.getMinY();
