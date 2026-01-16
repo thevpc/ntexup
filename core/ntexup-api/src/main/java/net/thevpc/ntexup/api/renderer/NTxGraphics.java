@@ -40,9 +40,9 @@ public interface NTxGraphics {
     void drawRect(double x, double y, double w, double h);
 
 
-    void fillRect(NTxBounds2 b);
+    void fillRect(NTxBounds2D b);
 
-    void drawRect(NTxBounds2 a);
+    void drawRect(NTxBounds2D a);
 
     Rectangle2D getStringBounds(String str);
 
