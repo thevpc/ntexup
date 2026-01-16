@@ -2,7 +2,7 @@ package net.thevpc.ntexup.extension.plot2d.deprecated;
 
 import net.thevpc.ntexup.api.document.NTxArrow;
 import net.thevpc.ntexup.api.document.NTxArrowType;
-import net.thevpc.ntexup.api.document.elem2d.NTxBounds2;
+import net.thevpc.ntexup.api.document.elem2d.NTxBounds2D;
 import net.thevpc.ntexup.api.document.elem2d.NTxPoint2D;
 import net.thevpc.ntexup.api.document.elem2d.NTxVector2D;
 import net.thevpc.ntexup.api.document.node.NTxNode;
@@ -16,7 +16,7 @@ import java.awt.*;
 
 public class NTxDeprecatedDrawHelper {
     public static void drawCurves(NTxNode p,NTxNodeRendererContext rendererContext, NTxDrawContext drawContext) {
-        NTxBounds2 selfBounds = rendererContext.selfBounds(p, null, null);
+        NTxBounds2D selfBounds = rendererContext.selfBounds(p, null, null);
         NTxGraphics g = rendererContext.graphics();
         drawAxises(drawContext, g, p, rendererContext);
         for (NTxPlot2DData pd : drawContext.allData) {
