@@ -1,6 +1,6 @@
 package net.thevpc.ntexup.extension.plot2d;
 
-import net.thevpc.ntexup.api.document.elem2d.NTxBounds2;
+import net.thevpc.ntexup.api.document.elem2d.NTxBounds2D;
 import net.thevpc.ntexup.api.document.node.NTxNode;
 import net.thevpc.ntexup.api.renderer.NTxNodeRendererContext;
 import net.thevpc.ntexup.extension.plot2d.model.NTxDrawContext;
@@ -19,7 +19,7 @@ import java.awt.geom.Rectangle2D;
 
 public class NTxJFreeChartHelper {
     static void drawCurves(NTxNode p,NTxNodeRendererContext rendererContext, NTxDrawContext drawContext){
-        NTxBounds2 bounds = rendererContext.parentBounds();
+        NTxBounds2D bounds = rendererContext.parentBounds();
         XYSeriesCollection dataset = new XYSeriesCollection();
         for (int j = 0; j < drawContext.allData.size(); j++) {
             NTxPlot2DData pd = drawContext.allData.get(j);
