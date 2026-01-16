@@ -106,13 +106,13 @@ public class NTxPolygonBuilder implements NTxNodeBuilder {
                         return false;
                     }
                 })
-                .renderComponent((rendererContext, buildContext) -> render(rendererContext, buildContext));
+                .renderComponent((rendererContext) -> render(rendererContext));
     }
 
-    private void render(NTxNodeRendererContext rendererContext, NTxNodeBuilderContext buildContext) {
+    private void render(NTxNodeRendererContext rendererContext) {
         NTxNode node = rendererContext.node();
         Integer count = NTxValue.ofProp(node, NTxPropName.COUNT).asInt().orNull();
-        if (buildContext.isAncestorScene3D(node)) {
+        if (rendererContext.buildContext().isAncestorScene3D(node)) {
             //really, where is 3D!!
             NTxPoint2D[] points = NTxValue.ofProp(node, NTxPropName.POINTS).asPoint2DArray().orNull();
             if(points!=null && points.length>=3) {
