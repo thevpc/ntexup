@@ -28,14 +28,14 @@ public class NTxPoint {
         this.root = root;
     }
 
-    public NTxDouble2 valueDouble2(NTxBounds2 parentBounds, NTxBounds2 screenBounds) {
+    public NTxDouble2 valueDouble2(NTxBounds2D parentBounds, NTxBounds2D screenBounds) {
         return new NTxDouble2(
                 (root ? NTxXLen.ofRoot(x) : NTxXLen.ofParent(x)).value(parentBounds, screenBounds),
                 (root ? NTxYLen.ofRoot(y) : NTxYLen.ofParent(y)).value(parentBounds, screenBounds)
         );
     }
 
-    public NTxPoint2D valueHPoint2D(NTxBounds2 parentBounds, NTxBounds2 screenBounds) {
+    public NTxPoint2D valueHPoint2D(NTxBounds2D parentBounds, NTxBounds2D screenBounds) {
         return new NTxPoint2D(
                 (root ? NTxXLen.ofRoot(x) : NTxXLen.ofParent(x)).value(parentBounds, screenBounds),
                 (root ? NTxYLen.ofRoot(y) : NTxYLen.ofParent(y)).value(parentBounds, screenBounds)
