@@ -1,6 +1,6 @@
 package net.thevpc.ntexup.extension.shapes2d.line;
 
-import net.thevpc.ntexup.api.document.elem2d.NTxBounds2;
+import net.thevpc.ntexup.api.document.elem2d.NTxBounds2D;
 import net.thevpc.ntexup.api.document.node.NTxNode;
 import net.thevpc.ntexup.api.document.node.NTxNodeType;
 import net.thevpc.ntexup.api.document.style.NTxPropName;
@@ -21,14 +21,14 @@ public class NTxArcBuilder implements NTxNodeBuilder {
     public void build(NTxNodeBuilderContext builderContext) {
         builderContext.id(NTxNodeType.ARC)
                 .parseParam().matchesNamedPair(NTxPropName.FROM, NTxPropName.TO).then()
-                .renderComponent((ctx, builderContext1) -> renderMain(ctx, builderContext1));
+                .renderComponent(this::renderMain);
     }
 
 
-    public void renderMain(NTxNodeRendererContext rendererContext, NTxNodeBuilderContext builderContext) {
+    public void renderMain(NTxNodeRendererContext rendererContext) {
         NTxNode node = rendererContext.node();
         rendererContext = rendererContext.withDefaultStyles(defaultStyles);
-        NTxBounds2 b = rendererContext.selfBounds(node, null, null);
+        NTxBounds2D b = rendererContext.selfBounds(node, null, null);
         double x = b.getX();
         double y = b.getY();
         double startAngle = NTxValueByType.getDouble(node,rendererContext, NTxPropName.FROM).orElse(0.0);
