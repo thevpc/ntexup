@@ -4,7 +4,7 @@
  */
 package net.thevpc.ntexup.extension.shapes2d.filler;
 
-import net.thevpc.ntexup.api.document.elem2d.NTxBounds2;
+import net.thevpc.ntexup.api.document.elem2d.NTxBounds2D;
 import net.thevpc.ntexup.api.document.node.NTxNode;
 import net.thevpc.ntexup.api.document.node.NTxNodeType;
 import net.thevpc.ntexup.api.engine.NTxNodeBuilderContext;
@@ -19,13 +19,13 @@ public class NTxFillerBuilder implements NTxNodeBuilder {
     @Override
     public void build(NTxNodeBuilderContext builderContext) {
         builderContext.id(NTxNodeType.FILLER)
-                .renderComponent((ctx, builderContext1) -> renderMain(ctx, builderContext1));
+                .renderComponent(this::renderMain);
     }
 
-    public void renderMain(NTxNodeRendererContext rendererContext, NTxNodeBuilderContext builderContext) {
+    public void renderMain(NTxNodeRendererContext rendererContext) {
         NTxNode node = rendererContext.node();
-        NTxBounds2 bounds = rendererContext.parentBounds();
-        NTxBounds2 b = new NTxBounds2(
+        NTxBounds2D bounds = rendererContext.parentBounds();
+        NTxBounds2D b = new NTxBounds2D(
                 bounds.getMinX(),
                 bounds.getMinY(),
                 bounds.getWidth(),
