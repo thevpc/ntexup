@@ -1,6 +1,6 @@
 package net.thevpc.ntexup.extension.tutorials.myshape;
 
-import net.thevpc.ntexup.api.document.elem2d.NTxBounds2;
+import net.thevpc.ntexup.api.document.elem2d.NTxBounds2D;
 import net.thevpc.ntexup.api.document.elem2d.NTxPoint2D;
 import net.thevpc.ntexup.api.engine.NTxNodeBuilderContext;
 import net.thevpc.ntexup.api.eval.NTxValue;
@@ -23,13 +23,13 @@ public class NTxMyShapeBuilder implements NTxNodeBuilder {
         builderContext
                 .id("my-shape")
                 .parseParam().matchesNamedPair(NTxPropName.WIDTH, NTxPropName.HEIGHT,"base","hat").end()
-                .renderComponent((rendererContext, buildContext) -> render(rendererContext, buildContext))
+                .renderComponent(this::render)
         ;
     }
 
-    public void render(NTxNodeRendererContext rendererContext, NTxNodeBuilderContext buildContext) {
+    public void render(NTxNodeRendererContext rendererContext) {
         NTxNode node=rendererContext.node();
-        NTxBounds2 b = rendererContext.selfBounds(node, null, null);
+        NTxBounds2D b = rendererContext.selfBounds(node, null, null);
         double x = b.getX();
         double y = b.getY();
         double width = b.getWidth();
