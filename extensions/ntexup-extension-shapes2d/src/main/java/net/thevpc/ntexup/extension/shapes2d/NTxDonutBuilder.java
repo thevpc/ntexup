@@ -1,6 +1,6 @@
 package net.thevpc.ntexup.extension.shapes2d;
 
-import net.thevpc.ntexup.api.document.elem2d.NTxBounds2;
+import net.thevpc.ntexup.api.document.elem2d.NTxBounds2D;
 import net.thevpc.ntexup.api.document.node.NTxNode;
 import net.thevpc.ntexup.api.document.node.NTxNodeType;
 import net.thevpc.ntexup.api.document.style.NTxPropName;
@@ -37,18 +37,18 @@ public class NTxDonutBuilder implements NTxNodeBuilder {
     }
 
 
-    private void render(NTxNodeRendererContext rendererContext, NTxNodeBuilderContext builderContext) {
-        renderDonutOrPie(rendererContext, builderContext, defaultStyles, true);
+    private void render(NTxNodeRendererContext rendererContext) {
+        renderDonutOrPie(rendererContext, defaultStyles, true);
     }
 
     public static void renderDonutOrPie(NTxNodeRendererContext rendererContext,
-                                        NTxNodeBuilderContext builderContext, NTxProperties defaultStyles,
+                                        NTxProperties defaultStyles,
                                         boolean isDonut
                                   ) {
         NTxNode node=rendererContext.node();
         rendererContext = rendererContext.withDefaultStyles(defaultStyles);
 
-        NTxBounds2 b = rendererContext.selfBounds(node, null, null);
+        NTxBounds2D b = rendererContext.selfBounds(node, null, null);
         double x = b.getX();
         double y = b.getY();
         double width = b.getWidth();
