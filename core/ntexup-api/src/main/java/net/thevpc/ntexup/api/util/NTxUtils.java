@@ -1,6 +1,6 @@
 package net.thevpc.ntexup.api.util;
 
-import net.thevpc.ntexup.api.document.elem2d.NTxBounds2;
+import net.thevpc.ntexup.api.document.elem2d.NTxBounds2D;
 import net.thevpc.ntexup.api.document.elem2d.NTxPoint2D;
 import net.thevpc.ntexup.api.document.node.NTxItem;
 import net.thevpc.ntexup.api.document.node.NTxItemList;
@@ -288,8 +288,8 @@ public class NTxUtils {
                     toElement(((Point2D.Double) o).getY())
             );
         }
-        if (o instanceof NTxBounds2) {
-            NTxBounds2 oo = (NTxBounds2) o;
+        if (o instanceof NTxBounds2D) {
+            NTxBounds2D oo = (NTxBounds2D) o;
             return NElement.ofUplet(
                     NElement.ofDouble(oo.getX()),
                     NElement.ofDouble(oo.getY()),
@@ -339,10 +339,10 @@ public class NTxUtils {
                 return v.asIntValue().get();
             case DOUBLE_QUOTED_STRING:
             case SINGLE_QUOTED_STRING:
-            case ANTI_QUOTED_STRING:
+            case BACKTICK_STRING:
             case TRIPLE_DOUBLE_QUOTED_STRING:
             case TRIPLE_SINGLE_QUOTED_STRING:
-            case TRIPLE_ANTI_QUOTED_STRING:
+            case TRIPLE_BACKTICK_STRING:
             case LINE_STRING:
                 return v.asStringValue().get();
         }
