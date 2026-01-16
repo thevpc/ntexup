@@ -37,7 +37,7 @@ public class NTxXLen {
         this.root = root;
     }
 
-    public double value(NTxBounds2 parentBounds, NTxBounds2 screenBounds) {
+    public double value(NTxBounds2D parentBounds, NTxBounds2D screenBounds) {
         if (this.root) {
             if (value >= 100) {
                 return screenBounds.getWidth();
