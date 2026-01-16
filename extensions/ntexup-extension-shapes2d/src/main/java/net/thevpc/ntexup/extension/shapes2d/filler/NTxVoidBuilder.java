@@ -21,8 +21,8 @@ public class NTxVoidBuilder implements NTxNodeBuilder {
                 .renderComponent(this::rendererContext)
         ;
     }
-    public void rendererContext(NTxNodeRendererContext rendererContext, NTxNodeBuilderContext builderContext) {
-
+    public void rendererContext(NTxNodeRendererContext rendererContext) {
+        // do nothing!!
     }
 
 //    NTxNodeType.VOID,
