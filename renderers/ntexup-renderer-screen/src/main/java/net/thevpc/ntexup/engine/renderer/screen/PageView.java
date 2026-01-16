@@ -1,6 +1,6 @@
 package net.thevpc.ntexup.engine.renderer.screen;
 
-import net.thevpc.ntexup.api.document.elem2d.NTxBounds2;
+import net.thevpc.ntexup.api.document.elem2d.NTxBounds2D;
 import net.thevpc.ntexup.api.engine.NTxCompiledDocument;
 import net.thevpc.ntexup.api.engine.NTxCompiledPage;
 import net.thevpc.ntexup.api.engine.NTxEngine;
@@ -144,11 +144,11 @@ public class PageView extends JComponent {
         NTxNodeRenderer r = engine.getRenderer(p.type()).get();
 
 
-        NTxBounds2 bounds = new NTxBounds2(0, 0, width, height);
+        NTxBounds2D bounds = new NTxBounds2D(0, 0, width, height);
         NTxNodeRendererContext ctx = new DefaultNTxNodeRendererContext(page,
                 p, engine,
                 engine.createGraphics(g2d)
-                , bounds, bounds, bounds, page, someChange, pageStartTime, NMaps.of(NTxNodeRendererContext.CAPABILITY_ANIMATE, true), this, this::repaint, null, false);
+                , bounds, bounds, bounds, page, someChange, pageStartTime, NMaps.of(NTxNodeRendererContext.CAPABILITY_ANIMATE, true), this, this::repaint, null, false,null);
         if (someChange) {
             p.invalidateRenderCache();
         }
