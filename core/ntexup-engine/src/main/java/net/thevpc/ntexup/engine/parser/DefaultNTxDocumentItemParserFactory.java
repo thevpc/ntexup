@@ -94,11 +94,11 @@ public class DefaultNTxDocumentItemParserFactory
 
         switch (c.type().typeGroup()) {
             case OPERATOR: {
-                switch (c.type()) {
-                    case OP_EQ: {
-                        NOperatorElement p = c.asOperator().get();
-                        NElement k = p.first().get();
-                        NElement v = p.second().get();
+                switch (((NOperatorElement)c).symbol()) {
+                    case EQ: {
+                        NBinaryOperatorElement p = c.asBinaryOperator().get();
+                        NElement k = p.first();
+                        NElement v = p.second();
                         NTxValue kh = NTxValue.of(k);
                         if (k.isName()) {
                             NOptional<String> nn = kh.asStringOrName();
@@ -112,10 +112,10 @@ public class DefaultNTxDocumentItemParserFactory
                             return _invalidSupport(NMsg.ofC("unable to interpret left hand of assignment as a valid var : %s", k), context);
                         }
                     }
-                    case OP_COLON_EQ: {
-                        NOperatorElement p = c.asOperator().get();
-                        NElement k = p.first().get();
-                        NElement v = p.second().get();
+                    case COLON_EQ: {
+                        NBinaryOperatorElement p = c.asBinaryOperator().get();
+                        NElement k = p.first();
+                        NElement v = p.second();
                         NTxValue kh = NTxValue.of(k);
                         if (k.isName()) {
                             NOptional<String> nn = kh.asStringOrName();
@@ -130,7 +130,7 @@ public class DefaultNTxDocumentItemParserFactory
                         }
                     }
                 }
-                NOptional<NTxNodeParser> ff = engine.nodeTypeParser(c.type().opSymbol());
+                NOptional<NTxNodeParser> ff = engine.nodeTypeParser(((NOperatorElement)c).symbol().lexeme());
                 if (ff.isPresent()) {
                     NScoredCallable<NTxItem> uu = ff.get().parseNode(context);
                     if (NScorable.isValidScore(uu, NScorableContext.of())) {
