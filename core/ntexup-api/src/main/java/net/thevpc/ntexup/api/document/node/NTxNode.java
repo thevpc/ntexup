@@ -20,9 +20,7 @@ public interface NTxNode extends NTxItem {
 
     NTxNode setUuid(String uuid);
 
-
     String[] getStyleClasses();
-
 
     NTxItem setStyleClasses(String[] classNames);
 
@@ -161,6 +159,7 @@ public interface NTxNode extends NTxItem {
     NTxNode copy();
 
     String getName();
+
     String getComponentName();
 
     NTxNode setRules(NTxStyleRule[] rules);
@@ -210,5 +209,6 @@ public interface NTxNode extends NTxItem {
     <T> NOptional<T> getAndSetRenderCache(String property, boolean force, Supplier<T> defaultValue);
 
     <T> NOptional<T> getAndSetRenderCache(Class<T> property, boolean force, Supplier<T> defaultValue);
+
     void invalidateRenderCache();
 }
