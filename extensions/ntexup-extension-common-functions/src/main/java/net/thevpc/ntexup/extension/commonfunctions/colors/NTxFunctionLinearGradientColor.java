@@ -1,6 +1,6 @@
 package net.thevpc.ntexup.extension.commonfunctions.colors;
 
-import net.thevpc.ntexup.api.document.elem2d.NTxBounds2;
+import net.thevpc.ntexup.api.document.elem2d.NTxBounds2D;
 import net.thevpc.ntexup.api.document.elem2d.NTxDouble2;
 import net.thevpc.ntexup.api.eval.*;
 import net.thevpc.ntexup.api.extension.NTxFunction;
@@ -25,7 +25,7 @@ public class NTxFunctionLinearGradientColor implements NTxFunction {
         boolean cyclic = false;
         NTxDouble2 start = null;
         NTxDouble2 end = null;
-        NTxBounds2 selfBounds = NTxValue.of(context.findVar("selfBounds").map(x->x.get()).orNull()).asBounds2().orNull();
+        NTxBounds2D selfBounds = NTxValue.of(context.findVar("selfBounds").map(x->x.get()).orNull()).asBounds2().orNull();
         java.util.List<Color> colors = new ArrayList<>();
         for (NTxFunctionArg arg : args.args()) {
             NElement v = arg.eval();
