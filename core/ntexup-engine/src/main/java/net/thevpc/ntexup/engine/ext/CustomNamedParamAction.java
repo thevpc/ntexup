@@ -340,16 +340,6 @@ class CustomNamedParamAction implements NTxNodeBuilderContext.NamedParamAction, 
                 }
                 break;
             }
-            case NAMED_MATRIX:
-            case NAMED_PARAMETRIZED_MATRIX: {
-                String uid = NTxUtils.uid(n.asMatrix().get().name().orNull());
-                if (dmatches(null, info)) {
-                    info.read();
-                    setProp(uid, n, info, buildContext);
-                    return true;
-                }
-                break;
-            }
             default: {
                 if (dmatches(null, info)) {
                     info.read();
