@@ -1,6 +1,6 @@
 package net.thevpc.ntexup.extension.shapes2d.container.util;
 
-import net.thevpc.ntexup.api.document.elem2d.NTxBounds2;
+import net.thevpc.ntexup.api.document.elem2d.NTxBounds2D;
 import net.thevpc.ntexup.api.document.elem2d.NTxDouble2;
 import net.thevpc.ntexup.api.document.elem2d.NTxInt2;
 import net.thevpc.ntexup.api.document.node.NTxNode;
@@ -23,7 +23,7 @@ public class NTxGridRendererHelper {
         this.children = children;
     }
 
-    public NTxBounds2 computeBound(NTxNode p, NTxNodeRendererContext ctx, NTxBounds2 expectedBounds) {
+    public NTxBounds2D computeBound(NTxNode p, NTxNodeRendererContext ctx, NTxBounds2D expectedBounds) {
         NTxGridRendererHelper.ComputePositionsResult r = computePositions(p, expectedBounds, ctx);
         for (ItemWithPosition<HPagePartExtInfo> eee : r.effPositions.items()) {
             HPagePartExtInfo ee = eee.getUserObject();
@@ -46,7 +46,7 @@ public class NTxGridRendererHelper {
         double childrenHeight;
     }
 
-    public void render(NTxNodeRendererContext ctx, NTxBounds2 expectedBounds) {
+    public void render(NTxNodeRendererContext ctx, NTxBounds2D expectedBounds) {
         if (ctx.isDry()) {
             return;
         }
@@ -76,7 +76,7 @@ public class NTxGridRendererHelper {
     }
 
 
-    private ComputePositionsResult computePositions(NTxNode node, NTxBounds2 expectedBounds, NTxNodeRendererContext ctx) {
+    private ComputePositionsResult computePositions(NTxNode node, NTxBounds2D expectedBounds, NTxNodeRendererContext ctx) {
         int cols = ctx.getColumns(node);
         int rows = ctx.getRows(node);
         if (cols < 0) {
@@ -211,7 +211,7 @@ public class NTxGridRendererHelper {
 
             double jx = columWeightsStack[ix] / 100.0 * childrenWidth + xOffset;
             double jy = rowWeightsStack[iy] / 100.0 * childrenHeight + yOffset;
-            ee.bounds = new NTxBounds2(jx, jy, ee.width / 100.0 * childrenWidth, ee.height / 100.0 * childrenHeight);
+            ee.bounds = new NTxBounds2D(jx, jy, ee.width / 100.0 * childrenWidth, ee.height / 100.0 * childrenHeight);
             ee.sizeRequirements = ctx.engine().getRenderer(ee.node.type()).get().sizeRequirements(ctx.withChild(ee.node, ee.bounds));
         }
 
@@ -291,7 +291,7 @@ public class NTxGridRendererHelper {
             double hh = r.childrenHeight * (ee.height / 100);
             double jx = columWeightsStack[ix] / 100.0 * r.childrenWidth + r.xOffset;
             double jy = rowWeightsStack[iy] / 100.0 * r.childrenHeight + r.yOffset;
-            ee.bounds = new NTxBounds2(jx, jy, ww, hh);
+            ee.bounds = new NTxBounds2D(jx, jy, ww, hh);
         }
 
         return r;
@@ -311,7 +311,7 @@ public class NTxGridRendererHelper {
         int index;
         NTxNodeRendererContext ctx;
 
-        NTxBounds2 bounds;
+        NTxBounds2D bounds;
     }
 
     public static class WeightInfo {
