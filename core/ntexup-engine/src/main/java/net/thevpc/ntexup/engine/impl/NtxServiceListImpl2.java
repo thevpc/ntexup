@@ -26,7 +26,7 @@ public abstract class NtxServiceListImpl2<T> implements NTxDependencyLoadedListe
         this.engine = engine;
         this.serviceType = serviceType;
         this.name = name;
-        engine.addNTxDependencyLoadedListener(this);
+        engine.addDependencyLoadedListener(this);
     }
 
     public boolean isLogLoadFinished() {
