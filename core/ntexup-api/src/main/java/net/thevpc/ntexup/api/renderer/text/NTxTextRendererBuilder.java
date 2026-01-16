@@ -1,6 +1,6 @@
 package net.thevpc.ntexup.api.renderer.text;
 
-import net.thevpc.ntexup.api.document.elem2d.NTxBounds2;
+import net.thevpc.ntexup.api.document.elem2d.NTxBounds2D;
 import net.thevpc.ntexup.api.document.elem2d.NTxDouble2;
 import net.thevpc.ntexup.api.document.node.NTxNode;
 import net.thevpc.ntexup.api.renderer.NTxGraphics;
@@ -20,7 +20,7 @@ public interface NTxTextRendererBuilder {
 
     NTxRichTextRow currRow();
 
-    NTxBounds2 computeBound(NTxNodeRendererContext ctx);
+    NTxBounds2D computeBound(NTxNodeRendererContext ctx);
 
     public void setLang(String lang);
 
@@ -32,7 +32,7 @@ public interface NTxTextRendererBuilder {
         NTxDouble2 size();
     }
 
-    public void render(NTxNode p, NTxNodeRendererContext ctx, NTxBounds2 bgBounds, NTxBounds2 selfBounds);
+    public void render(NTxNode p, NTxNodeRendererContext ctx, NTxBounds2D bgBounds, NTxBounds2D selfBounds);
 
     boolean isEmpty();
 
