@@ -1,6 +1,6 @@
 package net.thevpc.ntexup.engine.util;
 
-import net.thevpc.ntexup.api.document.elem2d.NTxBounds2;
+import net.thevpc.ntexup.api.document.elem2d.NTxBounds2D;
 import net.thevpc.ntexup.api.document.elem2d.NTxDouble2;
 import net.thevpc.ntexup.api.document.elem2d.NTxSizeD;
 import net.thevpc.ntexup.api.document.node.NTxNode;
@@ -9,7 +9,6 @@ import net.thevpc.ntexup.api.eval.NTxValueByName;
 import net.thevpc.ntexup.api.renderer.NTxGraphics;
 import net.thevpc.ntexup.api.renderer.NTxNodeRendererContext;
 import net.thevpc.ntexup.api.eval.NTxValue;
-import net.thevpc.ntexup.api.util.NTxUtils;
 import net.thevpc.nuts.elem.NElement;
 import net.thevpc.nuts.util.NOptional;
 
@@ -60,11 +59,11 @@ public class NTxNodeRendererUtils {
     }
 
     public static NTxSizeD mapDim(double w, double h, NTxNodeRendererContext ctx) {
-        NTxBounds2 size = ctx.parentBounds();
+        NTxBounds2D size = ctx.parentBounds();
         return new NTxSizeD(w / 100 * size.getWidth(), h / 100 * size.getHeight());
     }
 
-    public static NTxBounds2 bounds(NTxNode t, NTxNodeRendererContext ctx) {
+    public static NTxBounds2D bounds(NTxNode t, NTxNodeRendererContext ctx) {
         NTxValue oSize = NTxValue.of(ctx.computePropertyValue(t, NTxPropName.SIZE));
         NOptional<NElement[]> a = oSize.asElementArray();
         NTxDouble2 size=null;
@@ -90,7 +89,7 @@ public class NTxNodeRendererUtils {
         if (size == null) {
             size = new NTxDouble2(ctx.parentBounds().getWidth(), ctx.parentBounds().getHeight());
         }
-        return new NTxBounds2(
+        return new NTxBounds2D(
                 ctx.parentBounds().getX(),
                 ctx.parentBounds().getY(),
                 size.getX(),
@@ -138,14 +137,14 @@ public class NTxNodeRendererUtils {
         return false;
     }
 
-    public static void drawDebugBox(NTxNode node, NTxNodeRendererContext ctx, NTxGraphics g, NTxBounds2 a, boolean force) {
+    public static void drawDebugBox(NTxNode node, NTxNodeRendererContext ctx, NTxGraphics g, NTxBounds2D a, boolean force) {
         if (ctx.isDry()) {
             return;
         }
         if (force || NTxValueByName.isDebug(node, ctx)) {
             g.setColor(NTxValueByName.getDebugColor(node, ctx));
             g.drawRect(a);
-            NTxBounds2 b = NTxValueByName.getNodeSizeNoCache(node, ctx).parentBoundsWithMargin;
+            NTxBounds2D b = NTxValueByName.getNodeSizeNoCache(node, ctx).parentBoundsWithMargin;
             g.drawRect(b);
             NTxDouble2 origin = NTxValueByName.getOrigin(node, ctx,new NTxDouble2(a.getWidth(),a.getHeight()));
             double x = origin.getX() + a.getX();
@@ -159,7 +158,7 @@ public class NTxNodeRendererUtils {
         }
     }
 
-    public static void drawDebugBox(NTxNode t, NTxNodeRendererContext ctx, NTxGraphics g, NTxBounds2 a) {
+    public static void drawDebugBox(NTxNode t, NTxNodeRendererContext ctx, NTxGraphics g, NTxBounds2D a) {
         drawDebugBox(t, ctx, g, a, false);
     }
 
@@ -170,7 +169,7 @@ public class NTxNodeRendererUtils {
         return NOptional.ofNamedEmpty("color");
     }
 
-    public static void drawBorderLine(NTxNode t, NTxNodeRendererContext ctx, NTxGraphics g, NTxBounds2 a) {
+    public static void drawBorderLine(NTxNode t, NTxNodeRendererContext ctx, NTxGraphics g, NTxBounds2D a) {
         if (ctx.isDry()) {
             return;
         }
@@ -186,7 +185,7 @@ public class NTxNodeRendererUtils {
 
     }
 
-    public static void paintBackground(NTxNode t, NTxNodeRendererContext ctx, NTxGraphics g, NTxBounds2 a) {
+    public static void paintBackground(NTxNode t, NTxNodeRendererContext ctx, NTxGraphics g, NTxBounds2D a) {
         if (ctx.isDry()) {
             return;
         }
