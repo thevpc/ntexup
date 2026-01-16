@@ -3,9 +3,6 @@ package net.thevpc.ntexup.api.eval;
 import net.thevpc.ntexup.api.document.elem2d.*;
 import net.thevpc.ntexup.api.util.NTxSizeRef;
 import net.thevpc.ntexup.api.util.NtxFontInfo;
-import net.thevpc.nuts.elem.NElement;
-
-import java.awt.*;
 
 public class NTxValueSizeCache {
     public NTxElemNumber2 position;
@@ -15,5 +12,5 @@ public class NTxValueSizeCache {
     public NTxDouble2 componentSize;
     public NTxMargin margin;
     public NTxSizeRef parentWithMarginRef;
-    public NTxBounds2 parentBoundsWithMargin;
+    public NTxBounds2D parentBoundsWithMargin;
 }
