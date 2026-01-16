@@ -1,7 +1,6 @@
 package net.thevpc.ntexup.extension.shapes2d.line;
 
-import net.thevpc.ntexup.api.document.elem2d.NTxBounds2;
-import net.thevpc.ntexup.api.document.elem2d.NTxElement2DFactory;
+import net.thevpc.ntexup.api.document.elem2d.NTxBounds2D;
 import net.thevpc.ntexup.api.document.elem2d.NTxPoint2D;
 import net.thevpc.ntexup.api.document.node.NTxNode;
 import net.thevpc.ntexup.api.document.node.NTxNodeType;
@@ -13,6 +12,7 @@ import net.thevpc.ntexup.api.eval.NTxValue;
 import net.thevpc.ntexup.api.extension.NTxNodeBuilder;
 import net.thevpc.ntexup.api.renderer.NTxGraphics;
 import net.thevpc.ntexup.api.renderer.NTxNodeRendererContext;
+import net.thevpc.ntexup.lib.geometry2d.NTxElement2DFactory;
 import net.thevpc.nuts.elem.NElement;
 import net.thevpc.nuts.elem.NPairElement;
 import net.thevpc.nuts.util.NOptional;
@@ -100,14 +100,14 @@ public class NTxPolylineBuilder implements NTxNodeBuilder {
                     }
                     return false;
                 })
-                .renderComponent((rendererContext, buildContext1) -> render(rendererContext, buildContext1));
+                .renderComponent(this::render);
     }
 
-    private void render(NTxNodeRendererContext rendererContext, NTxNodeBuilderContext buildContext) {
+    private void render(NTxNodeRendererContext rendererContext) {
 
         NTxNode node = rendererContext.node();
         rendererContext = rendererContext.withDefaultStyles(defaultStyles);
-        NTxBounds2 b = rendererContext.selfBounds();
+        NTxBounds2D b = rendererContext.selfBounds();
         NTxGraphics g = rendererContext.graphics();
         NTxPoint2D[] points = NTxValue.ofProp(node, NTxPropName.POINTS).asPoint2DArray().get();
         if (!rendererContext.isDry()) {
