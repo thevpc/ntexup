@@ -4,7 +4,7 @@
  */
 package net.thevpc.ntexup.extension.shapes2d.container;
 
-import net.thevpc.ntexup.api.document.elem2d.NTxBounds2;
+import net.thevpc.ntexup.api.document.elem2d.NTxBounds2D;
 import net.thevpc.ntexup.api.document.node.NTxNode;
 import net.thevpc.ntexup.api.document.node.NTxNodeType;
 import net.thevpc.ntexup.api.document.style.NTxProperties;
@@ -28,10 +28,10 @@ public class NTxGroupBuilder implements NTxNodeBuilder {
         ;
     }
 
-    public void render(NTxNodeRendererContext ctx, NTxNodeBuilderContext builderContext) {
+    public void render(NTxNodeRendererContext ctx) {
         NTxNode node = ctx.node();
         ctx = ctx.withDefaultStyles(defaultStyles);
-        NTxBounds2 selfBounds = ctx.selfBounds();
+        NTxBounds2D selfBounds = ctx.selfBounds();
         if (!ctx.isDry()) {
             ctx.paintBackground(node, selfBounds);
         }
