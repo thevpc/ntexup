@@ -16,7 +16,7 @@ public class NTxNovagonBuilder implements NTxNodeBuilder {
                 .renderComponent(this::render);
     }
 
-    public void render(NTxNodeRendererContext rendererContext, NTxNodeBuilderContext buildContext) {
+    public void render(NTxNodeRendererContext rendererContext) {
         NTxPolygonHelper.renderPointsCount(9, rendererContext, defaultStyles);
     }
 }
