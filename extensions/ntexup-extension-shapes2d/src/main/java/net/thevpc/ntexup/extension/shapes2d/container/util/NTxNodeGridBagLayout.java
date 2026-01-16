@@ -27,7 +27,7 @@ package net.thevpc.ntexup.extension.shapes2d.container.util;
  * questions.
  */
 
-import net.thevpc.ntexup.api.document.elem2d.NTxBounds2;
+import net.thevpc.ntexup.api.document.elem2d.NTxBounds2D;
 import net.thevpc.ntexup.api.document.elem2d.NTxDouble2;
 import net.thevpc.ntexup.api.document.elem2d.NTxSizeD;
 import net.thevpc.ntexup.api.document.elem2d.primitives.NTxEditableBounds2;
@@ -52,10 +52,10 @@ public class NTxNodeGridBagLayout {
     private double rowWeights[];
     private NTxNodeGridNodeExt componentAdjusting;
     private Insets parentInsets;
-    private NTxBounds2 parentBounds;
+    private NTxBounds2D parentBounds;
     boolean rightToLeft = false;
 
-    public NTxNodeGridBagLayout(Insets parentInsets, boolean rightToLeft, NTxBounds2 parentBounds, NTxNodeGridNode[] children) {
+    public NTxNodeGridBagLayout(Insets parentInsets, boolean rightToLeft, NTxBounds2D parentBounds, NTxNodeGridNode[] children) {
         this.parentInsets = parentInsets;
         this.children = Arrays.asList(children).stream().map(x -> new NTxNodeGridNodeExt(x)).collect(Collectors.toList());
         this.rightToLeft = rightToLeft;
@@ -1322,9 +1322,9 @@ public class NTxNodeGridBagLayout {
              */
 
             if ((r.width <= 0) || (r.height <= 0)) {
-                comp.bounds = new NTxBounds2(parentBounds.getX(), parentBounds.getY(), 0, 0);
+                comp.bounds = new NTxBounds2D(parentBounds.getX(), parentBounds.getY(), 0, 0);
             } else {
-                comp.bounds = new NTxBounds2(parentBounds.getX() + r.x, parentBounds.getY() + r.y, r.width, r.height);
+                comp.bounds = new NTxBounds2D(parentBounds.getX() + r.x, parentBounds.getY() + r.y, r.width, r.height);
             }
             comp.propagate();
         }
@@ -1386,7 +1386,7 @@ public class NTxNodeGridBagLayout {
         boolean visible = true;
         NTxSizeD preferredSize;
         NTxSizeD minimumSize;
-        NTxBounds2 bounds;
+        NTxBounds2D bounds;
         int index;
 
 
@@ -1442,11 +1442,11 @@ public class NTxNodeGridBagLayout {
             return this;
         }
 
-        public NTxBounds2 getBounds() {
+        public NTxBounds2D getBounds() {
             return bounds;
         }
 
-        public NTxNodeGridNode setBounds(NTxBounds2 bounds) {
+        public NTxNodeGridNode setBounds(NTxBounds2D bounds) {
             this.bounds = bounds;
             return this;
         }
