@@ -9,11 +9,9 @@ import net.thevpc.ntexup.api.eval.NTxValue;
 import net.thevpc.ntexup.api.renderer.NTxGraphics;
 import net.thevpc.ntexup.api.renderer.NTxNodeRenderer;
 import net.thevpc.ntexup.api.renderer.NTxNodeRendererContext;
-import net.thevpc.ntexup.engine.util.NTx2DUtils;
+import net.thevpc.ntexup.engine.util.NTx2DUtils0;
 import net.thevpc.ntexup.engine.util.NTxNodeRendererUtils;
 import net.thevpc.nuts.util.NOptional;
-
-import java.awt.*;
 
 public abstract class NTxNodeRendererBase implements NTxNodeRenderer {
 
@@ -25,7 +23,7 @@ public abstract class NTxNodeRendererBase implements NTxNodeRenderer {
 
     @Override
     public NTxSizeRequirements sizeRequirements(NTxNodeRendererContext ctx) {
-        NTxBounds2 bounds = ctx.selfBounds();
+        NTxBounds2D bounds = ctx.selfBounds();
         return new NTxSizeRequirements(
                 0,
                 bounds.getWidth(),
@@ -48,7 +46,7 @@ public abstract class NTxNodeRendererBase implements NTxNodeRenderer {
             return;
         }
 
-        NTxBounds2 selfBounds = rendererContext.selfBounds();
+        NTxBounds2D selfBounds = rendererContext.selfBounds();
         NTxGraphics nv = null;
         try {
             if (!rendererContext.isDry()) {
@@ -83,7 +81,7 @@ public abstract class NTxNodeRendererBase implements NTxNodeRenderer {
                 if (shadowOptional.isPresent() && !shadowOptional.get().isBlank()) {
                     NTxShadow shadow = shadowOptional.get();
                     NTxNodeRendererContext finalRendererContext = rendererContext;
-                    NTx2DUtils.drawShadowed(rendererContext.graphics(), gg -> {
+                    NTx2DUtils0.drawShadowed(rendererContext.graphics(), gg -> {
                         renderMain(finalRendererContext.withGraphics(gg));
                     }, finalRendererContext.getGlobalBounds(), shadow);
                 } else {
@@ -101,15 +99,15 @@ public abstract class NTxNodeRendererBase implements NTxNodeRenderer {
 
     public abstract void renderMain(NTxNodeRendererContext ctx);
 
-    public NTxBounds2 bgBounds(NTxNode p, NTxNodeRendererContext ctx) {
+    public NTxBounds2D bgBounds(NTxNode p, NTxNodeRendererContext ctx) {
         return ctx.selfBounds(p, null, null);
     }
 
-    public NTxBounds2 selfBounds(NTxNodeRendererContext ctx) {
+    public NTxBounds2D selfBounds(NTxNodeRendererContext ctx) {
         return NTxValueByName.selfBounds(ctx.node(), null, null, ctx);
     }
 
-    public NTxBounds2 defaultSelfBounds(NTxNodeRendererContext ctx) {
+    public NTxBounds2D defaultSelfBounds(NTxNodeRendererContext ctx) {
         return NTxValueByName.selfBounds(ctx.node(), null, null, ctx);
     }
 
