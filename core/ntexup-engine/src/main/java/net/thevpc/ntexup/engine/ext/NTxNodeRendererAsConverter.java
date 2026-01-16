@@ -15,7 +15,7 @@ class NTxNodeRendererAsConverter extends ConvertedNTxNodeRenderer {
     @Override
     public NTxNode convert(NTxNode p, NTxNodeRendererContext rendererContext) {
         if (this.ctx.renderConvertAction != null) {
-            return this.ctx.renderConvertAction.convert(p, rendererContext, this.ctx);
+            return this.ctx.renderConvertAction.convert(p, rendererContext.withBuilderContext(this.ctx));
         }
         return p;
     }
