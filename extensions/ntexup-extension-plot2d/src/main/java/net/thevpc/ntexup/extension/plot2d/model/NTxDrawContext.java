@@ -1,6 +1,6 @@
 package net.thevpc.ntexup.extension.plot2d.model;
 
-import net.thevpc.ntexup.api.document.elem2d.NTxBounds2;
+import net.thevpc.ntexup.api.document.elem2d.NTxBounds2D;
 import net.thevpc.ntexup.api.util.NTxMinMax;
 
 import java.util.ArrayList;
@@ -35,7 +35,7 @@ public class NTxDrawContext {
     public double userMinY;
     public double userMaxY;
 
-    public NTxDrawContext(NTxBounds2 bounds, double[] gridXvalues, double minY, double maxY, boolean zoomY, NTxMinMax minMaxY) {
+    public NTxDrawContext(NTxBounds2D bounds, double[] gridXvalues, double minY, double maxY, boolean zoomY, NTxMinMax minMaxY) {
         this.componentWidth = bounds.getWidth();
         this.componentHeight = bounds.getHeight();
         this.componentMinX = bounds.getX();
