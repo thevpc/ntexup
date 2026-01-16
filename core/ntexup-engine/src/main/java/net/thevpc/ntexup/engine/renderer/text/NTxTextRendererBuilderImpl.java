@@ -10,7 +10,7 @@ import net.thevpc.ntexup.api.renderer.text.*;
 import net.thevpc.ntexup.api.util.NTxSizeRef;
 import net.thevpc.ntexup.api.util.NTxUtils;
 import net.thevpc.ntexup.api.util.NtxFontInfo;
-import net.thevpc.ntexup.engine.util.NTx2DUtils;
+import net.thevpc.ntexup.engine.util.NTx2DUtils0;
 import net.thevpc.ntexup.engine.util.NTxNodeRendererUtils;
 import net.thevpc.ntexup.api.eval.NTxValueByName;
 import net.thevpc.ntexup.api.renderer.NTxGraphics;
@@ -152,7 +152,7 @@ public class NTxTextRendererBuilderImpl implements NTxTextRendererBuilder {
         return rows.get(rows.size() - 1);
     }
 
-    public NTxBounds2 computeBound(NTxNodeRendererContext ctx) {
+    public NTxBounds2D computeBound(NTxNodeRendererContext ctx) {
         NTxGraphics g = ctx.graphics();
         Font oldFont = g.getFont();
         bounds = new Rectangle2D.Double(0, 0, 0, 0);
@@ -178,7 +178,7 @@ public class NTxTextRendererBuilderImpl implements NTxTextRendererBuilder {
             Rectangle2D.Double.union(bounds, row.textBounds, bounds);
             maxxY = row.yOffset + row.textBounds.getHeight();
         }
-        return new NTxBounds2(bounds.getMinX(), bounds.getMinY(), bounds.getWidth(), maxxY);
+        return new NTxBounds2D(bounds.getMinX(), bounds.getMinY(), bounds.getWidth(), maxxY);
     }
 
     public void setLang(String lang) {
@@ -198,7 +198,7 @@ public class NTxTextRendererBuilderImpl implements NTxTextRendererBuilder {
         return rows.isEmpty();
     }
 
-    public void render(NTxNode p, NTxNodeRendererContext rendererContext, NTxBounds2 bgBounds, NTxBounds2 selfBounds) {
+    public void render(NTxNode p, NTxNodeRendererContext rendererContext, NTxBounds2D bgBounds, NTxBounds2D selfBounds) {
         boolean debug = rendererContext.isDebug(p);
         double x = selfBounds.getX();
         double y = selfBounds.getY();
@@ -298,7 +298,7 @@ public class NTxTextRendererBuilderImpl implements NTxTextRendererBuilder {
                     );
                 }
 
-                List<Double> segmentLengths = NTx2DUtils.computeSegmentLengths(rowCurve);
+                List<Double> segmentLengths = NTx2DUtils0.computeSegmentLengths(rowCurve);
 
                 // render tokens along this row curve
                 renderRowAlongCurve(row, rowCurve, segmentLengths, textOptions, rendererContext, fontInfo);
@@ -316,8 +316,8 @@ public class NTxTextRendererBuilderImpl implements NTxTextRendererBuilder {
 
             double tokenWidth = computeTokenWidth(token, rendererContext); // text advance or image width
 
-            Point2D pos = NTx2DUtils.getPointAtLength(curvePoints, segmentLengths, s + tokenWidth / 2);
-            double angle = NTx2DUtils.getTangentAngle(curvePoints, segmentLengths, s + tokenWidth / 2);
+            Point2D pos = NTx2DUtils0.getPointAtLength(curvePoints, segmentLengths, s + tokenWidth / 2);
+            double angle = NTx2DUtils0.getTangentAngle(curvePoints, segmentLengths, s + tokenWidth / 2);
 
             AffineTransform at = new AffineTransform();
             at.translate(pos.getX(), pos.getY());
@@ -365,8 +365,8 @@ public class NTxTextRendererBuilderImpl implements NTxTextRendererBuilder {
         for (int i = 0; i < gv.getNumGlyphs(); i++) {
             Shape glyph = gv.getGlyphOutline(i);
             Point2D glyphPos = gv.getGlyphPosition(i);
-            Point2D pos = NTx2DUtils.getPointAtLength(curvePoints, segmentLengths, tokenStartS + glyphPos.getX());
-            double angle = NTx2DUtils.getTangentAngle(curvePoints, segmentLengths, tokenStartS + glyphPos.getX());
+            Point2D pos = NTx2DUtils0.getPointAtLength(curvePoints, segmentLengths, tokenStartS + glyphPos.getX());
+            double angle = NTx2DUtils0.getTangentAngle(curvePoints, segmentLengths, tokenStartS + glyphPos.getX());
             AffineTransform at = new AffineTransform();
             at.translate(pos.getX(), pos.getY());
             at.rotate(angle);
