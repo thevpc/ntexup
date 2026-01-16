@@ -28,12 +28,13 @@ public class NTxTextBuilder implements NTxNodeBuilder {
                 .parseParam().matchesNamedPair(NTxPropName.VALUE,NTxPropName.FILE).then()
                 .parseParam().matchesNamedPair("text-path").then()
                 .parseParam().matchesAnyNonPair().storeFirstMissingName(NTxPropName.VALUE).then()
-                .renderText().buildText(this::buildText).parseTokens(this::parseTokens)
+                .renderText().buildText(this::buildText)
+                .parseTokens(this::parseTokens)
         ;
     }
 
-    public void buildText(String text, NTxTextOptions options, NTxNode p, NTxNodeRendererContext ctx, NTxTextRendererBuilder builder, NTxNodeBuilderContext builderContext) {
-        NTxTextTokenParseHelper aa = new NTxTextTokenParseHelper(ctx, new NReservedSimpleCharQueue(ctx.engine().tools().trimBloc(text).toCharArray()), builderContext);
+    public void buildText(String text, NTxTextOptions options, NTxNode p, NTxNodeRendererContext ctx, NTxTextRendererBuilder builder) {
+        NTxTextTokenParseHelper aa = new NTxTextTokenParseHelper(ctx, new NReservedSimpleCharQueue(ctx.engine().tools().trimBloc(text).toCharArray()), ctx.buildContext());
         List<NTxTextToken> all = aa.parse();
         for (NTxTextToken a : all) {
             consumeSpecialTokenType(a, p, ctx, builder);
