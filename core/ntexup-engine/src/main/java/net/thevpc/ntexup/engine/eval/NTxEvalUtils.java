@@ -12,7 +12,7 @@ import java.util.List;
 public class NTxEvalUtils {
 
     public static NElement simplify(NElement e) {
-        e= NTxUtils.removeCompilerDeclarationPathAnnotations(e);
+        e = NTxUtils.removeCompilerDeclarationPathAnnotations(e);
         return simplifyPars(e);
     }
 
@@ -34,7 +34,7 @@ public class NTxEvalUtils {
             Number nb = bb.asNumberValue().get();
             return NElement.ofNumber(NNumberUtils.substructNumbers(na, nb));
         }
-        return NElement.ofUplet(NElement.ofOp(NElementType.OP_MINUS, aa, bb));
+        return NElement.ofUplet(NElement.ofOp(NOperatorSymbol.MINUS, aa, bb));
     }
 
     public static NElement remainder(NElement a, NElement b) {
@@ -45,8 +45,9 @@ public class NTxEvalUtils {
             Number nb = bb.asNumberValue().get();
             return NElement.ofNumber(NNumberUtils.reminderNumbers(na, nb));
         }
-        return NElement.ofUplet(NElement.ofOp(NElementType.OP_REM, aa, bb));
+        return NElement.ofUplet(NElement.ofOp(NOperatorSymbol.REM, aa, bb));
     }
+
     public static NElement remainder2(NElement a, NElement b) {
         NElement a1 = NTxEvalUtils.simplify(a);
         NElement b1 = NTxEvalUtils.simplify(b);
@@ -60,7 +61,7 @@ public class NTxEvalUtils {
                 //
             }
         }
-        return NElement.ofUplet(NElement.ofOp(NElementType.OP_REM, a1, b1));
+        return NElement.ofUplet(NElement.ofOp(NOperatorSymbol.REM, a1, b1));
     }
 
     public static NElement negate(NElement a) {
@@ -69,7 +70,7 @@ public class NTxEvalUtils {
             Number na = aa.asNumberValue().get();
             return NElement.ofNumber(NNumberUtils.negateNumber(na));
         }
-        return NElement.ofUplet(NElement.ofOp(NElementType.OP_MINUS, aa));
+        return NElement.ofUplet(NElement.ofOp(NOperatorSymbol.MINUS, aa));
     }
 
     public static NElement inv(NElement a, MathContext mc) {
@@ -78,7 +79,7 @@ public class NTxEvalUtils {
             Number na = aa.asNumberValue().get();
             return NElement.ofNumber(NNumberUtils.invNumber(na, mc));
         }
-        return NElement.ofUplet(NElement.ofOp(NElementType.OP_DIV, aa));
+        return NElement.ofUplet(NElement.ofOp(NOperatorSymbol.DIV, aa));
     }
 
     public static NElement add(NElement a, NElement b) {
@@ -89,7 +90,7 @@ public class NTxEvalUtils {
             Number nb = bb.asNumberValue().get();
             return NElement.ofNumber(NNumberUtils.addNumbers(na, nb));
         }
-        return NElement.ofUplet(NElement.ofOp(NElementType.OP_PLUS, aa, bb));
+        return NElement.ofUplet(NElement.ofOp(NOperatorSymbol.PLUS, aa, bb));
     }
 
     public static NElement div(NElement a, NElement b, MathContext mc) {
@@ -100,7 +101,7 @@ public class NTxEvalUtils {
             Number nb = bb.asNumberValue().get();
             return NElement.ofNumber(NNumberUtils.divideNumbers(na, nb, mc));
         }
-        return NElement.ofUplet(NElement.ofOp(NElementType.OP_DIV, aa, bb));
+        return NElement.ofUplet(NElement.ofOp(NOperatorSymbol.DIV, aa, bb));
     }
 
     public static NElement mul(NElement a, NElement b, MathContext mc) {
@@ -111,7 +112,7 @@ public class NTxEvalUtils {
             Number nb = bb.asNumberValue().get();
             return NElement.ofNumber(NNumberUtils.multiplyNumbers(na, nb, mc));
         }
-        return NElement.ofUplet(NElement.ofOp(NElementType.OP_MUL, aa, bb));
+        return NElement.ofUplet(NElement.ofOp(NOperatorSymbol.MUL, aa, bb));
     }
 
     public static int compareNumbers(Number a, Number b) {
@@ -121,13 +122,14 @@ public class NTxEvalUtils {
     public static Number reminderNumbers(Number a, Number b) {
         return NNumberUtils.reminderNumbers(a, b);
     }
+
     public static Number addNumbers(Number a, Number b) {
         return NNumberUtils.addNumbers(a, b);
     }
 
     public static NElement[] evalInterval(NElement f, NElement s) {
-        f=simplify(f);
-        s=simplify(s);
+        f = simplify(f);
+        s = simplify(s);
         if (f.isNumber() && s.isNumber()) {
             NElementType ct = NElements.of().commonNumberType(f.type(), s.type());
             if (ct.isAnyNumber()) {
