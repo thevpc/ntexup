@@ -1,6 +1,6 @@
 package net.thevpc.ntexup.extension.shapes2d.shape;
 
-import net.thevpc.ntexup.api.document.elem2d.NTxBounds2;
+import net.thevpc.ntexup.api.document.elem2d.NTxBounds2D;
 import net.thevpc.ntexup.api.document.node.NTxNode;
 import net.thevpc.ntexup.api.document.node.NTxNodeType;
 import net.thevpc.ntexup.api.document.style.NTxPropName;
@@ -24,10 +24,10 @@ public class NTxSphereBuilder implements NTxNodeBuilder {
         defaultStyles.set(NTxPropName.PRESERVE_ASPECT_RATIO, NElement.ofTrue());
     }
 
-    public void renderMain(NTxNodeRendererContext rendererContext, NTxNodeBuilderContext builderContext) {
+    public void renderMain(NTxNodeRendererContext rendererContext) {
         NTxNode node = rendererContext.node();
         rendererContext = rendererContext.withDefaultStyles(defaultStyles);
-        NTxBounds2 b = rendererContext.selfBounds(node, null, null);
+        NTxBounds2D b = rendererContext.selfBounds(node, null, null);
         double x = b.getX();
         double y = b.getY();
         NTxGraphics g = rendererContext.graphics();
