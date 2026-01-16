@@ -1,0 +1,77 @@
+import(
+    common-functions
+    plantuml
+    animated-gif
+    svg
+    shapes2d
+    shapes3d
+    plot2d
+    presenters
+    latex
+)
+
+styles:{
+    text:{
+        color:darkBlue
+    }
+    line:{
+        color:black
+    }
+    .dielectric:{
+        background:black
+    }
+    .dimLine:{
+        start-arrow:simple()
+        end-arrow:simple()
+        stroke:basic(dashed)
+    }
+    .dimension:{
+        color:black
+        arrow:simple()
+        stroke:dashed
+        label-position:center
+        label-orientation:screen
+    }
+}
+page{
+    freq=2.45_GHz
+    ω="2*π*freq"
+    patch_width=32_mm
+    patch_length=10_mm
+    substrate_εr=3.38
+    substrate_κ= "1E-3*ω*ε0*substrate_εr"
+    substrate_κ= "1e-3"
+    substrate_thickness=1.524_mm
+    feed_posx=-6_mm
+    feed_posy=0_mm
+    feed_R=50_Ω
+    substrate_width=60_mm
+    substrate_length=60_mm
+
+    mom_substrate_width=200 // bigger to simulate infinity
+    mom_substrate_height=200 // bigger to simulate infinity
+    mom_boundary_conditions=[OPEN SHORTCUT EEEE]
+
+    fdtd_box_width=200
+    fdtd_box_height=200
+    fdtd_box_thikness=150
+    fdtd_substrate_cells=4
+    fdtd_boundary_conditions=[MUR MUR MUR MUR MUR MUR]
+
+    rectangle(background:white)
+    grid(2,2){
+        scene3d(
+                id:scene_canonical
+                draw-contour,
+                transform:{
+                    translate(10,10,0)
+                    scale:0.7
+                }
+                real-size:[100_mm 100_mm 100_mm]
+        ){
+            @dielectric   box(size:(substrate_width,substrate_length,substrate_thickness),position:(0,0,-substrate_thickness),origin:(50,50,0))
+            @dielectric   patch(size:(substrate_width,substrate_length,substrate_thickness),position:(0,0,-substrate_thickness),origin:(50,50,0))
+            @dimension line(from:(-5,0,-5),to:(-5,100,-5),label:{"hello",offset:(-5,0)})
+        }
+    }
+}
