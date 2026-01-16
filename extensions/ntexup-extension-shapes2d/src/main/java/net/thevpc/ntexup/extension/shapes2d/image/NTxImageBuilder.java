@@ -4,7 +4,7 @@
  */
 package net.thevpc.ntexup.extension.shapes2d.image;
 
-import net.thevpc.ntexup.api.document.elem2d.NTxBounds2;
+import net.thevpc.ntexup.api.document.elem2d.NTxBounds2D;
 import net.thevpc.ntexup.api.document.elem2d.NTxImageOptions;
 import net.thevpc.ntexup.api.document.elem2d.NTxSize;
 import net.thevpc.ntexup.api.document.node.NTxNode;
@@ -41,17 +41,17 @@ public class NTxImageBuilder implements NTxNodeBuilder {
                 .parseParam().matchesNamedPair(NTxPropName.TRANSPARENT_COLOR).then()
                 .parseParam().matchesNamedPair(NTxPropName.VALUE, NTxPropName.FILE, "content", "src").storeName(NTxPropName.VALUE).then()
                 .parseParam().matchesStringOrName().storeName(NTxPropName.VALUE).ignoreDuplicates(true).then()
-                .renderComponent((rendererContext, builderContext1) -> renderMain(rendererContext, builderContext1))
+                .renderComponent(this::renderMain)
         ;
     }
     static class Cache {
         NPath img=null;
         NTxImageOptions options;
     }
-    public void renderMain(NTxNodeRendererContext rendererContext, NTxNodeBuilderContext builderContext) {
+    public void renderMain(NTxNodeRendererContext rendererContext) {
         NTxNode node = rendererContext.node();
         rendererContext = rendererContext.withDefaultStyles(defaultStyles);
-        NTxBounds2 b = rendererContext.selfBounds();
+        NTxBounds2D b = rendererContext.selfBounds();
         int w = NTxUtils.intOf(b.getWidth());
         int h = NTxUtils.intOf(b.getHeight());
         if (w <= 0 || h <= 0) {
