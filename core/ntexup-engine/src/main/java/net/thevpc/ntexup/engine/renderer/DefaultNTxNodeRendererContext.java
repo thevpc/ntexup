@@ -9,6 +9,7 @@ import net.thevpc.ntexup.api.document.style.NTxProperties;
 import net.thevpc.ntexup.api.engine.NTxCompiledDocument;
 import net.thevpc.ntexup.api.engine.NTxCompiledPage;
 import net.thevpc.ntexup.api.engine.NTxEngine;
+import net.thevpc.ntexup.api.engine.NTxNodeBuilderContext;
 import net.thevpc.ntexup.api.eval.NTxValueByName;
 import net.thevpc.ntexup.api.eval.NTxVar;
 import net.thevpc.ntexup.api.eval.NTxVarProvider;
@@ -37,7 +38,7 @@ import java.util.List;
 
 
 public class DefaultNTxNodeRendererContext implements NTxNodeRendererContext {
-    private NTxBounds2 selfBounds;
+    private NTxBounds2D selfBounds;
     private NTxVarProvider nTxVarProvider = new NTxVarProvider() {
         @Override
         public NOptional<NTxVar> findVar(String varName, NTxNode node) {
@@ -46,7 +47,7 @@ public class DefaultNTxNodeRendererContext implements NTxNodeRendererContext {
                     return NOptional.of(new NTxVar() {
                         @Override
                         public NElement get() {
-                            NTxBounds2 nTxBounds2 = DefaultNTxNodeRendererContext.this.selfBounds();
+                            NTxBounds2D nTxBounds2 = DefaultNTxNodeRendererContext.this.selfBounds();
                             return NTxUtils.toElement(nTxBounds2);
                         }
                     });
@@ -55,11 +56,12 @@ public class DefaultNTxNodeRendererContext implements NTxNodeRendererContext {
             return NOptional.ofNamedEmpty("var " + varName);
         }
     };
+    private final NTxNodeBuilderContext buildContext;
     private final ImageObserver imageObserver;
     private final NTxGraphics g3;
     private final NTxEngine engine;
-    private final NTxBounds2 globalBound;
-    private final NTxBounds2 parentBounds;
+    private final NTxBounds2D globalBound;
+    private final NTxBounds2D parentBounds;
     private final Map<String, Object> capabilities;
     private final long pageStartTime;
     private final boolean someChange;
@@ -71,8 +73,11 @@ public class DefaultNTxNodeRendererContext implements NTxNodeRendererContext {
     private final NTxCompiledPage page;
 
 
-    public DefaultNTxNodeRendererContext(NTxCompiledPage page, NTxNode node, NTxEngine engine, NTxGraphics g, NTxBounds2 selfBounds, NTxBounds2 parentBounds, NTxBounds2 globalBound, NTxCompiledPage compiledPage,
-                                         boolean someChange, long pageStartTime, Map<String, Object> capabilities, ImageObserver imageObserver, Runnable repainter, NTxProperties defaultStyles, boolean dry) {
+    public DefaultNTxNodeRendererContext(NTxCompiledPage page, NTxNode node, NTxEngine engine, NTxGraphics g, NTxBounds2D selfBounds, NTxBounds2D parentBounds, NTxBounds2D globalBound, NTxCompiledPage compiledPage,
+                                         boolean someChange, long pageStartTime, Map<String, Object> capabilities, ImageObserver imageObserver, Runnable repainter,
+                                         NTxProperties defaultStyles, boolean dry,
+                                         NTxNodeBuilderContext buildContext
+                                         ) {
         this.page = page;
         this.node = node;
         this.engine = engine;
@@ -89,9 +94,15 @@ public class DefaultNTxNodeRendererContext implements NTxNodeRendererContext {
         this.repainter = repainter;
         this.defaultStyles = defaultStyles;
         this.dry = dry;
+        this.buildContext = buildContext;
     }
 
-//    public DefaultNTxNodeRendererContext(NTxNode node, NTxEngine engine, NTxGraphics g, NTxBounds2 selfBounds, Dimension parentBounds, NTxCompiledPage compiledPage, boolean someChange,
+    @Override
+    public NTxNodeBuilderContext buildContext() {
+        return buildContext;
+    }
+
+    //    public DefaultNTxNodeRendererContext(NTxNode node, NTxEngine engine, NTxGraphics g, NTxBounds2 selfBounds, Dimension parentBounds, NTxCompiledPage compiledPage, boolean someChange,
 //                                      long pageStartTime, Map<String, Object> capabilities, ImageObserver imageObserver, Runnable repainter) {
 //        this(node, engine, g, selfBounds, parentBounds, new NTxBounds2(0, 0, parentBounds.getWidth(), parentBounds.getHeight()), compiledPage, someChange, pageStartTime, capabilities,imageObserver,repainter);
 //    }
@@ -138,7 +149,7 @@ public class DefaultNTxNodeRendererContext implements NTxNodeRendererContext {
     }
 
     @Override
-    public NTxBounds2 selfBounds() {
+    public NTxBounds2D selfBounds() {
         if (selfBounds == null) {
             selfBounds = engine().getRenderer(node().type()).get().selfBounds(this);
         }
@@ -146,36 +157,41 @@ public class DefaultNTxNodeRendererContext implements NTxNodeRendererContext {
     }
 
     @Override
-    public NTxBounds2 defaultSelfBounds() {
+    public NTxBounds2D defaultSelfBounds() {
         return NTxValueByName.selfBounds(node(), null, null, this);
     }
 
     @Override
     public NTxNodeRendererContext withDefaultStyles(NTxProperties defaultStyles) {
-        return new DefaultNTxNodeRendererContext(page, node, engine, g3, selfBounds, parentBounds, globalBound, compiledPage, someChange, pageStartTime, capabilities, imageObserver, repainter, defaultStyles, dry);
+        return new DefaultNTxNodeRendererContext(page, node, engine, g3, selfBounds, parentBounds, globalBound, compiledPage, someChange, pageStartTime, capabilities, imageObserver, repainter, defaultStyles, dry,buildContext);
     }
 
     @Override
-    public NTxNodeRendererContext withChild(NTxNode node, NTxBounds2 parentBounds) {
-        return new DefaultNTxNodeRendererContext(page, node, engine, g3, null, parentBounds == null ? selfBounds() : parentBounds, globalBound, compiledPage, someChange, pageStartTime, capabilities, imageObserver, repainter, defaultStyles, dry);
+    public NTxNodeRendererContext withBuilderContext(NTxNodeBuilderContext builderContext) {
+        return new DefaultNTxNodeRendererContext(page, node, engine, g3, null, parentBounds == null ? selfBounds() : parentBounds, globalBound, compiledPage, someChange, pageStartTime, capabilities, imageObserver, repainter, defaultStyles, dry,builderContext);
+    }
+
+    @Override
+    public NTxNodeRendererContext withChild(NTxNode node, NTxBounds2D parentBounds) {
+        return new DefaultNTxNodeRendererContext(page, node, engine, g3, null, parentBounds == null ? selfBounds() : parentBounds, globalBound, compiledPage, someChange, pageStartTime, capabilities, imageObserver, repainter, defaultStyles, dry,buildContext);
     }
 
     @Override
     public NTxNodeRendererContext withChild(NTxNode node) {
-        return new DefaultNTxNodeRendererContext(page, node, engine, g3, null, selfBounds(), globalBound, compiledPage, someChange, pageStartTime, capabilities, imageObserver, repainter, defaultStyles, dry);
+        return new DefaultNTxNodeRendererContext(page, node, engine, g3, null, selfBounds(), globalBound, compiledPage, someChange, pageStartTime, capabilities, imageObserver, repainter, defaultStyles, dry,buildContext);
     }
 
     @Override
     public NTxNodeRendererContext withNode(NTxNode node) {
-        return new DefaultNTxNodeRendererContext(page, node, engine, g3, null, parentBounds, globalBound, compiledPage, someChange, pageStartTime, capabilities, imageObserver, repainter, defaultStyles, dry);
+        return new DefaultNTxNodeRendererContext(page, node, engine, g3, null, parentBounds, globalBound, compiledPage, someChange, pageStartTime, capabilities, imageObserver, repainter, defaultStyles, dry,buildContext);
     }
 
     @Override
-    public NTxNodeRendererContext withParentBounds(NTxBounds2 parentBounds) {
+    public NTxNodeRendererContext withParentBounds(NTxBounds2D parentBounds) {
         if (parentBounds == null || Objects.equals(parentBounds, this.parentBounds)) {
             return this;
         }
-        return new DefaultNTxNodeRendererContext(page, node, engine, g3, selfBounds, parentBounds, globalBound, compiledPage, someChange, pageStartTime, capabilities, imageObserver, repainter, defaultStyles, dry);
+        return new DefaultNTxNodeRendererContext(page, node, engine, g3, selfBounds, parentBounds, globalBound, compiledPage, someChange, pageStartTime, capabilities, imageObserver, repainter, defaultStyles, dry,buildContext);
     }
 
     @Override
@@ -183,7 +199,7 @@ public class DefaultNTxNodeRendererContext implements NTxNodeRendererContext {
         if (dry) {
             return this;
         }
-        return new DefaultNTxNodeRendererContext(page, node, engine, g3, selfBounds, parentBounds, globalBound, compiledPage, someChange, pageStartTime, capabilities, imageObserver, repainter, defaultStyles, true);
+        return new DefaultNTxNodeRendererContext(page, node, engine, g3, selfBounds, parentBounds, globalBound, compiledPage, someChange, pageStartTime, capabilities, imageObserver, repainter, defaultStyles, true,buildContext);
     }
 
     @Override
@@ -191,7 +207,7 @@ public class DefaultNTxNodeRendererContext implements NTxNodeRendererContext {
         if (graphics == null || graphics == g3) {
             return this;
         }
-        return new DefaultNTxNodeRendererContext(page, node, engine, graphics, selfBounds, parentBounds, globalBound, compiledPage, someChange, pageStartTime, capabilities, imageObserver, repainter, defaultStyles, dry);
+        return new DefaultNTxNodeRendererContext(page, node, engine, graphics, selfBounds, parentBounds, globalBound, compiledPage, someChange, pageStartTime, capabilities, imageObserver, repainter, defaultStyles, dry,buildContext);
     }
 
     @Override
@@ -201,8 +217,8 @@ public class DefaultNTxNodeRendererContext implements NTxNodeRendererContext {
 
     @Override
     public NTxSizeRef sizeRef() {
-        NTxBounds2 b = parentBounds();
-        NTxBounds2 gb = getGlobalBounds();
+        NTxBounds2D b = parentBounds();
+        NTxBounds2D gb = getGlobalBounds();
         return new NTxSizeRef(
                 b.getWidth(), b.getHeight(),
                 gb.getWidth(), gb.getHeight()
@@ -221,24 +237,24 @@ public class DefaultNTxNodeRendererContext implements NTxNodeRendererContext {
     }
 
     @Override
-    public void renderDetachedNode(NElement childNode, NTxBounds2 relativeBounds) {
+    public void renderDetachedNode(NElement childNode, NTxBounds2D relativeBounds) {
         renderDetachedNode((NTxNode) newDetachedNode(childNode).get(), relativeBounds);
     }
 
     @Override
-    public void renderDetachedNode(NTxNode childNode, NTxBounds2 relativeBounds) {
+    public void renderDetachedNode(NTxNode childNode, NTxBounds2D relativeBounds) {
         //childNode=buildNode(childNode);
         NOptional<NTxNodeRenderer> renderer = engine().getRenderer(childNode.type());
         if (renderer.isPresent()) {
-            NTxBounds2 pb = selfBounds();
-            NTxBounds2 sb = new NTxBounds2(
+            NTxBounds2D pb = selfBounds();
+            NTxBounds2D sb = new NTxBounds2D(
                     relativeBounds.getX() / 100 * pb.getWidth() + pb.getX(),
                     relativeBounds.getY() / 100 * pb.getHeight() + pb.getY(),
                     relativeBounds.getWidth() / 100 * pb.getWidth(),
                     relativeBounds.getHeight() / 100 * pb.getHeight()
             );
             DefaultNTxNodeRendererContext d2 = new DefaultNTxNodeRendererContext(page, childNode, engine(), graphics(), sb, pb, getGlobalBounds(), compiledPage(),
-                    isSomeChange(), pageStartTime(), capabilities, imageObserver, repainter, null, false);
+                    isSomeChange(), pageStartTime(), capabilities, imageObserver, repainter, null, false,buildContext);
             renderer.get().render(d2);
         } else {
             engine().log().log(NMsg.ofC("%s for %s", renderer.getMessage().get(), NTxUtils.snippet(childNode)).asError(), NTxUtils.sourceOf(node()));
@@ -277,7 +293,7 @@ public class DefaultNTxNodeRendererContext implements NTxNodeRendererContext {
     }
 
     @Override
-    public NTxBounds2 selfBounds(NTxNode t, NTxDouble2 selfSize, NTxDouble2 minSize) {
+    public NTxBounds2D selfBounds(NTxNode t, NTxDouble2 selfSize, NTxDouble2 minSize) {
         return NTxValueByName.selfBounds(t, selfSize, minSize, this);
     }
 
@@ -449,7 +465,7 @@ public class DefaultNTxNodeRendererContext implements NTxNodeRendererContext {
     }
 
     @Override
-    public NTxBounds2 bounds(NTxNode t, NTxNodeRendererContext ctx) {
+    public NTxBounds2D bounds(NTxNode t, NTxNodeRendererContext ctx) {
         return NTxNodeRendererUtils.bounds(t, this);
 
     }
@@ -478,12 +494,12 @@ public class DefaultNTxNodeRendererContext implements NTxNodeRendererContext {
     }
 
     @Override
-    public void paintBorderLine(NTxNode t, NTxBounds2 a) {
+    public void paintBorderLine(NTxNode t, NTxBounds2D a) {
         NTxNodeRendererUtils.drawBorderLine(t, this, graphics(), a);
     }
 
     @Override
-    public void paintBackground(NTxNode t, NTxBounds2 a) {
+    public void paintBackground(NTxNode t, NTxBounds2D a) {
         NTxNodeRendererUtils.paintBackground(t, this, graphics(), a);
     }
 
@@ -574,11 +590,11 @@ public class DefaultNTxNodeRendererContext implements NTxNodeRendererContext {
         return g3;
     }
 
-    public NTxBounds2 getGlobalBounds() {
+    public NTxBounds2D getGlobalBounds() {
         return globalBound;
     }
 
-    public NTxBounds2 parentBounds() {
+    public NTxBounds2D parentBounds() {
         return parentBounds;
     }
 
