@@ -14,10 +14,10 @@ public class NTxRhombusBuilder implements NTxNodeBuilder {
     public void build(NTxNodeBuilderContext builderContext) {
         builderContext.id(NTxNodeType.RHOMBUS)
                 .alias("diamond")
-                .renderComponent((rendererContext, builderContext1) -> renderMain(rendererContext, builderContext1));
+                .renderComponent(this::renderMain);
     }
 
-    public void renderMain(NTxNodeRendererContext rendererContext, NTxNodeBuilderContext builderContext) {
+    public void renderMain(NTxNodeRendererContext rendererContext) {
         rendererContext = rendererContext.withDefaultStyles(defaultStyles);
         NTxPoint2D[] points = new NTxPoint2D[]{
                 new NTxPoint2D(0, 50),
