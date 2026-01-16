@@ -1,0 +1,62 @@
+import(
+    "common-functions"
+    "plantuml"
+    "animated-gif"
+    "svg"
+    "shapes2d"
+    "shapes3d"
+    "plot2d"
+    "presenters"
+    "latex"
+)
+page{
+    styles:{
+        text:{
+            color:darkBlue
+        }
+        line:{
+            color:black
+        }
+        .dielectric:{
+            background:black
+        }
+        .dimLine:{
+            start-arrow:simple()
+            end-arrow:simple()
+            stroke:basic(dashed)
+        }
+        .dimension:{
+            color:black
+            arrow:simple()
+            stroke:dashed
+            label-position:center
+            label-orientation:screen
+        }
+    }
+        rectangle(background:white)
+        scene3d(
+            draw-contour,
+                transform:{
+                    translate(10,10,0)
+                    scale:0.7
+                }
+        ){
+            @dielectric box(size:(100,100,5),position:(0,0,-5))
+            @dimension line(from:(-5,0,-5),to:(-5,100,-5),label:{"hello",offset:(-5,0)})
+
+//            box(size:(100,100,4),position:(0,0,-4)
+//                , background:"#00468B"
+//                , mesh-precision: 1000
+////                ,faces:{
+////                    top:{background:pink,visible:true} // back
+////                    bottom:{background:CadetBlue,visible:true} // front
+//                    left:{background:dark-blue,visible:true} // left
+//                    right:{background:dark-blue,visible:true} // right
+//                    front:{background:dark-blue,visible:true} // bottom
+//                    back:{background:dark-blue,visible:true} // top
+////                }
+//            ) // substrate
+
+        }
+
+}
