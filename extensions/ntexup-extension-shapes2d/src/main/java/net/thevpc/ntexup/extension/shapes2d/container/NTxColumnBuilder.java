@@ -4,7 +4,7 @@
  */
 package net.thevpc.ntexup.extension.shapes2d.container;
 
-import net.thevpc.ntexup.api.document.elem2d.NTxBounds2;
+import net.thevpc.ntexup.api.document.elem2d.NTxBounds2D;
 import net.thevpc.ntexup.api.document.node.NTxNode;
 import net.thevpc.ntexup.api.document.node.NTxNodeType;
 import net.thevpc.ntexup.api.document.style.NTxProp;
@@ -41,23 +41,23 @@ public class NTxColumnBuilder implements NTxNodeBuilder {
                 .afterParsingAllParams((NTxAllArgumentReader info, NTxNodeBuilderContext buildContext)->{
                     info.node().setProperty(NTxProp.of(NTxPropName.COLUMNS,NElement.ofInt(1)));
                 })
-                .selfBounds(this::selfBounds)
-                .renderComponent(this::renderMain)
+                .selfBounds((rendererContext) -> selfBounds(rendererContext))
+                .renderComponent((ctx) -> renderMain(ctx))
                 ;
     }
 
 
-    public NTxBounds2 selfBounds(NTxNodeRendererContext rendererContext, NTxNodeBuilderContext builderContext) {
+    public NTxBounds2D selfBounds(NTxNodeRendererContext rendererContext) {
         rendererContext = rendererContext.withDefaultStyles(defaultStyles);
         NTxNode node = rendererContext.node();
-        NTxBounds2 expectedBounds = rendererContext.defaultSelfBounds();
+        NTxBounds2D expectedBounds = rendererContext.defaultSelfBounds();
         NTxGridRendererHelper h = new NTxGridRendererHelper(node.children());
         return h.computeBound(node, rendererContext, expectedBounds);
     }
 
-    public void renderMain(NTxNodeRendererContext ctx, NTxNodeBuilderContext builderContext) {
+    public void renderMain(NTxNodeRendererContext ctx) {
         ctx = ctx.withDefaultStyles(defaultStyles);
-        NTxBounds2 expectedBounds = ctx.selfBounds();
+        NTxBounds2D expectedBounds = ctx.selfBounds();
         NTxGridRendererHelper h = new NTxGridRendererHelper(ctx.node().children());
         h.render(ctx, expectedBounds);
     }
