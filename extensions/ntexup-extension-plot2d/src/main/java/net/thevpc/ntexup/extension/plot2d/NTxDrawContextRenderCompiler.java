@@ -1,6 +1,6 @@
 package net.thevpc.ntexup.extension.plot2d;
 
-import net.thevpc.ntexup.api.document.elem2d.NTxBounds2;
+import net.thevpc.ntexup.api.document.elem2d.NTxBounds2D;
 import net.thevpc.ntexup.api.document.node.NTxNode;
 import net.thevpc.ntexup.api.eval.NTxValue;
 import net.thevpc.ntexup.api.renderer.NTxNodeRendererContext;
@@ -29,7 +29,7 @@ class NTxDrawContextRenderCompiler {
 
         Paint color = rendererContext.getForegroundColor(p, true);
 
-        NTxBounds2 bounds = rendererContext.parentBounds();
+        NTxBounds2D bounds = rendererContext.parentBounds();
         NTxDrawContext drawContext = new NTxDrawContext(bounds, xValues, minY, maxY, zoom, minMaxY);
         java.util.List<NTxFunctionPlotInfo> plotDefinitions = (List<NTxFunctionPlotInfo>) p.getUserObject("def").orNull();
 
