@@ -16,7 +16,7 @@ public abstract class NTxServiceListImpl<T> implements NTxDependencyLoadedListen
     public NTxServiceListImpl(Class<T> serviceType, DefaultNTxEngine engine) {
         this.engine = engine;
         this.serviceType = serviceType;
-        engine.addNTxDependencyLoadedListener(this);
+        engine.addDependencyLoadedListener(this);
     }
 
     public void build(NId[] dependencies){
