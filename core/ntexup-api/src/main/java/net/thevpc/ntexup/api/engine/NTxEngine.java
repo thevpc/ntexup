@@ -55,7 +55,7 @@ public interface NTxEngine {
 
     <S> List<S> loadServices(Class<S> serviceClass);
 
-    void addNTxDependencyLoadedListener(NTxDependencyLoadedListener listener);
+    void addDependencyLoadedListener(NTxDependencyLoadedListener listener);
 
     void dump();
 
