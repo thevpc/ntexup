@@ -22,11 +22,11 @@ public class NTxSourceBuilder implements NTxNodeBuilder {
                 .parseParam().matchesNamedPair("text-path").then()
                 .parseParam().matchesNamedPair(NTxPropName.VALUE,NTxPropName.FILE,NTxPropName.LANG).then()
                 .parseParam().matchesAnyNonPair().storeFirstMissingName(NTxPropName.VALUE).then()
-                .renderText().buildText(this::renderTextBuildText)
+                .renderText().buildText((text, options, p, rendererContext, builder) -> renderTextBuildText(text, options, p, rendererContext, builder))
         ;
     }
 
-    private void renderTextBuildText(String text, NTxTextOptions options, NTxNode p, NTxNodeRendererContext rendererContext, NTxTextRendererBuilder builder, NTxNodeBuilderContext buildContext) {
+    private void renderTextBuildText(String text, NTxTextOptions options, NTxNode p, NTxNodeRendererContext rendererContext, NTxTextRendererBuilder builder) {
         NTexts ttt = NTexts.of();
         NElement lng = p.getPropertyValue(NTxPropName.LANG).orNull();
         String lang = NTxValue.of(lng).asString().orNull();
