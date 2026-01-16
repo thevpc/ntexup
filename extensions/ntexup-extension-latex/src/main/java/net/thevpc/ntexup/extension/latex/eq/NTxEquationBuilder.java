@@ -4,7 +4,7 @@
  */
 package net.thevpc.ntexup.extension.latex.eq;
 
-import net.thevpc.ntexup.api.document.elem2d.NTxBounds2;
+import net.thevpc.ntexup.api.document.elem2d.NTxBounds2D;
 import net.thevpc.ntexup.api.document.elem2d.NTxDouble2;
 import net.thevpc.ntexup.api.document.node.NTxNode;
 import net.thevpc.ntexup.api.document.node.NTxNodeType;
@@ -44,7 +44,7 @@ public class NTxEquationBuilder implements NTxNodeBuilder {
                 .alias("equation")
                 .parseParam().matchesNamedPair(NTxPropName.VALUE,NTxPropName.FILE).then()
                 .parseParam().matchesAnyNonPair().storeFirstMissingName(NTxPropName.VALUE).then()
-                .renderComponent((rendererContext, builderContext1) -> renderMain(rendererContext, builderContext1))
+                .renderComponent(this::renderMain)
                 .renderText()
                 .buildText(this::buildText)
                 .parseTokens(this::parseTokens)
@@ -55,9 +55,9 @@ public class NTxEquationBuilder implements NTxNodeBuilder {
     }
 
 
-    public NTxSizeRequirements sizeRequirements(NTxNodeRendererContext rendererContext, NTxNodeBuilderContext builderContext) {
-        NTxBounds2 s = rendererContext.selfBounds();
-        NTxBounds2 bb = rendererContext.parentBounds();
+    public NTxSizeRequirements sizeRequirements(NTxNodeRendererContext rendererContext) {
+        NTxBounds2D s = rendererContext.selfBounds();
+        NTxBounds2D bb = rendererContext.parentBounds();
         return new NTxSizeRequirements(
                 s.getWidth(),
                 Math.max(bb.getWidth(), s.getWidth()),
@@ -68,7 +68,7 @@ public class NTxEquationBuilder implements NTxNodeBuilder {
         );
     }
 
-    public NTxBounds2 selfBounds(NTxNodeRendererContext rendererContext, NTxNodeBuilderContext builderContext) {
+    public NTxBounds2D selfBounds(NTxNodeRendererContext rendererContext) {
         NTxNode node = rendererContext.node();
         String message = NTxValue.ofProp(node, NTxPropName.VALUE).asStringOrName().orNull();
         if (message == null) {
@@ -77,7 +77,7 @@ public class NTxEquationBuilder implements NTxNodeBuilder {
         NTxGraphics g = rendererContext.graphics();
         String tex = NStringUtils.trim(message);
         if (tex.isEmpty()) {
-            return new NTxBounds2(rendererContext.parentBounds().getX(), rendererContext.parentBounds().getY(), 0.0, 0.0);
+            return new NTxBounds2D(rendererContext.parentBounds().getX(), rendererContext.parentBounds().getY(), 0.0, 0.0);
         } else {
             TeXFormula formula;
             try {
@@ -91,12 +91,12 @@ public class NTxEquationBuilder implements NTxNodeBuilder {
 
             // insert a border
             icon.setInsets(new Insets(0, 0, 0, 0));
-            return new NTxBounds2(rendererContext.parentBounds().getX(), rendererContext.parentBounds().getY(), icon.getIconWidth(), icon.getIconHeight());
+            return new NTxBounds2D(rendererContext.parentBounds().getX(), rendererContext.parentBounds().getY(), icon.getIconWidth(), icon.getIconHeight());
         }
     }
 
 
-    public void renderMain(NTxNodeRendererContext rendererContext, NTxNodeBuilderContext builderContext) {
+    public void renderMain(NTxNodeRendererContext rendererContext) {
         NTxNode node = rendererContext.node();
         NElement vElemExpr = node.getPropertyValue(NTxPropName.VALUE).orNull();
         NElement vElemValue = rendererContext.evalExpression(vElemExpr, node).orNull();
@@ -107,7 +107,7 @@ public class NTxEquationBuilder implements NTxNodeBuilder {
 
         String tex = NStringUtils.trim(rendererContext.engine().tools().trimBloc(text));
         if (tex.isEmpty()) {
-            NTxBounds2 selfBounds = rendererContext.selfBounds();
+            NTxBounds2D selfBounds = rendererContext.selfBounds();
             double x = selfBounds.getX();
             double y = selfBounds.getY();
             if (!rendererContext.isDry()) {
@@ -137,7 +137,7 @@ public class NTxEquationBuilder implements NTxNodeBuilder {
             // insert a border
             icon.setInsets(new Insets(0, 0, 0, 0));
 
-            NTxBounds2 selfBounds = rendererContext.selfBounds((NTxNode) node
+            NTxBounds2D selfBounds = rendererContext.selfBounds((NTxNode) node
                     , new NTxDouble2(icon.getIconWidth(), icon.getIconHeight())
                     , null
             );
@@ -159,7 +159,7 @@ public class NTxEquationBuilder implements NTxNodeBuilder {
         }
     }
 
-    private void buildText(String text, NTxTextOptions options, NTxNode p, NTxNodeRendererContext rendererContext, NTxTextRendererBuilder builder, NTxNodeBuilderContext buildContext) {
+    private void buildText(String text, NTxTextOptions options, NTxNode p, NTxNodeRendererContext rendererContext, NTxTextRendererBuilder builder) {
         if (!text.isEmpty()) {
             NTxRichTextToken r = new NTxRichTextToken(
                     NTxRichTextTokenType.IMAGE_PAINTER,
