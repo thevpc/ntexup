@@ -432,15 +432,15 @@ public class NTxValue {
         return children;
     }
 
-    public NOptional<NTxBounds2> asBounds2() {
-        if(element instanceof NTxBounds2) {
-            return  NOptional.of((NTxBounds2) element);
+    public NOptional<NTxBounds2D> asBounds2() {
+        if(element instanceof NTxBounds2D) {
+            return  NOptional.of((NTxBounds2D) element);
         }
         NOptional<double[]> d = asDoubleArrayOrDouble();
         if(d.isPresent()) {
             double[] arr = d.get();
             if(arr.length==4){
-                return NOptional.of(new NTxBounds2(arr[0], arr[1], arr[2], arr[3]));
+                return NOptional.of(new NTxBounds2D(arr[0], arr[1], arr[2], arr[3]));
             }
         }
         return NOptional.ofNamedEmpty("Bounds2 from " + element);
@@ -501,10 +501,10 @@ public class NTxValue {
                 }
                 case DOUBLE_QUOTED_STRING:
                 case SINGLE_QUOTED_STRING:
-                case ANTI_QUOTED_STRING:
+                case BACKTICK_STRING:
                 case TRIPLE_DOUBLE_QUOTED_STRING:
                 case TRIPLE_SINGLE_QUOTED_STRING:
-                case TRIPLE_ANTI_QUOTED_STRING:
+                case TRIPLE_BACKTICK_STRING:
                 case LINE_STRING:
                 case NAME: {
                     NTxValue h = NTxValue.of(element);
@@ -638,10 +638,10 @@ public class NTxValue {
                 }
                 case DOUBLE_QUOTED_STRING:
                 case SINGLE_QUOTED_STRING:
-                case ANTI_QUOTED_STRING:
+                case BACKTICK_STRING:
                 case TRIPLE_DOUBLE_QUOTED_STRING:
                 case TRIPLE_SINGLE_QUOTED_STRING:
-                case TRIPLE_ANTI_QUOTED_STRING:
+                case TRIPLE_BACKTICK_STRING:
                 case LINE_STRING:
                 case NAME: {
                     NTxValue h = NTxValue.of(element);
@@ -868,10 +868,10 @@ public class NTxValue {
                 }
                 case DOUBLE_QUOTED_STRING:
                 case SINGLE_QUOTED_STRING:
-                case ANTI_QUOTED_STRING:
+                case BACKTICK_STRING:
                 case TRIPLE_DOUBLE_QUOTED_STRING:
                 case TRIPLE_SINGLE_QUOTED_STRING:
-                case TRIPLE_ANTI_QUOTED_STRING:
+                case TRIPLE_BACKTICK_STRING:
                 case LINE_STRING: {
                     return NLiteral.of(te.asStringValue()).asBoolean();
                 }
@@ -1549,47 +1549,6 @@ public class NTxValue {
         }
     }
 
-    public NOptional<NTxPoint2D[][]> asPoint2DArray2Or1() {
-        if (element instanceof NTxPoint2D[][]) {
-            return NOptional.of((NTxPoint2D[][]) element);
-        }
-        if (element instanceof NTxPoint2D[]) {
-            NTxPoint2D[][] v = new NTxPoint2D[1][];
-            v[0] = (NTxPoint2D[]) element;
-            return NOptional.of(v);
-        }
-        if (element instanceof NElement) {
-            NElement te = (NElement) element;
-            if (te.isListContainer()) {
-                NArrayElement array = te.toArray().get();
-                if(array.isEmpty()) {
-                    return NOptional.of(new NTxPoint2D[0][0]);
-                }
-                if(array.get(0).get().isListContainer()) {
-                    NTxPoint2D[][] all=new NTxPoint2D[array.size()][];
-                    List<NElement> children = array.children();
-                    for (int i = 0; i < children.size(); i++) {
-                        NElement child = children.get(i);
-                        NOptional<NTxPoint2D[]> u = NTxValue.of(child).asPoint2DArray();
-                        if (u.isPresent()) {
-                            all[i]=u.get();
-                        } else {
-                            return NOptional.ofNamedEmpty("Point2DArray from " + child);
-                        }
-                    }
-                    return NOptional.of(all);
-                }
-                NOptional<NTxPoint2D[]> u = asPoint2DArray();
-                if(u.isPresent()) {
-                    NTxPoint2D[][] v = new NTxPoint2D[1][];
-                    v[0] = u.get();
-                    return NOptional.of(v);
-                }
-                return NOptional.ofNamedEmpty("Point2DArray from " + element);
-            }
-        }
-        return NOptional.ofNamedEmpty("Point2DArray from " + element);
-    }
 
     public NOptional<NTxPoint2D[]> asPoint2DArray() {
         NOptional<NTxDouble2[]> u = asDouble2Array();
