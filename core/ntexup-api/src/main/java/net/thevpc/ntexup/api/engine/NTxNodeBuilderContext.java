@@ -1,6 +1,6 @@
 package net.thevpc.ntexup.api.engine;
 
-import net.thevpc.ntexup.api.document.elem2d.NTxBounds2;
+import net.thevpc.ntexup.api.document.elem2d.NTxBounds2D;
 import net.thevpc.ntexup.api.document.node.NTxItem;
 import net.thevpc.ntexup.api.document.node.NTxNode;
 import net.thevpc.ntexup.api.document.style.NTxProp;
@@ -23,6 +23,7 @@ import java.util.function.Predicate;
 public interface NTxNodeBuilderContext {
     String id();
 
+    NTxNodeBuilderContext ids(String ...id);
     NTxNodeBuilderContext id(String id);
 
     NTxNodeBuilderContext alias(String... aliases);
@@ -138,15 +139,15 @@ public interface NTxNodeBuilderContext {
     }
 
     interface RenderAction {
-        void renderMain(NTxNodeRendererContext rendererContext, NTxNodeBuilderContext buildContext);
+        void renderMain(NTxNodeRendererContext rendererContext);
     }
 
     interface RenderTextBuildAction {
-        void buildText(String text, NTxTextOptions options, NTxNode p, NTxNodeRendererContext rendererContext, NTxTextRendererBuilder builder, NTxNodeBuilderContext buildContext);
+        void buildText(String text, NTxTextOptions options, NTxNode p, NTxNodeRendererContext rendererContext, NTxTextRendererBuilder builder);
     }
 
     interface RenderConvertAction {
-        NTxNode convert(NTxNode p, NTxNodeRendererContext ctx, NTxNodeBuilderContext buildContext);
+        NTxNode convert(NTxNode p, NTxNodeRendererContext ctx);
     }
 
     interface RenderTextParseTokensAction {
@@ -154,11 +155,11 @@ public interface NTxNodeBuilderContext {
     }
 
     interface SizeRequirementsAction {
-        NTxSizeRequirements sizeRequirements(NTxNodeRendererContext rendererContext, NTxNodeBuilderContext buildContext);
+        NTxSizeRequirements sizeRequirements(NTxNodeRendererContext rendererContext);
     }
 
     interface SelfBoundsAction {
-        NTxBounds2 selfBounds(NTxNodeRendererContext rendererContext, NTxNodeBuilderContext buildContext);
+        NTxBounds2D selfBounds(NTxNodeRendererContext rendererContext);
     }
 
     interface ProcessParamAction {
