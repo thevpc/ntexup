@@ -136,10 +136,10 @@ public class NTxGraphicsImpl implements NTxGraphics {
             case NAME:
             case DOUBLE_QUOTED_STRING:
             case SINGLE_QUOTED_STRING:
-            case ANTI_QUOTED_STRING:
+            case BACKTICK_STRING:
             case TRIPLE_DOUBLE_QUOTED_STRING:
             case TRIPLE_SINGLE_QUOTED_STRING:
-            case TRIPLE_ANTI_QUOTED_STRING:
+            case TRIPLE_BACKTICK_STRING:
             case LINE_STRING:
             {
                 return StrokeFactory.createStroke(o.asStringOrName().get(), e, this);
@@ -361,7 +361,7 @@ public class NTxGraphicsImpl implements NTxGraphics {
     }
 
     @Override
-    public void fillRect(NTxBounds2 a) {
+    public void fillRect(NTxBounds2D a) {
         fillRect(
                 NTxUtils.doubleOf(a.getMinX()), NTxUtils.intOf(a.getMinY()),
                 NTxUtils.intOf(a.getWidth()), NTxUtils.intOf(a.getHeight())
@@ -369,7 +369,7 @@ public class NTxGraphicsImpl implements NTxGraphics {
     }
 
     @Override
-    public void drawRect(NTxBounds2 a) {
+    public void drawRect(NTxBounds2D a) {
         drawRect(
                 NTxUtils.doubleOf(a.getMinX()), NTxUtils.doubleOf(a.getMinY()),
                 NTxUtils.doubleOf(a.getWidth()), NTxUtils.doubleOf(a.getHeight())
