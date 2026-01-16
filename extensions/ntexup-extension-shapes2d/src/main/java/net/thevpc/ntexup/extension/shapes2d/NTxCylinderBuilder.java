@@ -1,6 +1,6 @@
 package net.thevpc.ntexup.extension.shapes2d;
 
-import net.thevpc.ntexup.api.document.elem2d.NTxBounds2;
+import net.thevpc.ntexup.api.document.elem2d.NTxBounds2D;
 import net.thevpc.ntexup.api.document.elem2d.NTxPoint2D;
 import net.thevpc.ntexup.api.document.elem2d.NTxShadow;
 import net.thevpc.ntexup.api.document.node.NTxNode;
@@ -37,13 +37,13 @@ public class NTxCylinderBuilder implements NTxNodeBuilder {
 
 
 
-    public void render(NTxNodeRendererContext rendererContext, NTxNodeBuilderContext builderContext) {
+    public void render(NTxNodeRendererContext rendererContext) {
         NTxNode node=rendererContext.node();
         rendererContext = rendererContext.withDefaultStyles(defaultStyles);
         NOptional<NTxShadow> shadowOptional = rendererContext.readStyleAsShadow(node, NTxPropName.SHADOW);
 
 
-        NTxBounds2 b = rendererContext.selfBounds(node, null, null);
+        NTxBounds2D b = rendererContext.selfBounds(node, null, null);
         double x = b.getX();
         double y = b.getY();
         double width = b.getWidth();
