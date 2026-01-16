@@ -1,6 +1,6 @@
 package net.thevpc.ntexup.engine.renderer.text;
 
-import net.thevpc.ntexup.api.document.elem2d.NTxBounds2;
+import net.thevpc.ntexup.api.document.elem2d.NTxBounds2D;
 import net.thevpc.ntexup.api.document.elem2d.NTxDouble2;
 import net.thevpc.ntexup.api.document.node.*;
 import net.thevpc.ntexup.api.document.style.*;
@@ -27,8 +27,8 @@ public abstract class NTxTextBaseRenderer extends NTxNodeRendererBase {
 
     @Override
     public NTxSizeRequirements sizeRequirements(NTxNodeRendererContext ctx) {
-        NTxBounds2 s = ctx.selfBounds();
-        NTxBounds2 bb = ctx.parentBounds();
+        NTxBounds2D s = ctx.selfBounds();
+        NTxBounds2D bb = ctx.parentBounds();
         return new NTxSizeRequirements(
                 s.getWidth(),
                 Math.max(bb.getWidth(), s.getWidth()),
@@ -39,15 +39,15 @@ public abstract class NTxTextBaseRenderer extends NTxNodeRendererBase {
         );
     }
 
-    public NTxBounds2 bgBounds(NTxNode p, NTxNodeRendererContext ctx) {
+    public NTxBounds2D bgBounds(NTxNode p, NTxNodeRendererContext ctx) {
         return ctx.selfBounds(p, null, null);
     }
 
-    public NTxBounds2 selfBounds(NTxNodeRendererContext ctx) {
+    public NTxBounds2D selfBounds(NTxNodeRendererContext ctx) {
         return defaultSelfBounds(ctx);
     }
 
-    public NTxBounds2 defaultSelfBounds(NTxNodeRendererContext ctx) {
+    public NTxBounds2D defaultSelfBounds(NTxNodeRendererContext ctx) {
         Cache0 renderInfo = renderInfo0(ctx);
         return NTxValueByName.selfBounds(ctx.node(), new NTxDouble2(renderInfo.computedBound.getWidth(), renderInfo.computedBound.getHeight()), null, ctx);
     }
@@ -56,12 +56,12 @@ public abstract class NTxTextBaseRenderer extends NTxNodeRendererBase {
 
     static class Cache0 {
         NTxTextRendererBuilder helper;
-        NTxBounds2 computedBound;
+        NTxBounds2D computedBound;
     }
     static class Cache {
-        NTxBounds2 bgBounds0;
-        NTxBounds2 bgBounds;
-        NTxBounds2 selfBounds;
+        NTxBounds2D bgBounds0;
+        NTxBounds2D bgBounds;
+        NTxBounds2D selfBounds;
     }
     private Cache0 renderInfo0(NTxNodeRendererContext ctx){
         return ctx.node().getAndSetRenderCache(Cache0.class,ctx.isSomeChange(),()->{
@@ -71,7 +71,7 @@ public abstract class NTxTextBaseRenderer extends NTxNodeRendererBase {
             return ri;
         }).get();
     }
-    private Cache renderInfo(NTxNode p, NTxNodeRendererContext ctx,NTxBounds2 selfBounds0){
+    private Cache renderInfo(NTxNode p, NTxNodeRendererContext ctx, NTxBounds2D selfBounds0){
         return p.getAndSetRenderCache(Cache.class,ctx.isSomeChange(),()->{
             Cache ri = new Cache();
             ri.bgBounds0 = bgBounds(p, ctx);
