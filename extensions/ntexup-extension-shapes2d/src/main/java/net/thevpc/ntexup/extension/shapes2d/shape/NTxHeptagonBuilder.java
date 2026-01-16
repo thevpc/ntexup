@@ -15,7 +15,7 @@ public class NTxHeptagonBuilder implements NTxNodeBuilder {
                 .renderComponent(this::render);
     }
 
-    public void render(NTxNodeRendererContext rendererContext, NTxNodeBuilderContext buildContext) {
+    public void render(NTxNodeRendererContext rendererContext) {
         NTxPolygonHelper.renderPointsCount(7, rendererContext, defaultStyles);
     }
 
