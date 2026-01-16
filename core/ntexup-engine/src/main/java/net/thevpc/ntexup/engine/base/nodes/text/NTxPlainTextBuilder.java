@@ -33,7 +33,7 @@ public class NTxPlainTextBuilder implements NTxNodeBuilder {
         ;
     }
 
-    private void renderTextBuildText(String text, NTxTextOptions options, NTxNode p, NTxNodeRendererContext rendererContext, NTxTextRendererBuilder builder, NTxNodeBuilderContext buildContext) {
+    private void renderTextBuildText(String text, NTxTextOptions options, NTxNode p, NTxNodeRendererContext rendererContext, NTxTextRendererBuilder builder) {
 //        Paint fg = rendererContext.getForegroundColor(p,true);
         NElement d = p.getPropertyValue(NTxPropName.VALUE).orElse(NElement.ofString(""));
 
