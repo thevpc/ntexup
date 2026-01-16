@@ -44,7 +44,7 @@ public class NTxPlot2DBuilder implements NTxNodeBuilder {
     }
 
 
-    public void renderMain(NTxNodeRendererContext rendererContext, NTxNodeBuilderContext builderContext) {
+    public void renderMain(NTxNodeRendererContext rendererContext) {
         NTxNode node=rendererContext.node();
         NTxDrawContext drawContext = NTxDrawContextRenderCompiler.compile(node, rendererContext);
         NTxJFreeChartHelper.drawCurves(node, rendererContext, drawContext);
