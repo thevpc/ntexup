@@ -16,6 +16,8 @@
         <module>core/ntexup-api</module>
         <module>core/ntexup-engine</module>
         <module>test/ntexup-examples</module>
+        <module>lib/ntexup-lib-geometry2d</module>
+        <module>lib/ntexup-lib-geometry3d</module>
         <module>extensions/ntexup-extension-plantuml</module>
         <module>extensions/ntexup-extension-animated-gif</module>
         <module>extensions/ntexup-extension-svg</module>
