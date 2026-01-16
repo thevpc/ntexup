@@ -16,7 +16,7 @@ public class NTxPentagonBuilder implements NTxNodeBuilder {
                 .renderComponent(this::render);
     }
 
-    public void render(NTxNodeRendererContext rendererContext, NTxNodeBuilderContext buildContext) {
+    public void render(NTxNodeRendererContext rendererContext) {
         NTxPolygonHelper.renderPointsCount(5, rendererContext, defaultStyles);
     }
 
