@@ -1,7 +1,7 @@
 package net.thevpc.ntexup.extension.plantuml;
 
 import net.sourceforge.plantuml.SourceStringReader;
-import net.thevpc.ntexup.api.document.elem2d.NTxBounds2;
+import net.thevpc.ntexup.api.document.elem2d.NTxBounds2D;
 import net.thevpc.ntexup.api.document.style.NTxProperties;
 import net.thevpc.ntexup.api.eval.NTxValue;
 import net.thevpc.ntexup.api.extension.NTxNodeBuilder;
@@ -48,12 +48,12 @@ public abstract class PlantUmlBuilderBase implements NTxNodeBuilder {
                 .alias(aliases)
                 .parseParam().matchesNamedPair(NTxPropName.VALUE,NTxPropName.FILE).then()
                 .parseParam().matchesAnyNonPair().storeFirstMissingName(NTxPropName.VALUE).then()
-                .renderComponent((ctx, builderContext1) -> renderMain(ctx, builderContext1))
+                .renderComponent(this::renderMain)
         ;
     }
 
 
-    public void renderMain(NTxNodeRendererContext rendererContext, NTxNodeBuilderContext builderContext) {
+    public void renderMain(NTxNodeRendererContext rendererContext) {
         NTxNode node = rendererContext.node();
         rendererContext = rendererContext.withDefaultStyles(defaultStyles);
         String txt = NTxValue.of(node.getPropertyValue(NTxPropName.VALUE).orNull()).asStringOrName().orNull();
@@ -62,7 +62,7 @@ public abstract class PlantUmlBuilderBase implements NTxNodeBuilder {
         }
         String mode = NTxUtils.uid(this.mode);
         NTxGraphics g = rendererContext.graphics();
-        NTxBounds2 b = rendererContext.selfBounds();
+        NTxBounds2D b = rendererContext.selfBounds();
         double x = b.getX();
         double y = b.getY();
         BufferedImage image = null;
@@ -139,7 +139,7 @@ public abstract class PlantUmlBuilderBase implements NTxNodeBuilder {
         }
     }
 
-    private String prepare(String type, String txt, NTxBounds2 b) {
+    private String prepare(String type, String txt, NTxBounds2D b) {
         return "@start" + type + "\n"
                 + "scale " + (b.getWidth().intValue()) + "*" + (b.getHeight().intValue()) + "\n"
                 + "skinparam backgroundcolor transparent\n"
