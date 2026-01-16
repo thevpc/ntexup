@@ -13,11 +13,11 @@ public class NTxTrapezoidBuilder implements NTxNodeBuilder {
     @Override
     public void build(NTxNodeBuilderContext builderContext) {
         builderContext.id(NTxNodeType.TRAPEZOID)
-                .renderComponent((rendererContext, builderContext1) -> renderMain(rendererContext, builderContext1))
+                .renderComponent(this::renderMain)
         ;
     }
 
-    public void renderMain(NTxNodeRendererContext rendererContext, NTxNodeBuilderContext builderContext) {
+    public void renderMain(NTxNodeRendererContext rendererContext) {
         rendererContext = rendererContext.withDefaultStyles(defaultStyles);
         double x1 = 20;
         double x2 = 20;
