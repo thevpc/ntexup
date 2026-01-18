@@ -180,8 +180,8 @@ public class NTxDocStreamParser {
                 return child;
             }
             case OPERATOR: {
-                NOperatorElement op = child.asOperator().get();
-                NOperatorElementBuilder opb = op.builder();
+                NExprElement op = child.asOperator().get();
+                NExprElementBuilder opb = op.builder();
                 NElement first = opb.first().orNull();
                 boolean cc = false;
                 if (first != null) {
