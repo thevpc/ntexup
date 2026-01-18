@@ -94,11 +94,11 @@ public class DefaultNTxDocumentItemParserFactory
 
         switch (c.type().typeGroup()) {
             case OPERATOR: {
-                switch (((NOperatorElement)c).symbol()) {
+                switch (((NExprElement)c).operatorSymbol()) {
                     case EQ: {
                         NBinaryOperatorElement p = c.asBinaryOperator().get();
-                        NElement k = p.first();
-                        NElement v = p.second();
+                        NElement k = p.firstOperand();
+                        NElement v = p.secondOperand();
                         NTxValue kh = NTxValue.of(k);
                         if (k.isName()) {
                             NOptional<String> nn = kh.asStringOrName();
@@ -114,8 +114,8 @@ public class DefaultNTxDocumentItemParserFactory
                     }
                     case COLON_EQ: {
                         NBinaryOperatorElement p = c.asBinaryOperator().get();
-                        NElement k = p.first();
-                        NElement v = p.second();
+                        NElement k = p.firstOperand();
+                        NElement v = p.secondOperand();
                         NTxValue kh = NTxValue.of(k);
                         if (k.isName()) {
                             NOptional<String> nn = kh.asStringOrName();
@@ -130,7 +130,7 @@ public class DefaultNTxDocumentItemParserFactory
                         }
                     }
                 }
-                NOptional<NTxNodeParser> ff = engine.nodeTypeParser(((NOperatorElement)c).symbol().lexeme());
+                NOptional<NTxNodeParser> ff = engine.nodeTypeParser(((NExprElement)c).operatorSymbol().lexeme());
                 if (ff.isPresent()) {
                     NScoredCallable<NTxItem> uu = ff.get().parseNode(context);
                     if (NScorable.isValidScore(uu, NScorableContext.of())) {
