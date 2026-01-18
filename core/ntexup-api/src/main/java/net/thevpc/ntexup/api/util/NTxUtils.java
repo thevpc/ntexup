@@ -451,16 +451,16 @@ public class NTxUtils {
     public static NElement removeCompilerDeclarationPathAnnotations(NElement yy) {
         return yy.transform(new NElementTransform() {
             @Override
-            public NElement[] preTransform(NElement element) {
+            public List<NElement> preTransform(NElementPath path,NElement element) {
                 List<NElementAnnotation> oldAnn = element.annotations();
                 List<NElementAnnotation> a = oldAnn.stream().filter(x -> !COMPILER_DECLARATION_PATH.equals(x.name())).collect(Collectors.toList());
                 if (a.size() != oldAnn.size()) {
                     NElementBuilder b = element.builder().clearAnnotations().addAnnotations(a);
-                    return new NElement[]{b.build()};
+                    return Collections.singletonList(b.build());
                 }
-                return new NElement[]{element};
+                return Collections.singletonList(element);
             }
-        })[0];
+        }).get(0);
     }
 
     public static NElement addCompilerDeclarationPathAnnotations(NElement yy, String source) {
@@ -469,18 +469,18 @@ public class NTxUtils {
         }
         return yy.transform(new NElementTransform() {
             @Override
-            public NElement[] postTransform(NElement element) {
+            public List<NElement> postTransform(NElementPath path,NElement element) {
                 if (element.isString()) {
                     List<NElementAnnotation> oldAnn = element.annotations();
                     List<NElementAnnotation> a = oldAnn.stream().filter(x -> !COMPILER_DECLARATION_PATH.equals(x.name())).collect(Collectors.toList());
                     if (a.size() == oldAnn.size()) {
                         NElementBuilder b = element.builder().addAnnotation(COMPILER_DECLARATION_PATH, NElement.ofString(source)).addAnnotations(a);
-                        return new NElement[]{b.build()};
+                        return Collections.singletonList(b.build());
                     }
                 }
-                return new NElement[]{element};
+                return Collections.singletonList(element);
             }
-        })[0];
+        }).get(0);
     }
 
     public static String snippet(NElement yy) {
