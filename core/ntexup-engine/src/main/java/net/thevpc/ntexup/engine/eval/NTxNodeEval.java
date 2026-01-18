@@ -171,17 +171,25 @@ public class NTxNodeEval implements NTxObjectEvalContext {
                             .stream().map(x -> eval(x, node)).collect(Collectors.toList());
                     return ff.builder().setParams(r).build();
                 }
+                case ERROR: {
+                    return elementExpr;
+                }
+                case FLAT_EXPR: {
+                    NFlatExprElement ff1 = ((NFlatExprElement) elementExpr);
+                    NElement reshaped = ff1.reshape(NExprElementReshaper.ofJavaLike());
+                    return eval(reshaped, node);
+                }
                 case BINARY_OPERATOR: {
-                    NOperatorElement ff1 = ((NOperatorElement) elementExpr);
-                    switch (ff1.symbol()) {
+                    NBinaryOperatorElement ff1 = ((NBinaryOperatorElement) elementExpr);
+                    switch (ff1.operatorSymbol()) {
                         case MINUS: {
                             NBinaryOperatorElement ff = ((NBinaryOperatorElement) elementExpr);
                             if (ff.isBinaryOperator()) {
-                                NElement a = eval(ff.first(), node);
-                                NElement b = eval(ff.second(), node);
+                                NElement a = eval(ff.firstOperand(), node);
+                                NElement b = eval(ff.secondOperand(), node);
                                 return NTxEvalUtils.substruct(a, b);
                             } else if (ff.isUnaryOperator()) {
-                                NElement a = ff.first();
+                                NElement a = ff.firstOperand();
                                 return NTxEvalUtils.negate(a);
                             } else {
                                 return ff;
@@ -190,9 +198,9 @@ public class NTxNodeEval implements NTxObjectEvalContext {
                         case EQ2: {
                             NBinaryOperatorElement ff = ((NBinaryOperatorElement) elementExpr);
                             if (ff.isBinaryOperator()) {
-                                NElement a = eval(ff.first(), node);
-                                NElement b = eval(ff.second(), node);
-                                return NTxEvalUtils.eq(a,b);
+                                NElement a = eval(ff.firstOperand(), node);
+                                NElement b = eval(ff.secondOperand(), node);
+                                return NTxEvalUtils.eq(a, b);
                             } else {
                                 return ff;
                             }
@@ -200,9 +208,9 @@ public class NTxNodeEval implements NTxObjectEvalContext {
                         case REM: {
                             NBinaryOperatorElement ff = ((NBinaryOperatorElement) elementExpr);
                             if (ff.isBinaryOperator()) {
-                                NElement a = eval(ff.first(), node);
-                                NElement b = eval(ff.second(), node);
-                                return NTxEvalUtils.remainder2(a,b);
+                                NElement a = eval(ff.firstOperand(), node);
+                                NElement b = eval(ff.secondOperand(), node);
+                                return NTxEvalUtils.remainder2(a, b);
                             } else {
                                 return ff;
                             }
@@ -210,11 +218,11 @@ public class NTxNodeEval implements NTxObjectEvalContext {
                         case PLUS: {
                             NBinaryOperatorElement ff = ((NBinaryOperatorElement) elementExpr);
                             if (ff.isBinaryOperator()) {
-                                NElement a = eval(ff.first(), node);
-                                NElement b = eval(ff.second(), node);
+                                NElement a = eval(ff.firstOperand(), node);
+                                NElement b = eval(ff.secondOperand(), node);
                                 return NTxEvalUtils.add(a, b);
                             } else if (ff.isUnaryOperator()) {
-                                NElement a = eval(ff.first(), node);
+                                NElement a = eval(ff.firstOperand(), node);
                                 return a;
                             } else {
                                 return ff;
@@ -223,8 +231,8 @@ public class NTxNodeEval implements NTxObjectEvalContext {
                         case MUL: {
                             NBinaryOperatorElement ff = ((NBinaryOperatorElement) elementExpr);
                             if (ff.isBinaryOperator()) {
-                                NElement a = eval(ff.first(), node);
-                                NElement b = eval(ff.second(), node);
+                                NElement a = eval(ff.firstOperand(), node);
+                                NElement b = eval(ff.secondOperand(), node);
                                 return NTxEvalUtils.mul(a, b, MathContext.DECIMAL128);
                             } else {
                                 return ff;
@@ -233,8 +241,8 @@ public class NTxNodeEval implements NTxObjectEvalContext {
                         case DIV: {
                             NBinaryOperatorElement ff = ((NBinaryOperatorElement) elementExpr);
                             if (ff.isBinaryOperator()) {
-                                NElement a = eval(ff.first(), node);
-                                NElement b = eval(ff.second(), node);
+                                NElement a = eval(ff.firstOperand(), node);
+                                NElement b = eval(ff.secondOperand(), node);
                                 return NTxEvalUtils.div(a, b, MathContext.DECIMAL128);
                             } else {
                                 return ff;
@@ -289,8 +297,7 @@ public class NTxNodeEval implements NTxObjectEvalContext {
                 }
                 case PARAMETRIZED_OBJECT:
                 case OBJECT:
-                case NAMED_OBJECT:
-                {
+                case NAMED_OBJECT: {
                     // this is a complex object
                     break;
                 }
@@ -311,10 +318,10 @@ public class NTxNodeEval implements NTxObjectEvalContext {
 
     private NElement[] interpretAsArrayItems_interval(NTxNode node, NElement c) {
         if (c.type() == NElementType.BINARY_OPERATOR
-                && ((NOperatorElement)c).symbol()==NOperatorSymbol.MINUS_GT && c.isBinaryOperator()) {
+                && ((NExprElement) c).operatorSymbol() == NOperatorSymbol.MINUS_GT && c.isBinaryOperator()) {
             NBinaryOperatorElement g = c.asBinaryOperator().get();
-            NElement f = eval(g.first(), node);
-            NElement s = eval(g.second(), node);
+            NElement f = eval(g.firstOperand(), node);
+            NElement s = eval(g.secondOperand(), node);
             return NTxEvalUtils.evalInterval(f, s);
         }
         return null;
@@ -328,8 +335,8 @@ public class NTxNodeEval implements NTxObjectEvalContext {
                 NOptional<NElement> v = nd.getPropertyValue(propertyName);
                 if (v.isPresent()) {
                     NElement vv = v.get();
-                    String vvn=vv.asStringValue().orNull();
-                    if(vvn!=null && vvn.equals(propertyValue)){
+                    String vvn = vv.asStringValue().orNull();
+                    if (vvn != null && vvn.equals(propertyValue)) {
                         return NOptional.of(nd);
                     }
                 }
