@@ -1,0 +1,99 @@
+import(
+    "net.thevpc.ntexup:ntexup-extension-common-functions:0.8.9.0"
+    "net.thevpc.ntexup:ntexup-extension-plantuml:0.8.9.0"
+    "net.thevpc.ntexup:ntexup-extension-animated-gif:0.8.9.0"
+    "net.thevpc.ntexup:ntexup-extension-svg:0.8.9.0"
+    "net.thevpc.ntexup:ntexup-extension-shapes2d:0.8.9.0"
+    "net.thevpc.ntexup:ntexup-extension-shapes3d:0.8.9.0"
+    "net.thevpc.ntexup:ntexup-extension-plot2d:0.8.9.0"
+    "net.thevpc.ntexup:ntexup-extension-presenters:0.8.9.0"
+    "net.thevpc.ntexup:ntexup-extension-latex:0.8.9.0"
+)
+include ("subfolder")
+
+s=5_mm   // source width long x
+a=100_mm // box width long x
+b=100_mm // box width long y
+t=2_mm   // copper thickness
+l=45_mm   // copper thickness
+w=10_mm  // line width
+W=50_mm  // line width
+
+page{
+    styles:{
+        text:{ color:darkBlue }
+        line:{ color:black }
+        .substrate:{ background:"#00468B" }
+        .substrate:{ background:"#00468B" }
+        .copper:{ background:"#cb6d51" }
+        .source:{ background:yellow }
+        .dim-arrow:{
+            start-arrow: simple()
+            end-arrow: simple()
+            stroke: basic(dashed)
+        }
+    }
+        rectangle(background:white)
+        scene3d(
+            id: antenna-a
+            draw-contour,
+            transform:{
+//                    rotate(from:(0,0,0),to:(100,0,0),angle:-30)
+                translate(10,10,0)
+                scale:0.9
+            },
+            real-size:(200_mm,200_mm,200_cmm)
+            real-origin:(0_mm,-100_mm,-100_cmm)
+            size:(100,100) // 100% of the allocated 2D area from parent, aka all of it
+        ){
+            box(size:(100,100,100)) // enclosing box, 100% of the allocated 3D area
+            @copper    box(real-size:(a,b,h),real-position:(0,-b/2,-h-t)) // ground
+            @substrate box(real-size:(a,b,t),real-position:(0,-b/2,-h)) // substrate
+            @antenna @copper box(real-size:(l,w,t),real-position:(s,-w/2,0)) // line
+            @antenna @copper box(real-size:(W,W,t),real-position:(l+s,-W/2,0)) // patch
+            @source    box(real-size:(s,w,2),real-position:(0,-w/2,0)) // source
+        }
+
+        @dim-arrow line((18,29),(19,34)){
+            text("w", font-size:3%P , origin:(50,50), position:(50,-2%P)) // aka 50% of the line and -2% of the page
+        }
+
+}
+
+page{
+    hresult=hadruwaves-mom-solver(
+        geometry:antenna-a
+        box-walls: EEEE // all Electric walls
+        mode-functions-count: 1000 // all Electric walls
+        test-functions: {
+            sine-functions(geometry-selector:"@antenna", count:6)
+            rooftops(position:(l-s,-w/2),size:(2*s,w),count:1)
+        },
+        compute:{
+            S11:sweepFrequency(from:2.3_GHz,to 2.5_GHz, count:10)
+        }
+    )
+    oemsresult=open-ems-solver(
+        // will spwn a docker
+        run: docker(image:"openems#0.2.3")
+        geometry:antenna-a
+        compute:{
+            S11:sweepFrequency(from:2.3_GHz,to 2.5_GHz, count:10)
+        }
+    )
+    plot2d(
+        values: [
+                    hresult["S11"]
+                    oemsresult["S11"]
+                ]
+        as:curve
+        titles: [
+            "Hadruwaves S11"
+            "OpenEMS S11"
+        ]
+        xdomain: result["S11_frequencies"]
+    )
+}
+include ("antenna-b.ntx")
+
+
