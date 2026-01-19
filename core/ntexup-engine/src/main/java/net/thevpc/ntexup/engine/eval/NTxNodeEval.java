@@ -171,7 +171,7 @@ public class NTxNodeEval implements NTxObjectEvalContext {
                             .stream().map(x -> eval(x, node)).collect(Collectors.toList());
                     return ff.builder().setParams(r).build();
                 }
-                case ERROR: {
+                case EMPTY: {
                     return elementExpr;
                 }
                 case FLAT_EXPR: {
@@ -317,8 +317,8 @@ public class NTxNodeEval implements NTxObjectEvalContext {
     }
 
     private NElement[] interpretAsArrayItems_interval(NTxNode node, NElement c) {
-        if (c.type() == NElementType.BINARY_OPERATOR
-                && ((NExprElement) c).operatorSymbol() == NOperatorSymbol.MINUS_GT && c.isBinaryOperator()) {
+        if (c.isBinaryOperator()
+                && c.asBinaryOperator().get().operatorSymbol() == NOperatorSymbol.MINUS_GT) {
             NBinaryOperatorElement g = c.asBinaryOperator().get();
             NElement f = eval(g.firstOperand(), node);
             NElement s = eval(g.secondOperand(), node);
