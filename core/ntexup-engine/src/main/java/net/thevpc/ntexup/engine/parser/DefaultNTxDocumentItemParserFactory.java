@@ -42,8 +42,9 @@ public class DefaultNTxDocumentItemParserFactory
         if (c.annotations().stream().anyMatch(x -> NTxNodeType.CTRL_DEFINE.equals(x.name()))) {
             //this is a node definition
             if (c.isAnyObject() || c.isNamed()) {
+                NElement finalC1 = c;
                 return NScoredCallable.ofValid(() -> {
-                    NObjectElement object = c.asObject().get();
+                    NObjectElement object = finalC1.asObject().get();
                     String templateName = object.name().get();
                     List<NTxNodeDefParam> params;
                     if (object.isParametrized()) {
@@ -91,10 +92,13 @@ public class DefaultNTxDocumentItemParserFactory
                 return _invalidSupport(NMsg.ofC("invalid defineNode syntax, expected @define <NAME>(...){....}"), context);
             }
         }
-
-        switch (c.type().typeGroup()) {
-            case OPERATOR: {
-                switch (((NExprElement)c).operatorSymbol()) {
+        if(c.type()==NElementType.FLAT_EXPR){
+            c=c.asFlatExpression().get().reshape(NExprElementReshaper.ofJavaLike());
+        }
+        switch (c.type()) {
+            case BINARY_OPERATOR:{
+                NBinaryOperatorElement bo = c.asBinaryOperator().get();
+                switch (bo.operatorSymbol()) {
                     case EQ: {
                         NBinaryOperatorElement p = c.asBinaryOperator().get();
                         NElement k = p.firstOperand();
@@ -130,7 +134,7 @@ public class DefaultNTxDocumentItemParserFactory
                         }
                     }
                 }
-                NOptional<NTxNodeParser> ff = engine.nodeTypeParser(((NExprElement)c).operatorSymbol().lexeme());
+                NOptional<NTxNodeParser> ff = engine.nodeTypeParser(bo.operatorSymbol().lexeme());
                 if (ff.isPresent()) {
                     NScoredCallable<NTxItem> uu = ff.get().parseNode(context);
                     if (NScorable.isValidScore(uu, NScorableContext.of())) {
@@ -139,55 +143,50 @@ public class DefaultNTxDocumentItemParserFactory
                 }
                 break;
             }
-            case CONTAINER: {
-                switch (c.type()) {
-                    case OBJECT:
-                    case ARRAY: {
-                        return parseNoNameBloc(context);
-                    }
-                    case UPLET: {
-                        NTxNodeParser p = engine.nodeTypeParser(NTxNodeType.TEXT).orNull();
-                        return p.parseNode(context);
-                    }
-                    case NAMED_PARAMETRIZED_OBJECT:
-                    case NAMED_OBJECT:
-                    case NAMED_UPLET:
-                    case NAMED_PARAMETRIZED_ARRAY:
-                    case NAMED_ARRAY: {
-                        NTxValue ee = NTxValue.of(c);
-                        String uid = NTxUtils.uid(ee.name());
-                        NTxNodeParser p = engine.nodeTypeParser(uid).orNull();
-                        if (p != null) {
-                            return p.parseNode(context);
+            case OBJECT:
+            case ARRAY: {
+                return parseNoNameBloc(context);
+            }
+            case UPLET: {
+                NTxNodeParser p = engine.nodeTypeParser(NTxNodeType.TEXT).orNull();
+                return p.parseNode(context);
+            }
+            case NAMED_PARAMETRIZED_OBJECT:
+            case NAMED_OBJECT:
+            case NAMED_UPLET:
+            case NAMED_PARAMETRIZED_ARRAY:
+            case NAMED_ARRAY: {
+                NTxValue ee = NTxValue.of(c);
+                String uid = NTxUtils.uid(ee.name());
+                NTxNodeParser p = engine.nodeTypeParser(uid).orNull();
+                if (p != null) {
+                    return p.parseNode(context);
+                }
+                if (c.isNamedUplet() || c.isAnyObject()) {
+                    NElement finalC2 = c;
+                    return NScoredCallable.ofValid(() -> createCtrlNodeCall(finalC2, context));
+                }
+                return _invalidSupport(NMsg.ofC("[%s] unable to resolve node : %s", NTxUtils.shortName(context.source()), NTxUtils.snippet(c)), context);
+            }
+            case PAIR: {
+                if (c.isNamedPair()) {
+                    NPairElement p = c.asPair().get();
+                    String name = p.key().asStringValue().get();
+                    NOptional<NTxNodeParser> ff = engine.nodeTypeParser(name);
+                    if (ff.isPresent()) {
+                        NScoredCallable<NTxItem> uu = ff.get().parseNode(context);
+                        if (NScorable.isValidScore(uu, NScorableContext.of())) {
+                            return uu;
                         }
-                        if (c.isNamedUplet() || c.isAnyObject()) {
-                            return NScoredCallable.ofValid(() -> createCtrlNodeCall(c, context));
-                        }
-                        return _invalidSupport(NMsg.ofC("[%s] unable to resolve node : %s", NTxUtils.shortName(context.source()), NTxUtils.snippet(c)), context);
-                    }
-                    case PAIR: {
-                        if (c.isNamedPair()) {
-                            NPairElement p = c.asPair().get();
-                            String name = p.key().asStringValue().get();
-                            NOptional<NTxNodeParser> ff = engine.nodeTypeParser(name);
-                            if (ff.isPresent()) {
-                                NScoredCallable<NTxItem> uu = ff.get().parseNode(context);
-                                if (NScorable.isValidScore(uu, NScorableContext.of())) {
-                                    return uu;
-                                }
-                            }
-                        }
-                        return _invalidSupport(NMsg.ofC("[%s] unable to resolve node from pair : %s", NTxUtils.shortName(context.source()), NTxUtils.snippet(c)), context);
-                    }
-                    default: {
-                        return _invalidSupport(NMsg.ofC("[%s] unable to resolve node from %s : %s", c.type().id(), NTxUtils.shortName(context.source()), NTxUtils.snippet(c)), context);
                     }
                 }
+                return _invalidSupport(NMsg.ofC("[%s] unable to resolve node from pair : %s", NTxUtils.shortName(context.source()), NTxUtils.snippet(c)), context);
             }
+        }
+        switch (c.type().typeGroup()) {
             case NUMBER:
             case TEMPORAL:
             case STRING:
-            case REGEX:
             case NULL:
             case BOOLEAN: {
                 NTxNodeParser p = engine.nodeTypeParser(NTxNodeType.TEXT).orNull();
@@ -197,7 +196,8 @@ public class DefaultNTxDocumentItemParserFactory
                 break;
             }
             case NAME: {
-                return NScoredCallable.ofValid(() -> new CtrlNTxNodeName(context.source(), c));
+                NElement finalC = c;
+                return NScoredCallable.ofValid(() -> new CtrlNTxNodeName(context.source(), finalC));
             }
         }
         return _invalidSupport(NMsg.ofC("[%s] unable to resolve node : %s", NTxUtils.shortName(context.source()), NTxUtils.snippet(c)), context);
