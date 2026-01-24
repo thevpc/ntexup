@@ -6,7 +6,7 @@ import net.thevpc.nuts.elem.NElement;
 
 public class NTxParserUtils {
     public static boolean isIntOrExprNonCommon(NElement currentArg){
-        switch (currentArg.type().typeGroup()) {
+        switch (currentArg.type().group()) {
             case OPERATOR:{
                 return true;
             }
