@@ -48,7 +48,7 @@ public class NTxParseHelper {
             if (!NNameFormat.equalsIgnoreFormat(nn, NTxUtils.COMPILER_DECLARATION_PATH)) {
                 // add classes as well
                 Set<String> allClasses = new HashSet<>();
-                List<NElement> params = a.params();
+                List<NElement> params = a.params().orNull();
                 if (params != null) {
                     for (NElement cls : params) {
                         NOptional<String[]> ss = NTxValue.of(cls).asStringArrayOrString();
