@@ -80,7 +80,7 @@ class CustomNamedParamAction implements NTxNodeBuilderContext.NamedParamAction, 
             @Override
             public boolean test(NTxArgumentReader info) {
                 NElement x = info.peek();
-                return x.type().typeGroup() == NElementTypeGroup.STRING;
+                return x.type().group() == NElementTypeGroup.STRING;
             }
 
             @Override
@@ -96,7 +96,7 @@ class CustomNamedParamAction implements NTxNodeBuilderContext.NamedParamAction, 
             @Override
             public boolean test(NTxArgumentReader info) {
                 NElement x = info.peek();
-                return x.type().typeGroup() == NElementTypeGroup.STRING || x.type().typeGroup() == NElementTypeGroup.NAME;
+                return x.type().group() == NElementTypeGroup.STRING;
             }
 
             @Override
@@ -143,7 +143,7 @@ class CustomNamedParamAction implements NTxNodeBuilderContext.NamedParamAction, 
             @Override
             public boolean test(NTxArgumentReader info) {
                 NElement x = info.peek();
-                return x.type().typeGroup() == NElementTypeGroup.NAME;
+                return x.type() == NElementType.NAME;
             }
 
             @Override
