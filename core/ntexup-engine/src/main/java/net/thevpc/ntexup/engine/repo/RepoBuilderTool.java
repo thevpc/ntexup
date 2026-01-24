@@ -45,7 +45,7 @@ public class RepoBuilderTool {
         }
         try (PrintStream out = path.resolve("ndoc-repository.tson").getPrintStream()) {
             for (NTxTemplateInfo nTxTemplateInfo : all) {
-                out.println(nTxTemplateInfo.toElement().toString(true));
+                out.println(nTxTemplateInfo.toElement().toString());
             }
         }
         for (NVersion version : versions) {
@@ -54,7 +54,7 @@ public class RepoBuilderTool {
                     List<String> bv = nTxTemplateInfo.binaryVersions();
                     for (String v : bv) {
                         if (NVersion.of(v).filter().acceptVersion(version)) {
-                            out.println(nTxTemplateInfo.toElement().toString(true));
+                            out.println(nTxTemplateInfo.toElement().toString());
                         }
                     }
                 }
@@ -160,7 +160,7 @@ public class RepoBuilderTool {
         if (!newTemplates.equals(existing)) {
             try (PrintStream out = themeInfo.getPrintStream()) {
                 for (NTxTemplateInfo nTxTemplateInfo : newTemplates) {
-                    out.println(nTxTemplateInfo.toElement().toString(true));
+                    out.println(nTxTemplateInfo.toElement().toString());
                 }
             }
         }
