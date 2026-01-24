@@ -302,7 +302,7 @@ public class NTxNodeEval implements NTxObjectEvalContext {
                     break;
                 }
                 default: {
-                    NElementTypeGroup nElementTypeGroup = ee.type().typeGroup();
+                    NElementTypeGroup nElementTypeGroup = ee.type().group();
                     if (nElementTypeGroup == NElementTypeGroup.NUMBER || nElementTypeGroup == NElementTypeGroup.NULL || nElementTypeGroup == NElementTypeGroup.STRING || nElementTypeGroup == NElementTypeGroup.BOOLEAN || nElementTypeGroup == NElementTypeGroup.CUSTOM) {
 
                     } else if (nElementTypeGroup == NElementTypeGroup.OPERATOR) {
