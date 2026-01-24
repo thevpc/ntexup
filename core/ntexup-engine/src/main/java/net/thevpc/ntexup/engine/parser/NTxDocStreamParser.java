@@ -146,7 +146,7 @@ public class NTxDocStreamParser {
 
     private NElementAnnotation processControlElementsAnnotation(NElementAnnotation child, NBooleanRef someChanges) {
         NBooleanRef u = NBooleanRef.of(false);
-        List<NElement> np = processControlElements(child.params(), u);
+        List<NElement> np = processControlElements(child.params().orNull(), u);
         if (u.get()) {
             someChanges.set(true);
             return NElement.ofAnnotation(child.name(), np.toArray(new NElement[0]));
@@ -164,7 +164,7 @@ public class NTxDocStreamParser {
                 changesInAnnotation = true;
             }
         }
-        switch (child.type().typeGroup()) {
+        switch (child.type().group()) {
             case NULL:
             case NUMBER:
             case CUSTOM:
