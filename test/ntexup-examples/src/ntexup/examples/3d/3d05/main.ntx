@@ -8,6 +8,7 @@ import(
     plot2d
     presenters
     latex
+    "elaid:good-elaid#1.0"
 )
 
 styles:{
@@ -69,7 +70,7 @@ page{
                 real-size:[100mm 100mm 100mm]
         ){
             @dielectric   box(size:(substrate_width,substrate_length,substrate_thickness),position:(0,0,-substrate_thickness),origin:(50,50,0))
-            @dielectric   patch(size:(substrate_width,substrate_length,substrate_thickness),position:(0,0,-substrate_thickness),origin:(50,50,0))
+            @susbtrate   patch(size:(substrate_width,substrate_length,substrate_thickness),position:(0,0,-substrate_thickness),origin:(50,50,0))
             @dimension line(from:(-5,0,-5),to:(-5,100,-5),label:{"hello",offset:(-5,0)})
         }
 
