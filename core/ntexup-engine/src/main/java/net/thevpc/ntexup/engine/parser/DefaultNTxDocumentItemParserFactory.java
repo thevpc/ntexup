@@ -183,21 +183,21 @@ public class DefaultNTxDocumentItemParserFactory
                 return _invalidSupport(NMsg.ofC("[%s] unable to resolve node from pair : %s", NTxUtils.shortName(context.source()), NTxUtils.snippet(c)), context);
             }
         }
-        switch (c.type().typeGroup()) {
+        switch (c.type().group()) {
             case NUMBER:
             case TEMPORAL:
             case STRING:
             case NULL:
             case BOOLEAN: {
+                if (c.type()==NElementType.NAME){
+                    NElement finalC = c;
+                    return NScoredCallable.ofValid(() -> new CtrlNTxNodeName(context.source(), finalC));
+                }
                 NTxNodeParser p = engine.nodeTypeParser(NTxNodeType.TEXT).orNull();
                 if (p != null) {
                     return p.parseNode(context);
                 }
                 break;
-            }
-            case NAME: {
-                NElement finalC = c;
-                return NScoredCallable.ofValid(() -> new CtrlNTxNodeName(context.source(), finalC));
             }
         }
         return _invalidSupport(NMsg.ofC("[%s] unable to resolve node : %s", NTxUtils.shortName(context.source()), NTxUtils.snippet(c)), context);
@@ -311,7 +311,7 @@ public class DefaultNTxDocumentItemParserFactory
             boolean foundNtexup = false;
             boolean foundVersion = false;
             boolean foundOther = false;
-            List<NElement> params = a.params();
+            List<NElement> params = a.params().orNull();
             if (params != null) {
                 for (NElement cls : params) {
                     if (cls.isAnyString()) {
@@ -378,7 +378,7 @@ public class DefaultNTxDocumentItemParserFactory
                     allAncestors.add(NTxUtils.uid(nn));
                 }
                 // add classes as well
-                List<NElement> params = a.params();
+                List<NElement> params = a.params().orNull();
                 if (params != null) {
                     for (NElement cls : params) {
                         if (allStyles == null) {
