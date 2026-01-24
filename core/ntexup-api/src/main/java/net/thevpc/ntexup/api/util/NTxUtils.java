@@ -30,7 +30,7 @@ public class NTxUtils {
     }
 
     public static NOptional<String> findCompilerDeclarationPath(NElement element) {
-        Optional<String> e = element.annotations().stream().filter(x -> COMPILER_DECLARATION_PATH.equals(x.name())).flatMap(x -> x.params().get(0).asStringValue().stream().stream()).findFirst();
+        Optional<String> e = element.annotations().stream().filter(x -> COMPILER_DECLARATION_PATH.equals(x.name())).flatMap(x -> x.params().get().get(0).asStringValue().stream().stream()).findFirst();
         return NOptional.ofOptional(e, NMsg.ofC("Missing CompilerDeclarationPath in %s", element));
     }
 
@@ -158,7 +158,7 @@ public class NTxUtils {
     }
 
     public static String getCompilerDeclarationPath(NElement element) {
-        return element.annotations().stream().filter(a -> a.name().equals(COMPILER_DECLARATION_PATH)).findFirst().map(x -> x.param(0).asStringValue().get()).orElse(null);
+        return element.annotations().stream().filter(a -> a.name().equals(COMPILER_DECLARATION_PATH)).findFirst().map(x -> x.param(0).get().asStringValue().get()).orElse(null);
 
     }
 
@@ -451,7 +451,8 @@ public class NTxUtils {
     public static NElement removeCompilerDeclarationPathAnnotations(NElement yy) {
         return yy.transform(new NElementTransform() {
             @Override
-            public List<NElement> preTransform(NElementPath path,NElement element) {
+            public List<NElement> preTransform(NElementTransformContext context) {
+                NElement element = context.element();
                 List<NElementAnnotation> oldAnn = element.annotations();
                 List<NElementAnnotation> a = oldAnn.stream().filter(x -> !COMPILER_DECLARATION_PATH.equals(x.name())).collect(Collectors.toList());
                 if (a.size() != oldAnn.size()) {
@@ -469,7 +470,8 @@ public class NTxUtils {
         }
         return yy.transform(new NElementTransform() {
             @Override
-            public List<NElement> postTransform(NElementPath path,NElement element) {
+            public List<NElement> postTransform(NElementTransformContext context) {
+                NElement element = context.element();
                 if (element.isString()) {
                     List<NElementAnnotation> oldAnn = element.annotations();
                     List<NElementAnnotation> a = oldAnn.stream().filter(x -> !COMPILER_DECLARATION_PATH.equals(x.name())).collect(Collectors.toList());
