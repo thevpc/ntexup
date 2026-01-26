@@ -124,7 +124,7 @@ public abstract class NTxNodeParserBase implements NTxNodeParser {
                 }
                 break;
             }
-            case NAMED_PARAMETRIZED_OBJECT:
+            case FULL_OBJECT:
             case NAMED_OBJECT: {
                 NObjectElement h = e.toObject().get();
                 if (acceptTypeName(h.name().orNull())) {
@@ -132,7 +132,7 @@ public abstract class NTxNodeParserBase implements NTxNodeParser {
                 }
                 break;
             }
-            case NAMED_PARAMETRIZED_ARRAY:
+            case FULL_ARRAY:
             case NAMED_ARRAY: {
                 NArrayElement h = e.toArray().get();
                 if (acceptTypeName(h.name().orNull())) {
@@ -246,13 +246,13 @@ public abstract class NTxNodeParserBase implements NTxNodeParser {
             case NAMED_UPLET:
 
             case OBJECT:
-            case NAMED_PARAMETRIZED_OBJECT:
-            case PARAMETRIZED_OBJECT:
+            case FULL_OBJECT:
+            case PARAM_OBJECT:
             case NAMED_OBJECT:
 
             case ARRAY:
-            case NAMED_PARAMETRIZED_ARRAY:
-            case PARAMETRIZED_ARRAY:
+            case FULL_ARRAY:
+            case PARAM_ARRAY:
             case NAMED_ARRAY: {
                 NTxNode p = context.documentFactory().of(resolveEffectiveId(id));
                 p.setSource(context.source());
