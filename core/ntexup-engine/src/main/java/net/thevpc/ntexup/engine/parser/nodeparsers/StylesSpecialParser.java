@@ -31,7 +31,7 @@ public class StylesSpecialParser extends NTxNodeParserBase {
         NElement tsonElement = context.element();
         NTxDocumentFactory f = context.documentFactory();
         switch (tsonElement.type()) {
-            case NAMED_PARAMETRIZED_OBJECT:
+            case FULL_OBJECT:
             case NAMED_OBJECT: {
                 NObjectElement obj = tsonElement.toObject().get();
                 if (obj.isNamed(id())) {
@@ -52,7 +52,7 @@ public class StylesSpecialParser extends NTxNodeParserBase {
                 }
                 break;
             }
-            case NAMED_PARAMETRIZED_ARRAY:
+            case FULL_ARRAY:
             case NAMED_ARRAY: {
                 NArrayElement obj = tsonElement.toArray().get();
                 if (obj.isNamed(id())) {
