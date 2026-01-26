@@ -25,7 +25,7 @@ public class ForSpecialParser extends NTxNodeParserBase {
     public NScoredCallable<NTxItem> parseNode(NTxNodeFactoryParseContext context) {
         NElement tsonElement = context.element();
         switch (tsonElement.type()) {
-            case NAMED_PARAMETRIZED_OBJECT: {
+            case FULL_OBJECT: {
                 NObjectElement obj = tsonElement.asObject().get();
                 if(obj.isNamed(id())) {
                     return NScoredCallable.ofValid(()-> {
