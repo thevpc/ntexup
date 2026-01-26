@@ -312,7 +312,7 @@ class CustomNamedParamAction implements NTxNodeBuilderContext.NamedParamAction, 
                 break;
             }
             case NAMED_ARRAY:
-            case NAMED_PARAMETRIZED_ARRAY: {
+            case FULL_ARRAY: {
                 String uid = NTxUtils.uid(n.asArray().get().name().orNull());
                 if (dmatches(null, info)) {
                     info.read();
@@ -322,7 +322,7 @@ class CustomNamedParamAction implements NTxNodeBuilderContext.NamedParamAction, 
                 break;
             }
             case NAMED_OBJECT:
-            case NAMED_PARAMETRIZED_OBJECT: {
+            case FULL_OBJECT: {
                 String uid = NTxUtils.uid(n.asObject().get().name().orNull());
                 if (dmatches(null, info)) {
                     info.read();
