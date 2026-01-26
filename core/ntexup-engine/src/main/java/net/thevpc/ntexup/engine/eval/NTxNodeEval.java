@@ -264,8 +264,8 @@ public class NTxNodeEval implements NTxObjectEvalContext {
                             .build();
                 }
                 case ARRAY:
-                case NAMED_PARAMETRIZED_ARRAY:
-                case PARAMETRIZED_ARRAY:
+                case FULL_ARRAY:
+                case PARAM_ARRAY:
                 case NAMED_ARRAY: {
                     NArrayElement r = ee.asArray().get();
                     String u = r.name().orNull();
@@ -295,7 +295,7 @@ public class NTxNodeEval implements NTxObjectEvalContext {
                     }
                     break;
                 }
-                case PARAMETRIZED_OBJECT:
+                case PARAM_OBJECT:
                 case OBJECT:
                 case NAMED_OBJECT: {
                     // this is a complex object
