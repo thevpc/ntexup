@@ -151,10 +151,10 @@ public class DefaultNTxDocumentItemParserFactory
                 NTxNodeParser p = engine.nodeTypeParser(NTxNodeType.TEXT).orNull();
                 return p.parseNode(context);
             }
-            case NAMED_PARAMETRIZED_OBJECT:
+            case FULL_OBJECT:
             case NAMED_OBJECT:
             case NAMED_UPLET:
-            case NAMED_PARAMETRIZED_ARRAY:
+            case FULL_ARRAY:
             case NAMED_ARRAY: {
                 NTxValue ee = NTxValue.of(c);
                 String uid = NTxUtils.uid(ee.name());
@@ -227,7 +227,7 @@ public class DefaultNTxDocumentItemParserFactory
                 NUpletElementBuilder fb = (NUpletElementBuilder) c.builder();
                 for (int i = 0; i < fb.params().size(); i++) {
                     NElement u = NTxUtils.addCompilerDeclarationPath(fb.get(i).orNull(), sourcePath.toString());
-                    fb.set(i, u);
+                    fb.setAt(i, u);
                     __args.add(u);
                 }
                 c = fb.build();
