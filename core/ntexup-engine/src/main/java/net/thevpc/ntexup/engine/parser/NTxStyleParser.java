@@ -255,8 +255,8 @@ public class NTxStyleParser {
                 NElement v = e.asPair().get().value();
                 switch (v.type()) {
                     case OBJECT:
-                    case NAMED_PARAMETRIZED_OBJECT:
-                    case PARAMETRIZED_OBJECT:
+                    case FULL_OBJECT:
+                    case PARAM_OBJECT:
                     case NAMED_OBJECT:
                     {
                         List<NTxProp> styles = new ArrayList<>();
