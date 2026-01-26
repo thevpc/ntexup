@@ -325,13 +325,13 @@ public class NTxValue {
             if (element instanceof NListContainerElement) {
                 switch (((NListContainerElement) element).type()) {
                     case OBJECT:
-                    case NAMED_PARAMETRIZED_OBJECT:
-                    case PARAMETRIZED_OBJECT:
+                    case FULL_OBJECT:
+                    case PARAM_OBJECT:
                     case NAMED_OBJECT:
 
                     case ARRAY:
-                    case NAMED_PARAMETRIZED_ARRAY:
-                    case PARAMETRIZED_ARRAY:
+                    case FULL_ARRAY:
+                    case PARAM_ARRAY:
                     case NAMED_ARRAY: {
                         NListContainerElement te = (NListContainerElement) element;
                         name = NTxUtils.uid(te.toNamed().flatMap(NNamedElement::name).orNull());
@@ -998,8 +998,8 @@ public class NTxValue {
             NElement te = (NElement) element;
             switch (te.type()) {
                 case ARRAY:
-                case NAMED_PARAMETRIZED_ARRAY:
-                case PARAMETRIZED_ARRAY:
+                case FULL_ARRAY:
+                case PARAM_ARRAY:
                 case NAMED_ARRAY: {
                     NArrayElement a = te.asArray().get();
                     if (a.isNamed() || a.isParametrized()) {
@@ -1008,9 +1008,9 @@ public class NTxValue {
                     return NOptional.of(te.asArray().get().children().toArray(new NElement[0]));
                 }
                 case OBJECT:
-                case NAMED_PARAMETRIZED_OBJECT:
+                case FULL_OBJECT:
                 case NAMED_OBJECT:
-                case PARAMETRIZED_OBJECT: {
+                case PARAM_OBJECT: {
                     NObjectElement a = te.asObject().get();
                     if (a.isNamed() || a.isParametrized()) {
                         return NOptional.of(new NElement[]{te});
