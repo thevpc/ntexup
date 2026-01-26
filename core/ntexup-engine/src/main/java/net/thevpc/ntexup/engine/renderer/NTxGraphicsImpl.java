@@ -122,8 +122,8 @@ public class NTxGraphicsImpl implements NTxGraphics {
         }
         switch (e.type()) {
             case ARRAY:
-            case NAMED_PARAMETRIZED_ARRAY:
-            case PARAMETRIZED_ARRAY:
+            case FULL_ARRAY:
+            case PARAM_ARRAY:
             case NAMED_ARRAY:
             {
                 return CompositeStroke.of(e, this);
