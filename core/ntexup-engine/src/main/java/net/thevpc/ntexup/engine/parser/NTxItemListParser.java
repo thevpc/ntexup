@@ -18,13 +18,13 @@ public class NTxItemListParser {
             case NAMED_UPLET:
 
             case OBJECT:
-            case NAMED_PARAMETRIZED_OBJECT:
-            case PARAMETRIZED_OBJECT:
+            case FULL_OBJECT:
+            case PARAM_OBJECT:
             case NAMED_OBJECT:
 
             case ARRAY:
-            case NAMED_PARAMETRIZED_ARRAY:
-            case PARAMETRIZED_ARRAY:
+            case FULL_ARRAY:
+            case PARAM_ARRAY:
             case NAMED_ARRAY:
             {
                 NTxValue ee = NTxValue.of(ff);
