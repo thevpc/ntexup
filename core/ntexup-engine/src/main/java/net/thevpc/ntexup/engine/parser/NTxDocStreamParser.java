@@ -92,7 +92,7 @@ public class NTxDocStreamParser {
         List<NElement> children2 = new ArrayList<>(children);
         while (!children2.isEmpty()) {
             NElement c = children2.remove(0);
-            if (c.isNamedParametrizedObject("if")) {
+            if (c.isFullObject("if")) {
                 if (ifInfo != null) {
                     res.add(ifInfo.toElement());
                     ifInfo = null;
@@ -114,7 +114,7 @@ public class NTxDocStreamParser {
                 ifInfo.base.trueBody = o.children();
                 engine.log().log(NMsg.ofC("if expression is missing brackets : %s", c).asError());
                 cc = true;
-            } else if (c.isNamedParametrizedObject("elseif") && ifInfo != null) {
+            } else if (c.isFullObject("elseif") && ifInfo != null) {
                 NObjectElement o = c.asObject().get();
                 CondBody b = new CondBody();
                 b.cond = o.params().get();
@@ -180,8 +180,8 @@ public class NTxDocStreamParser {
                 return child;
             }
             case OPERATOR: {
-                NExprElement op = child.asOperator().get();
-                NExprElementBuilder opb = op.builder();
+                NOperatorElement op = child.asOperator().get();
+                NOperatorElementBuilder opb = op.builder();
                 NElement first = opb.first().orNull();
                 boolean cc = false;
                 if (first != null) {
@@ -215,8 +215,8 @@ public class NTxDocStreamParser {
         switch (child.type()) {
             case OBJECT:
             case NAMED_OBJECT:
-            case PARAMETRIZED_OBJECT:
-            case NAMED_PARAMETRIZED_OBJECT: {
+            case PARAM_OBJECT:
+            case FULL_OBJECT: {
                 NObjectElement p = child.asObject().get();
                 List<NElement> i = p.params().orNull();
                 NObjectElementBuilder builder = p.builder();
@@ -251,8 +251,8 @@ public class NTxDocStreamParser {
             }
             case ARRAY:
             case NAMED_ARRAY:
-            case PARAMETRIZED_ARRAY:
-            case NAMED_PARAMETRIZED_ARRAY: {
+            case PARAM_ARRAY:
+            case FULL_ARRAY: {
                 NArrayElement p = child.asArray().get();
                 List<NElement> i = p.params().orNull();
                 NArrayElementBuilder builder = p.builder();
