@@ -45,7 +45,7 @@ public class NTxNodeRendererConfig {
     }
 
     public NTxNodeRendererConfig setCapability(String name, Object value) {
-        NAssert.requireNonBlank(name, "name");
+        NAssert.requireNamedNonBlank(name, "name");
         if (this.capabilities == null) {
             this.capabilities = new HashMap<>();
         }
