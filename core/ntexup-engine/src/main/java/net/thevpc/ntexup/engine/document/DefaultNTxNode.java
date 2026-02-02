@@ -909,7 +909,7 @@ public class DefaultNTxNode implements NTxNode {
 
     @Override
     public void setChildAt(int i, NTxNode c) {
-        NAssert.requireNonNull(c, "node");
+        NAssert.requireNamedNonNull(c, "node");
         children.set(i, c);
     }
 
