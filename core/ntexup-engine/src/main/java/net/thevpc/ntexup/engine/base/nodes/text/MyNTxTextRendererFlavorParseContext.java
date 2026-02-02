@@ -69,7 +69,7 @@ class MyNTxTextRendererFlavorParseContext implements NTxTextRendererFlavorParseC
 
     @Override
     public List<NTxTextToken> parseDefault(String[] flavorIds, String[] customStartStops, Function<String,String> converter) {
-        NAssert.requireNonNull(flavorIds, "flavorIds");
+        NAssert.requireNamedNonNull(flavorIds, "flavorIds");
         if(customStartStops!=null && customStartStops.length%2!=0){
             throw NExceptions.ofSafeAssertException(NMsg.ofC("customStartStops shoud be a series of start/stop tokens, hence it must be even"));
         }
