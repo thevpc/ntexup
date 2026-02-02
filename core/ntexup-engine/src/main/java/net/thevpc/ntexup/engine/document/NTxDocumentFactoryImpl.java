@@ -29,7 +29,7 @@ public class NTxDocumentFactoryImpl implements NTxDocumentFactory {
 
     @Override
     public NTxNode of(String type) {
-        NAssert.requireNonNull(type, "type");
+        NAssert.requireNamedNonNull(type, "type");
         return engine.nodeTypeParser(type)
                 .get().newNode();
     }
