@@ -176,7 +176,7 @@ public class NTxNodeEval implements NTxObjectEvalContext {
                 }
                 case FLAT_EXPR: {
                     NFlatExprElement ff1 = ((NFlatExprElement) elementExpr);
-                    NElement reshaped = ff1.reshape(NExprElementReshaper.ofJavaLike());
+                    NElement reshaped = ff1.reshape();
                     return eval(reshaped, node);
                 }
                 case BINARY_OPERATOR: {
