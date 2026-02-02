@@ -93,7 +93,7 @@ public class DefaultNTxDocumentItemParserFactory
             }
         }
         if(c.type()==NElementType.FLAT_EXPR){
-            c=c.asFlatExpression().get().reshape(NExprElementReshaper.ofJavaLike());
+            c=c.asFlatExpression().get().reshape();
         }
         switch (c.type()) {
             case BINARY_OPERATOR:{
