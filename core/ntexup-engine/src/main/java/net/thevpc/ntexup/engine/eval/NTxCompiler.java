@@ -215,7 +215,7 @@ public class NTxCompiler {
 
     private List<NTxItem> compileNodeTree(NTxItem item, NodeHierarchy h0) {
         NodeHierarchy h=h0;
-        NAssert.requireNonNull(h, "h");
+        NAssert.requireNamedNonNull(h, "h");
         if (item instanceof NTxNode) {
             NTxNode node = (NTxNode) item;
             NTxItem tparent = node.parent();
