@@ -319,8 +319,8 @@ public class DefaultNTxEngine implements NTxEngine {
 
     @Override
     public NOptional<NTxItem> newNode(NElement element, NTxNodeFactoryParseContext ctx) {
-        NAssert.requireNonNull(ctx, "context");
-        NAssert.requireNonNull(element, "element");
+        NAssert.requireNamedNonNull(ctx, "context");
+        NAssert.requireNamedNonNull(element, "element");
         if (ctx.source() == null) {
             throw new IllegalArgumentException("unexpected source null");
         }
@@ -505,7 +505,7 @@ public class DefaultNTxEngine implements NTxEngine {
 
     @Override
     public NTxDocumentLoadingResult loadDocument(NPath path) {
-        NAssert.requireNonNull(path, "path");
+        NAssert.requireNamedNonNull(path, "path");
         synchronized (this) {
             if (NTxGitHelper.isGithubFolder(path.toString())) {
                 log().log(NMsg.ofC("loading document : loading github repository for %s", path));
@@ -782,7 +782,7 @@ public class DefaultNTxEngine implements NTxEngine {
 
     @Override
     public void createProject(NPath path, NPath templateUrl, Function<String, String> vars) {
-        NAssert.requireNonNull(path, "path");
+        NAssert.requireNamedNonNull(path, "path");
         if (NBlankable.isBlank(templateUrl)) {
             if (path.isDirectory()) {
                 NPath main = path.resolve("main.ntx");
@@ -824,7 +824,7 @@ public class DefaultNTxEngine implements NTxEngine {
             }
             return;
         }
-        NAssert.requireNonNull(templateUrl, "projectUrl");
+        NAssert.requireNamedNonNull(templateUrl, "projectUrl");
         NPath localTemplatePath = templateUrl;
         if (NTxGitHelper.isGithubFolder(templateUrl.toString())) {
             try {
