@@ -17,7 +17,7 @@ public class NTxTemplateFilter {
     }
 
     public static NTxTemplateFilter of(NTxTemplateInfo[] items) {
-        NAssert.requireNonNull(items, "items");
+        NAssert.requireNamedNonNull(items, "items");
         return new NTxTemplateFilter(() -> items);
     }
 
@@ -26,7 +26,7 @@ public class NTxTemplateFilter {
     }
 
     public NTxTemplateFilter(Supplier<NTxTemplateInfo[]> templatesSupplier) {
-        this.templatesSupplier = NAssert.requireNonNull(templatesSupplier, "templatesSupplier");
+        this.templatesSupplier = NAssert.requireNamedNonNull(templatesSupplier, "templatesSupplier");
     }
 
     public NOptional<NTxTemplateInfo> disambiguate(List<NTxTemplateInfo> found) {
