@@ -10,12 +10,12 @@ public class DefaultNTxColorPalette implements NTxColorPalette {
     private Color[] all;
 
     public DefaultNTxColorPalette(int... all) {
-        NAssert.requireTrue(all != null && all.length > 0, "color array");
+        NAssert.requireNamedTrue(all != null && all.length > 0, "color array");
         this.all = Arrays.stream(all).mapToObj(i -> new Color(i)).toArray(Color[]::new);
     }
 
     public DefaultNTxColorPalette(Color... all) {
-        NAssert.requireTrue(all != null && all.length > 0, "color array");
+        NAssert.requireNamedTrue(all != null && all.length > 0, "color array");
         this.all = all;
     }
 
