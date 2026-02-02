@@ -627,7 +627,7 @@ public class DefaultNTxNodeRendererContext implements NTxNodeRendererContext {
 
     @Override
     public NOptional<NElement> computePropertyValue(NTxNode t, String s, String[] others, NTxVarProvider varProvider) {
-        NAssert.requireNonBlank(s, "property name");
+        NAssert.requireNamedNonBlank(s, "property name");
         NOptional<NElement> r = computePropertyValueImpl(t, NTxUtils.uids(new String[]{s}, others));
         if (r.isPresent()) {
             NElement y = r.get();
