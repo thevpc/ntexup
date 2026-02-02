@@ -290,7 +290,7 @@ public class NTxNodeBuilderContextImpl implements NTxNodeBuilderContext {
                 customNamedParamAction.end();
                 this.customNamedParamAction = null;
             }
-            NAssert.requireNonBlank(id, "id");
+            NAssert.requireNamedNonBlank(id, "id");
             this.compiled = true;
         }
     }
