@@ -906,7 +906,7 @@ public class DefaultNTxEngine implements NTxEngine {
         }
         NTxTemplateInfoLoader loader = new NTxTemplateInfoLoader();
         for (Repo repo : new Repo[]{
-                new Repo("dev", NPath.ofUserHome().resolve("xprojects/nuts-world/nuts-productivity/ntexup-templates")),
+                new Repo("dev", NPath.ofUserHome().resolve("xprojects/nuts-world/nuts-productivity/ntexup/ntexup-templates")),
                 new Repo("local", NApp.of().getSharedConfFolder().resolve("templates")),
                 new Repo("user", NPath.ofUserStore(NStoreType.CONF).resolve("ntexup/templates")),
                 new Repo("system", NPath.ofSystemStore(NStoreType.CONF).resolve("ntexup/templates")),
