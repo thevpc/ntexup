@@ -14,6 +14,7 @@ import net.thevpc.ntexup.api.eval.NTxValue;
 import net.thevpc.ntexup.api.parser.NTxNodeParser;
 import net.thevpc.ntexup.engine.parser.ctrlnodes.CtrlNTxNodeName;
 import net.thevpc.ntexup.engine.document.NTxItemBag;
+import net.thevpc.ntexup.engine.util.NTxNodeUtils;
 import net.thevpc.nuts.concurrent.NScoredCallable;
 import net.thevpc.nuts.elem.*;
 import net.thevpc.nuts.io.NPath;
@@ -40,147 +41,44 @@ public class DefaultNTxDocumentItemParserFactory
         NElement c = context.element();
         NTxEngine engine = context.engine();
         if (c.annotations().stream().anyMatch(x -> NTxNodeType.CTRL_DEFINE.equals(x.name()))) {
-            //this is a node definition
-            if (c.isAnyObject() || c.isNamed()) {
-                NElement finalC1 = c;
-                return NScoredCallable.ofValid(() -> {
-                    NObjectElement object = finalC1.asObject().get();
-                    String templateName = object.name().get();
-                    List<NTxNodeDefParam> params;
-                    if (object.isParametrized()) {
-                        params = object.asParametrizedContainer().get().params().get()
-                                .stream().map(x -> {
-                                    if (x.isNamedPair()) {
-                                        NPairElement p = x.asPair().get();
-                                        return new NTxNodeDefParamImpl(
-                                                p.key().asStringValue().get(),
-                                                p.value()
-                                        );
-                                    } else if (x.isName()) {
-                                        return new NTxNodeDefParamImpl(
-                                                x.asStringValue().get(),
-                                                null
-                                        );
-                                    } else {
-                                        context.messages().log(NMsg.ofC("invalid definition param, expected var name %s in %s", x, object).asError());
-                                        return null;
-                                    }
-                                }).filter(x -> x != null).collect(Collectors.toList());
-                    } else {
-                        params = new ArrayList<>();
-                    }
-                    NTxSource source = context.source();
-                    List<NTxNode> defBody = new ArrayList<>();
-                    for (NElement child : object.children()) {
-                        NTxItem item = engine.newNode(child, context).get();
-                        NTxItemBag b = new NTxItemBag(Arrays.asList(item));
-                        if (b.isNodes()) {
-                            defBody.addAll(b.nodes());
-                        } else {
-                            context.messages().log(NMsg.ofC("expected nodes, but got other items when creating node from %s", NTxUtils.snippet(child)).asError());
-                        }
-                    }
-                    return new NTxNodeDefImpl(
-                            context.node(),
-                            templateName,
-                            params.toArray(new NTxNodeDefParam[0]),
-                            defBody.toArray(new NTxNode[0]),
-                            source
-                    );
-                });
-            } else {
-                return _invalidSupport(NMsg.ofC("invalid defineNode syntax, expected @define <NAME>(...){....}"), context);
-            }
+            return parseNodeAsDefine(c, context);
         }
-        if(c.type()==NElementType.FLAT_EXPR){
-            c=c.asFlatExpression().get().reshape();
+        if (c.type() == NElementType.FLAT_EXPR) {
+            c = c.asFlatExpression().get().reshape();
         }
         switch (c.type()) {
-            case BINARY_OPERATOR:{
+            case BINARY_OPERATOR: {
                 NBinaryOperatorElement bo = c.asBinaryOperator().get();
                 switch (bo.operatorSymbol()) {
                     case EQ: {
-                        NBinaryOperatorElement p = c.asBinaryOperator().get();
-                        NElement k = p.firstOperand();
-                        NElement v = p.secondOperand();
-                        NTxValue kh = NTxValue.of(k);
-                        if (k.isName()) {
-                            NOptional<String> nn = kh.asStringOrName();
-                            if (nn.isPresent()) {
-                                String nnn = NStringUtils.trim(nn.get());
-                                return NScoredCallable.ofValid(() -> DefaultNTxNode.ofAssign(nnn, v, context.source()));
-                            } else {
-                                return _invalidSupport(NMsg.ofC("unable to interpret left hand of assignment as a valid var : %s", k), context);
-                            }
-                        } else {
-                            return _invalidSupport(NMsg.ofC("unable to interpret left hand of assignment as a valid var : %s", k), context);
-                        }
+                        return parseNodeAsOpEq(c, context);
                     }
                     case COLON_EQ: {
-                        NBinaryOperatorElement p = c.asBinaryOperator().get();
-                        NElement k = p.firstOperand();
-                        NElement v = p.secondOperand();
-                        NTxValue kh = NTxValue.of(k);
-                        if (k.isName()) {
-                            NOptional<String> nn = kh.asStringOrName();
-                            if (nn.isPresent()) {
-                                String nnn = NStringUtils.trim(nn.get());
-                                return NScoredCallable.ofValid(() -> DefaultNTxNode.ofAssignIfEmpty(nnn, v, context.source()));
-                            } else {
-                                return _invalidSupport(NMsg.ofC("unable to interpret left hand of assignment as a valid var : %s", k), context);
-                            }
-                        } else {
-                            return _invalidSupport(NMsg.ofC("unable to interpret left hand of assignment as a valid var : %s", k), context);
-                        }
+                        return parseNodeAsOpColonEq(c, context);
                     }
                 }
-                NOptional<NTxNodeParser> ff = engine.nodeTypeParser(bo.operatorSymbol().lexeme());
-                if (ff.isPresent()) {
-                    NScoredCallable<NTxItem> uu = ff.get().parseNode(context);
-                    if (NScorable.isValidScore(uu, NScorableContext.of())) {
-                        return uu;
-                    }
-                }
-                break;
+                return parseNodeAsOpSpecial(c, context);
             }
             case OBJECT:
             case ARRAY: {
-                return parseNoNameBloc(context);
+                return parseNodeAsNoNameBloc(context);
             }
             case UPLET: {
-                NTxNodeParser p = engine.nodeTypeParser(NTxNodeType.TEXT).orNull();
-                return p.parseNode(context);
+                return parseNodeAsUplet(context);
             }
             case FULL_OBJECT:
             case NAMED_OBJECT:
             case NAMED_UPLET:
             case FULL_ARRAY:
             case NAMED_ARRAY: {
-                NTxValue ee = NTxValue.of(c);
-                String uid = NTxUtils.uid(ee.name());
-                NTxNodeParser p = engine.nodeTypeParser(uid).orNull();
-                if (p != null) {
-                    return p.parseNode(context);
-                }
-                if (c.isNamedUplet() || c.isAnyObject()) {
-                    NElement finalC2 = c;
-                    return NScoredCallable.ofValid(() -> createCtrlNodeCall(finalC2, context));
-                }
-                return _invalidSupport(NMsg.ofC("[%s] unable to resolve node : %s", NTxUtils.shortName(context.source()), NTxUtils.snippet(c)), context);
+                return parseNodeAsNamedListContainer(c,context);
             }
             case PAIR: {
-                if (c.isNamedPair()) {
-                    NPairElement p = c.asPair().get();
-                    String name = p.key().asStringValue().get();
-                    NOptional<NTxNodeParser> ff = engine.nodeTypeParser(name);
-                    if (ff.isPresent()) {
-                        NScoredCallable<NTxItem> uu = ff.get().parseNode(context);
-                        if (NScorable.isValidScore(uu, NScorableContext.of())) {
-                            return uu;
-                        }
-                    }
-                }
-                return _invalidSupport(NMsg.ofC("[%s] unable to resolve node from pair : %s", NTxUtils.shortName(context.source()), NTxUtils.snippet(c)), context);
+                return parseNodeAsPair(c,context);
+            }
+            case UNORDERED_LIST:
+            case ORDERED_LIST: {
+                return parseNodeAsList(c, context);
             }
         }
         switch (c.type().group()) {
@@ -189,18 +87,184 @@ public class DefaultNTxDocumentItemParserFactory
             case STRING:
             case NULL:
             case BOOLEAN: {
-                if (c.type()==NElementType.NAME){
-                    NElement finalC = c;
-                    return NScoredCallable.ofValid(() -> new CtrlNTxNodeName(context.source(), finalC));
-                }
-                NTxNodeParser p = engine.nodeTypeParser(NTxNodeType.TEXT).orNull();
-                if (p != null) {
-                    return p.parseNode(context);
-                }
-                break;
+                return parseNodeAsLiteral(c, context);
             }
         }
         return _invalidSupport(NMsg.ofC("[%s] unable to resolve node : %s", NTxUtils.shortName(context.source()), NTxUtils.snippet(c)), context);
+    }
+
+    private NScoredCallable<NTxItem> parseNodeAsOpSpecial(NElement c, NTxNodeFactoryParseContext context) {
+        NBinaryOperatorElement bo = c.asBinaryOperator().get();
+        NOptional<NTxNodeParser> ff = context.engine().nodeTypeParser(bo.operatorSymbol().lexeme());
+        if (ff.isPresent()) {
+            NScoredCallable<NTxItem> uu = ff.get().parseNode(context);
+            if (NScorable.isValidScore(uu, NScorableContext.of())) {
+                return uu;
+            }
+        }
+        return _invalidSupport(NMsg.ofC("[%s] unable to resolve node : %s", NTxUtils.shortName(context.source()), NTxUtils.snippet(c)), context);
+    }
+
+    private NScoredCallable<NTxItem> parseNodeAsLiteral(NElement c, NTxNodeFactoryParseContext context) {
+        if (c.type() == NElementType.NAME) {
+            NElement finalC = c;
+            return NScoredCallable.ofValid(() -> new CtrlNTxNodeName(context.source(), finalC));
+        }
+        NTxNodeParser p = context.engine().nodeTypeParser(NTxNodeType.TEXT).orNull();
+        if (p != null) {
+            return p.parseNode(context);
+        }
+        return _invalidSupport(NMsg.ofC("[%s] unable to resolve node : %s", NTxUtils.shortName(context.source()), NTxUtils.snippet(c)), context);
+    }
+
+    private NScoredCallable<NTxItem> parseNodeAsPair(NElement c, NTxNodeFactoryParseContext context) {
+        if (c.isNamedPair()) {
+            NPairElement p = c.asPair().get();
+            String name = p.key().asStringValue().get();
+            NOptional<NTxNodeParser> ff = context.engine().nodeTypeParser(name);
+            if (ff.isPresent()) {
+                NScoredCallable<NTxItem> uu = ff.get().parseNode(context);
+                if (NScorable.isValidScore(uu, NScorableContext.of())) {
+                    return uu;
+                }
+            }
+        }
+        return _invalidSupport(NMsg.ofC("[%s] unable to resolve node from pair : %s", NTxUtils.shortName(context.source()), NTxUtils.snippet(c)), context);
+    }
+
+    private NScoredCallable<NTxItem> parseNodeAsNamedListContainer(NElement c,NTxNodeFactoryParseContext context) {
+        NTxValue ee = NTxValue.of(c);
+        String uid = NTxUtils.uid(ee.name());
+        NTxNodeParser p = context.engine().nodeTypeParser(uid).orNull();
+        if (p != null) {
+            return p.parseNode(context);
+        }
+        if (c.isNamedUplet() || c.isAnyObject()) {
+            NElement finalC2 = c;
+            return NScoredCallable.ofValid(() -> createCtrlNodeCall(finalC2, context));
+        }
+        return _invalidSupport(NMsg.ofC("[%s] unable to resolve node : %s", NTxUtils.shortName(context.source()), NTxUtils.snippet(c)), context);
+    }
+
+    private NScoredCallable<NTxItem> parseNodeAsUplet(NTxNodeFactoryParseContext context) {
+        NTxNodeParser p = context.engine().nodeTypeParser(NTxNodeType.TEXT).orNull();
+        return p.parseNode(context);
+    }
+
+    private NScoredCallable<NTxItem> parseNodeAsDefine(NElement c, NTxNodeFactoryParseContext context) {
+        NTxEngine engine = context.engine();
+        //this is a node definition
+        if (c.isAnyObject() || c.isNamed()) {
+            NElement finalC1 = c;
+            return NScoredCallable.ofValid(() -> {
+                NObjectElement object = finalC1.asObject().get();
+                String templateName = object.name().get();
+                List<NTxNodeDefParam> params;
+                if (object.isParametrized()) {
+                    params = object.asParametrizedContainer().get().params().get()
+                            .stream().map(x -> {
+                                if (x.isNamedPair()) {
+                                    NPairElement p = x.asPair().get();
+                                    return new NTxNodeDefParamImpl(
+                                            p.key().asStringValue().get(),
+                                            p.value()
+                                    );
+                                } else if (x.isName()) {
+                                    return new NTxNodeDefParamImpl(
+                                            x.asStringValue().get(),
+                                            null
+                                    );
+                                } else {
+                                    context.messages().log(NMsg.ofC("invalid definition param, expected var name %s in %s", x, object).asError());
+                                    return null;
+                                }
+                            }).filter(x -> x != null).collect(Collectors.toList());
+                } else {
+                    params = new ArrayList<>();
+                }
+                NTxSource source = context.source();
+                List<NTxNode> defBody = new ArrayList<>();
+                for (NElement child : object.children()) {
+                    NTxItem item = engine.newNode(child, context).get();
+                    NTxItemBag b = new NTxItemBag(Arrays.asList(item));
+                    if (b.isNodes()) {
+                        defBody.addAll(b.nodes());
+                    } else {
+                        context.messages().log(NMsg.ofC("expected nodes, but got other items when creating node from %s", NTxUtils.snippet(child)).asError());
+                    }
+                }
+                return new NTxNodeDefImpl(
+                        context.node(),
+                        templateName,
+                        params.toArray(new NTxNodeDefParam[0]),
+                        defBody.toArray(new NTxNode[0]),
+                        source
+                );
+            });
+        } else {
+            return _invalidSupport(NMsg.ofC("invalid defineNode syntax, expected @define <NAME>(...){....}"), context);
+        }
+    }
+
+    private NScoredCallable<NTxItem> parseNodeAsOpColonEq(NElement c, NTxNodeFactoryParseContext context) {
+        NBinaryOperatorElement p = c.asBinaryOperator().get();
+        NElement k = p.firstOperand();
+        NElement v = p.secondOperand();
+        NTxValue kh = NTxValue.of(k);
+        if (k.isName()) {
+            NOptional<String> nn = kh.asStringOrName();
+            if (nn.isPresent()) {
+                String nnn = NStringUtils.trim(nn.get());
+                return NScoredCallable.ofValid(() -> DefaultNTxNode.ofAssignIfEmpty(nnn, v, context.source()));
+            } else {
+                return _invalidSupport(NMsg.ofC("unable to interpret left hand of assignment as a valid var : %s", k), context);
+            }
+        } else {
+            return _invalidSupport(NMsg.ofC("unable to interpret left hand of assignment as a valid var : %s", k), context);
+        }
+    }
+
+    private NScoredCallable<NTxItem> parseNodeAsOpEq(NElement c, NTxNodeFactoryParseContext context) {
+        NBinaryOperatorElement p = c.asBinaryOperator().get();
+        NElement k = p.firstOperand();
+        NElement v = p.secondOperand();
+        NTxValue kh = NTxValue.of(k);
+        if (k.isName()) {
+            NOptional<String> nn = kh.asStringOrName();
+            if (nn.isPresent()) {
+                String nnn = NStringUtils.trim(nn.get());
+                return NScoredCallable.ofValid(() -> DefaultNTxNode.ofAssign(nnn, v, context.source()));
+            } else {
+                return _invalidSupport(NMsg.ofC("unable to interpret left hand of assignment as a valid var : %s", k), context);
+            }
+        } else {
+            return _invalidSupport(NMsg.ofC("unable to interpret left hand of assignment as a valid var : %s", k), context);
+        }
+    }
+
+    private NScoredCallable<NTxItem> parseNodeAsList(NElement c, NTxNodeFactoryParseContext context) {
+        NListElement list = c.asList().get();
+        DefaultNTxNode n = new DefaultNTxNode(
+                list.type() == NElementType.ORDERED_LIST ? NTxNodeType.ORDERED_LIST : NTxNodeType.UNORDERED_LIST
+                , context.source());
+        for (NListItemElement item : list.items()) {
+            n.addAll(Arrays.asList(parseListItem(item, context)).toArray(new NTxItem[0]));
+        }
+        return NScoredCallable.ofValid(n);
+    }
+
+    private NTxItem parseListItem(NListItemElement c, NTxNodeFactoryParseContext context) {
+        NTxEngine engine = context.engine();
+        List<NTxNode> nodes = new ArrayList<>();
+        NElement v = c.value().orNull();
+        if (v != null) {
+            nodes.addAll(NTxNodeUtils.toNodes(engine.newNode(v, context.push(v)).get()));
+        }
+        NListElement li = c.subList().orNull();
+        if (li != null) {
+            nodes.addAll(NTxNodeUtils.toNodes(engine.newNode(v, context.push(v)).get()));
+        }
+        return NTxNodeUtils.ofNTxItem(nodes);
     }
 
     private NScoredCallable<NTxItem> _invalidSupport(NMsg msg, NTxNodeFactoryParseContext context) {
@@ -361,7 +425,7 @@ public class DefaultNTxDocumentItemParserFactory
         return false;
     }
 
-    private NScoredCallable<NTxItem> parseNoNameBloc(NTxNodeFactoryParseContext context) {
+    private NScoredCallable<NTxItem> parseNodeAsNoNameBloc(NTxNodeFactoryParseContext context) {
         NElement c = context.element();
         NTxEngine engine = context.engine();
         NTxDocumentFactory f = engine.documentFactory();
@@ -397,7 +461,7 @@ public class DefaultNTxDocumentItemParserFactory
             NTxNode pg = f.ofGroup().setSource(context.source());
             pg.setStyleClasses(allStyles == null ? null : allStyles.toArray(new String[0]));
             for (NElement child : ee.body()) {
-                NOptional<NTxItem> u = context.engine().newNode(child, context);
+                NOptional<NTxItem> u = engine.newNode(child, context);
                 if (u.isPresent()) {
                     pg.append(u.get());
                 } else {
@@ -410,7 +474,7 @@ public class DefaultNTxDocumentItemParserFactory
         } else {
             NTxItemList pg = new NTxItemList();
             for (NElement child : ee.body()) {
-                NOptional<NTxItem> u = context.engine().newNode(child, context);
+                NOptional<NTxItem> u = engine.newNode(child, context);
                 if (u.isPresent()) {
                     pg.add(u.get());
                 } else {
