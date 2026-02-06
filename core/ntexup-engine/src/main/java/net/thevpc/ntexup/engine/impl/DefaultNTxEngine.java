@@ -343,7 +343,7 @@ public class DefaultNTxEngine implements NTxEngine {
             if (nTxItem instanceof NTxNode) {
                 NTxSource s = nTxItem.source();
                 if (s == null) {
-                    throw new IllegalArgumentException("unexpected source null");
+                    throw new NIllegalArgumentException(NMsg.ofC("unexpected source null"));
                 }
             }
             return NOptional.of(nTxItem);
