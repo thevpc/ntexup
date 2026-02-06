@@ -15,6 +15,8 @@ public interface NTxNodeFactoryParseContext {
     NTxEngine engine();
 
     NTxNodeFactoryParseContext push(NTxNode node);
+    NTxNodeFactoryParseContext push(NTxNode node,NElement element);
+    NTxNodeFactoryParseContext push(NElement element);
 
     NTxNode node();
 
