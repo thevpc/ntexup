@@ -29,7 +29,7 @@ public class DefaultNTxNodeFactoryParseContext implements NTxNodeFactoryParseCon
             , NTxSource source
     ) {
         this.document = document;
-        this.element = element==null?null: NTxUtils.addCompilerDeclarationPath(element,source);
+        this.element = element == null ? null : NTxUtils.addCompilerDeclarationPath(element, source);
         this.engine = engine;
         this.source = source;
         this.nodePath.addAll(nodePath);
@@ -46,13 +46,13 @@ public class DefaultNTxNodeFactoryParseContext implements NTxNodeFactoryParseCon
             if (isVarName(pathString)) {
                 return element;
             }
-            if(!pathString.trim().isEmpty()) {
+            if (!pathString.trim().isEmpty()) {
                 for (int i = nodePath.size() - 1; i >= 0; i--) {
                     NTxSource resource = NTxUtils.sourceOf(nodePath.get(i));
-                    if (resource!=null) {
-                        if(resource.path().isPresent()) {
+                    if (resource != null) {
+                        if (resource.path().isPresent()) {
                             NPath nPath = NTxUtils.resolvePath(element, resource);
-                            if(nPath!=null) {
+                            if (nPath != null) {
                                 return NElement.ofString(nPath.toString());
                             }
                         }
@@ -74,12 +74,27 @@ public class DefaultNTxNodeFactoryParseContext implements NTxNodeFactoryParseCon
 
     @Override
     public NTxNodeFactoryParseContext push(NTxNode node) {
-        if (node == null) {
+        return push(node, null);
+    }
+
+    @Override
+    public NTxNodeFactoryParseContext push(NElement element) {
+        return push(null, element);
+    }
+
+    @Override
+    public NTxNodeFactoryParseContext push(NTxNode node, NElement element) {
+        if (node == null && element == null) {
             return this;
         }
         List<NTxNode> nodePath2 = new ArrayList<>();
         nodePath2.addAll(Arrays.asList(nodePath()));
-        nodePath2.add(node);
+        if (node != null) {
+            nodePath2.add(node);
+        }
+        if (element == null) {
+            element = this.element;
+        }
         return new DefaultNTxNodeFactoryParseContext(document(), element, engine(), nodePath2, source);
     }
 
