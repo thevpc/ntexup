@@ -240,7 +240,6 @@ public abstract class NTxNodeParserBase implements NTxNodeParser {
     }
 
     public NOptional<NTxItem> parseItem(String id, NElement element, NTxNodeFactoryParseContext context) {
-        NTxEngine engine = context.engine();
         NTxDocumentFactory f = context.documentFactory();
         switch (element.type()) {
             case NAMED_UPLET:
