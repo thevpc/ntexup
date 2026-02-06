@@ -35,7 +35,7 @@ public class NTxItemList implements NTxItem {
         return this;
     }
 
-    public NTxItemList addAll(List<NTxItem> all) {
+    public NTxItemList addAll(List<? extends NTxItem> all) {
         if (all != null) {
             for (NTxItem i : all) {
                 add(i);
