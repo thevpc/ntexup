@@ -3,11 +3,16 @@ package net.thevpc.ntexup.engine.util;
 import net.thevpc.ntexup.api.document.node.NTxItem;
 import net.thevpc.ntexup.api.document.node.NTxItemList;
 import net.thevpc.ntexup.api.document.node.NTxNode;
+import net.thevpc.ntexup.api.util.NTxUtils;
+import net.thevpc.ntexup.engine.parser.ctrlnodes.CtrlNTxNodeName;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class NTxNodeUtils {
+    public static boolean isComponentBody(NTxNode child) {
+        return (child instanceof CtrlNTxNodeName && NTxUtils.isComponentBody(((CtrlNTxNodeName)child).getVarName().asStringValue().get()));
+    }
     public static NTxItem ofNTxItem(List<? extends NTxItem> any) {
         if (any == null) {
             return null;
