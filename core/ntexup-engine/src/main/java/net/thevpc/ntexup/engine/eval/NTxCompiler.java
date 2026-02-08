@@ -21,6 +21,7 @@ import net.thevpc.ntexup.engine.parser.NTxNodeDefImpl;
 import net.thevpc.ntexup.engine.parser.NTxNodeDefParamImpl;
 import net.thevpc.ntexup.engine.document.DefaultNTxNode;
 import net.thevpc.ntexup.engine.parser.ctrlnodes.*;
+import net.thevpc.ntexup.engine.util.NTxNodeUtils;
 import net.thevpc.nuts.concurrent.NScoredCallable;
 import net.thevpc.nuts.text.NMsg;
 import net.thevpc.nuts.util.NIllegalArgumentException;
@@ -288,7 +289,7 @@ public class NTxCompiler {
         //enforce forward definition dependencies
         node.clearChildren();
         for (NTxNode child : initialChildren) {
-            boolean componentBodyVar=(child instanceof CtrlNTxNodeName && NTxUtils.isAnyDefVarName(((CtrlNTxNodeName)child).getVarName().asStringValue().get()));
+            boolean componentBodyVar= NTxNodeUtils.isComponentBody(child);
             List<NTxItem> cc = compileNodeTree(child, h.withParent(node));
             if(componentBodyVar && cc.size()>0){
                 List<NTxSource> sources=new ArrayList<>();
@@ -358,7 +359,7 @@ public class NTxCompiler {
             DefaultNTxNode e = DefaultNTxNode.ofExpr(c, h.parent.source());
             e.setParent(h.parent);
             return compileNodeTree(e, h.withParentOnly());
-        }else if(NTxUtils.isAnyDefVarName(name)) {
+        }else if(NTxUtils.isComponentBody(name)) {
             return Arrays.asList(node);
         }
         NTxNodeParser p = engine.nodeTypeParser(name).orNull();
@@ -429,28 +430,40 @@ public class NTxCompiler {
             return result;
         }
 
-        NTxNode[] body = Arrays.copyOf(d.body(), d.body().length);
-        for (int i = 0; i < body.length; i++) {
-            body[i] = body[i].copy();
-            body[i].setParent(c);
-            for (NTxProp extraParam : extraParams) {
-                body[i].setProperty(extraParam);
-            }
-            Map<String, NElement> ee = NTxUtils.inheritedVarsMap(c);
-            for (Map.Entry<String, NElement> e : ee.entrySet()) {
-                body[i].setVar(e.getKey(), e.getValue());
-            }
-            for (int j = effectiveParams.length - 1; j >= 0; j--) {
-                if (effectiveParams[j] != null) {
-                    body[i].setVar(effectiveParams[j].name(), NTxUtils.addCompilerDeclarationPath(effectiveParams[j].value(), NTxUtils.sourceOf(d)));
+        NTxNode[] oldBody = d.body();
+        List<NTxItem> body = new ArrayList<>();
+        for (int i = 0; i < oldBody.length; i++) {
+            NTxNode nn0 = oldBody[i];
+            if(NTxNodeUtils.isComponentBody(nn0)){
+                for (NElement nElement : c.getCallBody()) {
+                    NOptional<NTxItem> ii = engine.newNode(nElement, createParseContext(
+                            nElement,
+                            c,
+                            c.source(),
+                            h));
+                    if(ii.isPresent()) {
+                        body.addAll(compileNodeTree(ii.get(), h.withDef(d).withHierarchy((NTxNode) d.parent())));
+                    }
                 }
+            }else{
+                NTxNode nn = nn0.copy();
+                nn.setParent(c);
+                for (NTxProp extraParam : extraParams) {
+                    nn.setProperty(extraParam);
+                }
+                Map<String, NElement> ee = NTxUtils.inheritedVarsMap(c);
+                for (Map.Entry<String, NElement> e : ee.entrySet()) {
+                    nn.setVar(e.getKey(), e.getValue());
+                }
+                for (int j = effectiveParams.length - 1; j >= 0; j--) {
+                    if (effectiveParams[j] != null) {
+                        nn.setVar(effectiveParams[j].name(), NTxUtils.addCompilerDeclarationPath(effectiveParams[j].value(), NTxUtils.sourceOf(d)));
+                    }
+                }
+                body.addAll(compileNodeTree(nn, h.withDef(d).withHierarchy((NTxNode) d.parent())));
             }
         }
-        List<NTxItem> result = new ArrayList<>();
-        for (NTxNode i : body) {
-            result.addAll(compileNodeTree(i, h.withDef(d).withHierarchy((NTxNode) d.parent())));
-        }
-        return result;
+        return body;
     }
 
     private List<NTxItem> compileNodeTree_call(NTxNode node, NodeHierarchy h) {
