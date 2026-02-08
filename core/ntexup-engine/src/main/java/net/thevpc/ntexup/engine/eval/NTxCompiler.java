@@ -231,7 +231,7 @@ public class NTxCompiler {
             //temporarely set parent, it will be changed later!!
             NTxUtils.setNodeParent(node, h.parent);
             // compile properties
-            List<NTxProp> properties = node.getProperties();
+//            List<NTxProp> properties = node.getProperties();
 //            for (NTxProp property : properties) {
 //                NElement value0 = property.getValue();
 //                NElement value = engine.evalExpression(value0, node);
@@ -288,7 +288,7 @@ public class NTxCompiler {
         //enforce forward definition dependencies
         node.clearChildren();
         for (NTxNode child : initialChildren) {
-            boolean componentBodyVar=(child instanceof CtrlNTxNodeName && Objects.equals(((CtrlNTxNodeName)child).getVarName().asStringValue().get(),NTxUtils.COMPONENT_BODY_VAR_NAME));
+            boolean componentBodyVar=(child instanceof CtrlNTxNodeName && NTxUtils.isAnyDefVarName(((CtrlNTxNodeName)child).getVarName().asStringValue().get()));
             List<NTxItem> cc = compileNodeTree(child, h.withParent(node));
             if(componentBodyVar && cc.size()>0){
                 List<NTxSource> sources=new ArrayList<>();
