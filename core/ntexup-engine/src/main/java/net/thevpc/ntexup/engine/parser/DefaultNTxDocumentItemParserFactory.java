@@ -434,24 +434,22 @@ public class DefaultNTxDocumentItemParserFactory
         NTxValue ee = NTxValue.of(c);
         for (NElementAnnotation a : c.annotations()) {
             String nn = a.name();
-            if (!NNameFormat.equalsIgnoreFormat(nn, NTxUtils.COMPILER_DECLARATION_PATH)) {
-                if (!NBlankable.isBlank(nn)) {
-                    if (allAncestors == null) {
-                        allAncestors = new HashSet<>();
-                    }
-                    allAncestors.add(NTxUtils.uid(nn));
+            if (!NBlankable.isBlank(nn)) {
+                if (allAncestors == null) {
+                    allAncestors = new HashSet<>();
                 }
-                // add classes as well
-                List<NElement> params = a.params().orNull();
-                if (params != null) {
-                    for (NElement cls : params) {
-                        if (allStyles == null) {
-                            allStyles = new HashSet<>();
-                        }
-                        NOptional<String[]> ss = NTxValue.of(cls).asStringArrayOrString();
-                        if (ss.isPresent()) {
-                            allStyles.addAll(Arrays.asList(ss.get()));
-                        }
+                allAncestors.add(NTxUtils.uid(nn));
+            }
+            // add classes as well
+            List<NElement> params = a.params().orNull();
+            if (params != null) {
+                for (NElement cls : params) {
+                    if (allStyles == null) {
+                        allStyles = new HashSet<>();
+                    }
+                    NOptional<String[]> ss = NTxValue.of(cls).asStringArrayOrString();
+                    if (ss.isPresent()) {
+                        allStyles.addAll(Arrays.asList(ss.get()));
                     }
                 }
             }
