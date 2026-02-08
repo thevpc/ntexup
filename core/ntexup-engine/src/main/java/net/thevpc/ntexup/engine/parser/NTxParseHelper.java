@@ -45,23 +45,21 @@ public class NTxParseHelper {
     public static boolean fillAnnotations(NElement e, NTxNode p) {
         for (NElementAnnotation a : e.annotations()) {
             String nn=a.name();
-            if (!NNameFormat.equalsIgnoreFormat(nn, NTxUtils.COMPILER_DECLARATION_PATH)) {
-                // add classes as well
-                Set<String> allClasses = new HashSet<>();
-                List<NElement> params = a.params().orNull();
-                if (params != null) {
-                    for (NElement cls : params) {
-                        NOptional<String[]> ss = NTxValue.of(cls).asStringArrayOrString();
-                        if (ss.isPresent()) {
-                            allClasses.addAll(Arrays.asList(ss.get()));
-                        }
+            // add classes as well
+            Set<String> allClasses = new HashSet<>();
+            List<NElement> params = a.params().orNull();
+            if (params != null) {
+                for (NElement cls : params) {
+                    NOptional<String[]> ss = NTxValue.of(cls).asStringArrayOrString();
+                    if (ss.isPresent()) {
+                        allClasses.addAll(Arrays.asList(ss.get()));
                     }
                 }
-                if (!allClasses.isEmpty()) {
-                    p.addStyleClasses(allClasses.toArray(new String[0]));
-                }
-                return true;
             }
+            if (!allClasses.isEmpty()) {
+                p.addStyleClasses(allClasses.toArray(new String[0]));
+            }
+            return true;
         }
         return false;
     }
