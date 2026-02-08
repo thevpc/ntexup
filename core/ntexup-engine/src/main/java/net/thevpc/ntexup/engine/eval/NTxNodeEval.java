@@ -50,7 +50,7 @@ public class NTxNodeEval implements NTxObjectEvalContext {
                 if (v.isPresent()) {
                     return NTxVarImpl.ofOptional(varName, () -> v.get());
                 }
-                if (NTxUtils.isAnyDefVarName(varName)) {
+                if (NTxUtils.isComponentBody(varName)) {
                     if (nd.templateDefinition() != null) {
                         // do not go up in hierarchy
                         break;
@@ -340,7 +340,7 @@ public class NTxNodeEval implements NTxObjectEvalContext {
                         return NOptional.of(nd);
                     }
                 }
-                if (NTxUtils.isAnyDefVarName(propertyName)) {
+                if (NTxUtils.isComponentBody(propertyName)) {
                     if (nd.templateDefinition() != null) {
                         // do not go up in hierarchy
                         break;
