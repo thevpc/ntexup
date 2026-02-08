@@ -1,0 +1,23 @@
+import(
+    "common-functions"
+    "plantuml"
+    "animated-gif"
+    "svg"
+    "shapes2d"
+    "shapes3d"
+    "plot2d"
+    "presenters"
+    "latex"
+)
+page{
+    styles:{
+        "*" :{
+            font-size:20%P
+        }
+    }
+    column{
+       ¶ Hello [[eq:x^2]]
+       text("Helloj [[eq:x^2]]",debug)
+       text("Helloj [[eq:a_j^F]]",debug)
+   }
+}
