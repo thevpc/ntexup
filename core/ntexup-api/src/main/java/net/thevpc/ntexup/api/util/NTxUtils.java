@@ -26,12 +26,15 @@ public class NTxUtils {
     public static final String COMPILER_DECLARATION_PATH = "CompilerDeclarationPath";
 
     public static boolean hasCompilerDeclarationPath(NElement element) {
-        return element.annotations().stream().anyMatch(x -> x.name().equals(COMPILER_DECLARATION_PATH));
+        return getCompilerDeclarationPath(element) != null;
+    }
+
+    public static String getCompilerDeclarationPath(NElement element) {
+        return element.metadata().get(COMPILER_DECLARATION_PATH).instanceOf(String.class).orNull();
     }
 
     public static NOptional<String> findCompilerDeclarationPath(NElement element) {
-        Optional<String> e = element.annotations().stream().filter(x -> COMPILER_DECLARATION_PATH.equals(x.name())).flatMap(x -> x.params().get().get(0).asStringValue().stream().stream()).findFirst();
-        return NOptional.ofOptional(e, NMsg.ofC("Missing CompilerDeclarationPath in %s", element));
+        return NOptional.ofNamed(getCompilerDeclarationPath(element), NMsg.ofC("Missing CompilerDeclarationPath in %s", element));
     }
 
     public static NTxPoint2D point2DasRelative(NTxPoint2D a, NTxSizeRef sr) {
@@ -40,20 +43,21 @@ public class NTxUtils {
                 a.getY() / 100 * sr.getParentHeight()
         );
     }
+
     /**
      * Generates points along an elliptical arc.
      *
-     * @param minX      bounding box left
-     * @param minY      bounding box top
-     * @param maxX      bounding box right
-     * @param maxY      bounding box bottom
-     * @param startDeg  start angle in degrees (0° = right, increasing counterclockwise)
-     * @param endDeg    end angle in degrees
-     * @param steps     number of points along the curve
-     * @return          list of points along the arc
+     * @param minX     bounding box left
+     * @param minY     bounding box top
+     * @param maxX     bounding box right
+     * @param maxY     bounding box bottom
+     * @param startDeg start angle in degrees (0° = right, increasing counterclockwise)
+     * @param endDeg   end angle in degrees
+     * @param steps    number of points along the curve
+     * @return list of points along the arc
      */
     public static List<NTxPoint2D> createArc(double minX, double minY, double maxX, double maxY,
-                                          double startDeg, double endDeg, int steps) {
+                                             double startDeg, double endDeg, int steps) {
         List<NTxPoint2D> points = new ArrayList<>();
         double cx = (minX + maxX) / 2.0;
         double cy = (minY + maxY) / 2.0;
@@ -73,8 +77,9 @@ public class NTxUtils {
 
         return points;
     }
+
     public static List<NTxPoint2D> createArc2(double cx, double cy, double rx, double ry,
-                                          double startDeg, double endDeg, int steps) {
+                                              double startDeg, double endDeg, int steps) {
         List<NTxPoint2D> points = new ArrayList<>();
         double startRad = Math.toRadians(startDeg);
         double endRad = Math.toRadians(endDeg);
@@ -89,6 +94,7 @@ public class NTxUtils {
 
         return points;
     }
+
     public static NElement addCompilerDeclarationPath(NElement elem, NTxSource resource) {
         if (resource != null) {
             NPath nPath = resource.path().orNull();
@@ -108,7 +114,7 @@ public class NTxUtils {
         if (o.isPresent()) {
             return element;
         }
-        return element.builder().addAnnotation(COMPILER_DECLARATION_PATH, NElement.ofString("")).build();
+        return element.builder().metadata(element.metadata().with(COMPILER_DECLARATION_PATH, "")).build();
     }
 
     public static NElement addCompilerDeclarationPath(NElement element, String path) {
@@ -116,10 +122,7 @@ public class NTxUtils {
         if (o.isPresent()) {
             return element;
         }
-        //if (element.isString()) {
-            return element.builder().addAnnotation(COMPILER_DECLARATION_PATH, NElement.ofString(path)).build();
-        //}
-        //return element;
+        return element.builder().metadata(element.metadata().with(COMPILER_DECLARATION_PATH, path)).build();
     }
 
     public static List<NTxNode> nodePath(NTxNode node) {
@@ -155,11 +158,6 @@ public class NTxUtils {
             }
         }
         return d;
-    }
-
-    public static String getCompilerDeclarationPath(NElement element) {
-        return element.annotations().stream().filter(a -> a.name().equals(COMPILER_DECLARATION_PATH)).findFirst().map(x -> x.param(0).get().asStringValue().get()).orElse(null);
-
     }
 
 
@@ -453,13 +451,10 @@ public class NTxUtils {
             @Override
             public List<NElement> preTransform(NElementTransformContext context) {
                 NElement element = context.element();
-                List<NElementAnnotation> oldAnn = element.annotations();
-                List<NElementAnnotation> a = oldAnn.stream().filter(x -> !COMPILER_DECLARATION_PATH.equals(x.name())).collect(Collectors.toList());
-                if (a.size() != oldAnn.size()) {
-                    NElementBuilder b = element.builder().clearAnnotations().addAnnotations(a);
-                    return Collections.singletonList(b.build());
+                if (!element.metadata().get(COMPILER_DECLARATION_PATH).isPresent()) {
+                    return Collections.singletonList(element);
                 }
-                return Collections.singletonList(element);
+                return Collections.singletonList(element.builder().metadata(element.metadata().with(COMPILER_DECLARATION_PATH, null)).build());
             }
         }).get(0);
     }
@@ -473,12 +468,7 @@ public class NTxUtils {
             public List<NElement> postTransform(NElementTransformContext context) {
                 NElement element = context.element();
                 if (element.isString()) {
-                    List<NElementAnnotation> oldAnn = element.annotations();
-                    List<NElementAnnotation> a = oldAnn.stream().filter(x -> !COMPILER_DECLARATION_PATH.equals(x.name())).collect(Collectors.toList());
-                    if (a.size() == oldAnn.size()) {
-                        NElementBuilder b = element.builder().addAnnotation(COMPILER_DECLARATION_PATH, NElement.ofString(source)).addAnnotations(a);
-                        return Collections.singletonList(b.build());
-                    }
+                    return Collections.singletonList(element.builder().metadata(element.metadata().with(COMPILER_DECLARATION_PATH, source)).build());
                 }
                 return Collections.singletonList(element);
             }
