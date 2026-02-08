@@ -18,7 +18,6 @@ import java.awt.geom.Point2D;
 import java.lang.reflect.Array;
 import java.util.*;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class NTxUtils {
 
@@ -540,7 +539,7 @@ public class NTxUtils {
 //        }
     }
 
-    public static boolean isAnyDefVarName(String name) {
+    public static boolean isComponentBody(String name) {
         return NNameFormat.equalsIgnoreFormat(COMPONENT_BODY_VAR_NAME, name)
                 ;
     }
