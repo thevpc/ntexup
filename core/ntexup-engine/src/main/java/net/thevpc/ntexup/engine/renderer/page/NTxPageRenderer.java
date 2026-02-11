@@ -5,7 +5,7 @@ import net.thevpc.ntexup.api.document.node.NTxNode;
 import net.thevpc.ntexup.api.document.node.NTxNodeType;
 import net.thevpc.ntexup.engine.renderer.NTxNodeRendererBase;
 import net.thevpc.ntexup.api.renderer.NTxGraphics;
-import net.thevpc.ntexup.api.renderer.NTxNodeRendererContext;
+import net.thevpc.ntexup.api.renderer.NTxRendererContext;
 import net.thevpc.ntexup.api.util.NTxSizeRef;
 
 import net.thevpc.ntexup.engine.util.NTxNodeRendererUtils;
@@ -19,14 +19,14 @@ public class NTxPageRenderer extends NTxNodeRendererBase {
     }
 
     @Override
-    public void renderMain(NTxNodeRendererContext ctx) {
-        NTxBounds2D b = ctx.selfBounds(ctx.node(), null, null);
+    public void renderMain(NTxRendererContext ctx) {
+        NTxBounds2D b = ctx.selfBounds(null, null);
 
         drawBackground(ctx.node(), ctx.graphics(), ctx, b);
 //        drawGrid(ctx.graphics(), b);
 
         for (NTxNode child : ctx.node().children()) {
-            ctx.withChild(child, b)
+            ctx.resolveNode(child, b)
                     .render();
         }
         //perhaps add page sum ??
@@ -66,8 +66,8 @@ public class NTxPageRenderer extends NTxNodeRendererBase {
         g.setStroke(os);
     }
 
-    private void drawBackground(NTxNode p, NTxGraphics g, NTxNodeRendererContext rendererContext, NTxBounds2D b) {
-        NTxNodeRendererUtils.paintBackground(p, rendererContext, g, b);
+    private void drawBackground(NTxNode p, NTxGraphics g, NTxRendererContext rendererContext, NTxBounds2D b) {
+        NTxNodeRendererUtils.paintBackground(rendererContext, g, b);
 
 //        int width = b.getWidth().intValue();
 //        int height = b.getHeight().intValue();
