@@ -1,10 +1,10 @@
 package net.thevpc.ntexup.engine.parser.nodeparsers;
 
+import net.thevpc.ntexup.api.eval.NTxResolutionContext;
 import net.thevpc.ntexup.engine.parser.NTxNodeParserBase;
 import net.thevpc.ntexup.api.document.node.NTxItem;
 import net.thevpc.ntexup.api.document.node.NTxItemList;
 import net.thevpc.ntexup.api.document.node.NTxNodeType;
-import net.thevpc.ntexup.api.parser.NTxNodeFactoryParseContext;
 import net.thevpc.ntexup.api.util.NTxUtils;
 import net.thevpc.ntexup.engine.parser.ctrlnodes.CtrlNTxNodeFor;
 import net.thevpc.nuts.concurrent.NScoredCallable;
@@ -22,7 +22,7 @@ public class ForSpecialParser extends NTxNodeParserBase {
     }
 
     @Override
-    public NScoredCallable<NTxItem> parseNode(NTxNodeFactoryParseContext context) {
+    public NScoredCallable<NTxItem> parseNode(NTxResolutionContext context) {
         NElement tsonElement = context.element();
         switch (tsonElement.type()) {
             case FULL_OBJECT: {
