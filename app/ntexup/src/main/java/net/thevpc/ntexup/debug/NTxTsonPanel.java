@@ -26,7 +26,7 @@ public abstract class NTxTsonPanel extends JPanel {
         try {
             NElement e = createTson();
             if (e != null) {
-                txt = e.toString();
+                txt = e.toPrettyString();
             }
         } catch (Exception ex) {
             txt = "ERROR EVALUATION TSON : "+ex.toString();
