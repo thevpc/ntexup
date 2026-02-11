@@ -2,9 +2,9 @@ package net.thevpc.ntexup.engine.parser;
 
 import net.thevpc.ntexup.api.document.NTxDocumentFactory;
 import net.thevpc.ntexup.api.document.node.NTxNode;
+import net.thevpc.ntexup.api.eval.NTxResolutionContext;
 import net.thevpc.ntexup.api.parser.NTxAllArgumentReader;
 import net.thevpc.ntexup.api.parser.NTxArgumentReader;
-import net.thevpc.ntexup.api.parser.NTxNodeFactoryParseContext;
 import net.thevpc.ntexup.api.source.NTxSource;
 import net.thevpc.nuts.elem.NElement;
 
@@ -18,7 +18,7 @@ public class NTxArgumentReaderImpl implements NTxArgumentReader, NTxAllArgumentR
     private NElement[] arguments;
     private List<NElement> availableArguments;
     private NTxDocumentFactory f;
-    private NTxNodeFactoryParseContext context;
+    private NTxResolutionContext context;
     private Map<String, Object> props = new HashMap<>();
     private int currentIndex = 0;
 
@@ -121,11 +121,11 @@ public class NTxArgumentReaderImpl implements NTxArgumentReader, NTxAllArgumentR
     }
 
     @Override
-    public NTxNodeFactoryParseContext parseContext() {
+    public NTxResolutionContext parseContext() {
         return context;
     }
 
-    public NTxArgumentReader setContext(NTxNodeFactoryParseContext context) {
+    public NTxArgumentReader setContext(NTxResolutionContext context) {
         this.context = context;
         return this;
     }
