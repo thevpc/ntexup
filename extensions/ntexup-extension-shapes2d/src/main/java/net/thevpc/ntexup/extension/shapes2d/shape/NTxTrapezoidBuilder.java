@@ -5,7 +5,7 @@ import net.thevpc.ntexup.api.document.node.NTxNodeType;
 import net.thevpc.ntexup.api.document.style.NTxProperties;
 import net.thevpc.ntexup.api.engine.NTxNodeBuilderContext;
 import net.thevpc.ntexup.api.extension.NTxNodeBuilder;
-import net.thevpc.ntexup.api.renderer.NTxNodeRendererContext;
+import net.thevpc.ntexup.api.renderer.NTxRendererContext;
 
 public class NTxTrapezoidBuilder implements NTxNodeBuilder {
     NTxProperties defaultStyles = new NTxProperties();
@@ -17,7 +17,7 @@ public class NTxTrapezoidBuilder implements NTxNodeBuilder {
         ;
     }
 
-    public void renderMain(NTxNodeRendererContext rendererContext) {
+    public void renderMain(NTxRendererContext rendererContext) {
         rendererContext = rendererContext.withDefaultStyles(defaultStyles);
         double x1 = 20;
         double x2 = 20;
