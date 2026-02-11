@@ -10,7 +10,7 @@ import net.thevpc.ntexup.api.document.node.NTxNodeType;
 import net.thevpc.ntexup.api.document.style.NTxProperties;
 import net.thevpc.ntexup.api.engine.NTxNodeBuilderContext;
 import net.thevpc.ntexup.api.extension.NTxNodeBuilder;
-import net.thevpc.ntexup.api.renderer.NTxNodeRendererContext;
+import net.thevpc.ntexup.api.renderer.NTxRendererContext;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -28,18 +28,18 @@ public class NTxGroupBuilder implements NTxNodeBuilder {
         ;
     }
 
-    public void render(NTxNodeRendererContext ctx) {
+    public void render(NTxRendererContext ctx) {
         NTxNode node = ctx.node();
         ctx = ctx.withDefaultStyles(defaultStyles);
         NTxBounds2D selfBounds = ctx.selfBounds();
         if (!ctx.isDry()) {
-            ctx.paintBackground(node, selfBounds);
+            ctx.paintBackground(selfBounds);
         }
-        NTxNodeRendererContext finalCtx = ctx;
+        NTxRendererContext finalCtx = ctx;
         List<NTxNode> texts = node.children()
-                .stream().filter(x -> finalCtx.withChild(x,finalCtx.parentBounds()).isVisible(x)).collect(Collectors.toList());
+                .stream().filter(x -> finalCtx.resolveNode(x,finalCtx.parentBounds()).isVisible()).collect(Collectors.toList());
         for (NTxNode text : texts) {
-            NTxNodeRendererContext ctx3 = ctx.withChild(text,selfBounds);
+            NTxRendererContext ctx3 = ctx.resolveNode(text,selfBounds);
             ctx3.render();
         }
         ctx.drawContour();
