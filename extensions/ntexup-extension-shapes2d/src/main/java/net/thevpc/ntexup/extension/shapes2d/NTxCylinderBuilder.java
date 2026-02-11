@@ -11,7 +11,7 @@ import net.thevpc.ntexup.api.eval.NTxValue;
 import net.thevpc.ntexup.api.extension.NTxNodeBuilder;
 import net.thevpc.ntexup.api.engine.NTxNodeBuilderContext;
 import net.thevpc.ntexup.api.renderer.NTxGraphics;
-import net.thevpc.ntexup.api.renderer.NTxNodeRendererContext;
+import net.thevpc.ntexup.api.renderer.NTxRendererContext;
 import net.thevpc.ntexup.api.util.NTxUtils;
 import net.thevpc.nuts.util.NOptional;
 
@@ -37,13 +37,13 @@ public class NTxCylinderBuilder implements NTxNodeBuilder {
 
 
 
-    public void render(NTxNodeRendererContext rendererContext) {
+    public void render(NTxRendererContext rendererContext) {
         NTxNode node=rendererContext.node();
         rendererContext = rendererContext.withDefaultStyles(defaultStyles);
-        NOptional<NTxShadow> shadowOptional = rendererContext.readStyleAsShadow(node, NTxPropName.SHADOW);
+        NOptional<NTxShadow> shadowOptional = rendererContext.readStyleAsShadow(NTxPropName.SHADOW);
 
 
-        NTxBounds2D b = rendererContext.selfBounds(node, null, null);
+        NTxBounds2D b = rendererContext.selfBounds(null, null);
         double x = b.getX();
         double y = b.getY();
         double width = b.getWidth();
@@ -92,9 +92,9 @@ public class NTxCylinderBuilder implements NTxNodeBuilder {
 
             }
             double finalEllipse_height = ellipse_height;
-            if (someBG = rendererContext.applyBackgroundColor(node)) {
+            if (someBG = rendererContext.applyBackgroundColor()) {
 
-                rendererContext.withStroke(node, () -> {
+                rendererContext.withStroke(() -> {
                     g.setColor(sideColor);
                     g.fillRect(x, y + finalEllipse_height / 2, width, height - finalEllipse_height);
                     g.fillOval((int) x, (int) arcY - finalEllipse_height / 2, NTxUtils.intOf(width), NTxUtils.intOf(finalEllipse_height));
@@ -130,8 +130,8 @@ public class NTxCylinderBuilder implements NTxNodeBuilder {
             }
 
 
-            if (rendererContext.applyForeground(node, !someBG)) {
-                rendererContext.withStroke(node, () -> {
+            if (rendererContext.applyForeground(!someBG)) {
+                rendererContext.withStroke(() -> {
                     g.drawOval((int) x, (int) y, NTxUtils.doubleOf(width), NTxUtils.intOf(finalEllipse_height));
 
                     g.drawLine((int) x, (int) (y + finalEllipse_height / 2), (int) x, (int) (arcY));
