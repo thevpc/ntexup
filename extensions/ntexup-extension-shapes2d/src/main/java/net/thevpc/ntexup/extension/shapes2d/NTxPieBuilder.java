@@ -5,7 +5,7 @@ import net.thevpc.ntexup.api.document.style.NTxPropName;
 import net.thevpc.ntexup.api.document.style.NTxProperties;
 import net.thevpc.ntexup.api.engine.NTxNodeBuilderContext;
 import net.thevpc.ntexup.api.extension.NTxNodeBuilder;
-import net.thevpc.ntexup.api.renderer.NTxNodeRendererContext;
+import net.thevpc.ntexup.api.renderer.NTxRendererContext;
 
 
 /**
@@ -27,7 +27,7 @@ public class NTxPieBuilder implements NTxNodeBuilder {
     }
 
 
-    private void render(NTxNodeRendererContext rendererContext) {
+    private void render(NTxRendererContext rendererContext) {
         NTxDonutBuilder.renderDonutOrPie(rendererContext, defaultStyles, false);
     }
 
