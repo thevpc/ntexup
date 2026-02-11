@@ -9,7 +9,7 @@ import net.thevpc.ntexup.api.engine.NTxNodeBuilderContext;
 import net.thevpc.ntexup.api.eval.NTxValueByType;
 import net.thevpc.ntexup.api.extension.NTxNodeBuilder;
 import net.thevpc.ntexup.api.renderer.NTxGraphics;
-import net.thevpc.ntexup.api.renderer.NTxNodeRendererContext;
+import net.thevpc.ntexup.api.renderer.NTxRendererContext;
 import net.thevpc.ntexup.api.util.NTxUtils;
 
 import java.awt.*;
@@ -25,19 +25,19 @@ public class NTxArcBuilder implements NTxNodeBuilder {
     }
 
 
-    public void renderMain(NTxNodeRendererContext rendererContext) {
+    public void renderMain(NTxRendererContext rendererContext) {
         NTxNode node = rendererContext.node();
         rendererContext = rendererContext.withDefaultStyles(defaultStyles);
-        NTxBounds2D b = rendererContext.selfBounds(node, null, null);
+        NTxBounds2D b = rendererContext.selfBounds(null, null);
         double x = b.getX();
         double y = b.getY();
-        double startAngle = NTxValueByType.getDouble(node,rendererContext, NTxPropName.FROM).orElse(0.0);
-        double endAngle = NTxValueByType.getDouble(node,rendererContext, NTxPropName.TO).orElse(0.0);
+        double startAngle = NTxValueByType.getDouble(rendererContext, NTxPropName.FROM).orElse(0.0);
+        double endAngle = NTxValueByType.getDouble(rendererContext, NTxPropName.TO).orElse(0.0);
         NTxGraphics g = rendererContext.graphics();
         if (!rendererContext.isDry()) {
-            rendererContext.applyForeground(node , true);
+            rendererContext.applyForeground(true);
             Stroke oldStroke=g.getStroke();
-            Stroke stroke= rendererContext.resolveStroke(node);
+            Stroke stroke= rendererContext.resolveStroke();
             if(stroke!=null){
                 g.setStroke(stroke);
             }
