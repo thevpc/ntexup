@@ -7,7 +7,7 @@ package net.thevpc.ntexup.extension.shapes2d.filler;
 import net.thevpc.ntexup.api.document.node.NTxNodeType;
 import net.thevpc.ntexup.api.engine.NTxNodeBuilderContext;
 import net.thevpc.ntexup.api.extension.NTxNodeBuilder;
-import net.thevpc.ntexup.api.renderer.NTxNodeRendererContext;
+import net.thevpc.ntexup.api.renderer.NTxRendererContext;
 
 /**
  * @author vpc
@@ -21,7 +21,7 @@ public class NTxVoidBuilder implements NTxNodeBuilder {
                 .renderComponent(this::rendererContext)
         ;
     }
-    public void rendererContext(NTxNodeRendererContext rendererContext) {
+    public void rendererContext(NTxRendererContext rendererContext) {
         // do nothing!!
     }
 
