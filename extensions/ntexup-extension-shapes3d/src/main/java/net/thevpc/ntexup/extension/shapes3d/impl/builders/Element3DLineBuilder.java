@@ -6,27 +6,20 @@ import net.thevpc.ntexup.api.document.elem2d.NTxPoint2D;
 import net.thevpc.ntexup.api.document.node.NTxNode;
 import net.thevpc.ntexup.api.document.node.NTxNodeType;
 import net.thevpc.ntexup.api.document.style.NTxPropName;
-import net.thevpc.ntexup.api.engine.NTxNodeBuilderContext;
 import net.thevpc.ntexup.api.eval.NTxValueByType;
-import net.thevpc.ntexup.api.extension.NTxNodeBuilder;
-import net.thevpc.ntexup.api.renderer.NTxNodeRendererContext;
+import net.thevpc.ntexup.api.renderer.NTxRendererContext;
 import net.thevpc.ntexup.api.util.NTxUtils;
 import net.thevpc.ntexup.extension.shapes3d.impl.NtxElement3DNodeParser;
 import net.thevpc.ntexup.extension.shapes3d.impl.NtxShapes3dUtils;
 import net.thevpc.ntexup.extension.shapes3d.impl.RealToRelativeMapper;
 import net.thevpc.ntexup.lib.geometry2d.NTx2DUtils;
 import net.thevpc.ntexup.lib.geometry3d.*;
-import net.thevpc.ntexup.lib.geometry3d.impl.NTx3DUtils;
-import net.thevpc.ntexup.lib.geometry3d.impl.composite.NtxElement3DBox;
 import net.thevpc.ntexup.lib.geometry3d.impl.primitives.NtxElement3DLine;
 import net.thevpc.ntexup.lib.geometry3d.impl.primitives.NtxElement3DLineLabel;
-import net.thevpc.ntexup.lib.geometry3d.impl.primitives.NtxElement3DPolygon;
 import net.thevpc.nuts.elem.*;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 
 public class Element3DLineBuilder implements NtxElement3DNodeParser {
     @Override
@@ -35,13 +28,13 @@ public class Element3DLineBuilder implements NtxElement3DNodeParser {
     }
 
     @Override
-    public NtxElement3D createElement3D(NTxNode node, NTxNodeRendererContext rendererContext, NTxBounds2D b, RealToRelativeMapper mapper, NtxElement3DNodeParserFactory parserFactory) {
+    public NtxElement3D createElement3D(NTxNode node, NTxRendererContext rendererContext, NTxBounds2D b, RealToRelativeMapper mapper, NtxElement3DNodeParserFactory parserFactory) {
         NTxPoint3D from = NtxShapes3dUtils.resolvePoint(node, NTxPropName.FROM, "from-real", NTxPoint3D::ofZero, b, mapper);
         NTxPoint3D to = NtxShapes3dUtils.resolvePoint(node, NTxPropName.TO, "to-real", NTxPoint3D::ofZero, b, mapper);
         NtxElement3DLine r = NTxElement3DFactory.line(from, to);
-        r.setStartArrow(NTxValueByType.getArrow(node, rendererContext, NTxPropName.START_ARROW).orNull());
-        r.setEndArrow(NTxValueByType.getArrow(node, rendererContext, NTxPropName.END_ARROW).orNull());
-        NTxArrow darrow = NTxValueByType.getArrow(node, rendererContext, "arrow").orNull();
+        r.setStartArrow(NTxValueByType.getArrow(rendererContext, NTxPropName.START_ARROW).orNull());
+        r.setEndArrow(NTxValueByType.getArrow(rendererContext, NTxPropName.END_ARROW).orNull());
+        NTxArrow darrow = NTxValueByType.getArrow(rendererContext, "arrow").orNull();
         if (darrow != null) {
             if (r.getStartArrow() == null) {
                 r.setStartArrow(darrow);
@@ -95,13 +88,13 @@ public class Element3DLineBuilder implements NtxElement3DNodeParser {
             }
 
             if(!positionSet){
-                applyPosition(label,rendererContext.computePropertyValue(node, "label-position").orNull());
+                applyPosition(label,rendererContext.computePropertyValue("label-position").orNull());
             }
             if(label.getOffset()==null){
-                applyOffset(label,rendererContext.computePropertyValue(node, "label-offset").orNull());
+                applyOffset(label,rendererContext.computePropertyValue("label-offset").orNull());
             }
             if(!orientationSet){
-                applyOrientation(label,rendererContext.computePropertyValue(node, "label-orientation").orNull());
+                applyOrientation(label,rendererContext.computePropertyValue("label-orientation").orNull());
             }
 
 //            public static final String FONT_FAMILY="font-family";
