@@ -1,7 +1,6 @@
 package net.thevpc.ntexup.extension.shapes3d.impl.builders;
 
 import net.thevpc.ntexup.api.document.elem2d.*;
-import net.thevpc.ntexup.api.util.NTxUtils;
 import net.thevpc.ntexup.extension.shapes3d.impl.NtxElement3DNodeParser;
 import net.thevpc.ntexup.extension.shapes3d.impl.NtxShapes3dUtils;
 import net.thevpc.ntexup.extension.shapes3d.impl.RealToRelativeMapper;
@@ -12,15 +11,13 @@ import net.thevpc.ntexup.api.document.node.NTxNodeType;
 import net.thevpc.ntexup.api.engine.NTxNodeBuilderContext;
 import net.thevpc.ntexup.api.eval.NTxValue;
 import net.thevpc.ntexup.api.extension.NTxNodeBuilder;
-import net.thevpc.ntexup.api.renderer.NTxNodeRendererContext;
+import net.thevpc.ntexup.api.renderer.NTxRendererContext;
 import net.thevpc.ntexup.lib.geometry3d.impl.DefaultNTx3DMesh;
 import net.thevpc.ntexup.lib.geometry3d.impl.NTx3DUtils;
 import net.thevpc.ntexup.lib.geometry3d.impl.NTxCamera3DImpl;
 import net.thevpc.ntexup.lib.geometry3d.impl.NtxGraphics3DImpl;
 import net.thevpc.ntexup.lib.geometry3d.impl.composite.*;
 import net.thevpc.nuts.elem.*;
-
-import java.util.Map;
 
 /**
  *
@@ -49,9 +46,9 @@ public class NTxScene3dBuilder implements NTxNodeBuilder {
     }
 
 
-    public void render(NTxNodeRendererContext rendererContext) {
+    public void render(NTxRendererContext rendererContext) {
         NTxNode node = rendererContext.node();
-        NTxBounds2D b = rendererContext.selfBounds(node, null, null);
+        NTxBounds2D b = rendererContext.selfBounds(null, null);
         NTxPoint3D realSize = NTx3DUtils.asPoint3D(node, "real-size").orNull();
         NElement c = NTxValue.ofProp(node, "camera").asElement().orNull();
         NTxCamera3DImpl camera = null;
@@ -127,7 +124,7 @@ public class NTxScene3dBuilder implements NTxNodeBuilder {
         g3.draw3D(g, new NTxPoint2D(b.getX(), b.getY()));
     }
 
-    private NtxElement3D toNtxElement3D(NTxNode node, NTxNodeRendererContext rendererContext, NTxBounds2D b, RealToRelativeMapper mapper, NtxElement3DNodeParserFactory parserFactory) {
+    private NtxElement3D toNtxElement3D(NTxNode node, NTxRendererContext rendererContext, NTxBounds2D b, RealToRelativeMapper mapper, NtxElement3DNodeParserFactory parserFactory) {
         NtxElement3DNodeParser p = parserFactory.resolve(node.type()).orNull();
         if (p == null) {
             return null;
