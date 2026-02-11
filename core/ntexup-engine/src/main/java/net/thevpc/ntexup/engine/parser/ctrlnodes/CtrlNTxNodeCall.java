@@ -15,9 +15,7 @@ import java.util.stream.Collectors;
 public class CtrlNTxNodeCall extends CtrlNTxNodeBase {
     private List<NElement> __args = new ArrayList<>();
     private String callName;
-    private NElement __callExpr;
     private List<NElement> __callBody = new ArrayList<>();
-    private Map<String,NElement> __bodyVars = new HashMap<>();
 
     public CtrlNTxNodeCall(NTxSource source) {
         super(NTxNodeType.CTRL_CALL,source);
@@ -34,16 +32,8 @@ public class CtrlNTxNodeCall extends CtrlNTxNodeBase {
         return callName;
     }
 
-    public Map<String, NElement> getBodyVars() {
-        return __bodyVars;
-    }
-
     public List<NElement> getCallArgs() {
         return __args;
-    }
-
-    public NElement getCallExpr() {
-        return __callExpr;
     }
 
     public List<NElement> getCallBody() {
@@ -64,9 +54,7 @@ public class CtrlNTxNodeCall extends CtrlNTxNodeBase {
             CtrlNTxNodeCall oc = (CtrlNTxNodeCall) other;
             oc.callName = callName;
             oc.__args = new ArrayList<>(__args);
-            oc.__callExpr = __callExpr;
             oc.__callBody = new ArrayList<>(__callBody);
-            oc.__bodyVars = new HashMap<>(__bodyVars);
         }
         return this;
     }
@@ -77,18 +65,9 @@ public class CtrlNTxNodeCall extends CtrlNTxNodeBase {
         return this;
     }
 
-    public CtrlNTxNodeCall setCallExpr(NElement __callExpr) {
-        this.__callExpr = __callExpr;
-        return this;
-    }
 
     public CtrlNTxNodeCall setCallBody(List<NElement> __callBody) {
         this.__callBody = __callBody;
-        return this;
-    }
-
-    public CtrlNTxNodeCall setBodyVars(Map<String, NElement> __bodyVars) {
-        this.__bodyVars = __bodyVars;
         return this;
     }
 
@@ -96,7 +75,6 @@ public class CtrlNTxNodeCall extends CtrlNTxNodeBase {
     public String toString() {
         List<NElement> a = new ArrayList<>();
         a.addAll(__args);
-        a.addAll(__bodyVars.keySet().stream().map(x -> NElement.ofName(x)).collect(Collectors.toList()));
         return "call::" + callName + "("+a.stream().map(x -> NTxUtils.snippet(x)).collect(Collectors.joining(","))+")";
     }
 }
