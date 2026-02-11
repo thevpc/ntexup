@@ -1,13 +1,13 @@
 package net.thevpc.ntexup.extension.plot2d.expr;
 
 import net.thevpc.ntexup.api.eval.NTxValue;
-import net.thevpc.ntexup.api.renderer.NTxNodeRendererContext;
+import net.thevpc.ntexup.api.renderer.NTxRendererContext;
 import net.thevpc.nuts.expr.*;
 import net.thevpc.nuts.text.NMsg;
 import net.thevpc.nuts.util.NOptional;
 
 public class NTxExprHelper {
-    public static NExprMutableDeclarations create(NTxNodeRendererContext rendererContext){
+    public static NExprMutableDeclarations create(NTxRendererContext rendererContext){
         NExprMutableDeclarations d = NExprs.of().newMutableDeclarations();
         d.declareConstant("pi",Math.PI);
         d.declareConstant("PI",Math.PI);
@@ -138,7 +138,7 @@ public class NTxExprHelper {
         return d;
     }
 
-    public static double asDouble(NOptional<Object>  any,NTxNodeRendererContext rendererContext){
+    public static double asDouble(NOptional<Object>  any, NTxRendererContext rendererContext){
         if(any.isError()){
             rendererContext.log().log(NMsg.ofC("evaluation error : %s",any.getMessage().get()));
         }
