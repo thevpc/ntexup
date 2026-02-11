@@ -6,26 +6,20 @@ import net.thevpc.ntexup.api.document.node.NTxNode;
 import net.thevpc.ntexup.api.document.node.NTxNodeType;
 import net.thevpc.ntexup.api.document.style.NTxPropName;
 import net.thevpc.ntexup.api.eval.NTxValue;
-import net.thevpc.ntexup.api.renderer.NTxNodeRendererContext;
+import net.thevpc.ntexup.api.renderer.NTxRendererContext;
 import net.thevpc.ntexup.extension.shapes3d.impl.NtxElement3DNodeParser;
 import net.thevpc.ntexup.extension.shapes3d.impl.NtxShapes3dUtils;
 import net.thevpc.ntexup.extension.shapes3d.impl.RealToRelativeMapper;
 import net.thevpc.ntexup.lib.geometry2d.NTx2DUtils;
-import net.thevpc.ntexup.lib.geometry2d.impl.NTxPolygonWithHoles2DImpl;
-import net.thevpc.ntexup.lib.geometry2d.impl.NTxRing2DImpl;
 import net.thevpc.ntexup.lib.geometry2d.impl.NTxTriangle2DImpl;
-import net.thevpc.ntexup.lib.geometry3d.NTxElement3DFactory;
 import net.thevpc.ntexup.lib.geometry3d.NTxPoint3D;
 import net.thevpc.ntexup.lib.geometry3d.NtxElement3D;
 import net.thevpc.ntexup.lib.geometry3d.impl.NTx3DUtils;
 import net.thevpc.ntexup.lib.geometry3d.impl.composite.NtxElement3DPrism;
-import net.thevpc.ntexup.lib.geometry3d.impl.primitives.NtxElement3DLine;
 import net.thevpc.ntexup.lib.geometry3d.impl.primitives.NtxElement3DTriangle;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 public class Element3DTriangleBuilder implements  NtxElement3DNodeParser {
     @Override
@@ -34,7 +28,7 @@ public class Element3DTriangleBuilder implements  NtxElement3DNodeParser {
     }
 
     @Override
-    public NtxElement3D createElement3D(NTxNode node, NTxNodeRendererContext rendererContext, NTxBounds2D b, RealToRelativeMapper mapper, NtxElement3DNodeParserFactory parserFactory) {
+    public NtxElement3D createElement3D(NTxNode node, NTxRendererContext rendererContext, NTxBounds2D b, RealToRelativeMapper mapper, NtxElement3DNodeParserFactory parserFactory) {
         NTxPoint3D position = NTx3DUtils.asPoint3D(NTxValue.of(node.getPropertyValue(NTxPropName.POSITION))).orNull();
         Double thickness = NTxValue.of(node.getPropertyValue("thickness")).asDouble().orNull();
         NTxPoint2D[] points2d = NTx2DUtils.asPoint2DArray(node.getPropertyValue(NTxPropName.POINTS).orNull()).orNull();
