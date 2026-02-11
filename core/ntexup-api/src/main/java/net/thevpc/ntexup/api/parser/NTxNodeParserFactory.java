@@ -1,6 +1,7 @@
 package net.thevpc.ntexup.api.parser;
 
 import net.thevpc.ntexup.api.document.node.NTxItem;
+import net.thevpc.ntexup.api.eval.NTxResolutionContext;
 import net.thevpc.nuts.concurrent.NScoredCallable;
 
 /**
@@ -8,6 +9,6 @@ import net.thevpc.nuts.concurrent.NScoredCallable;
  */
 public interface NTxNodeParserFactory {
 
-    NScoredCallable<NTxItem> parseNode(NTxNodeFactoryParseContext context);
+    NScoredCallable<NTxItem> parseNode(NTxResolutionContext context);
 
 }
