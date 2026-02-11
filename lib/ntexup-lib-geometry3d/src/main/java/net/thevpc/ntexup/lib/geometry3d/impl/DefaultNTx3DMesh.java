@@ -3,7 +3,7 @@ package net.thevpc.ntexup.lib.geometry3d.impl;
 import net.thevpc.ntexup.api.document.node.NTxNode;
 import net.thevpc.ntexup.api.eval.NTxValue;
 import net.thevpc.ntexup.api.eval.NTxValueByType;
-import net.thevpc.ntexup.api.renderer.NTxNodeRendererContext;
+import net.thevpc.ntexup.api.renderer.NTxRendererContext;
 import net.thevpc.ntexup.lib.geometry3d.NTx3DMesh;
 import net.thevpc.ntexup.lib.geometry3d.NtxElement3D;
 import net.thevpc.ntexup.lib.geometry3d.impl.primitives.NtxElement3DPolygon;
@@ -32,14 +32,14 @@ public class DefaultNTx3DMesh implements NTx3DMesh {
         this.meshPaint = meshPaint;
     }
 
-    public NTx3DMesh configureScene(NTxNode node, NTxNodeRendererContext rendererContext) {
+    public NTx3DMesh configureScene(NTxNode node, NTxRendererContext rendererContext) {
         int _maxEdge = NTxValue.ofProp(node, "mesh-precision").asInt().orElse(maxEdge);
         if (_maxEdge <= 0) {
             _maxEdge = maxEdge;
         }
         boolean _showMesh = NTxValue.ofProp(node, "mesh-visible").asBoolean().orElse(showMesh);
-        Paint _meshPaint = NTxValueByType.getPaint(node, rendererContext, "mesh-color").orElse(null);
-        Stroke _meshStroke = (rendererContext.graphics().createStroke(NTxValueByType.getElement(node, rendererContext, "mesh-stroke").orNull()));
+        Paint _meshPaint = NTxValueByType.getPaint(rendererContext, "mesh-color").orElse(null);
+        Stroke _meshStroke = (rendererContext.graphics().createStroke(NTxValueByType.getElement(rendererContext, "mesh-stroke").orNull()));
         if (_meshStroke == null) {
             _meshStroke = meshStroke;
         }
