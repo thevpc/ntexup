@@ -9,7 +9,7 @@ import net.thevpc.ntexup.api.engine.NTxNodeBuilderContext;
 import net.thevpc.ntexup.api.eval.NTxValue;
 import net.thevpc.ntexup.api.extension.NTxNodeBuilder;
 import net.thevpc.ntexup.api.renderer.NTxGraphics;
-import net.thevpc.ntexup.api.renderer.NTxNodeRendererContext;
+import net.thevpc.ntexup.api.renderer.NTxRendererContext;
 
 import java.awt.*;
 import java.awt.geom.GeneralPath;
@@ -30,15 +30,15 @@ public class NTxArrowBuilder implements NTxNodeBuilder {
     }
 
 
-    public void render(NTxNodeRendererContext rendererContext) {
+    public void render(NTxRendererContext rendererContext) {
         NTxNode node=rendererContext.node();
-        NTxBounds2D b = rendererContext.selfBounds(node, null, null);
+        NTxBounds2D b = rendererContext.selfBounds(null, null);
         double x = b.getX();
         double y = b.getY();
         double width = b.getWidth();
         double height = b.getHeight();
 
-        Paint color = rendererContext.getForegroundColor(node, true);
+        Paint color = rendererContext.getForegroundColor(true);
         NTxPoint2D base = NTxValue.of(node.getPropertyValue("base")).asPoint2D().orElse(null);
         if(base==null){
             Double base3 = NTxValue.of(node.getPropertyValue("base")).asDouble().orElse(null);
