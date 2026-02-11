@@ -5,7 +5,7 @@ import net.thevpc.ntexup.api.document.node.NTxNodeType;
 import net.thevpc.ntexup.api.document.style.NTxProperties;
 import net.thevpc.ntexup.api.engine.NTxNodeBuilderContext;
 import net.thevpc.ntexup.api.extension.NTxNodeBuilder;
-import net.thevpc.ntexup.api.renderer.NTxNodeRendererContext;
+import net.thevpc.ntexup.api.renderer.NTxRendererContext;
 
 public class NTxParallelogramBuilder implements NTxNodeBuilder {
 
@@ -17,7 +17,7 @@ public class NTxParallelogramBuilder implements NTxNodeBuilder {
                 .renderComponent(this::renderMain);
     }
 
-    public void renderMain(NTxNodeRendererContext rendererContext) {
+    public void renderMain(NTxRendererContext rendererContext) {
         rendererContext = rendererContext.withDefaultStyles(defaultStyles);
         double w = 20;
         NTxPoint2D[] points = new NTxPoint2D[]{
