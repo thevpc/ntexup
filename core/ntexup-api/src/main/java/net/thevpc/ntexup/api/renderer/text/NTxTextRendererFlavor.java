@@ -1,7 +1,6 @@
 package net.thevpc.ntexup.api.renderer.text;
 
-import net.thevpc.ntexup.api.document.node.NTxNode;
-import net.thevpc.ntexup.api.renderer.NTxNodeRendererContext;
+import net.thevpc.ntexup.api.renderer.NTxRendererContext;
 
 import java.util.List;
 
@@ -9,7 +8,7 @@ public interface NTxTextRendererFlavor {
 
     String type();
 
-    void buildText(String text, NTxTextOptions options, NTxNode p, NTxNodeRendererContext ctx, NTxTextRendererBuilder builder);
+    void buildText(String text, NTxTextOptions options, NTxRendererContext ctx, NTxTextRendererBuilder builder);
 
     List<String> getParsePrefixes();
 
