@@ -1,8 +1,7 @@
 package net.thevpc.ntexup.api.util;
 
-import net.thevpc.ntexup.api.document.node.NTxNode;
 import net.thevpc.ntexup.api.eval.NTxValue;
-import net.thevpc.ntexup.api.renderer.NTxNodeRendererContext;
+import net.thevpc.ntexup.api.renderer.NTxRendererContext;
 import net.thevpc.nuts.elem.NElement;
 
 import java.awt.*;
@@ -23,9 +22,9 @@ public class NTxColors {
             new Color(0x6495ED)
     };
 
-    public static Color resolveDefaultColorByIndex(int index, Color[] colors, NTxNode node, NTxNodeRendererContext ctx) {
+    public static Color resolveDefaultColorByIndex(int index, Color[] colors, NTxRendererContext ctx) {
         if (colors == null || colors.length == 0) {
-            NElement v = ctx.resolveVarValue("documentColors", node).orNull();
+            NElement v = ctx.getVarValue("documentColors").orNull();
             if(v!=null && v.isArray()){
                 colors=NTxValue.of(v).asColorArray().orNull();
             }
