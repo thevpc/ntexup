@@ -5,7 +5,7 @@ import net.thevpc.ntexup.api.document.node.NTxNodeType;
 import net.thevpc.ntexup.api.document.style.NTxProperties;
 import net.thevpc.ntexup.api.engine.NTxNodeBuilderContext;
 import net.thevpc.ntexup.api.extension.NTxNodeBuilder;
-import net.thevpc.ntexup.api.renderer.NTxNodeRendererContext;
+import net.thevpc.ntexup.api.renderer.NTxRendererContext;
 
 public class NTxTriangleBuilder implements NTxNodeBuilder {
     NTxProperties defaultStyles = new NTxProperties();
@@ -17,7 +17,7 @@ public class NTxTriangleBuilder implements NTxNodeBuilder {
         ;
     }
 
-    public void renderMain(NTxNodeRendererContext rendererContext) {
+    public void renderMain(NTxRendererContext rendererContext) {
         rendererContext = rendererContext.withDefaultStyles(defaultStyles);
         NTxPoint2D[] points = new NTxPoint2D[]{
                 new NTxPoint2D(0, 100),
