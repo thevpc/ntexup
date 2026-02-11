@@ -10,7 +10,7 @@ import net.thevpc.ntexup.api.document.node.NTxNodeType;
 import net.thevpc.ntexup.api.document.style.NTxProperties;
 import net.thevpc.ntexup.api.extension.NTxNodeBuilder;
 import net.thevpc.ntexup.api.engine.NTxNodeBuilderContext;
-import net.thevpc.ntexup.api.renderer.NTxNodeRendererContext;
+import net.thevpc.ntexup.api.renderer.NTxRendererContext;
 import net.thevpc.ntexup.extension.shapes2d.container.util.NTxListHelper;
 
 import java.util.List;
@@ -29,7 +29,7 @@ public class NTxOrderedListBuilder implements NTxNodeBuilder {
                 ;
     }
 
-    public NTxBounds2D selfBounds(NTxNodeRendererContext rendererContext) {
+    public NTxBounds2D selfBounds(NTxRendererContext rendererContext) {
         rendererContext = rendererContext.withDefaultStyles(defaultStyles);
         NTxNode node = rendererContext.node();
         List<NTxListHelper.NodeWithIndent> all = NTxListHelper.build(node, true,rendererContext);
@@ -40,14 +40,14 @@ public class NTxOrderedListBuilder implements NTxNodeBuilder {
         return expectedBounds;
     }
 
-    public void renderMain(NTxNodeRendererContext rendererContext) {
+    public void renderMain(NTxRendererContext rendererContext) {
         rendererContext = rendererContext.withDefaultStyles(defaultStyles);
         //NTxBounds2 expectedBounds = ctx.selfBounds(p);
         List<NTxListHelper.NodeWithIndent> all = NTxListHelper.build(rendererContext.node(),true, rendererContext);
         for (int i = 0; i < all.size(); i++) {
             NTxListHelper.NodeWithIndent a = all.get(i);
-            rendererContext.withChild(a.bullet,a.bulletBounds).render();
-            rendererContext.withChild(a.child,a.childBounds).render();
+            rendererContext.resolveNode(a.bullet,a.bulletBounds).render();
+            rendererContext.resolveNode(a.child,a.childBounds).render();
         }
     }
 
