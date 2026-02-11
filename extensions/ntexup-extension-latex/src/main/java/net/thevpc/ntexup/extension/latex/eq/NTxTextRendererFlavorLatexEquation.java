@@ -1,7 +1,6 @@
 package net.thevpc.ntexup.extension.latex.eq;
 
 import net.thevpc.ntexup.api.document.elem2d.NTxDouble2;
-import net.thevpc.ntexup.api.document.node.NTxNode;
 import net.thevpc.ntexup.api.eval.NTxValueByName;
 import net.thevpc.ntexup.api.renderer.*;
 import net.thevpc.ntexup.api.renderer.text.*;
@@ -25,14 +24,14 @@ public class NTxTextRendererFlavorLatexEquation implements NTxTextRendererFlavor
 
 
     @Override
-    public void buildText(String text, NTxTextOptions options, NTxNode node, NTxNodeRendererContext ctx, NTxTextRendererBuilder builder) {
+    public void buildText(String text, NTxTextOptions options, NTxRendererContext ctx, NTxTextRendererBuilder builder) {
         if (!text.isEmpty()) {
             NTxRichTextToken r = new NTxRichTextToken(
                     NTxRichTextTokenType.IMAGE_PAINTER,
                     text.toString()
             );
-            double fontSize = NTxValueByName.getFontSize(node, ctx)*3;
-            r.imagePainter = this.createLatex(text, fontSize, options, node, ctx);
+            double fontSize = NTxValueByName.getFontSize(ctx)*3;
+            r.imagePainter = this.createLatex(text, fontSize, options, ctx);
             NTxDouble2 size = r.imagePainter.size();
             r.bounds = new Rectangle2D.Double(0, 0, size.getX(), size.getX());
             builder.currRow().addToken(r);
@@ -66,7 +65,7 @@ public class NTxTextRendererFlavorLatexEquation implements NTxTextRendererFlavor
     }
 
 
-    public NTxTextRendererBuilder.ImagePainter createLatex(String tex, double fontSize, NTxTextOptions options, NTxNode node, NTxNodeRendererContext ctx) {
+    public NTxTextRendererBuilder.ImagePainter createLatex(String tex, double fontSize, NTxTextOptions options, NTxRendererContext ctx) {
         TeXFormula formula;
         boolean error = false;
         try {
@@ -74,7 +73,7 @@ public class NTxTextRendererFlavorLatexEquation implements NTxTextRendererFlavor
         } catch (Exception ex) {
             error = true;
             formula = new TeXFormula("?error?");
-            ctx.log().log(NMsg.ofC("error evaluating latex formula %s : %s", tex, ex), NTxUtils.sourceOf(node));
+            ctx.log().log(NMsg.ofC("error evaluating latex formula %s : %s", tex, ex), ctx.source());
         }
         float size = (float) (fontSize / 2.0);
         TeXIcon icon = formula.createTeXIcon(TeXConstants.STYLE_DISPLAY, size);
@@ -86,13 +85,13 @@ public class NTxTextRendererFlavorLatexEquation implements NTxTextRendererFlavor
 //        }
         Color foregroundColor = null;
         if (options.foregroundColorIndex != null) {
-            foregroundColor = NTxColors.resolveDefaultColorByIndex(options.foregroundColorIndex, null, node, ctx);
+            foregroundColor = NTxColors.resolveDefaultColorByIndex(options.foregroundColorIndex, null, ctx);
         } else if (options.foregroundColor instanceof Color) {
             foregroundColor = (Color) options.foregroundColor;
         }
-        Color fg = NTxUtils.paintAsColor(NTxUtils.resolveForegroundColor(options, node, ctx));
+        Color fg = NTxUtils.paintAsColor(NTxUtils.resolveForegroundColor(options, ctx));
         if (fg == null) {
-            fg = NTxUtils.paintAsColor(ctx.getForegroundColor(node, true));
+            fg = NTxUtils.paintAsColor(ctx.getForegroundColor(true));
         }
         if (fg == null) {
             fg = Color.BLACK;
