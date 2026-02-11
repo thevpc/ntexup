@@ -2,8 +2,10 @@ package net.thevpc.ntexup.engine.parser;
 
 import net.thevpc.ntexup.api.document.NTxDocumentFactory;
 import net.thevpc.ntexup.api.engine.NTxEngine;
+import net.thevpc.ntexup.api.eval.NTxResolutionContext;
 import net.thevpc.ntexup.api.parser.*;
 import net.thevpc.ntexup.api.util.NTxUtils;
+import net.thevpc.ntexup.engine.parser.ctrlnodes.*;
 import net.thevpc.ntexup.engine.util.ToElementHelper;
 import net.thevpc.ntexup.api.eval.NTxValue;
 import net.thevpc.ntexup.api.document.node.*;
@@ -158,7 +160,7 @@ public abstract class NTxNodeParserBase implements NTxNodeParser {
     }
 
     @Override
-    public NScoredCallable<NTxItem> parseNode(NTxNodeFactoryParseContext context) {
+    public NScoredCallable<NTxItem> parseNode(NTxResolutionContext context) {
         NElement e = context.element();
 
         String s = acceptTypeName(e);
@@ -185,7 +187,7 @@ public abstract class NTxNodeParserBase implements NTxNodeParser {
         return NTxUtils.uid(id);
     }
 
-    public void onStartParsingItem(String id, NTxNode p, NElement element, NTxNodeFactoryParseContext context) {
+    public void onStartParsingItem(String id, NTxNode p, NElement element, NTxResolutionContext context) {
 
     }
 
@@ -239,7 +241,7 @@ public abstract class NTxNodeParserBase implements NTxNodeParser {
         }
     }
 
-    public NOptional<NTxItem> parseItem(String id, NElement element, NTxNodeFactoryParseContext context) {
+    public NOptional<NTxItem> parseItem(String id, NElement element, NTxResolutionContext context) {
         NTxDocumentFactory f = context.documentFactory();
         switch (element.type()) {
             case NAMED_UPLET:
@@ -255,7 +257,7 @@ public abstract class NTxNodeParserBase implements NTxNodeParser {
             case NAMED_ARRAY: {
                 NTxNode p = context.documentFactory().of(resolveEffectiveId(id));
                 p.setSource(context.source());
-                NTxNodeFactoryParseContext context2 = context.push(p);
+                NTxResolutionContext context2 = context.resolveNode(p);
                 onStartParsingItem(id, p, element, context);
                 NTxParseHelper.fillAnnotations(element, p);
                 NTxArgumentReaderImpl info = new NTxArgumentReaderImpl();
@@ -304,18 +306,60 @@ public abstract class NTxNodeParserBase implements NTxNodeParser {
             }
         }
         for (NElement e : body) {
-            NOptional<NTxItem> u = engine.newNode(e, info.parseContext());
-            if (u.isPresent()) {
-                info.node().append(u.get());
-            } else {
-                info.parseContext().messages().log(NMsg.ofC("[%s] error parsing child : %s : %s", info.parseContext().source(), e, u.getMessage().get()).asSevere(), info.parseContext().source());
-            }
+            info.node().append(new CtrNTxNodelUncompiled(e, info.parseContext().source()));
         }
     }
 
     @Override
-    public NElement toElem(NTxNode item) {
-        return ToElementHelper.of((NTxNode) item, engine)
+    public NElement toElem(NTxNode item, NTxEngine engine) {
+        if (item instanceof CtrlNTxNodeName) {
+            NElement v = ((CtrlNTxNodeName) item).getVarName();
+            if (v != null) {
+                return v;
+            }
+        }
+        if (item instanceof CtrNTxNodelUncompiled) {
+            NElement v = item.getRaw();
+            if (v != null) {
+                return v;
+            }
+        }
+        if (item instanceof CtrlNTxNodeInclude) {
+            List<NElement> v = ((CtrlNTxNodeInclude) item).getCallArgs();
+            if (v != null) {
+                return NElement.ofUplet(item.type(), v.toArray(new NElement[0]));
+            }
+        }
+        if (item instanceof CtrlNTxNodeImport) {
+            List<NElement> v = ((CtrlNTxNodeImport) item).getCallArgs();
+            if (v != null) {
+                return NElement.ofUplet(item.type(), v.toArray(new NElement[0]));
+            }
+        }
+        if (item instanceof CtrlNTxNodeIf) {
+            CtrlNTxNodeIf i = (CtrlNTxNodeIf) item;
+            NElement v = i.getCond();
+            return NElement.ofUplet(item.type(),
+                    v,
+                    NElement.ofPair("whenTrue", NElement.ofObject(i.getTrueBloc().stream().map(x -> engine.nodeTypeParser(x.type()).get().toElem(x, engine)).toArray(NElement[]::new))),
+                    NElement.ofPair("whenTrue", NElement.ofObject(i.getFalseBloc().stream().map(x -> engine.nodeTypeParser(x.type()).get().toElem(x, engine)).toArray(NElement[]::new)))
+            );
+        }
+        if (item instanceof CtrlNTxNodeFor) {
+            CtrlNTxNodeFor i = (CtrlNTxNodeFor) item;
+            return NElement.ofFullObject(item.type(),
+                    new NElement[]{i.getVarName(), i.getVarExpr()},
+                    NElement.ofObject(i.getBody().toArray(new NElement[0]))
+            );
+        }
+        if (item instanceof CtrlNTxNodeCall) {
+            CtrlNTxNodeCall i = (CtrlNTxNodeCall) item;
+            return NElement.ofFullObject(i.getCallName(),
+                    i.getCallArgs().toArray(new NElement[0]),
+                    i.getCallBody().toArray(new NElement[0])
+            );
+        }
+        return ToElementHelper.of(item, engine)
                 .build();
     }
 
@@ -329,13 +373,13 @@ public abstract class NTxNodeParserBase implements NTxNodeParser {
         return false;
     }
 
-    protected NScoredCallable<NTxItem> _invalidSupport(NMsg msg, NTxNodeFactoryParseContext context) {
+    protected NScoredCallable<NTxItem> _invalidSupport(NMsg msg, NTxResolutionContext context) {
         msg = msg.asError();
         context.messages().log(msg.asError());
         return NScoredCallable.ofInvalid(msg);
     }
 
-    protected void _logError(NMsg nMsg, NTxNodeFactoryParseContext context) {
+    protected void _logError(NMsg nMsg, NTxResolutionContext context) {
         context.messages().log(nMsg.asError(), context.source());
     }
 }
