@@ -8,7 +8,7 @@ import net.thevpc.ntexup.api.document.style.NTxPropName;
 import net.thevpc.ntexup.api.document.NTxSizeRequirements;
 import net.thevpc.ntexup.api.eval.NTxValueByName;
 import net.thevpc.ntexup.api.renderer.NTxGraphics;
-import net.thevpc.ntexup.api.renderer.NTxNodeRendererContext;
+import net.thevpc.ntexup.api.renderer.NTxRendererContext;
 import net.thevpc.ntexup.api.eval.NTxValue;
 
 import java.awt.*;
@@ -23,7 +23,7 @@ public class NTxGridRendererHelper {
         this.children = children;
     }
 
-    public NTxBounds2D computeBound(NTxNode p, NTxNodeRendererContext ctx, NTxBounds2D expectedBounds) {
+    public NTxBounds2D computeBound(NTxNode p, NTxRendererContext ctx, NTxBounds2D expectedBounds) {
         NTxGridRendererHelper.ComputePositionsResult r = computePositions(p, expectedBounds, ctx);
         for (ItemWithPosition<HPagePartExtInfo> eee : r.effPositions.items()) {
             HPagePartExtInfo ee = eee.getUserObject();
@@ -46,14 +46,14 @@ public class NTxGridRendererHelper {
         double childrenHeight;
     }
 
-    public void render(NTxNodeRendererContext ctx, NTxBounds2D expectedBounds) {
+    public void render(NTxRendererContext ctx, NTxBounds2D expectedBounds) {
         if (ctx.isDry()) {
             return;
         }
         NTxGraphics g = ctx.graphics();
         NTxNode p = ctx.node();
         if (drawBackground) {
-            if (ctx.applyBackgroundColor(p)) {
+            if (ctx.applyBackgroundColor()) {
                 g.fillRect(expectedBounds);
             }
         }
@@ -61,10 +61,10 @@ public class NTxGridRendererHelper {
         NTxGridRendererHelper.ComputePositionsResult r = computePositions(p, expectedBounds, ctx);
         for (ItemWithPosition<HPagePartExtInfo> eee : r.effPositions.items()) {
             HPagePartExtInfo ee = eee.getUserObject();
-            NTxNodeRendererContext ctx3 = ctx.withParentBounds(ee.bounds);
+            NTxRendererContext ctx3 = ctx.withParentBounds(ee.bounds);
             if (!ctx.isDry()) {
-                if (ctx.isDebug(p)) {
-                    g.setColor(ctx.getDebugColor(p));
+                if (ctx.isDebug()) {
+                    g.setColor(ctx.getDebugColor());
                     g.setFont(new Font("Verdana", Font.PLAIN, 8));
                     g.drawString(String.valueOf(ee.index), ee.bounds.getCenterX(), ee.bounds.getCenterY());
                 }
@@ -72,13 +72,13 @@ public class NTxGridRendererHelper {
             ctx3.withNode(ee.node).render();
         }
         drawGrid(p, r, ctx);
-        ctx.paintBorderLine(p, expectedBounds);
+        ctx.paintBorderLine(expectedBounds);
     }
 
 
-    private ComputePositionsResult computePositions(NTxNode node, NTxBounds2D expectedBounds, NTxNodeRendererContext ctx) {
-        int cols = ctx.getColumns(node);
-        int rows = ctx.getRows(node);
+    private ComputePositionsResult computePositions(NTxNode node, NTxBounds2D expectedBounds, NTxRendererContext ctx) {
+        int cols = ctx.getColumns();
+        int rows = ctx.getRows();
         if (cols < 0) {
             cols = -1;
         }
@@ -104,11 +104,11 @@ public class NTxGridRendererHelper {
             NTxNode cc = children.get(i);
             HPagePartExtInfo e = new HPagePartExtInfo();
             e.node = cc;
-            NTxNodeRendererContext chctx = ctx.withChild(cc, ctx.defaultSelfBounds());
-            e.colspan = NTxValueByName.getColSpan(cc, chctx);
-            e.rowspan = NTxValueByName.getRowSpan(cc, chctx);
-            e.colweight = NTxValueByName.getColWeight(cc, chctx);
-            e.rowweight = NTxValueByName.getRowWeight(cc, chctx);
+            NTxRendererContext chctx = ctx.resolveNode(cc, ctx.defaultSelfBounds());
+            e.colspan = NTxValueByName.getColSpan(chctx);
+            e.rowspan = NTxValueByName.getRowSpan(chctx);
+            e.colweight = NTxValueByName.getColWeight(chctx);
+            e.rowweight = NTxValueByName.getRowWeight(chctx);
             e.index = i;
             effPositions.add(e.colspan, e.rowspan, e);
         }
@@ -212,11 +212,11 @@ public class NTxGridRendererHelper {
             double jx = columWeightsStack[ix] / 100.0 * childrenWidth + xOffset;
             double jy = rowWeightsStack[iy] / 100.0 * childrenHeight + yOffset;
             ee.bounds = new NTxBounds2D(jx, jy, ee.width / 100.0 * childrenWidth, ee.height / 100.0 * childrenHeight);
-            ee.sizeRequirements = ctx.engine().getRenderer(ee.node.type()).get().sizeRequirements(ctx.withChild(ee.node, ee.bounds));
+            ee.sizeRequirements = ctx.engine().getRenderer(ee.node.type()).get().sizeRequirements(ctx.resolveNode(ee.node, ee.bounds));
         }
 
         //re-evaluate paintable zone
-        NTxDouble2 posAnchor = NTxValue.of(ctx.computePropertyValue(node, NTxPropName.ORIGIN).orNull()).asDouble2OrHAlign().orElse(null);
+        NTxDouble2 posAnchor = NTxValue.of(ctx.computePropertyValue(NTxPropName.ORIGIN).orNull()).asDouble2OrHAlign().orElse(null);
 
         if (posAnchor != null) {
             double[] preferredRowsWeight = new double[effPositions.count()];
@@ -309,7 +309,7 @@ public class NTxGridRendererHelper {
         double colweight;
         double rowweight;
         int index;
-        NTxNodeRendererContext ctx;
+        NTxRendererContext ctx;
 
         NTxBounds2D bounds;
     }
@@ -371,13 +371,13 @@ public class NTxGridRendererHelper {
     }
 
 
-    private void drawGrid(NTxNode p, NTxGridRendererHelper.ComputePositionsResult r, NTxNodeRendererContext ctx) {
+    private void drawGrid(NTxNode p, NTxGridRendererHelper.ComputePositionsResult r, NTxRendererContext ctx) {
         if (ctx.isDry()) {
             return;
         }
         NTxGraphics g = ctx.graphics();
-        if (ctx.requireDrawGrid(p)) {
-            if (ctx.applyGridColor(p, true)) {
+        if (ctx.requireDrawGrid()) {
+            if (ctx.applyGridColor(true)) {
                 for (int i = 0; i < r.columnWeights.length; i++) {
                     g.drawLine(
                             (int) (r.columWeightsStack[i] / 100 * r.childrenWidth + r.xOffset),
