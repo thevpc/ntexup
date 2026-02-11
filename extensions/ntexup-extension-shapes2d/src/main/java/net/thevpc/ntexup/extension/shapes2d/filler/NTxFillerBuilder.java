@@ -9,7 +9,7 @@ import net.thevpc.ntexup.api.document.node.NTxNode;
 import net.thevpc.ntexup.api.document.node.NTxNodeType;
 import net.thevpc.ntexup.api.engine.NTxNodeBuilderContext;
 import net.thevpc.ntexup.api.extension.NTxNodeBuilder;
-import net.thevpc.ntexup.api.renderer.NTxNodeRendererContext;
+import net.thevpc.ntexup.api.renderer.NTxRendererContext;
 
 /**
  * @author vpc
@@ -22,7 +22,7 @@ public class NTxFillerBuilder implements NTxNodeBuilder {
                 .renderComponent(this::renderMain);
     }
 
-    public void renderMain(NTxNodeRendererContext rendererContext) {
+    public void renderMain(NTxRendererContext rendererContext) {
         NTxNode node = rendererContext.node();
         NTxBounds2D bounds = rendererContext.parentBounds();
         NTxBounds2D b = new NTxBounds2D(
@@ -31,7 +31,7 @@ public class NTxFillerBuilder implements NTxNodeBuilder {
                 bounds.getWidth(),
                 bounds.getHeight());
         if (!rendererContext.isDry()) {
-            rendererContext.paintBackground(node, bounds);
+            rendererContext.paintBackground(bounds);
         }
         rendererContext.drawContour();
     }
