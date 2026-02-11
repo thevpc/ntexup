@@ -1,9 +1,6 @@
 package net.thevpc.ntexup.engine.base.functions.general;
 
-import net.thevpc.ntexup.api.eval.NTxFunctionArg;
-import net.thevpc.ntexup.api.eval.NTxFunctionArgs;
-import net.thevpc.ntexup.api.eval.NTxFunctionContext;
-import net.thevpc.ntexup.api.eval.NTxValue;
+import net.thevpc.ntexup.api.eval.*;
 import net.thevpc.ntexup.api.extension.NTxFunction;
 import net.thevpc.ntexup.api.util.NTxNumberUtils;
 import net.thevpc.nuts.elem.NElement;
@@ -18,7 +15,7 @@ public class NTxFunctionDsteps implements NTxFunction {
     }
 
     @Override
-    public NElement invoke(NTxFunctionArgs args, NTxFunctionContext context) {
+    public NElement invoke(NTxFunctionArgs args, NTxResolutionContext context) {
         List<String> all = new ArrayList<>();
         NTxFunctionArg[] argsed = args.args();
         if(argsed.length==0){
