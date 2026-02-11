@@ -7,7 +7,7 @@ import net.thevpc.ntexup.api.document.elem2d.NTxPoint2D;
 import net.thevpc.ntexup.api.document.elem2d.NTxVector2D;
 import net.thevpc.ntexup.api.document.node.NTxNode;
 import net.thevpc.ntexup.api.renderer.NTxGraphics;
-import net.thevpc.ntexup.api.renderer.NTxNodeRendererContext;
+import net.thevpc.ntexup.api.renderer.NTxRendererContext;
 import net.thevpc.ntexup.extension.plot2d.model.NTxDrawContext;
 import net.thevpc.ntexup.extension.plot2d.model.NTxPlot2DData;
 import net.thevpc.ntexup.extension.plot2d.util.NTxArrayUtils;
@@ -15,8 +15,8 @@ import net.thevpc.ntexup.extension.plot2d.util.NTxArrayUtils;
 import java.awt.*;
 
 public class NTxDeprecatedDrawHelper {
-    public static void drawCurves(NTxNode p,NTxNodeRendererContext rendererContext, NTxDrawContext drawContext) {
-        NTxBounds2D selfBounds = rendererContext.selfBounds(p, null, null);
+    public static void drawCurves(NTxNode p, NTxRendererContext rendererContext, NTxDrawContext drawContext) {
+        NTxBounds2D selfBounds = rendererContext.selfBounds(null, null);
         NTxGraphics g = rendererContext.graphics();
         drawAxises(drawContext, g, p, rendererContext);
         for (NTxPlot2DData pd : drawContext.allData) {
@@ -26,7 +26,7 @@ public class NTxDeprecatedDrawHelper {
     }
 
 
-    private static  void drawFunction(NTxPlot2DData pd, NTxDrawContext drawContext, NTxGraphics g, NTxNode p, NTxNodeRendererContext rendererContext) {
+    private static  void drawFunction(NTxPlot2DData pd, NTxDrawContext drawContext, NTxGraphics g, NTxNode p, NTxRendererContext rendererContext) {
         //draw function
         Stroke ostroke = g.getStroke();
         g.setColor(pd.color);
@@ -68,7 +68,7 @@ public class NTxDeprecatedDrawHelper {
         g.setStroke(ostroke);
     }
 
-    private static void drawAxises(NTxDrawContext drawContext, NTxGraphics g, NTxNode p, NTxNodeRendererContext rendererContext) {
+    private static void drawAxises(NTxDrawContext drawContext, NTxGraphics g, NTxNode p, NTxRendererContext rendererContext) {
         Stroke mainStroke = new BasicStroke(1.0f);
         Stroke stepStroke = new BasicStroke(1.0f, // Line width of 2 pixels
                 BasicStroke.CAP_BUTT, // No added decoration at line ends
