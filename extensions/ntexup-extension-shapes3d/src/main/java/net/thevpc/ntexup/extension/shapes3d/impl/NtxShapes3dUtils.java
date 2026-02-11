@@ -6,7 +6,7 @@ import net.thevpc.ntexup.api.document.style.NTxProp;
 import net.thevpc.ntexup.api.document.style.NTxPropName;
 import net.thevpc.ntexup.api.eval.NTxValue;
 import net.thevpc.ntexup.api.eval.NTxValueByType;
-import net.thevpc.ntexup.api.renderer.NTxNodeRendererContext;
+import net.thevpc.ntexup.api.renderer.NTxRendererContext;
 import net.thevpc.ntexup.api.util.NTxUtils;
 import net.thevpc.ntexup.lib.geometry3d.NTxMatrix3D;
 import net.thevpc.ntexup.lib.geometry3d.NTxPoint3D;
@@ -37,7 +37,7 @@ public class NtxShapes3dUtils {
         return b.build();
     }
 
-    public static NtxFace resolveFace(NElement element, NTxNodeRendererContext rendererContext) {
+    public static NtxFace resolveFace(NElement element, NTxRendererContext rendererContext) {
         if (element == null || !element.isAnyObject()) {
             return null;
         }
@@ -144,31 +144,31 @@ public class NtxShapes3dUtils {
         return Arrays.stream(NTx3DUtils.asPoint3DArray(node, relativeName).orElseGet(def)).map(x -> NTx3DUtils.convertPoint(x, b)).toArray(NTxPoint3D[]::new);
     }
 
-    public static void apply3dProps(NTxNode node, NtxElement3D g, NTxNodeRendererContext rendererContext, NTxBounds2D b) {
+    public static void apply3dProps(NTxNode node, NtxElement3D g, NTxRendererContext rendererContext, NTxBounds2D b) {
         g.setLineStroke(rendererContext.graphics().createStroke(
                 NUtils.firstNonNullLazy(
-                        NTxValueByType.getElement(node, rendererContext, "line-stroke").orNull(),
-                        () -> NTxValueByType.getElement(node, rendererContext, "stroke").orNull()
+                        NTxValueByType.getElement(rendererContext, "line-stroke").orNull(),
+                        () -> NTxValueByType.getElement(rendererContext, "stroke").orNull()
                 )
         ));
         g.setContourStroke(rendererContext.graphics().createStroke(
                 NUtils.firstNonNullLazy(
-                        NTxValueByType.getElement(node, rendererContext, "contour-stroke").orNull(),
-                        () -> NTxValueByType.getElement(node, rendererContext, "stroke").orNull()
+                        NTxValueByType.getElement(rendererContext, "contour-stroke").orNull(),
+                        () -> NTxValueByType.getElement(rendererContext, "stroke").orNull()
                 )
         ));
-        g.setForegroundPaint(NTxValueByType.getPaint(node, rendererContext, NTxPropName.FOREGROUND_COLOR, "foreground", "color", "fg").orElse(null));
-        g.setBackgroundPaint(NTxValueByType.getPaint(node, rendererContext, NTxPropName.BACKGROUND_COLOR, "background", "bg").orNull());
-        g.setContourPaint(NTxValueByType.getPaint(node, rendererContext, "contour-color").orElse(null));
-        g.setLinePaint(NTxValueByType.getPaint(node, rendererContext, "line-color").orElse(null));
+        g.setForegroundPaint(NTxValueByType.getPaint(rendererContext, NTxPropName.FOREGROUND_COLOR, "foreground", "color", "fg").orElse(null));
+        g.setBackgroundPaint(NTxValueByType.getPaint(rendererContext, NTxPropName.BACKGROUND_COLOR, "background", "bg").orNull());
+        g.setContourPaint(NTxValueByType.getPaint(rendererContext, "contour-color").orElse(null));
+        g.setLinePaint(NTxValueByType.getPaint(rendererContext, "line-color").orElse(null));
 
         Double _maxEdge = NTxValue.ofProp(node, "mesh-precision").asDouble().orNull();
         Boolean _showMesh = NTxValue.ofProp(node, "mesh-visible").asBoolean().orNull();
 
         g.setMeshVisible(_showMesh);
         g.setMeshPrecision(_maxEdge);
-        g.setMeshPaint(NTxValueByType.getPaint(node, rendererContext, "mesh-color").orElse(null));
-        g.setMeshStroke(rendererContext.graphics().createStroke(NTxValueByType.getElement(node, rendererContext, "mesh-stroke").orNull()));
+        g.setMeshPaint(NTxValueByType.getPaint(rendererContext, "mesh-color").orElse(null));
+        g.setMeshStroke(rendererContext.graphics().createStroke(NTxValueByType.getElement(rendererContext, "mesh-stroke").orNull()));
 //        g.setComposite(NTxValueByType.getComposite(node, rendererContext, "composite").orElse(null));
         g.setTransform(resolveTransform(node, b));
     }
