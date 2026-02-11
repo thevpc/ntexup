@@ -1,6 +1,6 @@
 package net.thevpc.ntexup.extension.plot2d.model;
 
-import net.thevpc.ntexup.api.renderer.NTxNodeRendererContext;
+import net.thevpc.ntexup.api.renderer.NTxRendererContext;
 import net.thevpc.ntexup.api.util.NTxMinMax;
 import net.thevpc.nuts.util.NDoubleFunction;
 
@@ -32,7 +32,7 @@ public class NTxPlot2DData {
 
     }
 
-    public double[] animatedYY(NTxNodeRendererContext rendererContext) {
+    public double[] animatedYY(NTxRendererContext rendererContext) {
         double[] xx = this.xx;
         double[] yy = this.yy;
         boolean animate = rendererContext.isAnimate();
