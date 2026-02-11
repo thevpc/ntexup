@@ -18,7 +18,10 @@ public class NTxItemBag {
     private List<NTxStyleRule> styleRules = new ArrayList<>();
     private List<NTxItem> list = new ArrayList<>();
 
-    public NTxItemBag(List<NTxItem> nodes) {
+    public NTxItemBag() {
+        
+    }
+    public NTxItemBag(List<? extends NTxItem> nodes) {
         if (nodes != null) {
             for (NTxItem node : nodes) {
                 add(node);
@@ -42,12 +45,13 @@ public class NTxItemBag {
         return styleRules;
     }
 
-    private void add(NTxItem a) {
+    public void add(NTxItem a) {
         if (a != null) {
             if (a instanceof NTxItemList) {
                 for (NTxItem item : ((NTxItemList) a).getItems()) {
                     add(item);
                 }
+                return;
             }
             if (a instanceof NTxNode) {
                 nodes.add((NTxNode) a);
