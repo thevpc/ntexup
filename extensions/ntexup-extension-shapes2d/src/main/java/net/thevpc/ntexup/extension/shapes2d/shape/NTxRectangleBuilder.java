@@ -9,7 +9,7 @@ import net.thevpc.ntexup.api.engine.NTxNodeBuilderContext;
 import net.thevpc.ntexup.api.document.node.NTxNodeType;
 import net.thevpc.ntexup.api.document.style.NTxPropName;
 import net.thevpc.ntexup.api.renderer.NTxGraphics;
-import net.thevpc.ntexup.api.renderer.NTxNodeRendererContext;
+import net.thevpc.ntexup.api.renderer.NTxRendererContext;
 import net.thevpc.ntexup.api.util.NTxUtils;
 
 public class NTxRectangleBuilder implements NTxNodeBuilder {
@@ -25,31 +25,31 @@ public class NTxRectangleBuilder implements NTxNodeBuilder {
     }
 
 
-    public void renderMain(NTxNodeRendererContext rendererContext) {
+    public void renderMain(NTxRendererContext rendererContext) {
         rendererContext = rendererContext.withDefaultStyles(defaultStyles);
         NTxNode node = rendererContext.node();
         NTxBounds2D b = rendererContext.selfBounds();
         double x = b.getX();
         double y = b.getY();
         NTxGraphics g = rendererContext.graphics();
-        Boolean threeD = rendererContext.get3D(node);
-        Boolean raised = rendererContext.getRaised(node);
+        Boolean threeD = rendererContext.get3D();
+        Boolean raised = rendererContext.getRaised();
         if (raised != null) {
             if (threeD == null) {
                 threeD = true;
             }
         }
-        NTxDouble2 roundCorners = rendererContext.getRoundCornerArcs(node);
+        NTxDouble2 roundCorners = rendererContext.getRoundCornerArcs();
         boolean round = roundCorners != null;
         boolean d3 = threeD == null ? false : threeD;
         if (!rendererContext.isDry()) {
             if (!round && !d3) {
                 boolean someBG = false;
-                if (someBG = rendererContext.applyBackgroundColor(node)) {
+                if (someBG = rendererContext.applyBackgroundColor()) {
                     g.fillRect((int) x, (int) y, NTxUtils.intOf(b.getWidth()), NTxUtils.intOf(b.getHeight()));
                 }
-                if (rendererContext.applyForeground(node,  !someBG)) {
-                    rendererContext.withStroke(node, () -> {
+                if (rendererContext.applyForeground(!someBG)) {
+                    rendererContext.withStroke(() -> {
                         g.drawRect((int) x, (int) y, NTxUtils.intOf(b.getWidth()), NTxUtils.intOf(b.getHeight()));
                     });
                 }
@@ -57,21 +57,21 @@ public class NTxRectangleBuilder implements NTxNodeBuilder {
                 double cx = NTxUtils.doubleOf(roundCorners.getX()) / 100 * rendererContext.getGlobalBounds().getWidth();
                 double cy = NTxUtils.doubleOf(roundCorners.getY()) / 100 * rendererContext.getGlobalBounds().getHeight();
                 boolean someBG = false;
-                if (someBG = rendererContext.applyBackgroundColor(node)) {
+                if (someBG = rendererContext.applyBackgroundColor()) {
                     g.fillRoundRect((int) x, (int) y, NTxUtils.intOf(b.getWidth()), NTxUtils.intOf(b.getHeight()), (int) cx, (int) cy);
                 }
-                if (rendererContext.applyForeground(node,  !someBG)) {
-                    rendererContext.withStroke(node, () -> {
+                if (rendererContext.applyForeground(!someBG)) {
+                    rendererContext.withStroke(() -> {
                         g.drawRoundRect((int) x, (int) y, NTxUtils.intOf(b.getWidth()), NTxUtils.intOf(b.getHeight()), (int) cx, (int) cy);
                     });
                 }
             } else if (threeD) {
                 boolean someBG = false;
-                if (someBG = rendererContext.applyBackgroundColor(node)) {
+                if (someBG = rendererContext.applyBackgroundColor()) {
                     g.fill3DRect((int) x, (int) y, NTxUtils.intOf(b.getWidth()), NTxUtils.intOf(b.getHeight()), raised != null && raised);
                 }
-                if (rendererContext.applyForeground(node,  !someBG)) {
-                    rendererContext.withStroke(node, () -> {
+                if (rendererContext.applyForeground(!someBG)) {
+                    rendererContext.withStroke(() -> {
                         g.draw3DRect((int) x, (int) y, NTxUtils.intOf(b.getWidth()), NTxUtils.intOf(b.getHeight()), raised != null && raised);
                     });
                 }
