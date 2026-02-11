@@ -8,7 +8,7 @@ import net.thevpc.ntexup.api.document.NTxSizeRequirements;
 import net.thevpc.ntexup.api.eval.NTxValue;
 import net.thevpc.ntexup.api.renderer.NTxGraphics;
 import net.thevpc.ntexup.api.renderer.NTxNodeRenderer;
-import net.thevpc.ntexup.api.renderer.NTxNodeRendererContext;
+import net.thevpc.ntexup.api.renderer.NTxRendererContext;
 import net.thevpc.ntexup.engine.util.NTx2DUtils0;
 import net.thevpc.ntexup.engine.util.NTxNodeRendererUtils;
 import net.thevpc.nuts.util.NOptional;
@@ -22,7 +22,7 @@ public abstract class NTxNodeRendererBase implements NTxNodeRenderer {
     }
 
     @Override
-    public NTxSizeRequirements sizeRequirements(NTxNodeRendererContext ctx) {
+    public NTxSizeRequirements sizeRequirements(NTxRendererContext ctx) {
         NTxBounds2D bounds = ctx.selfBounds();
         return new NTxSizeRequirements(
                 0,
@@ -39,9 +39,9 @@ public abstract class NTxNodeRendererBase implements NTxNodeRenderer {
         return types;
     }
 
-    public void render(NTxNodeRendererContext rendererContext) {
+    public void render(NTxRendererContext rendererContext) {
         NTxNode node = rendererContext.node();
-        boolean v = NTxValueByName.isVisible(node, rendererContext);
+        boolean v = NTxValueByName.isVisible(rendererContext);
         if (!v) {
             return;
         }
@@ -50,7 +50,7 @@ public abstract class NTxNodeRendererBase implements NTxNodeRenderer {
         NTxGraphics nv = null;
         try {
             if (!rendererContext.isDry()) {
-                NTxRotation rotation = NTxValueByName.getRotation(node, rendererContext);
+                NTxRotation rotation = NTxValueByName.getRotation(rendererContext);
                 if (rotation != null) {
                     double angle = NTxValue.of(rotation.getAngle()).asDouble().orElse(0.0);
                     if (angle != 0) {
@@ -61,8 +61,8 @@ public abstract class NTxNodeRendererBase implements NTxNodeRenderer {
                             ///HSizeRef sr=new HSizeRef();
                             double rotX = NTxValue.of(rotation.getX()).asDouble().get() / 100.0 * selfBounds.getWidth() + selfBounds.getX();
                             double rotY = NTxValue.of(rotation.getY()).asDouble().get() / 100.0 * selfBounds.getHeight() + selfBounds.getY();
-                            if (rendererContext.isDebug(node)) {
-                                g.setColor(NTxValueByName.getDebugColor(node, rendererContext));
+                            if (rendererContext.isDebug()) {
+                                g.setColor(NTxValueByName.getDebugColor(rendererContext));
                                 g.drawRect(selfBounds);
                                 g.fillRect(rotX - 3, rotY - 3, 6, 6);
 //                            g.drawString(rotX + "," + rotY+" : "+p, 100, 100);
@@ -77,17 +77,17 @@ public abstract class NTxNodeRendererBase implements NTxNodeRenderer {
                     }
                 }
 
-                NOptional<NTxShadow> shadowOptional = NTxValueByName.readStyleAsShadow(node, NTxPropName.SHADOW, rendererContext);
+                NOptional<NTxShadow> shadowOptional = NTxValueByName.readStyleAsShadow(NTxPropName.SHADOW, rendererContext);
                 if (shadowOptional.isPresent() && !shadowOptional.get().isBlank()) {
                     NTxShadow shadow = shadowOptional.get();
-                    NTxNodeRendererContext finalRendererContext = rendererContext;
+                    NTxRendererContext finalRendererContext = rendererContext;
                     NTx2DUtils0.drawShadowed(rendererContext.graphics(), gg -> {
                         renderMain(finalRendererContext.withGraphics(gg));
                     }, finalRendererContext.getGlobalBounds(), shadow);
                 } else {
                     renderMain(rendererContext);
                 }
-                NTxNodeRendererUtils.drawDebugBox(rendererContext.node(), rendererContext, rendererContext.graphics(), rendererContext.selfBounds());
+                NTxNodeRendererUtils.drawDebugBox(rendererContext, rendererContext.graphics(), rendererContext.selfBounds());
 
             }
         } finally {
@@ -97,18 +97,18 @@ public abstract class NTxNodeRendererBase implements NTxNodeRenderer {
         }
     }
 
-    public abstract void renderMain(NTxNodeRendererContext ctx);
+    public abstract void renderMain(NTxRendererContext ctx);
 
-    public NTxBounds2D bgBounds(NTxNode p, NTxNodeRendererContext ctx) {
-        return ctx.selfBounds(p, null, null);
+    public NTxBounds2D bgBounds(NTxNode p, NTxRendererContext ctx) {
+        return ctx.selfBounds(null, null);
     }
 
-    public NTxBounds2D selfBounds(NTxNodeRendererContext ctx) {
-        return NTxValueByName.selfBounds(ctx.node(), null, null, ctx);
+    public NTxBounds2D selfBounds(NTxRendererContext ctx) {
+        return NTxValueByName.selfBounds(null, null, ctx);
     }
 
-    public NTxBounds2D defaultSelfBounds(NTxNodeRendererContext ctx) {
-        return NTxValueByName.selfBounds(ctx.node(), null, null, ctx);
+    public NTxBounds2D defaultSelfBounds(NTxRendererContext ctx) {
+        return NTxValueByName.selfBounds(null, null, ctx);
     }
 
 }
