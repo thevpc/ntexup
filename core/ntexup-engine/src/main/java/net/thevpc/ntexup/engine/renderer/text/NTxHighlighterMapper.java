@@ -1,13 +1,12 @@
 package net.thevpc.ntexup.engine.renderer.text;
 
 import net.thevpc.ntexup.api.document.elem2d.NTxSize;
-import net.thevpc.ntexup.api.document.node.NTxNode;
 import net.thevpc.ntexup.api.renderer.text.*;
 import net.thevpc.ntexup.api.util.NTxColors;
 import net.thevpc.ntexup.engine.util.NTxNodeRendererUtils;
 import net.thevpc.ntexup.api.eval.NTxValue;
 import net.thevpc.ntexup.api.renderer.NTxGraphics;
-import net.thevpc.ntexup.api.renderer.NTxNodeRendererContext;
+import net.thevpc.ntexup.api.renderer.NTxRendererContext;
 import net.thevpc.nuts.text.*;
 import net.thevpc.nuts.util.NStringUtils;
 
@@ -16,23 +15,23 @@ import java.util.*;
 import java.util.List;
 
 public class NTxHighlighterMapper {
-    public static void highlightNutsText(String lang, String rawText, NText parsedText, NTxNode p, NTxNodeRendererContext ctx, NTxTextRendererBuilder result) {
+    public static void highlightNutsText(String lang, String rawText, NText parsedText, NTxRendererContext ctx, NTxTextRendererBuilder result) {
         Map<String, NTxTextPartStyle> cache = new HashMap<>();
         result.setLang(lang);
         result.setCode(rawText);
         NTxGraphics g = ctx.graphics();
-        NTxNodeRendererUtils.applyFont(p, g, ctx);
+        NTxNodeRendererUtils.applyFont(g, ctx);
         //String[] allLines = code.trim().split("[\n]");
         NTexts ttt = NTexts.of();
         NTextTransformConfig nTextTransformConfig = new NTextTransformConfig();
         nTextTransformConfig.setFlatten(true);
         nTextTransformConfig.setNormalize(true);
         nTextTransformConfig.setProcessTitleNumbers(true);
-        processNTextRecursively(ttt.normalize(parsedText, nTextTransformConfig), result, ctx, new NTextStyle[0],p, cache);
+        processNTextRecursively(ttt.normalize(parsedText, nTextTransformConfig), result, ctx, new NTextStyle[0], cache);
         result.computeBound(ctx);
     }
 
-    private static void applyOptions(NTxTextOptions to, NTextStyle nTextStyle, NTxNode node, NTxNodeRendererContext ctx, Map<String, NTxTextPartStyle> cache) {
+    private static void applyOptions(NTxTextOptions to, NTextStyle nTextStyle, NTxRendererContext ctx, Map<String, NTxTextPartStyle> cache) {
         switch (nTextStyle.getType()) {
             case BOLD: {
                 to.setBold(true);
@@ -60,11 +59,11 @@ public class NTxHighlighterMapper {
                 break;
             }
             case FORE_COLOR: {
-                to.foregroundColor = NTxColors.resolveDefaultColorByIndex(nTextStyle.getVariant(),null,node,ctx);
+                to.foregroundColor = NTxColors.resolveDefaultColorByIndex(nTextStyle.getVariant(),null, ctx);
                 break;
             }
             case BACK_COLOR: {
-                to.backgroundColor = NTxColors.resolveDefaultColorByIndex(nTextStyle.getVariant(),null,node,ctx);
+                to.backgroundColor = NTxColors.resolveDefaultColorByIndex(nTextStyle.getVariant(),null, ctx);
                 break;
             }
             case PLAIN: {
@@ -99,7 +98,7 @@ public class NTxHighlighterMapper {
             case VAR:
             case VERSION:
             case WARN: {
-                NTxTextPartStyle ss = resolveCodeStyle(nTextStyle, node, ctx, cache);
+                NTxTextPartStyle ss = resolveCodeStyle(nTextStyle, ctx, cache);
                 if (ss.foreground != null) {
                     to.foregroundColor = ss.foreground;
                 }
@@ -122,7 +121,7 @@ public class NTxHighlighterMapper {
         }
     }
 
-    private static void processNTextRecursively(NNormalizedText nText, NTxTextRendererBuilder result, NTxNodeRendererContext ctx, NTextStyle[] styles, NTxNode p, Map<String, NTxTextPartStyle> cache) {
+    private static void processNTextRecursively(NNormalizedText nText, NTxTextRendererBuilder result, NTxRendererContext ctx, NTextStyle[] styles, Map<String, NTxTextPartStyle> cache) {
         NTxGraphics g = ctx.graphics();
         if(styles==null){
             styles=new NTextStyle[0];
@@ -150,7 +149,7 @@ public class NTxHighlighterMapper {
                         //g.setFont(col.textOptions.font);
                         col.bounds = g.getStringBounds(col.text);
                         for (NTextStyle nTextStyle : styles) {
-                            applyOptions(col.textOptions, nTextStyle, p, ctx, cache);
+                            applyOptions(col.textOptions, nTextStyle, ctx, cache);
                         }
                         result.addToken(col);
                     }
@@ -161,13 +160,13 @@ public class NTxHighlighterMapper {
                 NTextStyled ss=(NTextStyled)nText;
                 List<NTextStyle> newStyles=new ArrayList<>(Arrays.asList(styles));
                 newStyles.addAll(ss.getStyles().toList());
-                processNTextRecursively((NNormalizedText) ss.getChild(), result, ctx,newStyles.toArray(new NTextStyle[0]), p,cache);
+                processNTextRecursively((NNormalizedText) ss.getChild(), result, ctx,newStyles.toArray(new NTextStyle[0]), cache);
                 break;
             }
             case LIST:{
                 NTextList list = (NTextList) nText;
                 for (NText nt : list.getChildren()) {
-                    processNTextRecursively((NNormalizedText)nt, result, ctx,styles, p,cache);
+                    processNTextRecursively((NNormalizedText)nt, result, ctx,styles, cache);
                 }
                 break;
             }
@@ -177,7 +176,7 @@ public class NTxHighlighterMapper {
         }
     }
 
-    private static NTxTextPartStyle resolveCodeStyle(NTextStyle nTextStyle, NTxNode node, NTxNodeRendererContext ctx, Map<String, NTxTextPartStyle> cache) {
+    private static NTxTextPartStyle resolveCodeStyle(NTextStyle nTextStyle, NTxRendererContext ctx, Map<String, NTxTextPartStyle> cache) {
         String styleTypeId = nTextStyle.getType().id();
         String prefix = "source-" + styleTypeId + "-";
         NTxTextPartStyle ss = cache.get(nTextStyle.id());
@@ -186,12 +185,12 @@ public class NTxHighlighterMapper {
         }
         ss = new NTxTextPartStyle();
         {
-            NTxValue e = NTxValue.of(ctx.computePropertyValue(node, prefix + "color").orNull());
+            NTxValue e = NTxValue.of(ctx.computePropertyValue(prefix + "color").orNull());
             Color[] colors = e.asColorArrayOrColor().orNull();
-            ss.foreground = NTxColors.resolveDefaultColorByIndex(nTextStyle.getVariant(), colors,node, ctx);
+            ss.foreground = NTxColors.resolveDefaultColorByIndex(nTextStyle.getVariant(), colors, ctx);
         }
         {
-            NTxValue e = NTxValue.of(ctx.computePropertyValue(node, prefix + "background").orNull());
+            NTxValue e = NTxValue.of(ctx.computePropertyValue(prefix + "background").orNull());
             Color[] colors = e.asColorArray().orNull();
             if (colors == null || colors.length == 0) {
                 // od nothing
@@ -202,8 +201,8 @@ public class NTxHighlighterMapper {
         }
         {
             NTxValue e = NTxValue.of(
-                    ctx.computePropertyValue(node, prefix + "font-family")
-                            .orElseGetOptionalFrom(() -> ctx.computePropertyValue(node, "font-family"))
+                    ctx.computePropertyValue(prefix + "font-family")
+                            .orElseGetOptionalFrom(() -> ctx.computePropertyValue("font-family"))
                             .orNull()
             );
             String value = NStringUtils.trimToNull(e.asStringOrName().orNull());
@@ -215,8 +214,8 @@ public class NTxHighlighterMapper {
         }
         {
             NTxSize e = NTxSize.ofElement(
-                    ctx.computePropertyValue(node, prefix + "font-family-size")
-                            .orElseGetOptionalFrom(() -> ctx.computePropertyValue(node, "font-family-size"))
+                    ctx.computePropertyValue(prefix + "font-family-size")
+                            .orElseGetOptionalFrom(() -> ctx.computePropertyValue("font-family-size"))
                             .orNull()
             );
             if (e == null) {
@@ -226,12 +225,12 @@ public class NTxHighlighterMapper {
             }
         }
         {
-            ss.bold = NTxValue.of(ctx.computePropertyValue(node, prefix + "font-bold")
-                    .orElseGetOptionalFrom(() -> ctx.computePropertyValue(node, "font-bold"))
+            ss.bold = NTxValue.of(ctx.computePropertyValue(prefix + "font-bold")
+                    .orElseGetOptionalFrom(() -> ctx.computePropertyValue("font-bold"))
                     .orNull()).asBoolean().orElse(false);
 
-            ss.italic = NTxValue.of(ctx.computePropertyValue(node, prefix + "font-italic")
-                    .orElseGetOptionalFrom(() -> ctx.computePropertyValue(node, "font-italic"))
+            ss.italic = NTxValue.of(ctx.computePropertyValue(prefix + "font-italic")
+                    .orElseGetOptionalFrom(() -> ctx.computePropertyValue("font-italic"))
                     .orNull()).asBoolean().orElse(false);
         }
         cache.put(nTextStyle.id(), ss);
