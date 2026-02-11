@@ -1,9 +1,9 @@
 package net.thevpc.ntexup.extension.commonfunctions.general;
 
+import net.thevpc.ntexup.api.eval.NTxResolutionContext;
 import net.thevpc.ntexup.api.eval.NTxValue;
 import net.thevpc.ntexup.api.extension.NTxFunction;
 import net.thevpc.ntexup.api.eval.NTxFunctionArgs;
-import net.thevpc.ntexup.api.eval.NTxFunctionContext;
 import net.thevpc.ntexup.api.util.NTxUtils;
 import net.thevpc.nuts.elem.NElement;
 import net.thevpc.nuts.text.NMsg;
@@ -21,7 +21,7 @@ public class NTxFunctionArrayRightRotate implements NTxFunction {
     }
 
     @Override
-    public NElement invoke(NTxFunctionArgs args, NTxFunctionContext context) {
+    public NElement invoke(NTxFunctionArgs args, NTxResolutionContext context) {
         if (args.size() == 0) {
             return NElement.ofNull();
         }
