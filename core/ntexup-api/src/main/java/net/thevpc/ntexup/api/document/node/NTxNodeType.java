@@ -55,8 +55,12 @@ public class NTxNodeType {
     public static final String CTRL_FOR ="for";
     public static final String CTRL_DEFINE ="define";
     public static final String CTRL_INCLUDE ="include";
+    public static final String CTRL_UNCOMPILED ="uncompiled";
     public static final String CTRL_IMPORT ="import";
     public static final String CTRL_NAME ="ctrlname";
+    public static final String CTRL_COMPLEX_RESULT ="ctrlcomplexresult";
+    public static final String CTRL_SIMPLE_RESULT ="ctrlsimpleresult";
+    public static final String CTRL_ERROR ="ctrlerror";
 
     public static final String CTRL_IF = "if";
 }
