@@ -1,6 +1,6 @@
 package net.thevpc.ntexup.engine.base.nodes.text;
 
-import net.thevpc.ntexup.api.renderer.NTxNodeRendererContext;
+import net.thevpc.ntexup.api.renderer.NTxRendererContext;
 import net.thevpc.ntexup.api.renderer.text.NTxTextRendererFlavorParseContext;
 import net.thevpc.ntexup.api.renderer.text.NTxTextToken;
 import net.thevpc.ntexup.api.renderer.text.NTxTextTokenFlavored;
@@ -14,16 +14,16 @@ import java.util.List;
 import java.util.function.Function;
 
 class MyNTxTextRendererFlavorParseContext implements NTxTextRendererFlavorParseContext {
-    private final NTxNodeRendererContext rendererContext;
+    private final NTxRendererContext rendererContext;
     private final NReservedSimpleCharQueue cq;
 
-    public MyNTxTextRendererFlavorParseContext(NTxNodeRendererContext rendererContext, NReservedSimpleCharQueue cq) {
+    public MyNTxTextRendererFlavorParseContext(NTxRendererContext rendererContext, NReservedSimpleCharQueue cq) {
         this.rendererContext = rendererContext;
         this.cq = cq;
     }
 
     @Override
-    public NTxNodeRendererContext rendererContext() {
+    public NTxRendererContext rendererContext() {
         return rendererContext;
     }
 
