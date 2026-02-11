@@ -19,7 +19,7 @@ public class NTxFunctionArrayLeftRotate implements NTxFunction {
     }
 
     @Override
-    public NElement invoke(NTxFunctionArgs args, NTxFunctionContext context) {
+    public NElement invoke(NTxFunctionArgs args, NTxResolutionContext context) {
         if (args.size() == 0) {
             return NElement.ofNull();
         }
