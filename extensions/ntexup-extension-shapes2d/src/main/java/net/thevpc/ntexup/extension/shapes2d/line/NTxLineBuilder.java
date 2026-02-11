@@ -14,7 +14,7 @@ import net.thevpc.ntexup.api.document.node.NTxNode;
 import net.thevpc.ntexup.api.document.node.NTxNodeType;
 import net.thevpc.ntexup.api.document.style.NTxPropName;
 import net.thevpc.ntexup.api.renderer.NTxGraphics;
-import net.thevpc.ntexup.api.renderer.NTxNodeRendererContext;
+import net.thevpc.ntexup.api.renderer.NTxRendererContext;
 import net.thevpc.ntexup.api.eval.NTxValue;
 import net.thevpc.ntexup.lib.geometry2d.NTxElement2DFactory;
 
@@ -33,7 +33,7 @@ public class NTxLineBuilder implements NTxNodeBuilder {
     }
 
 
-    public void renderMain(NTxNodeRendererContext rendererContext) {
+    public void renderMain(NTxRendererContext rendererContext) {
         NTxNode node = rendererContext.node();
         rendererContext = rendererContext.withDefaultStyles(defaultStyles);
         NTxBounds2D b = rendererContext.selfBounds();
@@ -44,11 +44,11 @@ public class NTxLineBuilder implements NTxNodeBuilder {
                 .plus(translation);
         NTxGraphics g = rendererContext.graphics();
         if (!rendererContext.isDry()) {
-            Paint fc = rendererContext.getForegroundColor(node, true);
+            Paint fc = rendererContext.getForegroundColor(true);
             NtxElement2DLine li0 = NTxElement2DFactory.line(from, to)
-                    .setStartArrow(NTxValueByType.getArrow(node, rendererContext, NTxPropName.START_ARROW).orNull())
-                    .setEndArrow(NTxValueByType.getArrow(node, rendererContext, NTxPropName.END_ARROW).orNull());
-            NTxArrow darrow = NTxValueByType.getArrow(node, rendererContext, "arrow").orNull();
+                    .setStartArrow(NTxValueByType.getArrow(rendererContext, NTxPropName.START_ARROW).orNull())
+                    .setEndArrow(NTxValueByType.getArrow(rendererContext, NTxPropName.END_ARROW).orNull());
+            NTxArrow darrow = NTxValueByType.getArrow(rendererContext, "arrow").orNull();
             if (darrow != null) {
                 if (li0.getStartArrow() == null) {
                     li0.setStartArrow(darrow);
@@ -58,7 +58,7 @@ public class NTxLineBuilder implements NTxNodeBuilder {
                 }
             }
             NtxElement2DPrimitive li = li0
-                    .setLineStroke(g.createStroke(rendererContext.getStroke(node)))
+                    .setLineStroke(g.createStroke(rendererContext.getStroke()))
                     .setLinePaint(fc);
             g.draw2D(li);
         }
