@@ -7,7 +7,7 @@ import net.thevpc.ntexup.api.document.style.NTxProperties;
 import net.thevpc.ntexup.api.engine.NTxNodeBuilderContext;
 import net.thevpc.ntexup.api.extension.NTxNodeBuilder;
 import net.thevpc.ntexup.api.renderer.NTxGraphics;
-import net.thevpc.ntexup.api.renderer.NTxNodeRendererContext;
+import net.thevpc.ntexup.api.renderer.NTxRendererContext;
 import net.thevpc.ntexup.api.util.NTxUtils;
 
 public class NTxEllipseBuilder implements NTxNodeBuilder {
@@ -21,20 +21,20 @@ public class NTxEllipseBuilder implements NTxNodeBuilder {
                 ;
     }
 
-    public void renderMain(NTxNodeRendererContext rendererContext) {
+    public void renderMain(NTxRendererContext rendererContext) {
         rendererContext = rendererContext.withDefaultStyles(defaultStyles);
         NTxNode node = rendererContext.node();
-        NTxBounds2D b = rendererContext.selfBounds(node, null, null);
+        NTxBounds2D b = rendererContext.selfBounds(null, null);
         double x = b.getX();
         double y = b.getY();
         NTxGraphics g = rendererContext.graphics();
         boolean someBG = false;
         if (!rendererContext.isDry()) {
-            if (someBG = rendererContext.applyBackgroundColor(node)) {
+            if (someBG = rendererContext.applyBackgroundColor()) {
                 g.fillOval((int) x, (int) y, NTxUtils.intOf(b.getWidth()), NTxUtils.intOf(b.getHeight()));
             }
-            if (rendererContext.applyForeground(node, !someBG)) {
-                rendererContext.withStroke(node,()->{
+            if (rendererContext.applyForeground(!someBG)) {
+                rendererContext.withStroke(()->{
                     g.drawOval((int) x, (int) y, NTxUtils.intOf(b.getWidth()), NTxUtils.intOf(b.getHeight()));
                 });
             }
