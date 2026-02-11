@@ -1,11 +1,11 @@
 package net.thevpc.ntexup.engine.parser.nodeparsers;
 
+import net.thevpc.ntexup.api.eval.NTxResolutionContext;
 import net.thevpc.ntexup.engine.parser.NTxNodeParserBase;
 import net.thevpc.ntexup.api.document.NTxDocumentFactory;
 import net.thevpc.ntexup.api.document.node.NTxItemList;
 import net.thevpc.ntexup.api.document.node.NTxItem;
 import net.thevpc.ntexup.api.document.style.NTxStyleRule;
-import net.thevpc.ntexup.api.parser.NTxNodeFactoryParseContext;
 import net.thevpc.ntexup.api.util.NTxUtils;
 import net.thevpc.ntexup.engine.parser.NTxStyleParser;
 import net.thevpc.nuts.concurrent.NScoredCallable;
@@ -26,7 +26,7 @@ public class StylesSpecialParser extends NTxNodeParserBase {
     }
 
     @Override
-    public NScoredCallable<NTxItem> parseNode(NTxNodeFactoryParseContext context) {
+    public NScoredCallable<NTxItem> parseNode(NTxResolutionContext context) {
         List<NTxItem> styles = new ArrayList<>();
         NElement tsonElement = context.element();
         NTxDocumentFactory f = context.documentFactory();
