@@ -12,9 +12,5 @@ import net.thevpc.nuts.util.NOptional;
  * @author vpc
  */
 public interface NTxObjectEvalContext {
-
-    NOptional<NTxVar> findVar(String varName, NTxNode node);
-
-    NElement eval(NElement elementExpr, NTxNode node);
-
+    NElement eval(NElement elementExpr);
 }
