@@ -7,7 +7,7 @@ import net.thevpc.ntexup.api.document.style.NTxPropName;
 import net.thevpc.ntexup.api.engine.NTxNodeBuilderContext;
 import net.thevpc.ntexup.api.eval.NTxValue;
 import net.thevpc.ntexup.api.extension.NTxNodeBuilder;
-import net.thevpc.ntexup.api.renderer.NTxNodeRendererContext;
+import net.thevpc.ntexup.api.renderer.NTxRendererContext;
 import net.thevpc.ntexup.extension.shapes3d.impl.NtxElement3DNodeParser;
 import net.thevpc.ntexup.extension.shapes3d.impl.NtxShapes3dUtils;
 import net.thevpc.ntexup.extension.shapes3d.impl.RealToRelativeMapper;
@@ -43,7 +43,7 @@ public class Element3DPrismPrimitiveBuilder implements NTxElement3DRenderer, NTx
         return Arrays.asList("prism", "prism3d");
     }
 
-    public void render(NTxNodeRendererContext rendererContext) {
+    public void render(NTxRendererContext rendererContext) {
         //do nothing in 2D
     }
 
@@ -165,7 +165,7 @@ public class Element3DPrismPrimitiveBuilder implements NTxElement3DRenderer, NTx
     }
 
     @Override
-    public NtxElement3D createElement3D(NTxNode node, NTxNodeRendererContext rendererContext, NTxBounds2D b, RealToRelativeMapper mapper, NtxElement3DNodeParserFactory parserFactory) {
+    public NtxElement3D createElement3D(NTxNode node, NTxRendererContext rendererContext, NTxBounds2D b, RealToRelativeMapper mapper, NtxElement3DNodeParserFactory parserFactory) {
         NTxPoint3D position = NtxShapes3dUtils.resolvePoint(node, NTxPropName.POSITION, "real-position", NTxPoint3D::ofZero, b, mapper);
         double thickness = NTxValue.ofProp(node, "thickness").asDouble().orElse(100.0);
         NTxRegion2D region = NTxElement2DFactory.region(NTxValue.ofProp(node, "region").asElement().orNull()).orNull();
@@ -174,13 +174,13 @@ public class Element3DPrismPrimitiveBuilder implements NTxElement3DRenderer, NTx
         }
         NtxElement3DPrism r = NTxElement3DFactory.prism(position, region, thickness);
         NtxShapes3dUtils.apply3dProps(node, r, rendererContext, b);
-        NElement faces = rendererContext.computePropertyValue(node, "faces").orNull();
+        NElement faces = rendererContext.computePropertyValue("faces").orNull();
         if (faces == null) {
-            r.setTop(NtxShapes3dUtils.resolveFace(rendererContext.computePropertyValue(node, "top").orNull(), rendererContext));
-            r.setBottom(NtxShapes3dUtils.resolveFace(rendererContext.computePropertyValue(node, "bottom").orNull(), rendererContext));
-            r.setSide(NtxShapes3dUtils.resolveFace(rendererContext.computePropertyValue(node, "side").orNull(), rendererContext));
+            r.setTop(NtxShapes3dUtils.resolveFace(rendererContext.computePropertyValue("top").orNull(), rendererContext));
+            r.setBottom(NtxShapes3dUtils.resolveFace(rendererContext.computePropertyValue("bottom").orNull(), rendererContext));
+            r.setSide(NtxShapes3dUtils.resolveFace(rendererContext.computePropertyValue("side").orNull(), rendererContext));
             for (String s : new String[]{"top", "bottom", "side"}) {
-                NtxFace f = NtxShapes3dUtils.resolveFace(rendererContext.computePropertyValue(node, s).orNull(), rendererContext);
+                NtxFace f = NtxShapes3dUtils.resolveFace(rendererContext.computePropertyValue(s).orNull(), rendererContext);
                 setBoxFace(s, r, f);
             }
         } else if (faces.isAnyObject()) {
