@@ -17,15 +17,10 @@ import net.thevpc.ntexup.api.document.NTxDocument;
 import net.thevpc.ntexup.api.document.NTxDocumentLoadingResult;
 import net.thevpc.ntexup.api.document.style.NTxProp;
 import net.thevpc.ntexup.api.document.style.NTxStyleRule;
-import net.thevpc.ntexup.api.eval.NTxCompilePageContext;
-import net.thevpc.ntexup.api.eval.NTxVarProvider;
-import net.thevpc.ntexup.api.extension.NTxFunction;
-import net.thevpc.ntexup.api.eval.NTxFunctionArg;
+import net.thevpc.ntexup.api.eval.NTxResolutionContext;
 import net.thevpc.ntexup.api.document.node.NTxItem;
 import net.thevpc.ntexup.api.document.node.NTxNode;
-import net.thevpc.ntexup.api.eval.NTxVar;
 import net.thevpc.ntexup.api.log.NTxLogger;
-import net.thevpc.ntexup.api.parser.NTxNodeFactoryParseContext;
 import net.thevpc.ntexup.api.parser.NTxNodeParser;
 import net.thevpc.ntexup.api.renderer.*;
 import net.thevpc.ntexup.api.renderer.text.NTxTextRendererFlavor;
@@ -69,7 +64,7 @@ public interface NTxEngine {
 
     List<NTxNodeParser> nodeTypeFactories();
 
-    NOptional<NTxFunction> findFunction(NTxItem node, String name, NTxFunctionArg... args);
+//    NOptional<NTxFunction> findFunction(NTxItem node, String name, NTxFunctionArg... args);
 
     NTxNode newDefaultNode(String id);
 
@@ -77,7 +72,7 @@ public interface NTxEngine {
 
     NTxDocumentFactory documentFactory();
 
-    NOptional<NTxItem> newNode(NElement element, NTxNodeFactoryParseContext ctx);
+    NOptional<NTxItem> newNode(NElement element, NTxResolutionContext ctx);
 
     NOptional<NTxDocumentStreamRenderer> newStreamRenderer(String type);
 
@@ -93,9 +88,7 @@ public interface NTxEngine {
 
     List<NTxNode> compilePageNode(NTxNode node, NTxDocument document);
 
-    List<NTxNode> compilePageNode(NTxNode node, NTxCompilePageContext context);
-
-    List<NTxNode> compileItem(NTxItem node, NTxCompilePageContext context);
+    NTxResolutionContext newContext(NTxNode node, NTxDocument document);
 
     boolean validateNode(NTxNode node);
 
@@ -135,17 +128,6 @@ public interface NTxEngine {
 
     NTxTemplateInfo[] getTemplates();
 
-    NOptional<NElement> evalExpression(NElement expression, NTxNode node, NTxVarProvider varProvider);
-
-    NOptional<NElement> resolveVarValue(String varName, NTxNode node);
-    NOptional<NElement> resolveVarValue(String varName, NTxNode node, NTxVarProvider varProvider);
-
-    NOptional<NTxVar> findVar(String varName, NTxNode node, NTxVarProvider varProvider);
-
-    NOptional<NTxNode> findNodeByProperty(String varName, String varValue, NTxNode node, NTxVarProvider varProvider);
-
-    NPath resolvePath(NElement path, NTxNode node);
-
     NOptional<NTxTextRendererFlavor> textRendererFlavor(String id);
 
     List<NTxTextRendererFlavor> textRendererFlavors();
@@ -155,7 +137,6 @@ public interface NTxEngine {
     byte[] renderImageBytes(NTxCompiledPage page, NTxNodeRendererConfig config);
 
     NOptional<NTxNodeRenderer> getRenderer(String type);
-
 
     <T> NOptional<T> getEnv(String name);
 
