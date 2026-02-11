@@ -12,14 +12,13 @@ import net.thevpc.ntexup.lib.geometry3d.NTxRenderState3D;
 import net.thevpc.ntexup.api.engine.NTxNodeBuilderContext;
 import net.thevpc.ntexup.api.extension.NTxNodeBuilder;
 import net.thevpc.ntexup.lib.geometry3d.NTxElement3DRenderer;
-import net.thevpc.ntexup.api.renderer.NTxNodeRendererContext;
+import net.thevpc.ntexup.api.renderer.NTxRendererContext;
 import net.thevpc.ntexup.lib.geometry3d.impl.NTx3DUtils;
 import net.thevpc.ntexup.lib.geometry3d.impl.composite.NtxElement3DGroup;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 
 public class Element3DGroupPrimitiveBuilder implements NTxElement3DRenderer, NTxNodeBuilder, NtxElement3DNodeParser {
 
@@ -37,7 +36,7 @@ public class Element3DGroupPrimitiveBuilder implements NTxElement3DRenderer, NTx
     }
 
     @Override
-    public NtxElement3D createElement3D(NTxNode node, NTxNodeRendererContext rendererContext, NTxBounds2D b, RealToRelativeMapper mapper, NtxElement3DNodeParserFactory parserFactory) {
+    public NtxElement3D createElement3D(NTxNode node, NTxRendererContext rendererContext, NTxBounds2D b, RealToRelativeMapper mapper, NtxElement3DNodeParserFactory parserFactory) {
         NtxElement3DGroup r = new NtxElement3DGroup();
         for (NTxNode child : node.children()) {
             NtxElement3D cc = createElement3D(child, rendererContext, b, mapper,parserFactory);
@@ -47,7 +46,7 @@ public class Element3DGroupPrimitiveBuilder implements NTxElement3DRenderer, NTx
         return r;
     }
 
-    public void render(NTxNodeRendererContext rendererContext) {
+    public void render(NTxRendererContext rendererContext) {
         // do nothing in 2D
     }
 
