@@ -1,9 +1,8 @@
 package net.thevpc.ntexup.extension.plot2d;
 
 import net.thevpc.ntexup.api.document.elem2d.NTxBounds2D;
-import net.thevpc.ntexup.api.document.node.NTxNode;
 import net.thevpc.ntexup.api.eval.NTxValue;
-import net.thevpc.ntexup.api.renderer.NTxNodeRendererContext;
+import net.thevpc.ntexup.api.renderer.NTxRendererContext;
 import net.thevpc.ntexup.api.util.NTxMinMax;
 import net.thevpc.ntexup.api.util.NTxNumberUtils;
 import net.thevpc.ntexup.extension.plot2d.expr.NTxPlotNExprEvaluator;
@@ -19,19 +18,19 @@ import java.awt.*;
 import java.util.List;
 
 class NTxDrawContextRenderCompiler {
-    public static NTxDrawContext compile(NTxNode p, NTxNodeRendererContext rendererContext){
-        double[] xValues = NTxValue.of(rendererContext.evalExpression(p.getPropertyValue("x").orElse(NElement.ofDoubleArray(NTxNumberUtils.dsteps(100,-100,1))), p).orNull())
+    public static NTxDrawContext compile(NTxRendererContext rendererContext){
+        double[] xValues = NTxValue.of(rendererContext.evalExpression(rendererContext.computePropertyValue("x").orElse(NElement.ofDoubleArray(NTxNumberUtils.dsteps(100,-100,1)))).orNull())
                 .asDoubleArray().orElse(NTxNumberUtils.dsteps(100,-100,1));
         double minY = -100;
         double maxY = 100;
         boolean zoom = true;
         NTxMinMax minMaxY = new NTxMinMax();
 
-        Paint color = rendererContext.getForegroundColor(p, true);
+        Paint color = rendererContext.getForegroundColor(true);
 
         NTxBounds2D bounds = rendererContext.parentBounds();
         NTxDrawContext drawContext = new NTxDrawContext(bounds, xValues, minY, maxY, zoom, minMaxY);
-        java.util.List<NTxFunctionPlotInfo> plotDefinitions = (List<NTxFunctionPlotInfo>) p.getUserObject("def").orNull();
+        java.util.List<NTxFunctionPlotInfo> plotDefinitions = (List<NTxFunctionPlotInfo>) rendererContext.node().getUserObject("def").orNull();
 
 //        int steps = (int) (bounds.getHeight() * 2);
 
@@ -41,15 +40,15 @@ class NTxDrawContextRenderCompiler {
                 pd.color = (Color) color;
             }
             if (pld.color != null) {
-                NElement ev = rendererContext.evalExpression(pld.color, p).orNull();
+                NElement ev = rendererContext.evalExpression(pld.color).orNull();
                 pd.color = NTxValue.of(ev).asColor().orElse(pd.color);
             }
             if (pld.title != null) {
-                NElement ev = rendererContext.evalExpression(pld.title, p).orNull();
+                NElement ev = rendererContext.evalExpression(pld.title).orNull();
                 pd.title = NTxValue.of(ev).asString().orNull();
             }
             if (pld.stroke != null) {
-                NElement ev = rendererContext.evalExpression(pld.color, p).orNull();
+                NElement ev = rendererContext.evalExpression(pld.color).orNull();
                 if (ev != null && !ev.isNull()) {
                     Stroke stroke = rendererContext.graphics().createStroke(ev);
                     if (stroke != null) {
