@@ -11,7 +11,7 @@ import net.thevpc.ntexup.api.engine.NTxNodeBuilderContext;
 import net.thevpc.ntexup.api.eval.NTxValue;
 import net.thevpc.ntexup.api.extension.NTxNodeBuilder;
 import net.thevpc.ntexup.api.renderer.NTxGraphics;
-import net.thevpc.ntexup.api.renderer.NTxNodeRendererContext;
+import net.thevpc.ntexup.api.renderer.NTxRendererContext;
 import net.thevpc.ntexup.lib.geometry2d.NTxElement2DFactory;
 import net.thevpc.nuts.elem.NElement;
 import net.thevpc.nuts.elem.NPairElement;
@@ -103,7 +103,7 @@ public class NTxPolylineBuilder implements NTxNodeBuilder {
                 .renderComponent(this::render);
     }
 
-    private void render(NTxNodeRendererContext rendererContext) {
+    private void render(NTxRendererContext rendererContext) {
 
         NTxNode node = rendererContext.node();
         rendererContext = rendererContext.withDefaultStyles(defaultStyles);
@@ -111,9 +111,9 @@ public class NTxPolylineBuilder implements NTxNodeBuilder {
         NTxGraphics g = rendererContext.graphics();
         NTxPoint2D[] points = NTxValue.ofProp(node, NTxPropName.POINTS).asPoint2DArray().get();
         if (!rendererContext.isDry()) {
-            Paint fc = rendererContext.getForegroundColor(node, true);
+            Paint fc = rendererContext.getForegroundColor(true);
             g.draw2D(NTxElement2DFactory.polyline(points)
-                    .setLineStroke(rendererContext.resolveStroke(node))
+                    .setLineStroke(rendererContext.resolveStroke())
                     .setLinePaint(fc));
         }
         rendererContext.drawContour();
