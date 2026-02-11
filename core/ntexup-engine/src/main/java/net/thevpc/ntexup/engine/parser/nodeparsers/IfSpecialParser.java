@@ -1,12 +1,13 @@
 package net.thevpc.ntexup.engine.parser.nodeparsers;
 
+import net.thevpc.ntexup.api.eval.NTxResolutionContext;
 import net.thevpc.ntexup.engine.parser.NTxNodeParserBase;
 import net.thevpc.ntexup.api.document.node.NTxItem;
 import net.thevpc.ntexup.api.document.node.NTxItemList;
 import net.thevpc.ntexup.api.document.node.NTxNode;
 import net.thevpc.ntexup.api.document.node.NTxNodeType;
-import net.thevpc.ntexup.api.parser.NTxNodeFactoryParseContext;
 import net.thevpc.ntexup.api.util.NTxUtils;
+import net.thevpc.ntexup.engine.parser.ctrlnodes.CtrNTxNodelUncompiled;
 import net.thevpc.ntexup.engine.parser.ctrlnodes.CtrlNTxNodeIf;
 import net.thevpc.nuts.concurrent.NScoredCallable;
 import net.thevpc.nuts.elem.NElement;
@@ -23,7 +24,7 @@ public class IfSpecialParser extends NTxNodeParserBase {
     }
 
     @Override
-    public NScoredCallable<NTxItem> parseNode(NTxNodeFactoryParseContext context) {
+    public NScoredCallable<NTxItem> parseNode(NTxResolutionContext context) {
         NElement tsonElement = context.element();
         switch (tsonElement.type()) {
             case FULL_OBJECT: {
@@ -34,7 +35,9 @@ public class IfSpecialParser extends NTxNodeParserBase {
                         List<NTxNode> __trueBloc = new ArrayList<>();
                         List<NTxNode> __falseBloc = new ArrayList<>();
                         for (NElement child : obj.children()) {
-                            __trueBloc.add((NTxNode) context.engine().newNode(child, context).get());
+                            __trueBloc.add(
+                                    new CtrNTxNodelUncompiled(child,context.source())
+                            );
                         }
                         for (NElement e : obj.params().get()) {
                             if (e.isNamedPair("$condition")) {
@@ -47,7 +50,9 @@ public class IfSpecialParser extends NTxNodeParserBase {
                                 NElement ee = e.asPair().get().value();
                                 if (ee.isAnyObject()) {
                                     for (NElement child : ee.asObject().get().children()) {
-                                        __falseBloc.add((NTxNode) context.engine().newNode(child, context).get());
+                                        __falseBloc.add(
+                                                new CtrNTxNodelUncompiled(child,context.source())
+                                        );
                                     }
                                 }
                             } else {
