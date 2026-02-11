@@ -5,7 +5,7 @@ import net.thevpc.ntexup.api.extension.NTxNodeBuilder;
 import net.thevpc.ntexup.api.document.node.NTxNode;
 import net.thevpc.ntexup.api.document.node.NTxNodeType;
 import net.thevpc.ntexup.api.parser.NTxAllArgumentReader;
-import net.thevpc.ntexup.api.renderer.NTxNodeRendererContext;
+import net.thevpc.ntexup.api.renderer.NTxRendererContext;
 import net.thevpc.ntexup.extension.plot2d.model.NTxDrawContext;
 import net.thevpc.ntexup.extension.plot2d.model.NTxFunctionPlotInfo;
 
@@ -44,9 +44,9 @@ public class NTxPlot2DBuilder implements NTxNodeBuilder {
     }
 
 
-    public void renderMain(NTxNodeRendererContext rendererContext) {
+    public void renderMain(NTxRendererContext rendererContext) {
         NTxNode node=rendererContext.node();
-        NTxDrawContext drawContext = NTxDrawContextRenderCompiler.compile(node, rendererContext);
+        NTxDrawContext drawContext = NTxDrawContextRenderCompiler.compile(rendererContext);
         NTxJFreeChartHelper.drawCurves(node, rendererContext, drawContext);
     }
 
