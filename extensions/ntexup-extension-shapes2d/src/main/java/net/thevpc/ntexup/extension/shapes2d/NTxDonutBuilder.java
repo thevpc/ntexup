@@ -9,7 +9,7 @@ import net.thevpc.ntexup.api.engine.NTxNodeBuilderContext;
 import net.thevpc.ntexup.api.eval.NTxValue;
 import net.thevpc.ntexup.api.extension.NTxNodeBuilder;
 import net.thevpc.ntexup.api.renderer.NTxGraphics;
-import net.thevpc.ntexup.api.renderer.NTxNodeRendererContext;
+import net.thevpc.ntexup.api.renderer.NTxRendererContext;
 
 import java.awt.*;
 import java.awt.geom.Arc2D;
@@ -37,18 +37,18 @@ public class NTxDonutBuilder implements NTxNodeBuilder {
     }
 
 
-    private void render(NTxNodeRendererContext rendererContext) {
+    private void render(NTxRendererContext rendererContext) {
         renderDonutOrPie(rendererContext, defaultStyles, true);
     }
 
-    public static void renderDonutOrPie(NTxNodeRendererContext rendererContext,
+    public static void renderDonutOrPie(NTxRendererContext rendererContext,
                                         NTxProperties defaultStyles,
                                         boolean isDonut
                                   ) {
         NTxNode node=rendererContext.node();
         rendererContext = rendererContext.withDefaultStyles(defaultStyles);
 
-        NTxBounds2D b = rendererContext.selfBounds(node, null, null);
+        NTxBounds2D b = rendererContext.selfBounds(null, null);
         double x = b.getX();
         double y = b.getY();
         double width = b.getWidth();
@@ -75,7 +75,7 @@ public class NTxDonutBuilder implements NTxNodeBuilder {
         g.setColor(Color.black);
         if (!rendererContext.isDry()) {
             double finalInnerRadius = innerRadius;
-            rendererContext.withStroke(node, () -> {
+            rendererContext.withStroke(() -> {
                 int sliceCount = NTxValue.of(node.getPropertyValue(NTxPropName.SLICE_COUNT)).asInt().orElse(-1);
                 //equal slices
                 if (sliceCount > 0) {
