@@ -20,22 +20,18 @@ import net.thevpc.ntexup.api.document.style.DefaultNTxNodeSelector;
 import net.thevpc.ntexup.api.document.style.NTxProp;
 import net.thevpc.ntexup.api.document.style.NTxStyleRule;
 import net.thevpc.ntexup.api.engine.*;
-import net.thevpc.ntexup.api.eval.NTxVarProvider;
 import net.thevpc.ntexup.api.renderer.text.NTxTextRendererFlavor;
 import net.thevpc.ntexup.api.source.NTxSource;
 import net.thevpc.ntexup.engine.eval.*;
 import net.thevpc.ntexup.engine.log.DefaultNTxLogger;
 import net.thevpc.ntexup.api.log.NTxLogger;
-import net.thevpc.ntexup.api.eval.NTxCompilePageContext;
+import net.thevpc.ntexup.api.eval.NTxResolutionContext;
 import net.thevpc.ntexup.api.document.*;
-import net.thevpc.ntexup.api.extension.NTxFunction;
-import net.thevpc.ntexup.api.eval.NTxFunctionArg;
-import net.thevpc.ntexup.api.eval.NTxVar;
 import net.thevpc.ntexup.api.parser.*;
 import net.thevpc.ntexup.api.renderer.*;
 import net.thevpc.ntexup.api.util.NTxUtils;
-import net.thevpc.ntexup.engine.renderer.DefaultNTxNodeRendererContext;
-import net.thevpc.ntexup.api.util.NTxElementUtils;
+import net.thevpc.ntexup.engine.parser.ctrlnodes.CtrNTxNodelUncompiled;
+import net.thevpc.ntexup.engine.renderer.DefaultNTxRendererContext;
 import net.thevpc.ntexup.engine.document.DefaultNTxNode;
 import net.thevpc.ntexup.engine.ext.NTxNodeBuilderContextImpl;
 import net.thevpc.ntexup.engine.log.NTxMessageList;
@@ -191,7 +187,7 @@ public class DefaultNTxEngine implements NTxEngine {
     }
 
     public <S> List<S> loadServices(Class<S> serviceClass) {
-        return NCollections.list(NServiceLoader.of(serviceClass, null,classLoader.asClassLoader()).loadAll(null));
+        return NCollections.list(NServiceLoader.of(serviceClass, null, classLoader.asClassLoader()).loadAll(null));
     }
 
     public NMutableClassLoader getEngineClassLoader() {
@@ -292,21 +288,21 @@ public class DefaultNTxEngine implements NTxEngine {
         return log;
     }
 
-    @Override
-    public NOptional<NTxFunction> findFunction(NTxItem node, String name, NTxFunctionArg... args) {
-        NTxItem p = node;
-        while (p != null) {
-            if (p instanceof NTxNode) {
-                for (NTxFunction f : ((NTxNode) p).nodeFunctions()) {
-                    if (NNameFormat.equalsIgnoreFormat(f.name(), name)) {
-                        return NOptional.of(f);
-                    }
-                }
-            }
-            p = p.parent();
-        }
-        return functions.get(name);
-    }
+//    @Override
+//    public NOptional<NTxFunction> findFunction(NTxItem node, String name, NTxFunctionArg... args) {
+//        NTxItem p = node;
+//        while (p != null) {
+//            if (p instanceof NTxNode) {
+//                for (NTxFunction f : ((NTxNode) p).nodeFunctions()) {
+//                    if (NNameFormat.equalsIgnoreFormat(f.name(), name)) {
+//                        return NOptional.of(f);
+//                    }
+//                }
+//            }
+//            p = p.parent();
+//        }
+//        return functions.get(name);
+//    }
 
     @Override
     public NTxDocumentFactory documentFactory() {
@@ -318,24 +314,18 @@ public class DefaultNTxEngine implements NTxEngine {
 
 
     @Override
-    public NOptional<NTxItem> newNode(NElement element, NTxNodeFactoryParseContext ctx) {
+    public NOptional<NTxItem> newNode(NElement element, NTxResolutionContext ctx) {
         NAssert.requireNamedNonNull(ctx, "context");
         NAssert.requireNamedNonNull(element, "element");
         if (ctx.source() == null) {
             throw new IllegalArgumentException("unexpected source null");
         }
-        NTxNodeFactoryParseContext newContext = new DefaultNTxNodeFactoryParseContext(
-                ctx.document(),
-                element,
-                this,
-                Arrays.asList(ctx.nodePath()),
-                ctx.source()
-        );
+        NTxResolutionContext finalCtx = ctx.withElement(element);
         NOptional<NTxItem> optional = NScorable.<NScoredCallable<NTxItem>>query()
                 .withName(NMsg.ofC("support for node from type '%s' value '%s'", element.type().id(), NTxUtils.snippet(element)))
                 .fromStream(
                         nodeParserFactories.list().stream()
-                                .map(x -> x.parseNode(newContext))
+                                .map(x -> x.parseNode(finalCtx))
                 )
                 .getBest().map(x -> x.call());
         if (optional.isPresent()) {
@@ -458,35 +448,47 @@ public class DefaultNTxEngine implements NTxEngine {
     }
 
     public NTxDocumentLoadingResult compileDocument(NTxDocument document) {
-        return new NTxCompiler(this).compile(document);
+        return new NTxCompiler(this).compileDocument(document);
     }
 
     @Override
     public List<NTxNode> compilePageNode(NTxNode node, NTxDocument document) {
-        return compilePageNode(node, new NTxCompilePageContextImpl(this, document));
-    }
-
-    @Override
-    public List<NTxNode> compilePageNode(NTxNode node, NTxCompilePageContext context) {
-        return new NTxCompiler(this).compilePageNode(node, context);
-    }
-
-    @Override
-    public List<NTxNode> compileItem(NTxItem node, NTxCompilePageContext context) {
-        List<NTxNode> all = new ArrayList<>();
-        if (node instanceof NTxNode) {
-            all.addAll(compilePageNode((NTxNode) node, context));
-        } else if (node instanceof NTxItemList) {
-            for (NTxItem i : ((NTxItemList) node).getItems()) {
-                all.addAll(compileItem(i, context));
-            }
-        } else if (node instanceof NTxStyleRule
-                || node instanceof NTxNodeDef
-                || node instanceof NTxProp) {
-            //just ignore
+        NTxNode o = (NTxNode) node.parent();
+        node = node.copy();
+        if (o != null) {
+            o = o.copy();
+        } else {
+            o = DefaultNTxNode.ofGroup();
         }
-        return all;
+        o.children().clear();
+        node.setParent(o);
+        NTxResolutionContext c = newContext(node, document).withInPage(true);
+        new NTxCompiler(this).compilePageNode(c);
+        return o.children();
     }
+
+    @Override
+    public NTxResolutionContext newContext(NTxNode node, NTxDocument document) {
+        NTxNode p = node == null ? null : (NTxNode) node.parent();
+        return new NTxResolutionContextImpl(p, node, NElement.ofNull(), true, this, document);
+    }
+
+//    @Override
+//    public List<NTxNode> compileItem(NTxItem node, NTxCompilePageContext context) {
+//        List<NTxNode> all = new ArrayList<>();
+//        if (node instanceof NTxNode) {
+//            all.addAll(compilePageNode((NTxNode) node, context));
+//        } else if (node instanceof NTxItemList) {
+//            for (NTxItem i : ((NTxItemList) node).getItems()) {
+//                all.addAll(compileItem(i, context));
+//            }
+//        } else if (node instanceof NTxStyleRule
+//                || node instanceof NTxNodeDef
+//                || node instanceof NTxProp) {
+//            //just ignore
+//        }
+//        return all;
+//    }
 
     public boolean validateNode(NTxNode node) {
         return nodeTypeParser(node.type()).get().validateNode(node);
@@ -680,19 +682,7 @@ public class DefaultNTxEngine implements NTxEngine {
         NTxDocument docd = documentFactory().ofDocument(source);
         docd.sourceMonitor().add(source);
         docd.root().setSource(source);
-        NTxNodeFactoryParseContext newContext = new DefaultNTxNodeFactoryParseContext(
-                docd,
-                doc, this,
-                new ArrayList<>(),
-                source
-        );
-
-        NOptional<NTxItem> r = newNode(doc, newContext);
-        if (r.isPresent()) {
-            docd.root().append(r.get());
-            return NOptional.of(docd);
-        }
-        log().log(NMsg.ofC("invalid %s", r.getMessage().get()).asSevere());
+        docd.root().append(new CtrNTxNodelUncompiled(doc, source));
         return NOptional.of(docd);
     }
 
@@ -708,24 +698,26 @@ public class DefaultNTxEngine implements NTxEngine {
         if (into != null) {
             parents.add(into);
         }
-        return newNode(c, new DefaultNTxNodeFactoryParseContext(
-                document,
-                null,
-                this,
-                parents,
-                source
-        ));
+        //document.root().setRaw(c);
+        return NOptional.of(new CtrNTxNodelUncompiled(c, source));
+//        return newNode(c, new DefaultNTxNodeFactoryParseContext(
+//                document,
+//                null,
+//                this,
+//                parents,
+//                source
+//        ));
     }
 
     @Override
     public NElement toElement(NTxDocument doc) {
         NTxNode r = doc.root();
-        return nodeTypeParser(r.type()).get().toElem(r);
+        return nodeTypeParser(r.type()).get().toElem(r, this);
     }
 
     @Override
     public NElement toElement(NTxNode node) {
-        return nodeTypeParser(node.type()).get().toElem(node);
+        return nodeTypeParser(node.type()).get().toElem(node, this);
     }
 
     @Override
@@ -956,65 +948,65 @@ public class DefaultNTxEngine implements NTxEngine {
         }
     }
 
-    @Override
-    public NOptional<NElement> evalExpression(NElement expression, NTxNode node, NTxVarProvider varProvider) {
-        if (expression == null) {
-            return null;
-        }
-        String baseSrc = NTxUtils.findCompilerDeclarationPath(expression).orNull();
-        NTxNodeEval ne = new NTxNodeEval(this, varProvider);
-        NElement u = ne.eval(NTxElementUtils.toElement(expression), node);
-        if (u == null) {
-            u = NElement.ofNull();
-        }
-        if (baseSrc != null) {
-            u = NTxUtils.addCompilerDeclarationPath(u, baseSrc);
-        }
-        return NOptional.ofNamed(u, "expression " + expression);
-    }
+//    @Override
+//    public NOptional<NElement> evalExpression(NElement expression, NTxNode node, NTxVarProvider varProvider) {
+//        if (expression == null) {
+//            return null;
+//        }
+//        String baseSrc = NTxUtils.findCompilerDeclarationPath(expression).orNull();
+//        NTxNodeEval ne = new NTxNodeEval(this, varProvider);
+//        NElement u = ne.eval(NTxElementUtils.toElement(expression), node);
+//        if (u == null) {
+//            u = NElement.ofNull();
+//        }
+//        if (baseSrc != null) {
+//            u = NTxUtils.addCompilerDeclarationPath(u, baseSrc);
+//        }
+//        return NOptional.ofNamed(u, "expression " + expression);
+//    }
 
-    @Override
-    public NOptional<NElement> resolveVarValue(String varName, NTxNode node) {
-        return resolveVarValue(varName, node, null);
-    }
+//    @Override
+//    public NOptional<NElement> resolveVarValue(String varName, NTxNode node) {
+//        return resolveVarValue(varName, node, null);
+//    }
 
-    @Override
-    public NOptional<NElement> resolveVarValue(String varName, NTxNode node, NTxVarProvider varProvider) {
-        NOptional<NTxVar> v = findVar(varName, node, varProvider);
-        if (!v.isPresent()) {
-            log().log(NMsg.ofC("var not found %s", varName).asWarning(), NTxUtils.sourceOf(node));
-            return NOptional.ofNamedEmpty(NMsg.ofC("var %s", varName));
-        }
-        NElement ee = v.get().get();
-        return evalExpression(ee, node, varProvider);
-    }
+//    @Override
+//    public NOptional<NElement> resolveVarValue(String varName, NTxNode node, NTxVarProvider varProvider) {
+//        NOptional<NTxVar> v = findVar(varName, node, varProvider);
+//        if (!v.isPresent()) {
+//            log().log(NMsg.ofC("var not found %s", varName).asWarning(), NTxUtils.sourceOf(node));
+//            return NOptional.ofNamedEmpty(NMsg.ofC("var %s", varName));
+//        }
+//        NElement ee = v.get().get();
+//        return evalExpression(ee, node, varProvider);
+//    }
+//
+//    public NOptional<NTxVar> findVar(String varName, NTxNode node, NTxVarProvider varProvider) {
+//        NTxNodeEval ne = new NTxNodeEval(this, varProvider);
+//        return ne.findVar(varName, node);
+//    }
 
-    public NOptional<NTxVar> findVar(String varName, NTxNode node, NTxVarProvider varProvider) {
-        NTxNodeEval ne = new NTxNodeEval(this, varProvider);
-        return ne.findVar(varName, node);
-    }
+//    @Override
+//    public NOptional<NTxNode> findNodeByProperty(String varName, String varValue, NTxNode node, NTxVarProvider varProvider) {
+//        NTxNodeEval ne = new NTxNodeEval(this, varProvider);
+//        return ne.findNodeByProperty(varName, varValue, node);
+//    }
 
-    @Override
-    public NOptional<NTxNode> findNodeByProperty(String varName, String varValue, NTxNode node, NTxVarProvider varProvider) {
-        NTxNodeEval ne = new NTxNodeEval(this, varProvider);
-        return ne.findNodeByProperty(varName, varValue, node);
-    }
-
-    @Override
-    public NPath resolvePath(NElement path, NTxNode node) {
-        if (NBlankable.isBlank(path)) {
-            return null;
-        }
-        if (path.isAnyString()) {
-            String pathStr = path.asStringValue().get();
-            if (NTxGitHelper.isGithubFolder(pathStr)) {
-                return NTxGitHelper.resolveGithubPath(pathStr, log());
-            }
-            NTxSource source = NTxUtils.sourceOf(node);
-            return NTxUtils.resolvePath(path, source);
-        }
-        throw new NIllegalArgumentException(NMsg.ofC("unsupported path type", path));
-    }
+//    @Override
+//    public NPath resolvePath(NElement path, NTxNode node) {
+//        if (NBlankable.isBlank(path)) {
+//            return null;
+//        }
+//        if (path.isAnyString()) {
+//            String pathStr = path.asStringValue().get();
+//            if (NTxGitHelper.isGithubFolder(pathStr)) {
+//                return NTxGitHelper.resolveGithubPath(pathStr, log());
+//            }
+//            NTxSource source = NTxUtils.sourceOf(node);
+//            return NTxUtils.resolvePath(path, source);
+//        }
+//        throw new NIllegalArgumentException(NMsg.ofC("unsupported path type", path));
+//    }
 
     public NOptional<NTxNodeRenderer> getRenderer(String type) {
         return renderers.get(type);
@@ -1040,12 +1032,12 @@ public class DefaultNTxEngine implements NTxEngine {
 
         NTxGraphics hg = this.createGraphics(g);
         NTxNodeRenderer renderer = getRenderer(node.type()).get();
-        DefaultNTxNodeRendererContext context = new DefaultNTxNodeRendererContext(
+        DefaultNTxRendererContext context = new DefaultNTxRendererContext(
                 page,
-                node, this, hg, null,
+                new NTxNode[]{node}, this, hg, null,
                 new NTxBounds2D(0, 0, dimension.getWidth(), dimension.getHeight()),
                 new NTxBounds2D(0, 0, dimension.getWidth(), dimension.getHeight()),
-                page, true, System.currentTimeMillis(), capabilities, null, null, null, false, null);
+                page, true, System.currentTimeMillis(), capabilities,null,null,page.document().compiledDocument());
         renderer.render(context);
         g.dispose();
         return newImage;
