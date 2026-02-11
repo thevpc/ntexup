@@ -9,7 +9,7 @@ import net.thevpc.ntexup.extension.shapes3d.impl.RealToRelativeMapper;
 import net.thevpc.ntexup.lib.geometry3d.*;
 import net.thevpc.ntexup.api.engine.NTxNodeBuilderContext;
 import net.thevpc.ntexup.api.extension.NTxNodeBuilder;
-import net.thevpc.ntexup.api.renderer.NTxNodeRendererContext;
+import net.thevpc.ntexup.api.renderer.NTxRendererContext;
 import net.thevpc.ntexup.lib.geometry3d.impl.NTx3DUtils;
 import net.thevpc.ntexup.lib.geometry3d.impl.composite.NtxElement3DBox;
 import net.thevpc.ntexup.lib.geometry3d.impl.primitives.NtxElement3DPolygon;
@@ -20,7 +20,6 @@ import net.thevpc.nuts.elem.NObjectElement;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 
 public class Element3DBoxPrimitiveBuilder implements NTxElement3DRenderer, NTxNodeBuilder, NtxElement3DNodeParser {
     @Override
@@ -41,27 +40,27 @@ public class Element3DBoxPrimitiveBuilder implements NTxElement3DRenderer, NTxNo
         return Arrays.asList("box", "box3d");
     }
 
-    public void render(NTxNodeRendererContext rendererContext) {
+    public void render(NTxRendererContext rendererContext) {
         //do nothing in 2D
     }
 
     @Override
-    public NtxElement3D createElement3D(NTxNode node, NTxNodeRendererContext rendererContext, NTxBounds2D b, RealToRelativeMapper mapper, NtxElement3DNodeParserFactory parserFactory) {
+    public NtxElement3D createElement3D(NTxNode node, NTxRendererContext rendererContext, NTxBounds2D b, RealToRelativeMapper mapper, NtxElement3DNodeParserFactory parserFactory) {
         NTxPoint3D position = NtxShapes3dUtils.resolvePoint(node, NTxPropName.POSITION, "real-position", NTxPoint3D::ofZero, b, mapper);
         NTxPoint3D size = NtxShapes3dUtils.resolvePoint(node, NTxPropName.SIZE, "real-size", NTxPoint3D::ofHundred, b, mapper);
         NtxElement3DBox r = (NtxElement3DBox) NTxElement3DFactory.box(position, size.x, size.y, size.z);
         NtxShapes3dUtils.apply3dProps(node, r, rendererContext, b);
-        NElement faces = rendererContext.computePropertyValue(node, "faces").orNull();
+        NElement faces = rendererContext.computePropertyValue("faces").orNull();
         if (faces == null) {
-            r.setTop(NtxShapes3dUtils.resolveFace(rendererContext.computePropertyValue(node, "top").orNull(), rendererContext));
-            r.setBottom(NtxShapes3dUtils.resolveFace(rendererContext.computePropertyValue(node, "bottom").orNull(), rendererContext));
-            r.setLeft(NtxShapes3dUtils.resolveFace(rendererContext.computePropertyValue(node, "left").orNull(), rendererContext));
-            r.setRight(NtxShapes3dUtils.resolveFace(rendererContext.computePropertyValue(node, "right").orNull(), rendererContext));
-            r.setFront(NtxShapes3dUtils.resolveFace(rendererContext.computePropertyValue(node, "front").orNull(), rendererContext));
-            r.setBack(NtxShapes3dUtils.resolveFace(rendererContext.computePropertyValue(node, "back").orNull(), rendererContext));
+            r.setTop(NtxShapes3dUtils.resolveFace(rendererContext.computePropertyValue("top").orNull(), rendererContext));
+            r.setBottom(NtxShapes3dUtils.resolveFace(rendererContext.computePropertyValue("bottom").orNull(), rendererContext));
+            r.setLeft(NtxShapes3dUtils.resolveFace(rendererContext.computePropertyValue("left").orNull(), rendererContext));
+            r.setRight(NtxShapes3dUtils.resolveFace(rendererContext.computePropertyValue("right").orNull(), rendererContext));
+            r.setFront(NtxShapes3dUtils.resolveFace(rendererContext.computePropertyValue("front").orNull(), rendererContext));
+            r.setBack(NtxShapes3dUtils.resolveFace(rendererContext.computePropertyValue("back").orNull(), rendererContext));
 
             for (String s : new String[]{"top", "bottom", "left", "right", "front", "back"}) {
-                NtxFace f = NtxShapes3dUtils.resolveFace(rendererContext.computePropertyValue(node, s).orNull(), rendererContext);
+                NtxFace f = NtxShapes3dUtils.resolveFace(rendererContext.computePropertyValue(s).orNull(), rendererContext);
                 setBoxFace(s, r, f);
             }
         } else if (faces.isAnyObject()) {
