@@ -20,45 +20,68 @@ import java.util.stream.Collectors;
 
 public class DefaultNTxNode implements NTxNode {
     private String uuid;
+    private NElement raw;
     private String nodeType;
     private NTxSource source;
     protected NTxItem parent;
     private NTxProperties properties;
-    private Map<String, NElement> vars = new LinkedHashMap<>();
     private Map<String, Object> userObjects;
     private Map<String, Object> renderCache;
     private List<NTxNode> children = new ArrayList<>();
     private List<NTxStyleRule> styleRules = new ArrayList<>();
-    private List<NTxNodeDef> definitions = new ArrayList<>();
-    private List<NTxFunction> functions = new ArrayList<>();
-    private List<NTxNode> hierarchy = new ArrayList<>();
     private NTxNodeDef templateDefinition;
 
     public static DefaultNTxNode ofText(String message) {
         DefaultNTxNode t = new DefaultNTxNode(NTxNodeType.TEXT);
         t.setProperty(NTxPropName.VALUE, NElement.ofString(message));
+        t.setRaw(NElement.ofNamedUplet("text", NElement.ofPair(NTxPropName.VALUE, message)));
         return t;
     }
 
     public static DefaultNTxNode ofAssign(String name, NElement value, NTxSource source) {
-        DefaultNTxNode n = new DefaultNTxNode(NTxNodeType.CTRL_ASSIGN, source);
-        n.setProperty(NTxPropName.NAME, NTxUtils.addCompilerDeclarationPath(NElement.ofString(name), source));
-        n.setProperty(NTxPropName.VALUE, NTxUtils.addCompilerDeclarationPath(value, source));
-        return n;
+        if (value == null) {
+            value = NElement.ofNull();
+        }
+        DefaultNTxNode t = new DefaultNTxNode(NTxNodeType.CTRL_ASSIGN, source);
+        t.setProperty(NTxPropName.NAME, NTxUtils.addCompilerDeclarationPath(NElement.ofString(name), source));
+        t.setProperty(NTxPropName.VALUE, NTxUtils.addCompilerDeclarationPath(value, source));
+        t.setRaw(NElement.ofBinaryInfixOperator(NOperatorSymbol.EQ, NElement.ofString(name), value));
+        return t;
     }
 
     public static DefaultNTxNode ofAssignIfEmpty(String name, NElement value, NTxSource source) {
-        DefaultNTxNode n = new DefaultNTxNode(NTxNodeType.CTRL_ASSIGN, source);
-        n.setProperty(NTxPropName.NAME, NTxUtils.addCompilerDeclarationPath(NElement.ofString(name), source));
-        n.setProperty(NTxPropName.VALUE, NTxUtils.addCompilerDeclarationPath(value, source));
-        n.setProperty("ifempty", NElement.ofBoolean(true));
-        return n;
+        if (value == null) {
+            value = NElement.ofNull();
+        }
+        DefaultNTxNode t = new DefaultNTxNode(NTxNodeType.CTRL_ASSIGN, source);
+        t.setProperty(NTxPropName.NAME, NTxUtils.addCompilerDeclarationPath(NElement.ofString(name), source));
+        t.setProperty(NTxPropName.VALUE, NTxUtils.addCompilerDeclarationPath(value, source));
+        t.setProperty("ifempty", NElement.ofBoolean(true));
+        t.setRaw(NElement.ofBinaryInfixOperator(NOperatorSymbol.COLON_EQ, NElement.ofString(name), value));
+        return t;
+    }
+
+    public static DefaultNTxNode ofGroup() {
+        DefaultNTxNode t = new DefaultNTxNode(NTxNodeType.GROUP);
+        return t;
+    }
+    public static DefaultNTxNode ofGroup(NTxNode parent) {
+        DefaultNTxNode t = new DefaultNTxNode(NTxNodeType.GROUP);
+        if(parent!=null){
+            t.setParent(parent);
+            t.setSource(parent.source());
+        }
+        return t;
     }
 
     public static DefaultNTxNode ofExpr(NElement value, NTxSource source) {
-        DefaultNTxNode n = new DefaultNTxNode(NTxNodeType.CTRL_EXPR, source);
-        n.setProperty(NTxPropName.VALUE, NTxUtils.addCompilerDeclarationPath(value, source));
-        return n;
+        if (value == null) {
+            value = NElement.ofNull();
+        }
+        DefaultNTxNode t = new DefaultNTxNode(NTxNodeType.CTRL_EXPR, source);
+        t.setProperty(NTxPropName.VALUE, NTxUtils.addCompilerDeclarationPath(value, source));
+        t.setRaw(value);
+        return t;
     }
 
     public DefaultNTxNode(String nodeType) {
@@ -79,6 +102,15 @@ public class DefaultNTxNode implements NTxNode {
 
     public NTxNode setUuid(String uuid) {
         this.uuid = uuid;
+        return this;
+    }
+
+    public NElement getRaw() {
+        return raw;
+    }
+
+    public NTxNode setRaw(NElement raw) {
+        this.raw = raw;
         return this;
     }
 
@@ -162,33 +194,33 @@ public class DefaultNTxNode implements NTxNode {
         return getProperty(propertyNames).map(x -> x.getValue());
     }
 
-    @Override
-    public NOptional<NElement> getVar(String property) {
-        NElement u = vars.get(property);
-        if (u != null) {
-            NTxSource source = NTxUtils.sourceOf(this);
-            if (source != null) {
-                u = NTxUtils.addCompilerDeclarationPath(u, source);
-            }
-        }
-        return NOptional.ofNamed(u, property);
-    }
-
-    @Override
-    public Map<String, NElement> getVars() {
-        return new LinkedHashMap<>(vars);
-    }
+//    @Override
+//    public NOptional<NElement> getVar(String property) {
+//        NElement u = vars.get(property);
+//        if (u != null) {
+//            NTxSource source = NTxUtils.sourceOf(this);
+//            if (source != null) {
+//                u = NTxUtils.addCompilerDeclarationPath(u, source);
+//            }
+//        }
+//        return NOptional.ofNamed(u, property);
+//    }
+//
+//    @Override
+//    public Map<String, NElement> getVars() {
+//        return new LinkedHashMap<>(vars);
+//    }
 
 
     @Override
     public NTxNode setUserObject(String name, Object value) {
         if (value == null) {
-            if(userObjects!=null) {
+            if (userObjects != null) {
                 userObjects.remove(name);
             }
         } else {
-            if(userObjects==null) {
-                userObjects=new HashMap<>();
+            if (userObjects == null) {
+                userObjects = new HashMap<>();
             }
             userObjects.put(name, value);
         }
@@ -197,9 +229,9 @@ public class DefaultNTxNode implements NTxNode {
 
     @Override
     public NOptional<Object> getUserObject(String property) {
-        if(userObjects!=null) {
+        if (userObjects != null) {
             Object u = userObjects.get(property);
-            if(u!=null) {
+            if (u != null) {
                 return NOptional.of(u);
             }
         }
@@ -207,24 +239,24 @@ public class DefaultNTxNode implements NTxNode {
     }
 
     @Override
-    public <T> NOptional<T> getAndSetUserObject(String property, boolean force,Supplier<T> defaultValue) {
-        if(!force){
+    public <T> NOptional<T> getAndSetUserObject(String property, boolean force, Supplier<T> defaultValue) {
+        if (!force) {
             NOptional<T> ol = (NOptional) this.getUserObject(property);
-            if(ol.isPresent()){
-               return ol;
+            if (ol.isPresent()) {
+                return ol;
             }
         }
         T nv = defaultValue.get();
-        if(nv==null){
-            setUserObject(property,null);
-        }else{
-            setUserObject(property,nv);
+        if (nv == null) {
+            setUserObject(property, null);
+        } else {
+            setUserObject(property, nv);
         }
-        return NOptional.ofNamed(nv,property);
+        return NOptional.ofNamed(nv, property);
     }
 
     @Override
-    public <T> NOptional<T> getAndSetUserObject(Class<T> property, boolean force,Supplier<T> defaultValue) {
+    public <T> NOptional<T> getAndSetUserObject(Class<T> property, boolean force, Supplier<T> defaultValue) {
         return getAndSetUserObject(property.getName(), force, defaultValue);
     }
 
@@ -269,21 +301,21 @@ public class DefaultNTxNode implements NTxNode {
     }
 
 
-    @Override
-    public NTxNode setVar(String name, NElement value) {
-        if (value == null) {
-            vars.remove(name);
-        } else {
-            if (false) {
-                String s = NTxUtils.findCompilerDeclarationPath(value).orNull();
-                if (s == null) {
-                    throw new NIllegalArgumentException(NMsg.ofC("var value %s=%s is missing CompilerDeclarationPath", name, value));
-                }
-            }
-            vars.put(name, value);
-        }
-        return this;
-    }
+//    @Override
+//    public NTxNode setVar(String name, NElement value) {
+//        if (value == null) {
+//            vars.remove(name);
+//        } else {
+//            if (false) {
+//                String s = NTxUtils.findCompilerDeclarationPath(value).orNull();
+//                if (s == null) {
+//                    throw new NIllegalArgumentException(NMsg.ofC("var value %s=%s is missing CompilerDeclarationPath", name, value));
+//                }
+//            }
+//            vars.put(name, value);
+//        }
+//        return this;
+//    }
 
 
     @Override
@@ -403,31 +435,6 @@ public class DefaultNTxNode implements NTxNode {
         return this;
     }
 
-    @Override
-    public NTxNode mergeNode(NTxItem other) {
-        if (other != null) {
-            if (other instanceof NTxItemList) {
-                for (NTxItem item : ((NTxItemList) other).getItems()) {
-                    mergeNode(item);
-                }
-            } else if (other instanceof NTxProp) {
-                setProperty((NTxProp) other);
-            } else if (other instanceof NTxNodeDef) {
-                addDefinition((NTxNodeDef) other);
-            } else if (other instanceof NTxNode) {
-                NTxNode hn = (NTxNode) other;
-                if (this.source == null) {
-                    this.source = hn.source();
-                }
-                this.properties.set(hn.props());
-                addRules(hn.rules());
-                for (NTxNode child : hn.children()) {
-                    addChild(child);
-                }
-            }
-        }
-        return this;
-    }
 
     @Override
     public NTxNode add(NTxItem other) {
@@ -438,12 +445,33 @@ public class DefaultNTxNode implements NTxNode {
                 }
             } else if (other instanceof NTxProp) {
                 setProperty((NTxProp) other);
-            } else if (other instanceof NTxNodeDef) {
-                addDefinition((NTxNodeDef) other);
             } else if (other instanceof NTxNode) {
                 addChild((NTxNode) other);
             } else if (other instanceof NTxStyleRule) {
                 addRule((NTxStyleRule) other);
+            }
+        }
+        return this;
+    }
+    @Override
+    public NTxNode mergeNode(NTxItem other) {
+        if (other != null) {
+            if (other instanceof NTxItemList) {
+                for (NTxItem item : ((NTxItemList) other).getItems()) {
+                    mergeNode(item);
+                }
+            } else if (other instanceof NTxProp) {
+                setProperty((NTxProp) other);
+            } else if (other instanceof NTxNode) {
+                NTxNode hn = (NTxNode) other;
+                if (this.source == null) {
+                    this.source = hn.source();
+                }
+                this.properties.set(hn.props());
+                addRules(hn.rules());
+                for (NTxNode child : hn.children()) {
+                    addChild(child);
+                }
             }
         }
         return this;
@@ -466,9 +494,6 @@ public class DefaultNTxNode implements NTxNode {
                 return true;
             } else if (a instanceof NTxNode) {
                 addChild((NTxNode) a);
-                return true;
-            } else if (a instanceof NTxNodeDef) {
-                addDefinition((NTxNodeDef) a);
                 return true;
             }
         }
@@ -663,7 +688,7 @@ public class DefaultNTxNode implements NTxNode {
 
     @Override
     public List<NTxNode> children() {
-        return children;
+        return new ArrayList<>(children);
     }
 
     @Override
@@ -713,31 +738,31 @@ public class DefaultNTxNode implements NTxNode {
         return this;
     }
 
-    @Override
-    public NTxNode clearDefinitions() {
-        definitions.clear();
-        return this;
-    }
-
-    public NTxNodeDef[] definitions() {
-        return definitions.toArray(new NTxNodeDef[0]);
-    }
-
-    @Override
-    public NTxNode addDefinition(NTxNodeDef s) {
-        if (s != null) {
-            definitions.add(s);
-        }
-        return this;
-    }
-
-    @Override
-    public NTxNode removeNodeDefinition(NTxNodeDef s) {
-        if (s != null) {
-            definitions.remove(s);
-        }
-        return this;
-    }
+//    @Override
+//    public NTxNode clearDefinitions() {
+//        definitions.clear();
+//        return this;
+//    }
+//
+//    public NTxNodeDef[] definitions() {
+//        return definitions.toArray(new NTxNodeDef[0]);
+//    }
+//
+//    @Override
+//    public NTxNode addDefinition(NTxNodeDef s) {
+//        if (s != null) {
+//            definitions.add(s);
+//        }
+//        return this;
+//    }
+//
+//    @Override
+//    public NTxNode removeNodeDefinition(NTxNodeDef s) {
+//        if (s != null) {
+//            definitions.remove(s);
+//        }
+//        return this;
+//    }
 
     @Override
     public NTxStyleRule[] rules() {
@@ -753,25 +778,17 @@ public class DefaultNTxNode implements NTxNode {
     public NTxNode copyTo(NTxNode other) {
         other.setUuid(UUID.randomUUID().toString());
         other.setSource(source());
+        other.setRaw(getRaw());
         other.setProperties(properties.toArray());
         other.addChildren(children().stream().map(NTxNode::copy).toArray(NTxNode[]::new));
         other.addRules(Arrays.stream(rules()).toArray(NTxStyleRule[]::new));
-        for (Map.Entry<String, NElement> e : vars.entrySet()) {
-            other.setVar(e.getKey(), e.getValue());
-        }
-        if(userObjects!=null) {
+//        for (Map.Entry<String, NElement> e : vars.entrySet()) {
+//            other.setVar(e.getKey(), e.getValue());
+//        }
+        if (userObjects != null) {
             for (Map.Entry<String, Object> e : userObjects.entrySet()) {
                 other.setUserObject(e.getKey(), e.getValue());
             }
-        }
-        for (NTxNodeDef v : definitions) {
-            other.addDefinitions(v);
-        }
-        for (NTxFunction v : functions) {
-            other.addNodeFunction(v);
-        }
-        for (NTxNode h : hierarchy) {
-            other.addHierarchy(h);
         }
         other.setTemplateDefinition(templateDefinition);
         return this;
@@ -784,13 +801,9 @@ public class DefaultNTxNode implements NTxNode {
         if (properties != null) {
             properties.clear();
         }
-        vars.clear();
         children.clear();
         styleRules.clear();
-        definitions.clear();
-        functions.clear();
-        hierarchy.clear();
-        if(userObjects!=null){
+        if (userObjects != null) {
             userObjects.clear();
         }
         templateDefinition = null;
@@ -802,13 +815,13 @@ public class DefaultNTxNode implements NTxNode {
         return this;
     }
 
-    @Override
-    public NTxNode addDefinitions(NTxNodeDef... definitions) {
-        for (NTxNodeDef definition : definitions) {
-            addDefinition(definition);
-        }
-        return this;
-    }
+//    @Override
+//    public NTxNode addDefinitions(NTxNodeDef... definitions) {
+//        for (NTxNodeDef definition : definitions) {
+//            addDefinition(definition);
+//        }
+//        return this;
+//    }
 
     //    @Override
 //    public NTxNode addRule(HProp... s) {
@@ -825,14 +838,14 @@ public class DefaultNTxNode implements NTxNode {
         if (NTxNodeType.CTRL_ASSIGN.equals(type())) {
             return NElement.ofPair("$" + getName(), getPropertyValue(NTxPropName.VALUE).orNull());
         }
-        String componentName=getPropertyValue(NTxPropName.VALUE).flatMap(x->x.asStringValue()).orNull();
+        String componentName = getPropertyValue(NTxPropName.VALUE).flatMap(x -> x.asStringValue()).orNull();
         String[] styleClasses = getStyleClasses();
         if (!styleRules.isEmpty() || !children.isEmpty()) {
             NObjectElementBuilder o = NElement.ofObjectBuilder(nodeType);
             if (styleClasses.length > 0) {
                 o.addAnnotation(null, Arrays.stream(styleClasses).map(x -> NElement.ofString(x)).toArray(NElement[]::new));
             }
-            if(!NBlankable.isBlank(componentName)){
+            if (!NBlankable.isBlank(componentName)) {
                 o.add(NElement.ofPair("componentName", NElement.ofString(componentName)));
             }
             if (source != null) {
@@ -864,7 +877,7 @@ public class DefaultNTxNode implements NTxNode {
             if (styleClasses.length > 0) {
                 o.addAnnotation(null, Arrays.stream(styleClasses).map(x -> NElement.ofString(x)).toArray(NElement[]::new));
             }
-            if(!NBlankable.isBlank(componentName)){
+            if (!NBlankable.isBlank(componentName)) {
                 o.add(NElement.ofPair("componentName", NElement.ofString(componentName)));
             }
             if (source != null) {
@@ -913,52 +926,34 @@ public class DefaultNTxNode implements NTxNode {
         children.set(i, c);
     }
 
-    @Override
-    public NTxFunction[] nodeFunctions() {
-        return functions.toArray(new NTxFunction[0]);
-    }
-
-    @Override
-    public NTxNode addNodeFunction(NTxFunction s) {
-        if (s != null) {
-            functions.add(s);
-        }
-        return this;
-    }
-
-    @Override
-    public NTxNode addNodeFunctions(NTxFunction... definitions) {
-        if (definitions != null) {
-            for (NTxFunction s : definitions) {
-                addNodeFunction(s);
-            }
-        }
-        return this;
-    }
-
-    @Override
-    public NTxNode removeNodeFunction(String s) {
-        functions.removeIf(f -> NNameFormat.equalsIgnoreFormat(f.name(), s));
-        return this;
-    }
-
-    public NTxNode addHierarchy(NTxNode n) {
-        if (n != null) {
-            hierarchy.add(n);
-        }
-        return this;
-    }
-
-    public NTxNode removeHierarchy(NTxNode n) {
-        if (n != null) {
-            hierarchy.remove(n);
-        }
-        return this;
-    }
-
-    public List<NTxNode> hierarchy() {
-        return hierarchy;
-    }
+//    @Override
+//    public NTxFunction[] nodeFunctions() {
+//        return functions.toArray(new NTxFunction[0]);
+//    }
+//
+//    @Override
+//    public NTxNode addNodeFunction(NTxFunction s) {
+//        if (s != null) {
+//            functions.add(s);
+//        }
+//        return this;
+//    }
+//
+//    @Override
+//    public NTxNode addNodeFunctions(NTxFunction... definitions) {
+//        if (definitions != null) {
+//            for (NTxFunction s : definitions) {
+//                addNodeFunction(s);
+//            }
+//        }
+//        return this;
+//    }
+//
+//    @Override
+//    public NTxNode removeNodeFunction(String s) {
+//        functions.removeIf(f -> NNameFormat.equalsIgnoreFormat(f.name(), s));
+//        return this;
+//    }
 
     public NTxNode setTemplateDefinition(NTxNodeDef n) {
         this.templateDefinition = n;
@@ -975,12 +970,12 @@ public class DefaultNTxNode implements NTxNode {
     @Override
     public NTxNode setRenderCache(String name, Object value) {
         if (value == null) {
-            if(renderCache!=null) {
+            if (renderCache != null) {
                 renderCache.remove(name);
             }
         } else {
-            if(renderCache==null) {
-                renderCache=new HashMap<>();
+            if (renderCache == null) {
+                renderCache = new HashMap<>();
             }
             renderCache.put(name, value);
         }
@@ -989,9 +984,9 @@ public class DefaultNTxNode implements NTxNode {
 
     @Override
     public NOptional<Object> getRenderCache(String property) {
-        if(renderCache!=null) {
+        if (renderCache != null) {
             Object u = renderCache.get(property);
-            if(u!=null) {
+            if (u != null) {
                 return NOptional.of(u);
             }
         }
@@ -999,30 +994,30 @@ public class DefaultNTxNode implements NTxNode {
     }
 
     @Override
-    public <T> NOptional<T> getAndSetRenderCache(String property, boolean force,Supplier<T> defaultValue) {
-        if(!force){
+    public <T> NOptional<T> getAndSetRenderCache(String property, boolean force, Supplier<T> defaultValue) {
+        if (!force) {
             NOptional<T> ol = (NOptional) this.getRenderCache(property);
-            if(ol.isPresent()){
+            if (ol.isPresent()) {
                 return ol;
             }
         }
         T nv = defaultValue.get();
-        if(nv==null){
-            setRenderCache(property,null);
-        }else{
-            setRenderCache(property,nv);
+        if (nv == null) {
+            setRenderCache(property, null);
+        } else {
+            setRenderCache(property, nv);
         }
-        return NOptional.ofNamed(nv,property);
+        return NOptional.ofNamed(nv, property);
     }
 
     @Override
-    public <T> NOptional<T> getAndSetRenderCache(Class<T> property, boolean force,Supplier<T> defaultValue) {
+    public <T> NOptional<T> getAndSetRenderCache(Class<T> property, boolean force, Supplier<T> defaultValue) {
         return getAndSetRenderCache(property.getName(), force, defaultValue);
     }
 
-    public void invalidateRenderCache(){
-        renderCache=null;
-        if(children!=null){
+    public void invalidateRenderCache() {
+        renderCache = null;
+        if (children != null) {
             for (NTxNode child : children) {
                 child.invalidateRenderCache();
             }
