@@ -9,7 +9,7 @@ import net.thevpc.ntexup.api.parser.NTxArgumentReader;
 import net.thevpc.ntexup.api.document.elem2d.NTxPoint2D;
 import net.thevpc.ntexup.api.document.node.NTxNodeType;
 import net.thevpc.ntexup.api.document.style.NTxPropName;
-import net.thevpc.ntexup.api.renderer.NTxNodeRendererContext;
+import net.thevpc.ntexup.api.renderer.NTxRendererContext;
 import net.thevpc.ntexup.api.eval.NTxValue;
 import net.thevpc.nuts.elem.NElement;
 import net.thevpc.nuts.elem.NPairElement;
@@ -109,7 +109,7 @@ public class NTxPolygonBuilder implements NTxNodeBuilder {
                 .renderComponent((rendererContext) -> render(rendererContext));
     }
 
-    private void render(NTxNodeRendererContext rendererContext) {
+    private void render(NTxRendererContext rendererContext) {
         NTxNode node = rendererContext.node();
         Integer count = NTxValue.ofProp(node, NTxPropName.COUNT).asInt().orNull();
         if (rendererContext.buildContext().isAncestorScene3D(node)) {
