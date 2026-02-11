@@ -20,6 +20,10 @@ public interface NTxNode extends NTxItem {
 
     NTxNode setUuid(String uuid);
 
+    NElement getRaw();
+
+    NTxNode setRaw(NElement raw);
+
     String[] getStyleClasses();
 
     NTxItem setStyleClasses(String[] classNames);
@@ -40,18 +44,17 @@ public interface NTxNode extends NTxItem {
 
     List<NTxProp> props();
 
-    NOptional<NElement> getVar(String property);
-
-    Map<String, NElement> getVars();
-
-    NTxNode setVar(String name, NElement value);
+//    NOptional<NElement> getVar(String property);
+//
+//    Map<String, NElement> getVars();
+//
+//    NTxNode setVar(String name, NElement value);
 
     NOptional<NElement> getPropertyValue(String... propertyNames);
 
     NOptional<NTxProp> getProperty(String... propertyNames);
 
     List<NTxProp> getProperties();
-
 
     NTxNode setName(String name);
 
@@ -137,7 +140,6 @@ public interface NTxNode extends NTxItem {
 
     NTxNode setChildren(NTxNode... a);
 
-
     NTxNode addRule(NTxStyleRule s);
 
     NTxNode removeRule(NTxStyleRule s);
@@ -145,8 +147,6 @@ public interface NTxNode extends NTxItem {
     NTxNode addRules(NTxStyleRule... s);
 
     NTxNode clearChildren();
-
-    NTxNode clearDefinitions();
 
     NTxNode clearRules();
 
@@ -166,29 +166,7 @@ public interface NTxNode extends NTxItem {
 
     void setChildAt(int i, NTxNode c);
 
-    NTxNodeDef[] definitions();
-
-    NTxNode addDefinition(NTxNodeDef s);
-
-    NTxNode addDefinitions(NTxNodeDef... definitions);
-
-    NTxNode removeNodeDefinition(NTxNodeDef s);
-
-    NTxFunction[] nodeFunctions();
-
-    NTxNode addNodeFunction(NTxFunction s);
-
-    NTxNode addNodeFunctions(NTxFunction... definitions);
-
-    NTxNode removeNodeFunction(String name);
-
     NTxNode reset();
-
-    NTxNode addHierarchy(NTxNode n);
-
-    NTxNode removeHierarchy(NTxNode n);
-
-    List<NTxNode> hierarchy();
 
     NTxNode setTemplateDefinition(NTxNodeDef n);
 
