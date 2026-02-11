@@ -34,7 +34,7 @@ public class NTxEvalUtils {
             Number nb = bb.asNumberValue().get();
             return NElement.ofNumber(NNumberUtils.substructNumbers(na, nb));
         }
-        return NElement.ofUplet(NElement.ofOp(NOperatorSymbol.MINUS, aa, bb));
+        return NElement.ofUplet(NElement.ofBinaryInfixOperator(NOperatorSymbol.MINUS, aa, bb));
     }
 
     public static NElement remainder(NElement a, NElement b) {
@@ -45,7 +45,7 @@ public class NTxEvalUtils {
             Number nb = bb.asNumberValue().get();
             return NElement.ofNumber(NNumberUtils.reminderNumbers(na, nb));
         }
-        return NElement.ofUplet(NElement.ofOp(NOperatorSymbol.REM, aa, bb));
+        return NElement.ofUplet(NElement.ofBinaryInfixOperator(NOperatorSymbol.REM, aa, bb));
     }
 
     public static NElement remainder2(NElement a, NElement b) {
@@ -61,7 +61,7 @@ public class NTxEvalUtils {
                 //
             }
         }
-        return NElement.ofUplet(NElement.ofOp(NOperatorSymbol.REM, a1, b1));
+        return NElement.ofUplet(NElement.ofBinaryInfixOperator(NOperatorSymbol.REM, a1, b1));
     }
 
     public static NElement negate(NElement a) {
@@ -70,7 +70,7 @@ public class NTxEvalUtils {
             Number na = aa.asNumberValue().get();
             return NElement.ofNumber(NNumberUtils.negateNumber(na));
         }
-        return NElement.ofUplet(NElement.ofOp(NOperatorSymbol.MINUS, aa));
+        return NElement.ofUplet(NElement.ofUnaryPrefixOperator(NOperatorSymbol.MINUS, aa));
     }
 
     public static NElement inv(NElement a, MathContext mc) {
@@ -79,7 +79,7 @@ public class NTxEvalUtils {
             Number na = aa.asNumberValue().get();
             return NElement.ofNumber(NNumberUtils.invNumber(na, mc));
         }
-        return NElement.ofUplet(NElement.ofOp(NOperatorSymbol.DIV, aa));
+        return NElement.ofUplet(NElement.ofUnaryPrefixOperator(NOperatorSymbol.DIV, aa));
     }
 
     public static NElement add(NElement a, NElement b) {
@@ -90,7 +90,7 @@ public class NTxEvalUtils {
             Number nb = bb.asNumberValue().get();
             return NElement.ofNumber(NNumberUtils.addNumbers(na, nb));
         }
-        return NElement.ofUplet(NElement.ofOp(NOperatorSymbol.PLUS, aa, bb));
+        return NElement.ofUplet(NElement.ofBinaryInfixOperator(NOperatorSymbol.PLUS, aa, bb));
     }
 
     public static NElement div(NElement a, NElement b, MathContext mc) {
@@ -101,7 +101,7 @@ public class NTxEvalUtils {
             Number nb = bb.asNumberValue().get();
             return NElement.ofNumber(NNumberUtils.divideNumbers(na, nb, mc));
         }
-        return NElement.ofUplet(NElement.ofOp(NOperatorSymbol.DIV, aa, bb));
+        return NElement.ofUplet(NElement.ofBinaryInfixOperator(NOperatorSymbol.DIV, aa, bb));
     }
 
     public static NElement mul(NElement a, NElement b, MathContext mc) {
@@ -112,7 +112,7 @@ public class NTxEvalUtils {
             Number nb = bb.asNumberValue().get();
             return NElement.ofNumber(NNumberUtils.multiplyNumbers(na, nb, mc));
         }
-        return NElement.ofUplet(NElement.ofOp(NOperatorSymbol.MUL, aa, bb));
+        return NElement.ofUplet(NElement.ofBinaryInfixOperator(NOperatorSymbol.MUL, aa, bb));
     }
 
     public static int compareNumbers(Number a, Number b) {
