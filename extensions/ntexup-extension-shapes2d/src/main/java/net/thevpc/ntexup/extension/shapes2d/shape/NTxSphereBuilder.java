@@ -8,7 +8,7 @@ import net.thevpc.ntexup.api.document.style.NTxProperties;
 import net.thevpc.ntexup.api.engine.NTxNodeBuilderContext;
 import net.thevpc.ntexup.api.extension.NTxNodeBuilder;
 import net.thevpc.ntexup.api.renderer.NTxGraphics;
-import net.thevpc.ntexup.api.renderer.NTxNodeRendererContext;
+import net.thevpc.ntexup.api.renderer.NTxRendererContext;
 import net.thevpc.ntexup.api.util.NTxUtils;
 import net.thevpc.nuts.elem.NElement;
 
@@ -24,20 +24,20 @@ public class NTxSphereBuilder implements NTxNodeBuilder {
         defaultStyles.set(NTxPropName.PRESERVE_ASPECT_RATIO, NElement.ofTrue());
     }
 
-    public void renderMain(NTxNodeRendererContext rendererContext) {
+    public void renderMain(NTxRendererContext rendererContext) {
         NTxNode node = rendererContext.node();
         rendererContext = rendererContext.withDefaultStyles(defaultStyles);
-        NTxBounds2D b = rendererContext.selfBounds(node, null, null);
+        NTxBounds2D b = rendererContext.selfBounds(null, null);
         double x = b.getX();
         double y = b.getY();
         NTxGraphics g = rendererContext.graphics();
         boolean someBG = false;
         if (!rendererContext.isDry()) {
-            if (someBG = rendererContext.applyBackgroundColor((NTxNode) node)) {
+            if (someBG = rendererContext.applyBackgroundColor()) {
                 g.fillSphere((int) x, (int) y, NTxUtils.intOf(b.getWidth()), NTxUtils.intOf(b.getHeight()), 45, 50f);
             }
-            if (rendererContext.applyForeground(node, !someBG)) {
-                rendererContext.withStroke(node,()->{
+            if (rendererContext.applyForeground(!someBG)) {
+                rendererContext.withStroke(()->{
                     g.drawOval((int) x, (int) y, NTxUtils.intOf(b.getWidth()), NTxUtils.intOf(b.getHeight()));
                 });
             }
