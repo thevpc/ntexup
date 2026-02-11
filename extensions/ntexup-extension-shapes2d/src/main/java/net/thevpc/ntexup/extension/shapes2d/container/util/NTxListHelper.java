@@ -6,7 +6,7 @@ import net.thevpc.ntexup.api.document.node.NTxNode;
 import net.thevpc.ntexup.api.document.node.NTxNodeType;
 import net.thevpc.ntexup.api.document.style.DefaultNTxStyleRule;
 import net.thevpc.ntexup.api.document.style.NTxProp;
-import net.thevpc.ntexup.api.renderer.NTxNodeRendererContext;
+import net.thevpc.ntexup.api.renderer.NTxRendererContext;
 import net.thevpc.ntexup.api.util.NTxSizeRef;
 import net.thevpc.ntexup.api.util.NTxUtils;
 import net.thevpc.nuts.elem.NElement;
@@ -17,11 +17,11 @@ import java.util.List;
 import java.util.Set;
 
 public class NTxListHelper {
-    private static NumberingStrategy resolveNumberingStrategy(NTxNode p, boolean ordered, NTxNodeRendererContext ctx) {
+    private static NumberingStrategy resolveNumberingStrategy(NTxNode p, boolean ordered, NTxRendererContext ctx) {
         return new NumberingStrategy();
     }
 
-    public static List<NodeWithIndent> build(NTxNode p, boolean ordered, NTxNodeRendererContext ctx) {
+    public static List<NodeWithIndent> build(NTxNode p, boolean ordered, NTxRendererContext ctx) {
         List<NodeWithIndent> all = new ArrayList<>();
         List<NTxNode> children = p.children();
         NTxDocumentFactory f = ctx.documentFactory();
@@ -52,8 +52,8 @@ public class NTxListHelper {
         for (NodeWithIndent child : all) {
             double indentWidth = indentFactor * child.indent;
             double bulletWidth = (nTxSizeRef.getParentWidth() - indentWidth) * bulletWidthFactor;
-            child.bulletSelfBounds = ctx.withChild(child.bullet, new NTxBounds2D(sb.getX() + indentWidth, y0, bulletWidth + childHeight, h)).selfBounds();
-            child.childSelfBounds = ctx.withChild(child.child, new NTxBounds2D(sb.getX() + indentWidth + bulletWidth + childHeight, y0,
+            child.bulletSelfBounds = ctx.resolveNode(child.bullet, new NTxBounds2D(sb.getX() + indentWidth, y0, bulletWidth + childHeight, h)).selfBounds();
+            child.childSelfBounds = ctx.resolveNode(child.child, new NTxBounds2D(sb.getX() + indentWidth + bulletWidth + childHeight, y0,
                     sb.getMaxX() - (sb.getX() + bulletWidth + childHeight)
                     , h)).selfBounds();
             if ("t".equals(child.child.getComponentName())) {
@@ -95,7 +95,7 @@ public class NTxListHelper {
         return false;
     }
 
-    private static void fillList(List<NTxNode> children, List<NodeWithIndent> all, int indent, boolean ordered, String parentString, NTxDocumentFactory f, NTxNodeRendererContext ctx, NumberingStrategy ns) {
+    private static void fillList(List<NTxNode> children, List<NodeWithIndent> all, int indent, boolean ordered, String parentString, NTxDocumentFactory f, NTxRendererContext ctx, NumberingStrategy ns) {
         int userIndex = 1;
         String lastParent = "";
         for (int i = 0; i < children.size(); i++) {
@@ -110,7 +110,7 @@ public class NTxListHelper {
         }
     }
 
-    private static boolean fillNonList(NTxNode p, List<NodeWithIndent> all, int indent, boolean ordered, String parentString, int index, NTxDocumentFactory f, NTxNodeRendererContext ctx, NumberingStrategy ns) {
+    private static boolean fillNonList(NTxNode p, List<NodeWithIndent> all, int indent, boolean ordered, String parentString, int index, NTxDocumentFactory f, NTxRendererContext ctx, NumberingStrategy ns) {
         switch (p.type()) {
             case NTxNodeType.UNORDERED_LIST:
             case NTxNodeType.ORDERED_LIST: {
@@ -179,7 +179,7 @@ public class NTxListHelper {
         }
     }
 
-    private static void fillAny(NTxNode p, List<NodeWithIndent> all, int indent, boolean ordered, String parentString, int index, NTxDocumentFactory f, NTxNodeRendererContext ctx, NumberingStrategy ns) {
+    private static void fillAny(NTxNode p, List<NodeWithIndent> all, int indent, boolean ordered, String parentString, int index, NTxDocumentFactory f, NTxRendererContext ctx, NumberingStrategy ns) {
         switch (p.type()) {
             case NTxNodeType.UNORDERED_LIST: {
                 List<NTxNode> children = p.children();
