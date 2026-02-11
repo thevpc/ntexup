@@ -17,7 +17,7 @@ import net.thevpc.ntexup.api.eval.NTxValueByType;
 import net.thevpc.ntexup.api.extension.NTxNodeBuilder;
 import net.thevpc.ntexup.api.source.NTxSource;
 import net.thevpc.ntexup.api.renderer.NTxGraphics;
-import net.thevpc.ntexup.api.renderer.NTxNodeRendererContext;
+import net.thevpc.ntexup.api.renderer.NTxRendererContext;
 import net.thevpc.ntexup.api.renderer.text.NTxTextOptions;
 import net.thevpc.ntexup.api.util.NTxUtils;
 import net.thevpc.ntexup.api.util.NtxFontInfo;
@@ -48,7 +48,7 @@ public class NTxImageBuilder implements NTxNodeBuilder {
         NPath img=null;
         NTxImageOptions options;
     }
-    public void renderMain(NTxNodeRendererContext rendererContext) {
+    public void renderMain(NTxRendererContext rendererContext) {
         NTxNode node = rendererContext.node();
         rendererContext = rendererContext.withDefaultStyles(defaultStyles);
         NTxBounds2D b = rendererContext.selfBounds();
@@ -58,10 +58,10 @@ public class NTxImageBuilder implements NTxNodeBuilder {
             return;
         }
 
-        NTxNodeRendererContext finalCtx = rendererContext;
+        NTxRendererContext finalCtx = rendererContext;
         Cache cache = node.getAndSetRenderCache(Cache.class,rendererContext.isSomeChange(),()->{
             Cache cc=new Cache();
-            Color transparentColor = NTxValueByType.getColor(node, finalCtx, NTxPropName.TRANSPARENT_COLOR).orNull();
+            Color transparentColor = NTxValueByType.getColor(finalCtx, NTxPropName.TRANSPARENT_COLOR).orNull();
             cc.options = new NTxImageOptions();
             cc.options.setTransparentColor(transparentColor);
             cc.options.setDisableAnimation(!finalCtx.isAnimate());
@@ -70,8 +70,8 @@ public class NTxImageBuilder implements NTxNodeBuilder {
             cc.options.setSize(new Dimension(b.getWidth().intValue(), b.getHeight().intValue()));
             NElement eimg = node.getPropertyValue(NTxPropName.VALUE).orNull();
             if(eimg!=null){
-                NElement eimg2 = finalCtx.evalExpression(eimg, node).orNull();
-                cc.img = finalCtx.engine().resolvePath(eimg2, node);
+                NElement eimg2 = finalCtx.evalExpression(eimg).orNull();
+                cc.img = finalCtx.resolvePath(eimg2);
                 cc.img = resolveImagePath(cc.img);
             }
             return cc;
@@ -85,11 +85,11 @@ public class NTxImageBuilder implements NTxNodeBuilder {
         double y = b.getY();
 
         if (!rendererContext.isDry()) {
-            if (rendererContext.applyBackgroundColor(node)) {
+            if (rendererContext.applyBackgroundColor()) {
                 g.fillRect((int) x, (int) y, NTxUtils.intOf(b.getWidth()), NTxUtils.intOf(b.getHeight()));
             }
 
-            rendererContext.applyForeground(node, false);
+            rendererContext.applyForeground(false);
             if (cache.img instanceof NPath) {
                 try {
                     g.drawImage(cache.img, x, y, cache.options);
@@ -103,7 +103,7 @@ public class NTxImageBuilder implements NTxNodeBuilder {
             }else{
                 int descent = g.getFontMetrics().getAscent();
                 NTxTextOptions nTxTextOptions = new NTxTextOptions();
-                NtxFontInfo fontInfo = NTxValueByName.getFontInfo(node, rendererContext);
+                NtxFontInfo fontInfo = NTxValueByName.getFontInfo(rendererContext);
                 nTxTextOptions.defaultFont=fontInfo;
                 nTxTextOptions.sr=rendererContext.sizeRef();
                 g.drawString("Image not found "+cache.img, x, y+descent, nTxTextOptions.setForegroundColor(Color.YELLOW).setBackgroundColor(Color.RED).setFontSize(NTxSize.ofPx(8.0f)));
