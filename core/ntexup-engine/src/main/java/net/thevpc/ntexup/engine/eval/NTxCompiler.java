@@ -5,7 +5,6 @@ import net.thevpc.ntexup.api.document.style.NTxProp;
 import net.thevpc.ntexup.api.document.style.NTxPropName;
 import net.thevpc.ntexup.api.document.style.NTxStyleRule;
 import net.thevpc.ntexup.api.extension.NTxFunction;
-import net.thevpc.ntexup.api.log.NTxLogger;
 import net.thevpc.ntexup.api.eval.*;
 import net.thevpc.ntexup.api.engine.NTxEngine;
 import net.thevpc.ntexup.api.document.*;
@@ -18,10 +17,8 @@ import net.thevpc.ntexup.engine.log.SilentNTxLogger;
 import net.thevpc.ntexup.engine.parser.DefaultNTxNodeFactoryParseContext;
 import net.thevpc.ntexup.engine.parser.NTxDocumentLoadingResultImpl;
 import net.thevpc.ntexup.engine.parser.NTxNodeDefImpl;
-import net.thevpc.ntexup.engine.parser.NTxNodeDefParamImpl;
 import net.thevpc.ntexup.engine.document.DefaultNTxNode;
 import net.thevpc.ntexup.engine.parser.ctrlnodes.*;
-import net.thevpc.ntexup.engine.util.NTxNodeUtils;
 import net.thevpc.nuts.concurrent.NScoredCallable;
 import net.thevpc.nuts.text.NMsg;
 import net.thevpc.nuts.util.NIllegalArgumentException;
@@ -35,23 +32,27 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class NTxCompiler {
-    NTxVarProvider varProvider=null;
     private NTxEngine engine;
 
     public NTxCompiler(NTxEngine engine) {
         this.engine = engine;
     }
 
-    public NTxDocumentLoadingResult compile(NTxDocument document0) {
+    public NTxDocumentLoadingResult compileDocument(NTxDocument document0) {
         NTxDocument documentCopy = document0.copy();
         NTxSource source = documentCopy.root().source();
         SilentNTxLogger slog = new SilentNTxLogger();
         try {
             engine.addLog(slog);
-            NTxNode root = documentCopy.root();
-            List<NTxItem> all = compileNodeTree(root, new NodeHierarchy(null, false, false, new NTxCompilePageContextImpl(engine, documentCopy)));
+            NTxNode preRoot = DefaultNTxNode.ofGroup();
+            NTxNode root = documentCopy.root().copy();
+            root.setParent(preRoot);
+            compileNodeTree(new NTxResolutionContextImpl(preRoot, root, NElement.ofNull(), false, engine, documentCopy));
+            if (root.children().size() == 1) {
+                root = root.children().get(0);
+            }
 //            checkNode(root,null);
-            NTxItemBag b = new NTxItemBag(all);
+            NTxItemBag b = new NTxItemBag((List) root.children());
             root = b.compress(false, source);
             processRootPages(root);
             if (documentCopy.root() != root) {
@@ -119,228 +120,426 @@ public class NTxCompiler {
         }
     }
 
-    public NOptional<NTxNodeDef> findDefinition(NTxItem node, String name) {
-        NTxItem currNode = node;
-        while (currNode != null) {
-            if (currNode instanceof NTxNode) {
-                for (NTxNodeDef o : ((NTxNode) currNode).definitions()) {
-                    if (NNameFormat.equalsIgnoreFormat(o.name(), name)) {
-                        return NOptional.of(o);
-                    }
-                }
-            }
-            currNode = currNode.parent();
-        }
-        return NOptional.ofNamedEmpty("definition for " + name);
-    }
+//    public NOptional<NTxNodeDef> findDefinition(NTxItem node, String name) {
+//        NTxItem currNode = node;
+//        while (currNode != null) {
+//            if (currNode instanceof NTxNode) {
+//                for (NTxNodeDef o : ((NTxNode) currNode).definitions()) {
+//                    if (NNameFormat.equalsIgnoreFormat(o.name(), name)) {
+//                        return NOptional.of(o);
+//                    }
+//                }
+//            }
+//            currNode = currNode.parent();
+//        }
+//        return NOptional.ofNamedEmpty("definition for " + name);
+//    }
 
-    private NTxNodeDef compileNodeDef(NTxNodeDef item, NodeHierarchy h) {
-        List<NTxItem> body = new ArrayList<>();
+    private NTxNodeDef compileNodeDef(NTxNodeDef item, NTxResolutionContext context) {
+        DefaultNTxNode bodyContainer = DefaultNTxNode.ofGroup(context.parent());
+        NTxResolutionContext newContext = context.withNode(bodyContainer).withDef(item); // replace itemDef
         for (NTxNode b : item.body()) {
-            body.addAll(compileNodeTree(b, h.withParent(h.parent).withDef(item).withHierarchy(h.parent)));
+            compileNodeTree(newContext.resolveNode(b));
+        }
+        List<NTxNode> newBody = new NTxItemBag(bodyContainer.children()).compressToNodes(context.inPage(), item.source());
+        bodyContainer.clearChildren();
+        for (NTxNode nTxNode : newBody) {
+            bodyContainer.add(nTxNode);
+            nTxNode.setParent(bodyContainer);
         }
         return new NTxNodeDefImpl(
                 (NTxNode) item.parent(),
                 item.name(),
                 Arrays.copyOf(item.params(), item.params().length),
-                new NTxItemBag(body).compressToNodes(h.isInPage, item.source()).toArray(new NTxNode[0]),
+                bodyContainer,
                 item.source()
         );
     }
 
-    private static class NodeHierarchy {
-        NTxNode parent;
-        NTxNodeDef def;
-        NTxNode hierarchy;
-        boolean processPages;
-        boolean isInPage;
-        NTxCompilePageContext context;
-
-        public NodeHierarchy(NTxNode parent, boolean processPages, boolean isInPage, NTxCompilePageContext context) {
-            this.parent = parent;
-            this.isInPage = isInPage;
-            this.processPages = processPages;
-            this.context = context;
-        }
-
-        public NodeHierarchy(NTxNode parent, NTxNodeDef def, NTxNode hierarchy, boolean processPages, boolean isInPage, NTxCompilePageContext context) {
-            this.parent = parent;
-            this.def = def;
-            this.hierarchy = hierarchy;
-            this.isInPage = isInPage;
-            this.processPages = processPages;
-            this.context = context;
-        }
-        public NTxDocument document(){
-            return context.document();
-        }
-        NTxLogger messages(){
-            return context.messages();
-        }
-        NTxEngine engine(){
-            return context.engine();
-        }
-
-        public NodeHierarchy copy() {
-            return new NodeHierarchy(parent, def, hierarchy , processPages, isInPage, context);
-        }
-
-        public NodeHierarchy withParent(NTxNode parent) {
-            return new NodeHierarchy(parent, def, hierarchy , processPages, isInPage, context);
-        }
-
-        public NodeHierarchy withInPage(boolean isInPage) {
-            return new NodeHierarchy(parent, def, hierarchy , processPages, isInPage, context);
-        }
-
-        public NodeHierarchy withParentOnly(NTxNode parent) {
-            return new NodeHierarchy(parent, null, null, processPages, isInPage, context);
-        }
-
-        public NodeHierarchy withParentOnly() {
-            return new NodeHierarchy(parent, null, null, processPages, isInPage, context);
-        }
-
-        public NodeHierarchy withDef(NTxNodeDef def) {
-            return new NodeHierarchy(parent, def, hierarchy , processPages, isInPage, context);
-        }
-
-        public NodeHierarchy withHierarchy(NTxNode hierarchy) {
-            return new NodeHierarchy(parent, def, hierarchy , processPages, isInPage, context);
-        }
-
-        public boolean isDef() {
-            return def != null;
-        }
-    }
-
-    private List<NTxItem> compileNodeTree(NTxItem item, NodeHierarchy h0) {
-        NodeHierarchy h=h0;
-        NAssert.requireNamedNonNull(h, "h");
+    private void compileNodeTree(NTxResolutionContext context) {
+        NTxItem item = context.node();
+        NAssert.requireNamedNonNull(context, "context");
+        boolean wasInPage = context.inPage();
         if (item instanceof NTxNode) {
             NTxNode node = (NTxNode) item;
-            NTxItem tparent = node.parent();
-            if (!h.isInPage && NTxNodeType.PAGE.equals(node.type())) {
-                h=h.withInPage(true);
+            if (NTxNodeType.PAGE.equals(node.type())) {
+                //update reference!
+                context.setInPage(true);
             }
-            if (!h.processPages && h.isInPage) {
-                return Arrays.asList(node);
+            if (!wasInPage && context.inPage()) {
+                context.parent().add(node);
+                return;
+            }
+            if (node instanceof CtrNTxNodelUncompiled) {
+                NElement raw = node.getRaw();
+                NOptional<NTxItem> o = engine.newNode(raw, context.withElement(raw));
+                if (o.isPresent()) {
+                    NTxNode oldNode = context.node();
+                    try {
+                        NTxItem v = o.get();
+                        NTxItemBag ib = new NTxItemBag();
+                        ib.add(v);
+                        for (NTxItem a : ib.all()) {
+                            if (a instanceof NTxNode) {
+                                //update reference!
+                                compileNodeTree(context.setNode((NTxNode) a));
+                            } else {
+                                context.parent().add(a);
+                            }
+                        }
+                    } finally {
+                        context.setNode(oldNode);
+                    }
+                    return;
+                }
+                return;
             }
             node = node.copy();
-            node.addHierarchy(h.hierarchy);
-            node.setTemplateDefinition(h.def);
+            node.setTemplateDefinition(context.def());
             //temporarely set parent, it will be changed later!!
-            NTxUtils.setNodeParent(node, h.parent);
-            // compile properties
-//            List<NTxProp> properties = node.getProperties();
-//            for (NTxProp property : properties) {
-//                NElement value0 = property.getValue();
-//                NElement value = engine.evalExpression(value0, node);
-//                node.setProperty(property.getName(), value);
-//            }
-            // compile definitions
-            NTxNodeDef[] defs = node.definitions();
-            for (int i = 0; i < defs.length; i++) {
-                defs[i] = compileNodeDef(defs[i], h.withParentOnly(node));
-            }
-            node.clearDefinitions();
-            node.addDefinitions(defs);
-            NTxUtils.setNodeParent(node, h.parent);
+            NTxUtils.setNodeParent(node, context.parent());
+            context = context.withNode(node);
+//            NTxUtils.setNodeParent(node, context.parent());
             switch (node.type()) {
-                case NTxNodeType.CTRL_IF:
-                    return compileNodeTree_if(node, h.withParentOnly());
-                case NTxNodeType.CTRL_NAME:
-                    return compileNodeTree_name(node, h.withParentOnly());
-                case NTxNodeType.CTRL_INCLUDE:
-                    return compileNodeTree_include(node, h.withParentOnly());
-                case NTxNodeType.CTRL_IMPORT:
-                    return compileNodeTree_import(node, h.withParentOnly());
-                case NTxNodeType.CTRL_FOR:
-                    return compileNodeTree_for(node, h.withParentOnly());
-                case NTxNodeType.CTRL_ASSIGN:
-                    return compileNodeTree_assign(node, h.withParentOnly());
-                case NTxNodeType.CTRL_EXPR:
-                    return compileNodeTree_expr(node, h.withParentOnly());
-                case NTxNodeType.CTRL_CALL:
-                    return compileNodeTree_call(node, h.withParentOnly());
+                case NTxNodeType.CTRL_IF: {
+                    compileNodeTree_if(context.withParentOnly());
+                    return;
+                }
+                case NTxNodeType.CTRL_NAME: {
+                    compileNodeTree_name(context.withParentOnly());
+                    return;
+                }
+                case NTxNodeType.CTRL_INCLUDE: {
+                    compileNodeTree_include(context.withParentOnly());
+                    return;
+                }
+                case NTxNodeType.CTRL_IMPORT: {
+                    compileNodeTree_import(context.withParentOnly());
+                    return;
+                }
+                case NTxNodeType.CTRL_FOR: {
+                    compileNodeTree_for(context.withParentOnly());
+                    return;
+                }
+                case NTxNodeType.CTRL_ASSIGN: {
+                    compileNodeTree_assign(context.withParentOnly());
+                    return;
+                }
+                case NTxNodeType.CTRL_EXPR: {
+                    compileNodeTree_expr(context.withParentOnly());
+                    return;
+                }
+                case NTxNodeType.CTRL_CALL: {
+                    compileNodeTree_call(context.withParentOnly());
+                    return;
+                }
+                case NTxNodeType.CTRL_DEFINE: {
+                    compileNodeTree_define(context.withParentOnly());
+                    return;
+                }
             }
-            return compileNodeTree_default(node, h);
+            compileNodeTree_default(context);
+            return;
         } else if (item instanceof NTxItemList) {
-            List<NTxItem> all = new ArrayList<>();
             for (NTxItem subItem : ((NTxItemList) item).getItems()) {
-                all.addAll(compileNodeTree(subItem, h));
+                if (subItem instanceof NTxProp) {
+                    context.parent().setProperty((NTxProp) subItem);
+                    return;
+                } else if (subItem instanceof NTxStyleRule) {
+                    context.parent().addRule((NTxStyleRule) subItem);
+                    return;
+                } else {
+                    compileNodeTree(context.withNode((NTxNode) subItem));
+                }
             }
-            return all;
+            return;
         } else if (item instanceof NTxProp) {
-            return Arrays.asList(item);
-        } else if (item instanceof NTxNodeDef) {
-            // should i compile
-            return Arrays.asList(item);
+            context.parent().setProperty((NTxProp) item);
+            return;
         } else if (item instanceof NTxStyleRule) {
-            return Arrays.asList(item);
+            context.parent().addRule((NTxStyleRule) item);
+            return;
         } else {
             throw new IllegalArgumentException("what are you talking about?");
         }
     }
 
-    private List<NTxItem> compileNodeTree_default(NTxNode node, NodeHierarchy h) {
-        List<NTxItem> newChildren = new ArrayList<>();
-        List<NTxNode> initialChildren = new ArrayList<>(node.children());
-        //enforce forward definition dependencies
-        node.clearChildren();
-        for (NTxNode child : initialChildren) {
-            boolean componentBodyVar= NTxNodeUtils.isComponentBody(child);
-            List<NTxItem> cc = compileNodeTree(child, h.withParent(node));
-            if(componentBodyVar && cc.size()>0){
-                List<NTxSource> sources=new ArrayList<>();
-                for (NTxItem nTxItem : cc) {
-                    NTxSource source = nTxItem.source();
-                    if(source!=null){
-                        if(!sources.contains(source)){
-                            sources.add(source);
-                        }
-                    }
-                }
-                System.out.println(sources);
-            }
-            newChildren.addAll(cc);
-            // should update for each child, because second child my depend on
-            // some include of the previous child
-            node.clearChildren();
-            node.addAll(newChildren.toArray(new NTxItem[0]));
+    private void compileNodeTree_default(NTxResolutionContext context) {
+        context.parent().add(context.node());
+        for (NTxNode child : context.node().children()) {
+            context.pushNode(child);
+            compileNodeTree(context);
+            context.popNode();
         }
-        return Arrays.asList(node);
     }
 
-    private List<NTxItem> compileNodeTree_expr(NTxNode node, NodeHierarchy h) {
-        NElement varExpr = node.getProperty(NTxPropName.VALUE).get().getValue();
-        NElement element = engine.evalExpression(varExpr, node, varProvider).get();
-        NTxItem h2 = engine.newNode(element, createParseContext(
-                varExpr,
-                node,
-                node.source(),
-                h)).get();
-        return new ArrayList<>(compileNodeTree(h2, h));
+    private void compileNodeTree_expr(NTxResolutionContext context) {
+        NElement varExpr = context.node().getProperty(NTxPropName.VALUE).get().getValue();
+        NElement element = context.evalExpression(varExpr).get();
+        NTxItem h2 = engine.newNode(element, context.withElement(element)).get();
+        context.parent().mergeNode(h2);
     }
 
-    private List<NTxItem> compileNodeTree_assign(NTxNode node, NodeHierarchy h) {
-        NTxItem p = node.parent();
-        NTxNode n = (NTxNode) p;
+    private void compileNodeTree_assign(NTxResolutionContext context) {
+        NTxNode node = context.node();
         String varName = node.getProperty(NTxPropName.NAME).get().getValue().asStringValue().get();
         NElement varExpr = node.getProperty(NTxPropName.VALUE).get().getValue();
-        boolean ifempty = NTxValue.of(node.getProperty("ifempty").map(x->x.getValue()).orNull()).asBoolean().orElse(false);
-        if(ifempty) {
-            NElement old = n.getVar(varName).orNull();
-            if(old==null || old.isNull()) {
-                n.setVar(varName, engine.evalExpression(varExpr, node, varProvider).orNull());
+        boolean ifempty = NTxValue.of(node.getProperty("ifempty").map(x -> x.getValue()).orNull()).asBoolean().orElse(false);
+        NElement evaluatedExpr = context.evalExpression(varExpr).orNull();
+        if (ifempty) {
+            NTxVar v = context.getVar(varName).orNull();
+            if (v == null) {
+                context.setVar(varName, NTxVar.ofEvaluatedExpression(evaluatedExpr));
             }
-        }else{
-            n.setVar(varName, engine.evalExpression(varExpr, node, varProvider).orNull());
+        } else {
+            context.setVar(varName, NTxVar.ofEvaluatedExpression(evaluatedExpr));
         }
-        return new ArrayList<>();
     }
 
-    private DefaultNTxNodeFactoryParseContext createParseContext(NElement element, NTxNode node, NTxSource resource, NodeHierarchy compilePageContext) {
+    private void compileNodeTree_name(NTxResolutionContext context) {
+        CtrlNTxNodeName node = (CtrlNTxNodeName) context.node();
+        NElement c = node.getVarName();
+        String name = c.asStringValue().get();
+        NOptional<NTxVar> v = context.getVar(name);
+        if (v.isPresent()) {
+            DefaultNTxNode e = DefaultNTxNode.ofExpr(c, context.parent().source());
+            e.setParent(context.parent());
+            compileNodeTree(context.withParentOnly().withNode(e));
+        } else if (NTxUtils.isComponentBody(name)) {
+            context.parent().add(node);
+        } else {
+            NTxNodeParser p = engine.nodeTypeParser(name).orNull();
+            if (p != null) {
+                context.messages().log(NMsg.ofC("variable '%s' not found, rendering as plain text.  If you meant a component, use '%s()' syntax", name, name).asWarning(), NTxUtils.sourceOf(node));
+            } else {
+                context.messages().log(NMsg.ofC("variable '%s' not found, rendering as plain text", name).asWarning(), NTxUtils.sourceOf(node));
+            }
+            DefaultNTxNode t = DefaultNTxNode.ofText(name);
+            t.setSource(node.source());
+            context.parent().add(t);
+        }
+    }
+
+    private void _process_call_node(NTxNodeDef d, CtrlNTxNodeCall c, NTxResolutionContext h) {
+        NTxNodeDefParam[] expectedParams = d.params();
+        //first unset any parent COMPONENT_BODY_VAR_NAME and create a new context!
+        h = h.withVar(NTxUtils.COMPONENT_BODY_VAR_NAME, null);
+        for (NTxNodeDefParam expectedParam : expectedParams) {
+            if (expectedParam.value() != null) {
+                h.setVar(NTxUtils.COMPONENT_BODY_VAR_NAME, NTxVar.ofNonEvaluatedExpression(expectedParam.value()));
+            }
+        }
+        h.setVar(NTxUtils.COMPONENT_BODY_VAR_NAME, NTxVar.ofNonEvaluatedExpression(NElement.ofArray(c.getCallBody().toArray(new NElement[0]))));
+
+        List<NElement> callArgs = c.getCallArgs();
+
+        if (callArgs.stream().allMatch(NElement::isNamedPair)) {
+            for (NElement e : callArgs) {
+                NPairElement p = e.asPair().get();
+                String n = p.key().asStringValue().get();
+                h.setVar(n, NTxVar.ofNonEvaluatedExpression(NTxUtils.addCompilerDeclarationPath(p.value(), c.source())));
+            }
+        } else if (callArgs.stream().noneMatch(NElement::isNamedPair)) {
+            for (int i = 0; i < Math.min(expectedParams.length, callArgs.size()); i++) {
+                h.setVar(expectedParams[i].name(), NTxVar.ofNonEvaluatedExpression(NTxUtils.addCompilerDeclarationPath(callArgs.get(i), c.source())));
+            }
+        } else {
+            NMsg errMsg = NMsg.ofC("cannot mix named and non named params in %s, all params ignored", callArgs.stream().map(x -> NTxUtils.snippet(x)).collect(Collectors.toList()));
+            engine.log().log(errMsg, c.source());
+        }
+        NTxNode[] oldBody = d.body();
+        NTxResolutionContext newContext = h.withDef(d);
+        for (int i = 0; i < oldBody.length; i++) {
+            compileNodeTree(newContext.withNode(oldBody[i]));
+        }
+    }
+
+    private void compileNodeTree_define(NTxResolutionContext context) {
+        context.parent().add(context.node());
+        context.setNamedDef((NTxNodeDef) context.node());
+    }
+
+    private void compileNodeTree_call(NTxResolutionContext context) {
+        CtrlNTxNodeCall c = (CtrlNTxNodeCall) context.node();
+        String uid = c.getCallName();
+        NTxNodeParser p = engine.nodeTypeParser(uid).orNull();
+        if (p != null) {
+            NScoredCallable<NTxItem> n = p.parseNode(
+                    context.withElement(NElement.ofObjectBuilder()
+                            .name(uid)
+                            .addParams(c.getCallArgs())
+                            .addAll(c.getCallBody())
+                            .build())
+            );
+            NScorableContext scc = NScorableContext.of();
+            if (NScorable.isValidScore(n, scc)) {
+                NTxItem t = n.call();
+                if (t != null) {
+                    context.parent().add(t);
+                }
+            }
+        }
+//                NTxNode currNode = NTxUtils.firstNodeUp(node.parent());
+        NOptional<NTxNodeDef> dd = context.getNamedDef(uid);
+        if (dd.isPresent()) {
+            _process_call_node(dd.get(), c, context);
+            return;
+        } else {
+            NOptional<NTxFunction> t = context.getFunction(uid);
+            if (t.isPresent()) {
+                _process_call_fct(t.get(), c, context);
+                return;
+            }
+            addErr(NMsg.ofC("undefined node %s", NMsg.ofStyledError(uid)), context);
+        }
+    }
+
+    private void compileNodeTree_include(NTxResolutionContext context) {
+        CtrlNTxNodeInclude node = (CtrlNTxNodeInclude) context.node();
+        for (NElement callArg : node.getCallArgs()) {
+            NElement r = context.evalExpression(NTxUtils.addCompilerDeclarationPath(callArg, NTxUtils.sourceOf(node))).orNull();
+            NPath path = context.resolvePath(r);
+            if (path.isDirectory()) {
+                path = path.resolve(NTxEngineUtils.NTEXUP_EXT_STAR_STAR);
+            }
+            context.document().sourceMonitor().add(path);
+            List<NPath> list = path.walkGlob().toList();
+            list.sort(NTxEngineUtils::comparePaths);
+            if (!list.isEmpty()) {
+                for (NPath nPath : list) {
+                    if (nPath.isRegularFile()) {
+                        NOptional<NTxItem> se = engine.loadNode(node, nPath, context.document());
+                        if (se.isPresent()) {
+                            NTxItem item = se.get();
+                            NTxUtils.setNodeParent(item, context.parent());
+                            compileNodeTree(context.withParentOnly().withNode((NTxNode) item));
+                        } else {
+                            context.messages().log(NMsg.ofC("invalid include. error loading : %s", nPath).asSevere(), NTxUtils.sourceOf(node));
+                        }
+                    } else {
+                        context.messages().log(NMsg.ofC("invalid include. error loading : %s", nPath).asWarning(), NTxUtils.sourceOf(node));
+                    }
+                }
+            } else {
+                context.messages().log(NMsg.ofC("invalid include. error loading : %s", path).asWarning(), NTxUtils.sourceOf(node));
+            }
+        }
+
+    }
+
+    private void compileNodeTree_import(NTxResolutionContext context) {
+        CtrlNTxNodeImport node = (CtrlNTxNodeImport) context.node();
+        List<String> toImport = new ArrayList<>();
+        for (NElement callArg : node.getCallArgs()) {
+            NElement r = context.evalExpression(NTxUtils.addCompilerDeclarationPath(callArg, NTxUtils.sourceOf(node))).orNull();
+            String s = NTxValue.of(r).asString().orNull();
+            toImport.add(s);
+        }
+        //import is global
+        // TODO : add some context to "accessible imports some how!!
+        // dont now how (need track each class where is came from
+        // does nuts support this ? it should, its a common use
+        engine.importDependencies(toImport.toArray(new String[0]));
+    }
+
+    private void compileNodeTree_if(NTxResolutionContext context) {
+        CtrlNTxNodeIf node = (CtrlNTxNodeIf) context.node();
+        NElement cond = node.getCond();
+        NElement r = context.evalExpression(cond).orNull();
+        boolean b = NTxUtils.asBoolean(r);
+        if (b) {
+            List<NTxNode> tb = node.getTrueBloc();
+            if (tb != null) {
+                for (NTxNode d : tb) {
+                    d = d.copy();
+                    d.setParent(context.parent());
+                    compileNodeTree(context.withParentOnly().withNode(d));
+                }
+            }
+        } else {
+            List<NTxNode> tb = node.getFalseBloc();
+            List<NTxItem> tb2 = new ArrayList<>();
+            if (tb != null) {
+                for (NTxNode d : tb) {
+                    d = d.copy();
+                    d.setParent(context.parent());
+                    compileNodeTree(context.withParentOnly().withNode(d));
+                }
+            }
+        }
+    }
+
+    private void compileNodeTree_for(NTxResolutionContext context) {
+        CtrlNTxNodeFor node = (CtrlNTxNodeFor) context.node();
+        NElement varName = node.getVarName();
+        NElement varExpr = node.getVarExpr();
+        String varNameStr = null;
+        if (varName.isName()) {
+            varNameStr = varName.asStringValue().get();
+        } else {
+            addErr(NMsg.ofC("expected varName in for construct : %s", node), context);
+        }
+        NElement anyVal = context.evalExpression(varExpr).orNull();
+        List<NElement> b = new ArrayList<>();
+        if (anyVal.isAnyArray()) {
+            b.addAll(anyVal.asArray().get().children());
+        } else {
+            b.add(anyVal);
+        }
+        for (NElement o : b) {
+            NTxResolutionContext icontext = context.withVar(varNameStr, NTxVar.ofEvaluatedExpression(o));
+            for (NElement e : node.getBody()) {
+                NTxNode node2 = (NTxNode) engine.newNode(e, icontext.withElement(e)).get();
+                NTxUtils.setNodeParent(node2, context.parent());
+                compileNodeTree(icontext.withParentOnly().withNode(node2));
+            }
+        }
+    }
+
+    private void addErr(NMsg msg, NTxResolutionContext context) {
+        engine.log().log(msg.asError());
+        context.parent().add(new CtrlNTxNodeError(context.source(), msg));
+    }
+
+    private void _process_call_fct(NTxFunction t, CtrlNTxNodeCall c, NTxResolutionContext context) {
+        NTxSource source = NTxUtils.sourceOf(c);
+        NElement result = t.invoke(new NTxFunctionArgsImpl(c.getCallArgs(), c, context), context);
+        if (result == null) {
+            context.parent().add(new CtrlNTxNodeSimpleResult(source, NElement.ofNull()));
+        }
+        NOptional<NTxItem> n = engine.newNode(result, context.withElement(result));
+        if (n.isPresent()) {
+            NTxItem nn = n.get();
+            if (nn instanceof NTxNode) {
+                compileNodeTree(context.withNode((NTxNode) nn));
+                return;
+            } else if (nn instanceof NTxItemList && ((NTxItemList) nn).getItems().stream().allMatch(x -> x instanceof NTxItem)) {
+                for (NTxItem item : ((NTxItemList) nn).getItems()) {
+                    compileNodeTree(context.withNode((NTxNode) item));
+                }
+                return;
+            } else {
+                addErr(NMsg.ofC("unexpected node type %s", nn.getClass()), context);
+                return;
+            }
+        } else {
+            addErr(NMsg.ofC("not found node for %s : %s", result.type().id(), NTxUtils.snippet(result)), context);
+        }
+    }
+
+
+    public void compilePageNode(NTxResolutionContext context) {
+        if (context.engine() != engine) {
+            throw new NIllegalArgumentException(NMsg.ofC("invalid engine"));
+        }
+        context = context.withInPage(true);
+        NAssert.requireNamedNonNull(context.node(), "page");
+        NAssert.requireNamedEquals(NTxNodeType.PAGE, context.node().type(), "page");
+        compileNodeTree(context);
+    }
+
+
+    private DefaultNTxNodeFactoryParseContext createParseContext(NElement element, NTxNode node, NTxSource resource, NTxResolutionContext compilePageContext) {
         return new DefaultNTxNodeFactoryParseContext(
                 compilePageContext.document(),
                 element,
@@ -349,333 +548,4 @@ public class NTxCompiler {
                 resource
         );
     }
-
-    private List<NTxItem> compileNodeTree_name(NTxNode node, NodeHierarchy h) {
-        CtrlNTxNodeName nnode = (CtrlNTxNodeName) node;
-        NElement c = nnode.getVarName();
-        String name = c.asStringValue().get();
-        NOptional<NTxVar> v = engine.findVar(name, h.parent, varProvider);
-        if (v.isPresent()) {
-            DefaultNTxNode e = DefaultNTxNode.ofExpr(c, h.parent.source());
-            e.setParent(h.parent);
-            return compileNodeTree(e, h.withParentOnly());
-        }else if(NTxUtils.isComponentBody(name)) {
-            return Arrays.asList(node);
-        }
-        NTxNodeParser p = engine.nodeTypeParser(name).orNull();
-        if (p != null) {
-            h.messages().log(NMsg.ofC("variable '%s' not found, rendering as plain text.  If you meant a component, use '%s()' syntax",name,name).asWarning(), NTxUtils.sourceOf(node));
-        }else {
-            h.messages().log(NMsg.ofC("variable '%s' not found, rendering as plain text", name).asWarning(), NTxUtils.sourceOf(node));
-        }
-        DefaultNTxNode t = DefaultNTxNode.ofText(name);
-        t.setSource(node.source());
-        return Arrays.asList(t);
-    }
-
-    private List<NTxItem> _process_call_node(NTxNodeDef d, CtrlNTxNodeCall c, NodeHierarchy h) {
-        String uid = c.getCallName();
-        NElement callDeclaration = c.getCallExpr();
-        NTxNodeDefParam[] expectedParams = d.params();
-        NTxNodeDefParam[] allExpectedParams = Arrays.copyOf(expectedParams, expectedParams.length + 1);
-        allExpectedParams[expectedParams.length] = new NTxNodeDefParamImpl(NTxUtils.COMPONENT_BODY_VAR_NAME, NElement.ofArray(c.getCallBody().toArray(new NElement[0])));
-        NTxNodeDefParam[] effectiveParams = new NTxNodeDefParam[allExpectedParams.length];
-        List<NElement> callArgs = c.getCallArgs();
-        List<NTxProp> extraParams = new ArrayList<>();
-
-        if (callArgs.stream().allMatch(x -> x.isNamedPair())) {
-            for (NElement e : callArgs) {
-                NPairElement p = e.asPair().get();
-                String n = p.key().asStringValue().get();
-                int pos = NArrays.indexOfByMatcher(allExpectedParams, a -> NNameFormat.equalsIgnoreFormat(a.name(), n));
-                NElement newValue = NTxUtils.addCompilerDeclarationPath(p.value(), c.source());
-                if (pos >= 0) {
-                    effectiveParams[pos] = new NTxNodeDefParamImpl(allExpectedParams[pos].name(), newValue);
-                } else {
-                    extraParams.add(new NTxProp(n, newValue, c));
-                }
-            }
-            for (Map.Entry<String, NElement> e : c.getBodyVars().entrySet()) {
-                String n = e.getKey();
-                int pos = NArrays.indexOfByMatcher(allExpectedParams, a -> NNameFormat.equalsIgnoreFormat(a.name(), n));
-                if (pos >= 0) {
-                    effectiveParams[pos] = new NTxNodeDefParamImpl(allExpectedParams[pos].name(), e.getValue());
-                } else {
-                    NMsg errMsg = NMsg.ofC("undefined param %s for %s in %s. ignored", n, uid, NTxUtils.snippet(callDeclaration));
-                    engine.log().log(errMsg, c.source());
-                }
-            }
-            for (int i = 0; i < allExpectedParams.length; i++) {
-                if (effectiveParams[i] == null) {
-                    NElement v = allExpectedParams[i].value();
-                    if (v != null) {
-                        effectiveParams[i] = allExpectedParams[i];
-                    } else {
-                        NMsg errMsg = NMsg.ofC("missing param %s for %s in %s", allExpectedParams[i].name(), uid, NTxUtils.snippet(callDeclaration));
-                        engine.log().log(errMsg, c.source());
-                        //throw new NIllegalArgumentException(errMsg);
-                    }
-                }
-            }
-        } else if (callArgs.stream().noneMatch(x -> x.isNamedPair())) {
-            if (expectedParams.length == callArgs.size()) {
-                for (int i = 0; i < expectedParams.length; i++) {
-                    effectiveParams[i] = new NTxNodeDefParamImpl(allExpectedParams[i].name(), callArgs.get(i));
-                }
-            }
-        } else {
-            NMsg errMsg = NMsg.ofC("cannot mix named and non named params in %s", callArgs.stream().map(x-> NTxUtils.snippet(x)).collect(Collectors.toList()));
-            engine.log().log(errMsg, c.source());
-            List<NTxItem> result = new ArrayList<>();
-            return result;
-        }
-
-        NTxNode[] oldBody = d.body();
-        List<NTxItem> body = new ArrayList<>();
-        for (int i = 0; i < oldBody.length; i++) {
-            NTxNode nn0 = oldBody[i];
-            if(NTxNodeUtils.isComponentBody(nn0)){
-                for (NElement nElement : c.getCallBody()) {
-                    NOptional<NTxItem> ii = engine.newNode(nElement, createParseContext(
-                            nElement,
-                            c,
-                            c.source(),
-                            h));
-                    if(ii.isPresent()) {
-                        body.addAll(compileNodeTree(ii.get(), h.withDef(d).withHierarchy((NTxNode) d.parent())));
-                    }
-                }
-            }else{
-                NTxNode nn = nn0.copy();
-                nn.setParent(c);
-                for (NTxProp extraParam : extraParams) {
-                    nn.setProperty(extraParam);
-                }
-                Map<String, NElement> ee = NTxUtils.inheritedVarsMap(c);
-                for (Map.Entry<String, NElement> e : ee.entrySet()) {
-                    nn.setVar(e.getKey(), e.getValue());
-                }
-                for (int j = effectiveParams.length - 1; j >= 0; j--) {
-                    if (effectiveParams[j] != null) {
-                        nn.setVar(effectiveParams[j].name(), NTxUtils.addCompilerDeclarationPath(effectiveParams[j].value(), NTxUtils.sourceOf(d)));
-                    }
-                }
-                body.addAll(compileNodeTree(nn, h.withDef(d).withHierarchy((NTxNode) d.parent())));
-            }
-        }
-        return body;
-    }
-
-    private List<NTxItem> compileNodeTree_call(NTxNode node, NodeHierarchy h) {
-        if (NTxNodeType.CTRL_CALL.equals(node.type())) {
-            CtrlNTxNodeCall c = (CtrlNTxNodeCall) node;
-            if (!h.isInPage || (h.isInPage && h.processPages)) {
-                String uid = c.getCallName();
-                NTxNodeParser p = engine.nodeTypeParser(uid).orNull();
-                if (p != null) {
-                    NScoredCallable<NTxItem> n = p.parseNode(createParseContext(
-                            NElement.ofObjectBuilder()
-                                    .name(uid)
-                                    .addParams(c.getCallArgs())
-                                    .addAll(c.getCallBody())
-                                    .build()
-                            ,
-                            node,
-                            node.source(),
-                            h));
-                    NScorableContext scc = NScorableContext.of();
-                    if(NScorable.isValidScore(n,scc)) {
-                        NTxItem t = n.call();
-                        if(t!=null){
-                            return new ArrayList<>(Collections.singleton(t));
-                        }
-                    }
-                }
-//                NTxNode currNode = NTxUtils.firstNodeUp(node.parent());
-                NOptional<NTxNodeDef> dd = findDefinition(h.parent, uid);
-                if (dd.isPresent()) {
-                    return _process_call_node(dd.get(), c, h);
-                } else {
-                    NOptional<NTxFunction> t = engine.findFunction(h.parent, uid);
-                    if (t.isPresent()) {
-                        return _process_call_fct(t.get(), c, h);
-                    }
-                    NMsg errMsg = NMsg.ofC("undefined node %s", NMsg.ofStyledError(uid));
-                    h.messages().log(errMsg.asError(), c.source());
-                    NTxNode node2 = DefaultNTxNode.ofText((errMsg.toString()));
-                    node2.setSource(node.source());
-                    return new ArrayList<>(Arrays.asList(node2));
-                }
-            }
-            return new ArrayList<>(Collections.singleton(node));
-        }
-        throw new NIllegalArgumentException(NMsg.ofC("unexpected node type %s", node.type()));
-    }
-
-    private List<NTxItem> compileNodeTree_include(NTxNode node, NodeHierarchy h) {
-        if (NTxNodeType.CTRL_INCLUDE.equals(node.type())) {
-            CtrlNTxNodeInclude c = (CtrlNTxNodeInclude) node;
-            List<NTxItem> loaded = new ArrayList<>();
-            for (NElement callArg : c.getCallArgs()) {
-                NElement r = engine.evalExpression(NTxUtils.addCompilerDeclarationPath(callArg, NTxUtils.sourceOf(c)), c, varProvider).orNull();
-                NPath path = engine.resolvePath(r, c);
-                if (path.isDirectory()) {
-                    path = path.resolve(NTxEngineUtils.NTEXUP_EXT_STAR_STAR);
-                }
-                h.document().sourceMonitor().add(path);
-                List<NPath> list = path.walkGlob().toList();
-                list.sort(NTxEngineUtils::comparePaths);
-                if (!list.isEmpty()) {
-                    for (NPath nPath : list) {
-                        if (nPath.isRegularFile()) {
-                            NOptional<NTxItem> se = engine.loadNode(c, nPath, h.document());
-                            if (se.isPresent()) {
-                                NTxItem item = se.get();
-                                NTxUtils.setNodeParent(item, h.parent);
-                                List<NTxItem> compiled = compileNodeTree(item, h.withParentOnly());
-                                loaded.addAll(compiled);
-                            } else {
-                                h.messages().log(NMsg.ofC("invalid include. error loading : %s", nPath).asSevere(), NTxUtils.sourceOf(c));
-                            }
-                        } else {
-                            h.messages().log(NMsg.ofC("invalid include. error loading : %s", nPath).asWarning(), NTxUtils.sourceOf(c));
-                        }
-                    }
-                } else {
-                    h.messages().log(NMsg.ofC("invalid include. error loading : %s", path).asWarning(), NTxUtils.sourceOf(c));
-                }
-            }
-            return loaded;
-        }
-        throw new NIllegalArgumentException(NMsg.ofC("expected 'include' node, got %s", NMsg.ofStyledKeyword(node.type())));
-    }
-    private List<NTxItem> compileNodeTree_import(NTxNode node, NodeHierarchy h) {
-        if (NTxNodeType.CTRL_IMPORT.equals(node.type())) {
-            CtrlNTxNodeImport c = (CtrlNTxNodeImport) node;
-            List<String> toImport = new ArrayList<>();
-            for (NElement callArg : c.getCallArgs()) {
-                NElement r = engine.evalExpression(NTxUtils.addCompilerDeclarationPath(callArg, NTxUtils.sourceOf(c)), c, varProvider).orNull();
-                String s = NTxValue.of(r).asString().orNull();
-                toImport.add(s);
-            }
-            engine.importDependencies(toImport.toArray(new String[0]));
-            return new  ArrayList<>();
-        }
-        throw new NIllegalArgumentException(NMsg.ofC("expected 'include' node, got %s", NMsg.ofStyledKeyword(node.type())));
-    }
-
-    private List<NTxItem> compileNodeTree_if(NTxNode node, NodeHierarchy h) {
-        if (NTxNodeType.CTRL_IF.equals(node.type())) {
-            CtrlNTxNodeIf c = (CtrlNTxNodeIf) node;
-            if (!h.isInPage || (h.isInPage && h.processPages)) {
-                NElement cond = c.getCond();
-                NElement r = engine.evalExpression(cond, c, varProvider).orNull();
-                boolean b = NTxUtils.asBoolean(r);
-                if (b) {
-                    List<NTxNode> tb = c.getTrueBloc();
-                    List<NTxItem> tb2 = new ArrayList<>();
-                    if (tb != null) {
-                        for (NTxNode d : tb) {
-                            d = d.copy();
-                            d.setParent(h.parent);
-                            tb2.addAll(compileNodeTree(d, h.withParentOnly()));
-                        }
-                    }
-                    return tb2;
-                } else {
-                    List<NTxNode> tb = c.getFalseBloc();
-                    List<NTxItem> tb2 = new ArrayList<>();
-                    if (tb != null) {
-                        for (NTxNode d : tb) {
-                            d = d.copy();
-                            d.setParent(h.parent);
-                            tb2.addAll(compileNodeTree(d, h.withParentOnly()));
-                        }
-                    }
-                    return tb2;
-                }
-            }
-            return new ArrayList<>(Collections.singleton(node));
-        }
-        throw new NIllegalArgumentException(NMsg.ofC("unexpected node type %s", node.type()));
-    }
-
-    private List<NTxItem> compileNodeTree_for(NTxNode node, NodeHierarchy h) {
-        if (NTxNodeType.CTRL_FOR.equals(node.type())) {
-            CtrlNTxNodeFor c = (CtrlNTxNodeFor) node;
-            if (!h.isInPage || (h.isInPage && h.processPages)) {
-                NElement varName = c.getVarName();
-                NElement varExpr = c.getVarExpr();
-                String varNameStr = null;
-                if (varName.isName()) {
-                    varNameStr = varName.asStringValue().get();
-                } else {
-                    throw new NIllegalArgumentException(NMsg.ofC("expected varName in for contruct : %s", node));
-                }
-                NElement anyVal = engine.evalExpression(varExpr, node, varProvider).orNull();
-                List<NElement> b = new ArrayList<>();
-                if (anyVal.isAnyArray()) {
-                    b.addAll(anyVal.asArray().get().children());
-                } else {
-                    b.add(anyVal);
-                }
-                List<NTxItem> result = new ArrayList<>();
-                for (NElement o : b) {
-                    for (NElement e : c.getBody()) {
-                        NTxNode node2 = (NTxNode) engine.newNode(e, createParseContext(e, node, node.source(), h)).get();
-                        node2.setVar(varNameStr, o);
-                        NTxUtils.setNodeParent(node2, h.parent);
-                        result.addAll(compileNodeTree(node2, h.withParentOnly()));
-                    }
-                }
-                return result;
-            }
-            return new ArrayList<>(Collections.singleton(node));
-        }
-        throw new NIllegalArgumentException(NMsg.ofC("unexpected node type %s", node.type()));
-    }
-
-    private List<NTxItem> _process_call_fct(NTxFunction t, CtrlNTxNodeCall c, NodeHierarchy h) {
-        NTxSource source = NTxUtils.sourceOf(c);
-        NTxFunctionContext ctx = new DefaultNTxFunctionContext(engine,c,varProvider);
-        NElement result = t.invoke(new NTxFunctionArgsImpl(c.getCallArgs(),c,engine,varProvider), ctx);
-        if (result == null) {
-            return new ArrayList<>();
-        }
-        DefaultNTxNodeFactoryParseContext ctx2 = createParseContext(result, c, source, h);
-        NOptional<NTxItem> n = engine.newNode(result, ctx2);
-        if (n.isPresent()) {
-            NTxItem nn = n.get();
-            if (nn instanceof NTxNode) {
-                return compileNodeTree(nn, h);
-            } else if (nn instanceof NTxItemList && ((NTxItemList) nn).getItems().stream().allMatch(x -> x instanceof NTxItem)) {
-                List<NTxItem> r = new ArrayList<>();
-                for (NTxItem item : ((NTxItemList) nn).getItems()) {
-                    r.addAll(compileNodeTree((NTxNode) item, h));
-                }
-                return r;
-            } else {
-                engine.newNode(result, ctx2).get();
-                NMsg msg = NMsg.ofC("unexpected node type %s", nn.getClass());
-                engine.log().log(msg.asError());
-                return Arrays.asList(DefaultNTxNode.ofText(msg.toString()));
-            }
-        } else {
-            NMsg msg = NMsg.ofC("not found node for %s : %s", result.type().id(), NTxUtils.snippet(result));
-            engine.log().log(msg.asError());
-            return Arrays.asList(DefaultNTxNode.ofText(msg.toString()));
-        }
-    }
-
-
-    public List<NTxNode> compilePageNode(NTxNode node, NTxCompilePageContext context) {
-        NTxNode p = (NTxNode) node.parent();
-        NTxUtils.checkNode(node, p);
-        ArrayList<NTxNode> y = new ArrayList<>();
-        for (NTxItem d : compileNodeTree(node, new NodeHierarchy(p,true, true, context))) {
-            y.add((NTxNode) d);
-        }
-        return y;
-    }
-
 }
