@@ -2,16 +2,15 @@ package net.thevpc.ntexup.engine.parser;
 
 import net.thevpc.ntexup.api.document.NTxDocumentFactory;
 import net.thevpc.ntexup.api.document.node.NTxItemList;
-import net.thevpc.ntexup.api.document.node.NTxItem;
 import net.thevpc.ntexup.api.document.style.NTxProp;
+import net.thevpc.ntexup.api.eval.NTxResolutionContext;
 import net.thevpc.ntexup.api.eval.NTxValue;
-import net.thevpc.ntexup.api.parser.NTxNodeFactoryParseContext;
-import net.thevpc.nuts.text.NMsg;
+import net.thevpc.ntexup.engine.parser.ctrlnodes.CtrNTxNodelUncompiled;
 import net.thevpc.nuts.util.NOptional;
 import net.thevpc.nuts.elem.NElement;
 
 public class NTxItemListParser {
-    public static NOptional<NTxItemList> readHItemList(NElement ff, NTxDocumentFactory f, NTxNodeFactoryParseContext context) {
+    public static NOptional<NTxItemList> readHItemList(NElement ff, NTxDocumentFactory f, NTxResolutionContext context) {
         NTxItemList pg = new NTxItemList();
 
         switch (ff.type()) {
@@ -39,14 +38,9 @@ public class NTxItemListParser {
                     }
                 }
                 for (NElement e : ee.body()) {
-                    NOptional<NTxItem> u = context.engine().newNode(e, context);
-                    if (u.isPresent()) {
-                        pg.add(u.get());
-                    } else {
-                        return NOptional.ofError(
-                                () -> NMsg.ofC("Error parsing page group : %s", e)
-                        );
-                    }
+                    pg.add(
+                            new CtrNTxNodelUncompiled(e,context.source())
+                    );
                 }
             }
         }
