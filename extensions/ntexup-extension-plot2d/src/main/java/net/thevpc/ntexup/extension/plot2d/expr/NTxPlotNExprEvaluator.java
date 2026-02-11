@@ -1,6 +1,6 @@
 package net.thevpc.ntexup.extension.plot2d.expr;
 
-import net.thevpc.ntexup.api.renderer.NTxNodeRendererContext;
+import net.thevpc.ntexup.api.renderer.NTxRendererContext;
 import net.thevpc.ntexup.api.util.NTxUtils;
 import net.thevpc.ntexup.extension.plot2d.model.NTxFunctionPlotInfo;
 import net.thevpc.nuts.expr.*;
@@ -17,7 +17,7 @@ public class NTxPlotNExprEvaluator implements NExprEvaluator {
     private Map<String, NExprVar> extraVars = new HashMap<>();
 
 
-    public static NDoubleFunction compileFunctionX(NTxFunctionPlotInfo e, NTxNodeRendererContext rendererContext) {
+    public static NDoubleFunction compileFunctionX(NTxFunctionPlotInfo e, NTxRendererContext rendererContext) {
         NExprMutableDeclarations d = NTxExprHelper.create(rendererContext);
         NOptional<NExprNode> ne = d.parse(e.fexpr.isAnyString() ? e.fexpr.asStringValue().get() : NTxUtils.removeCompilerDeclarationPathAnnotations(e.fexpr).toString());
         if (!ne.isPresent()) {
