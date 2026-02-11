@@ -65,7 +65,7 @@ public class ToElementHelper {
             ch.addAll(children);
             for (NTxNode child : node.children()) {
                 ch.add(
-                        engine.nodeTypeParser(child.type()).get().toElem(child)
+                        engine.nodeTypeParser(child.type()).get().toElem(child,engine)
                 );
             }
             NObjectElementBuilder u = NElement.ofObjectBuilder(name).addParams(args2).addAll(ch);
