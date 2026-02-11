@@ -4,7 +4,7 @@ import net.thevpc.ntexup.api.document.node.NTxNodeType;
 import net.thevpc.ntexup.api.document.style.NTxProperties;
 import net.thevpc.ntexup.api.extension.NTxNodeBuilder;
 import net.thevpc.ntexup.api.engine.NTxNodeBuilderContext;
-import net.thevpc.ntexup.api.renderer.NTxNodeRendererContext;
+import net.thevpc.ntexup.api.renderer.NTxRendererContext;
 
 public class NTxNovagonBuilder implements NTxNodeBuilder {
 
@@ -16,7 +16,7 @@ public class NTxNovagonBuilder implements NTxNodeBuilder {
                 .renderComponent(this::render);
     }
 
-    public void render(NTxNodeRendererContext rendererContext) {
+    public void render(NTxRendererContext rendererContext) {
         NTxPolygonHelper.renderPointsCount(9, rendererContext, defaultStyles);
     }
 }
