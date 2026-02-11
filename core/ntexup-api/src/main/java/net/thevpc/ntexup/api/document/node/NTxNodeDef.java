@@ -1,13 +1,7 @@
 package net.thevpc.ntexup.api.document.node;
 
-import net.thevpc.ntexup.api.source.NTxSource;
-
-public interface NTxNodeDef extends NTxItem {
-    String name();
-
+public interface NTxNodeDef extends NTxNode{
     NTxNodeDefParam[] params();
-
     NTxNode[] body();
-
-    NTxSource source();
+    NTxNode bodyContainer();
 }
