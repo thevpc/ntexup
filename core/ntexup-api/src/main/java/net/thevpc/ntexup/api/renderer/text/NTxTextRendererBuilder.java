@@ -4,23 +4,23 @@ import net.thevpc.ntexup.api.document.elem2d.NTxBounds2D;
 import net.thevpc.ntexup.api.document.elem2d.NTxDouble2;
 import net.thevpc.ntexup.api.document.node.NTxNode;
 import net.thevpc.ntexup.api.renderer.NTxGraphics;
-import net.thevpc.ntexup.api.renderer.NTxNodeRendererContext;
+import net.thevpc.ntexup.api.renderer.NTxRendererContext;
 import net.thevpc.nuts.text.NText;
 
 public interface NTxTextRendererBuilder {
-    void appendText(String rawText, NTxTextOptions options, NTxNode node, NTxNodeRendererContext ctx);
+    void appendText(String rawText, NTxTextOptions options, NTxRendererContext ctx);
 
-    void appendNText(String lang, String rawText, NText text, NTxNode node, NTxNodeRendererContext ctx);
+    void appendNText(String lang, String rawText, NText text, NTxRendererContext ctx);
 
-    void appendCustom(String lang, String rawText, NTxTextOptions options, NTxNode node, NTxNodeRendererContext ctx);
+    void appendCustom(String lang, String rawText, NTxTextOptions options, NTxRendererContext ctx);
 
-    public void appendPlain(String text, NTxNodeRendererContext ctx);
+    public void appendPlain(String text, NTxRendererContext ctx);
 
     NTxRichTextRow nextLine();
 
     NTxRichTextRow currRow();
 
-    NTxBounds2D computeBound(NTxNodeRendererContext ctx);
+    NTxBounds2D computeBound(NTxRendererContext ctx);
 
     public void setLang(String lang);
 
@@ -32,7 +32,7 @@ public interface NTxTextRendererBuilder {
         NTxDouble2 size();
     }
 
-    public void render(NTxNode p, NTxNodeRendererContext ctx, NTxBounds2D bgBounds, NTxBounds2D selfBounds);
+    public void render(NTxNode p, NTxRendererContext ctx, NTxBounds2D bgBounds, NTxBounds2D selfBounds);
 
     boolean isEmpty();
 
