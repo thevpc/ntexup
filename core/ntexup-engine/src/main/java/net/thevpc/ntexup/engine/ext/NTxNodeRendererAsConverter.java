@@ -2,7 +2,7 @@ package net.thevpc.ntexup.engine.ext;
 
 import net.thevpc.ntexup.engine.renderer.ConvertedNTxNodeRenderer;
 import net.thevpc.ntexup.api.document.node.NTxNode;
-import net.thevpc.ntexup.api.renderer.NTxNodeRendererContext;
+import net.thevpc.ntexup.api.renderer.NTxRendererContext;
 
 class NTxNodeRendererAsConverter extends ConvertedNTxNodeRenderer {
     private final NTxNodeBuilderContextImpl ctx;
@@ -13,7 +13,7 @@ class NTxNodeRendererAsConverter extends ConvertedNTxNodeRenderer {
     }
 
     @Override
-    public NTxNode convert(NTxNode p, NTxNodeRendererContext rendererContext) {
+    public NTxNode convert(NTxNode p, NTxRendererContext rendererContext) {
         if (this.ctx.renderConvertAction != null) {
             return this.ctx.renderConvertAction.convert(p, rendererContext.withBuilderContext(this.ctx));
         }
