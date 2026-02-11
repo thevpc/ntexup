@@ -1,7 +1,7 @@
 package net.thevpc.ntexup.extension.commonfunctions.colors;
 
+import net.thevpc.ntexup.api.eval.NTxResolutionContext;
 import net.thevpc.ntexup.api.eval.NTxFunctionArgs;
-import net.thevpc.ntexup.api.eval.NTxFunctionContext;
 import net.thevpc.ntexup.api.eval.NTxValue;
 import net.thevpc.ntexup.api.extension.NTxFunction;
 import net.thevpc.ntexup.api.util.NTxElementUtils;
@@ -18,7 +18,7 @@ public class NTxFunctionLighterColor implements NTxFunction {
     }
 
     @Override
-    public NElement invoke(NTxFunctionArgs args, NTxFunctionContext context) {
+    public NElement invoke(NTxFunctionArgs args, NTxResolutionContext context) {
         if (args.size() == 0) {
             return NElement.ofNull();
         }
