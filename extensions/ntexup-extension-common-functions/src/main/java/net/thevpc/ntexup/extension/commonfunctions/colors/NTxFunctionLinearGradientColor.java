@@ -21,11 +21,11 @@ public class NTxFunctionLinearGradientColor implements NTxFunction {
     }
 
     @Override
-    public NElement invoke(NTxFunctionArgs args, NTxFunctionContext context) {
+    public NElement invoke(NTxFunctionArgs args, NTxResolutionContext context) {
         boolean cyclic = false;
         NTxDouble2 start = null;
         NTxDouble2 end = null;
-        NTxBounds2D selfBounds = NTxValue.of(context.findVar("selfBounds").map(x->x.get()).orNull()).asBounds2().orNull();
+        NTxBounds2D selfBounds = NTxValue.of(context.getVar("selfBounds").map(x->x.get()).orNull()).asBounds2().orNull();
         java.util.List<Color> colors = new ArrayList<>();
         for (NTxFunctionArg arg : args.args()) {
             NElement v = arg.eval();
