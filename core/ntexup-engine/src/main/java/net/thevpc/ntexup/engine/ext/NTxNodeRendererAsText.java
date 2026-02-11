@@ -2,7 +2,7 @@ package net.thevpc.ntexup.engine.ext;
 
 import net.thevpc.ntexup.api.document.elem2d.NTxBounds2D;
 import net.thevpc.ntexup.api.document.NTxSizeRequirements;
-import net.thevpc.ntexup.api.renderer.NTxNodeRendererContext;
+import net.thevpc.ntexup.api.renderer.NTxRendererContext;
 import net.thevpc.ntexup.engine.renderer.text.NTxTextRendererBase;
 
 class NTxNodeRendererAsText extends NTxTextRendererBase {
@@ -14,7 +14,7 @@ class NTxNodeRendererAsText extends NTxTextRendererBase {
     }
 
     @Override
-    public void renderMain(NTxNodeRendererContext ctx) {
+    public void renderMain(NTxRendererContext ctx) {
         if (this.ctx.renderMainAction != null) {
             this.ctx.renderMainAction.renderMain(ctx);
         }else {
@@ -23,7 +23,7 @@ class NTxNodeRendererAsText extends NTxTextRendererBase {
     }
 
     @Override
-    public NTxSizeRequirements sizeRequirements(NTxNodeRendererContext ctx) {
+    public NTxSizeRequirements sizeRequirements(NTxRendererContext ctx) {
         if (this.ctx.sizeRequirementsAction != null) {
             NTxSizeRequirements u = this.ctx.sizeRequirementsAction.sizeRequirements(ctx.withBuilderContext(this.ctx));
             if (u != null) {
@@ -34,7 +34,7 @@ class NTxNodeRendererAsText extends NTxTextRendererBase {
     }
 
     @Override
-    public NTxBounds2D selfBounds(NTxNodeRendererContext ctx) {
+    public NTxBounds2D selfBounds(NTxRendererContext ctx) {
         if (this.ctx.selfBoundsAction != null) {
             NTxBounds2D u = this.ctx.selfBoundsAction.selfBounds(ctx);
             if (u != null) {
