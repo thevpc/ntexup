@@ -5,11 +5,11 @@ import net.thevpc.ntexup.api.document.node.NTxItem;
 import net.thevpc.ntexup.api.document.node.NTxNode;
 import net.thevpc.ntexup.api.document.style.NTxProp;
 import net.thevpc.ntexup.api.document.NTxSizeRequirements;
+import net.thevpc.ntexup.api.eval.NTxResolutionContext;
 import net.thevpc.ntexup.api.log.NTxLogger;
 import net.thevpc.ntexup.api.parser.NTxAllArgumentReader;
 import net.thevpc.ntexup.api.parser.NTxArgumentReader;
-import net.thevpc.ntexup.api.parser.NTxNodeFactoryParseContext;
-import net.thevpc.ntexup.api.renderer.NTxNodeRendererContext;
+import net.thevpc.ntexup.api.renderer.NTxRendererContext;
 import net.thevpc.ntexup.api.renderer.text.NTxTextRendererFlavorParseContext;
 import net.thevpc.ntexup.api.renderer.text.NTxTextToken;
 import net.thevpc.ntexup.api.renderer.text.NTxTextOptions;
@@ -71,7 +71,7 @@ public interface NTxNodeBuilderContext {
 
 
     interface NTxItemSpecialParser {
-        NScoredCallable<NTxItem> parseElement(String id, NElement element, NTxNodeFactoryParseContext context);
+        NScoredCallable<NTxItem> parseElement(String id, NElement element, NTxResolutionContext context);
     }
 
     interface RenderTextAction {
@@ -139,15 +139,15 @@ public interface NTxNodeBuilderContext {
     }
 
     interface RenderAction {
-        void renderMain(NTxNodeRendererContext rendererContext);
+        void renderMain(NTxRendererContext rendererContext);
     }
 
     interface RenderTextBuildAction {
-        void buildText(String text, NTxTextOptions options, NTxNode p, NTxNodeRendererContext rendererContext, NTxTextRendererBuilder builder);
+        void buildText(String text, NTxTextOptions options, NTxRendererContext rendererContext, NTxTextRendererBuilder builder);
     }
 
     interface RenderConvertAction {
-        NTxNode convert(NTxNode p, NTxNodeRendererContext ctx);
+        NTxNode convert(NTxNode p, NTxRendererContext ctx);
     }
 
     interface RenderTextParseTokensAction {
@@ -155,11 +155,11 @@ public interface NTxNodeBuilderContext {
     }
 
     interface SizeRequirementsAction {
-        NTxSizeRequirements sizeRequirements(NTxNodeRendererContext rendererContext);
+        NTxSizeRequirements sizeRequirements(NTxRendererContext rendererContext);
     }
 
     interface SelfBoundsAction {
-        NTxBounds2D selfBounds(NTxNodeRendererContext rendererContext);
+        NTxBounds2D selfBounds(NTxRendererContext rendererContext);
     }
 
     interface ProcessParamAction {
