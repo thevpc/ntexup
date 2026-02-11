@@ -4,10 +4,11 @@ import net.thevpc.ntexup.api.document.NTxDocumentFactory;
 import net.thevpc.ntexup.api.document.node.*;
 import net.thevpc.ntexup.api.document.style.NTxPropName;
 import net.thevpc.ntexup.api.engine.NTxEngine;
-import net.thevpc.ntexup.api.parser.NTxNodeFactoryParseContext;
+import net.thevpc.ntexup.api.eval.NTxResolutionContext;
 import net.thevpc.ntexup.api.parser.NTxNodeParserFactory;
 import net.thevpc.ntexup.api.source.NTxSource;
 import net.thevpc.ntexup.api.util.NTxUtils;
+import net.thevpc.ntexup.engine.parser.ctrlnodes.CtrNTxNodelUncompiled;
 import net.thevpc.ntexup.engine.parser.ctrlnodes.CtrlNTxNodeCall;
 import net.thevpc.ntexup.engine.document.DefaultNTxNode;
 import net.thevpc.ntexup.api.eval.NTxValue;
@@ -37,7 +38,7 @@ public class DefaultNTxDocumentItemParserFactory
     }
 
     @Override
-    public NScoredCallable<NTxItem> parseNode(NTxNodeFactoryParseContext context) {
+    public NScoredCallable<NTxItem> parseNode(NTxResolutionContext context) {
         NElement c = context.element();
         NTxEngine engine = context.engine();
         if (c.annotations().stream().anyMatch(x -> NTxNodeType.CTRL_DEFINE.equals(x.name()))) {
@@ -78,7 +79,7 @@ public class DefaultNTxDocumentItemParserFactory
             }
             case UNORDERED_LIST:
             case ORDERED_LIST: {
-                return parseNodeAsList(c, context);
+                return parseNodeAsListCallable(c, context);
             }
         }
         switch (c.type().group()) {
@@ -93,7 +94,7 @@ public class DefaultNTxDocumentItemParserFactory
         return _invalidSupport(NMsg.ofC("[%s] unable to resolve node : %s", NTxUtils.shortName(context.source()), NTxUtils.snippet(c)), context);
     }
 
-    private NScoredCallable<NTxItem> parseNodeAsOpSpecial(NElement c, NTxNodeFactoryParseContext context) {
+    private NScoredCallable<NTxItem> parseNodeAsOpSpecial(NElement c, NTxResolutionContext context) {
         NBinaryOperatorElement bo = c.asBinaryOperator().get();
         NOptional<NTxNodeParser> ff = context.engine().nodeTypeParser(bo.operatorSymbol().lexeme());
         if (ff.isPresent()) {
@@ -105,7 +106,7 @@ public class DefaultNTxDocumentItemParserFactory
         return _invalidSupport(NMsg.ofC("[%s] unable to resolve node : %s", NTxUtils.shortName(context.source()), NTxUtils.snippet(c)), context);
     }
 
-    private NScoredCallable<NTxItem> parseNodeAsLiteral(NElement c, NTxNodeFactoryParseContext context) {
+    private NScoredCallable<NTxItem> parseNodeAsLiteral(NElement c, NTxResolutionContext context) {
         if (c.type() == NElementType.NAME) {
             NElement finalC = c;
             return NScoredCallable.ofValid(() -> new CtrlNTxNodeName(context.source(), finalC));
@@ -117,7 +118,7 @@ public class DefaultNTxDocumentItemParserFactory
         return _invalidSupport(NMsg.ofC("[%s] unable to resolve node : %s", NTxUtils.shortName(context.source()), NTxUtils.snippet(c)), context);
     }
 
-    private NScoredCallable<NTxItem> parseNodeAsPair(NElement c, NTxNodeFactoryParseContext context) {
+    private NScoredCallable<NTxItem> parseNodeAsPair(NElement c, NTxResolutionContext context) {
         if (c.isNamedPair()) {
             NPairElement p = c.asPair().get();
             String name = p.key().asStringValue().get();
@@ -132,7 +133,7 @@ public class DefaultNTxDocumentItemParserFactory
         return _invalidSupport(NMsg.ofC("[%s] unable to resolve node from pair : %s", NTxUtils.shortName(context.source()), NTxUtils.snippet(c)), context);
     }
 
-    private NScoredCallable<NTxItem> parseNodeAsNamedListContainer(NElement c,NTxNodeFactoryParseContext context) {
+    private NScoredCallable<NTxItem> parseNodeAsNamedListContainer(NElement c, NTxResolutionContext context) {
         NTxValue ee = NTxValue.of(c);
         String uid = NTxUtils.uid(ee.name());
         NTxNodeParser p = context.engine().nodeTypeParser(uid).orNull();
@@ -146,12 +147,12 @@ public class DefaultNTxDocumentItemParserFactory
         return _invalidSupport(NMsg.ofC("[%s] unable to resolve node : %s", NTxUtils.shortName(context.source()), NTxUtils.snippet(c)), context);
     }
 
-    private NScoredCallable<NTxItem> parseNodeAsUplet(NTxNodeFactoryParseContext context) {
+    private NScoredCallable<NTxItem> parseNodeAsUplet(NTxResolutionContext context) {
         NTxNodeParser p = context.engine().nodeTypeParser(NTxNodeType.TEXT).orNull();
         return p.parseNode(context);
     }
 
-    private NScoredCallable<NTxItem> parseNodeAsDefine(NElement c, NTxNodeFactoryParseContext context) {
+    private NScoredCallable<NTxItem> parseNodeAsDefine(NElement c, NTxResolutionContext context) {
         NTxEngine engine = context.engine();
         //this is a node definition
         if (c.isAnyObject() || c.isNamed()) {
@@ -185,7 +186,7 @@ public class DefaultNTxDocumentItemParserFactory
                 NTxSource source = context.source();
                 List<NTxNode> defBody = new ArrayList<>();
                 for (NElement child : object.children()) {
-                    NTxItem item = engine.newNode(child, context).get();
+                    NTxItem item = new CtrNTxNodelUncompiled(child,source);
                     NTxItemBag b = new NTxItemBag(Arrays.asList(item));
                     if (b.isNodes()) {
                         defBody.addAll(b.nodes());
@@ -193,11 +194,13 @@ public class DefaultNTxDocumentItemParserFactory
                         context.messages().log(NMsg.ofC("expected nodes, but got other items when creating node from %s", NTxUtils.snippet(child)).asError());
                     }
                 }
+                DefaultNTxNode bodyContainer = new DefaultNTxNode(NTxNodeType.GROUP);
+                bodyContainer.addAll(defBody.toArray(new NTxItem[0]));
                 return new NTxNodeDefImpl(
-                        context.node(),
+                        context.parent(),
                         templateName,
                         params.toArray(new NTxNodeDefParam[0]),
-                        defBody.toArray(new NTxNode[0]),
+                        bodyContainer,
                         source
                 );
             });
@@ -206,7 +209,7 @@ public class DefaultNTxDocumentItemParserFactory
         }
     }
 
-    private NScoredCallable<NTxItem> parseNodeAsOpColonEq(NElement c, NTxNodeFactoryParseContext context) {
+    private NScoredCallable<NTxItem> parseNodeAsOpColonEq(NElement c, NTxResolutionContext context) {
         NBinaryOperatorElement p = c.asBinaryOperator().get();
         NElement k = p.firstOperand();
         NElement v = p.secondOperand();
@@ -224,7 +227,7 @@ public class DefaultNTxDocumentItemParserFactory
         }
     }
 
-    private NScoredCallable<NTxItem> parseNodeAsOpEq(NElement c, NTxNodeFactoryParseContext context) {
+    private NScoredCallable<NTxItem> parseNodeAsOpEq(NElement c, NTxResolutionContext context) {
         NBinaryOperatorElement p = c.asBinaryOperator().get();
         NElement k = p.firstOperand();
         NElement v = p.secondOperand();
@@ -242,7 +245,11 @@ public class DefaultNTxDocumentItemParserFactory
         }
     }
 
-    private NScoredCallable<NTxItem> parseNodeAsList(NElement c, NTxNodeFactoryParseContext context) {
+    private NScoredCallable<NTxItem> parseNodeAsListCallable(NElement c, NTxResolutionContext context) {
+        return NScoredCallable.ofValid(parseNodeAsList(c,context));
+    }
+
+    private NTxNode parseNodeAsList(NElement c, NTxResolutionContext context) {
         NListElement list = c.asList().get();
         DefaultNTxNode n = new DefaultNTxNode(
                 list.type() == NElementType.ORDERED_LIST ? NTxNodeType.ORDERED_LIST : NTxNodeType.UNORDERED_LIST
@@ -250,38 +257,37 @@ public class DefaultNTxDocumentItemParserFactory
         for (NListItemElement item : list.items()) {
             n.addAll(Arrays.asList(parseListItem(item, context)).toArray(new NTxItem[0]));
         }
-        return NScoredCallable.ofValid(n);
+        return n;
     }
 
-    private NTxItem parseListItem(NListItemElement c, NTxNodeFactoryParseContext context) {
-        NTxEngine engine = context.engine();
+    private NTxItem parseListItem(NListItemElement c, NTxResolutionContext context) {
         List<NTxNode> nodes = new ArrayList<>();
         NElement v = c.value().orNull();
         if (v != null) {
-            nodes.addAll(NTxNodeUtils.toNodes(engine.newNode(v, context.push(v)).get()));
+            nodes.add(new CtrNTxNodelUncompiled(v,context.source()));
         }
         NListElement li = c.subList().orNull();
         if (li != null) {
-            nodes.addAll(NTxNodeUtils.toNodes(engine.newNode(v, context.push(v)).get()));
+            nodes.add(parseNodeAsList(li,context));
         }
         return NTxNodeUtils.ofNTxItem(nodes);
     }
 
-    private NScoredCallable<NTxItem> _invalidSupport(NMsg msg, NTxNodeFactoryParseContext context) {
+    private NScoredCallable<NTxItem> _invalidSupport(NMsg msg, NTxResolutionContext context) {
         msg = msg.asError();
         context.messages().log(msg.asError());
         return NScoredCallable.ofInvalid(msg);
     }
 
 
-    private CtrlNTxNodeCall createCtrlNodeCall(NElement c, NTxNodeFactoryParseContext context) {
+    private CtrlNTxNodeCall createCtrlNodeCall(NElement c, NTxResolutionContext context) {
         CtrlNTxNodeCall cc = new CtrlNTxNodeCall(context.source());
         NTxSource source = context.source();
         String __name = c.asNamed().get().name().get();
         cc.setProperty(NTxPropName.NAME, NTxUtils.addCompilerDeclarationPath(NElement.ofString(NTxUtils.uid(__name)), context.source()));
         List<NElement> __callBody = new ArrayList<>();
         List<NElement> __args = new ArrayList<>();
-        Map<String, NElement> __bodyVars = new HashMap<>();
+//        Map<String, NElement> __bodyVars = new HashMap<>();
 
         //inline current file path in the NElements
         if (source != null && source.path().orNull() != null) {
@@ -305,14 +311,7 @@ public class DefaultNTxDocumentItemParserFactory
                         __args.add(u);
                     }
                 }
-                for (NElement child : fb.children()) {
-                    if (child.isNamedPair() && child.asPair().get().key().isAnnotated("let")) {
-                        NPairElement pe = child.asPair().get();
-                        __bodyVars.put(pe.key().asStringValue().get(), pe.value());
-                    } else {
-                        __callBody.add(child);
-                    }
-                }
+                __callBody.addAll(fb.children());
                 c = fb.build();
             } else {
                 context.messages().log(NMsg.ofC("unexpected call : %s (ignored)", c).asError(), context.source());
@@ -329,14 +328,7 @@ public class DefaultNTxDocumentItemParserFactory
                 if (args != null) {
                     __args.addAll(args);
                 }
-                for (NElement child : fb.children()) {
-                    if (child.isNamedPair() && child.asPair().get().key().isAnnotated("let")) {
-                        NPairElement pe = child.asPair().get();
-                        __bodyVars.put(pe.key().asStringValue().get(), pe.value());
-                    } else {
-                        __callBody.add(child);
-                    }
-                }
+                __callBody.addAll(fb.children());
             } else {
                 context.messages().log(NMsg.ofC("unexpected call : %s (ignored)", c).asError(), context.source());
             }
@@ -344,16 +336,15 @@ public class DefaultNTxDocumentItemParserFactory
         cc.setCallName(__name);
         cc.setCallBody(__callBody);
         cc.setArgs(__args);
-        cc.setCallExpr(c);
-        cc.setBodyVars(__bodyVars);
+        cc.setRaw(c);
         cc.setProperty(NTxPropName.VALUE, c);
         cc.setSource(context.source());
-        cc.setParent(context.node());
+        cc.setParent(context.parent());
         return cc;
     }
 
-    private boolean isRootBloc(NTxNodeFactoryParseContext context) {
-        NTxNode[] nodes = context.nodePath();
+    private boolean isRootBloc(NTxResolutionContext context) {
+        NTxNode[] nodes = context.path();
         if (nodes.length == 0) {
             return true;
         }
@@ -425,7 +416,7 @@ public class DefaultNTxDocumentItemParserFactory
         return false;
     }
 
-    private NScoredCallable<NTxItem> parseNodeAsNoNameBloc(NTxNodeFactoryParseContext context) {
+    private NScoredCallable<NTxItem> parseNodeAsNoNameBloc(NTxResolutionContext context) {
         NElement c = context.element();
         NTxEngine engine = context.engine();
         NTxDocumentFactory f = engine.documentFactory();
@@ -454,33 +445,18 @@ public class DefaultNTxDocumentItemParserFactory
                 }
             }
         }
-        NTxNode node = context.node();
+//        NTxNode node = context.node();
         if ((allStyles != null || allAncestors != null) && !isRootBloc(context)) {
             NTxNode pg = f.ofGroup().setSource(context.source());
             pg.setStyleClasses(allStyles == null ? null : allStyles.toArray(new String[0]));
             for (NElement child : ee.body()) {
-                NOptional<NTxItem> u = engine.newNode(child, context);
-                if (u.isPresent()) {
-                    pg.append(u.get());
-                } else {
-                    return _invalidSupport(NMsg.ofC("invalid %s for %s", NTxUtils.snippet(child),
-                            node == null ? "document" : node.type()
-                    ), context);
-                }
+                pg.append(new CtrNTxNodelUncompiled(child, context.source()));
             }
             return NScoredCallable.ofValid(pg);
         } else {
             NTxItemList pg = new NTxItemList();
             for (NElement child : ee.body()) {
-                NOptional<NTxItem> u = engine.newNode(child, context);
-                if (u.isPresent()) {
-                    pg.add(u.get());
-                } else {
-                    return _invalidSupport(NMsg.ofC("invalid %s for %s : %s", NTxUtils.snippet(child),
-                            node == null ? "document" : node.type(),
-                            u.getMessage().get()
-                    ), context);
-                }
+                pg.add(new CtrNTxNodelUncompiled(child, context.source()));
             }
             return NScoredCallable.ofValid(pg);
         }
