@@ -8,7 +8,7 @@ import net.thevpc.ntexup.api.extension.NTxNodeBuilder;
 import net.thevpc.ntexup.api.document.node.NTxNode;
 import net.thevpc.ntexup.api.document.style.NTxPropName;
 import net.thevpc.ntexup.api.renderer.NTxGraphics;
-import net.thevpc.ntexup.api.renderer.NTxNodeRendererContext;
+import net.thevpc.ntexup.api.renderer.NTxRendererContext;
 
 import java.awt.*;
 import java.awt.geom.GeneralPath;
@@ -27,15 +27,15 @@ public class NTxMyShapeBuilder implements NTxNodeBuilder {
         ;
     }
 
-    public void render(NTxNodeRendererContext rendererContext) {
+    public void render(NTxRendererContext rendererContext) {
         NTxNode node=rendererContext.node();
-        NTxBounds2D b = rendererContext.selfBounds(node, null, null);
+        NTxBounds2D b = rendererContext.selfBounds(null, null);
         double x = b.getX();
         double y = b.getY();
         double width = b.getWidth();
         double height = b.getHeight();
 
-        Paint color = rendererContext.getForegroundColor(node, true);
+        Paint color = rendererContext.getForegroundColor(true);
         NTxPoint2D base = NTxValue.of(node.getPropertyValue("base")).asPoint2DOrDouble().orNull();
         if (base == null) {
             base = new NTxPoint2D(80, 20);
