@@ -4,7 +4,7 @@ import net.thevpc.ntexup.api.document.elem2d.NTxBounds2D;
 import net.thevpc.ntexup.api.document.node.NTxNode;
 import net.thevpc.ntexup.api.document.style.NTxPropName;
 import net.thevpc.ntexup.api.eval.NTxValue;
-import net.thevpc.ntexup.api.renderer.NTxNodeRendererContext;
+import net.thevpc.ntexup.api.renderer.NTxRendererContext;
 import net.thevpc.ntexup.extension.shapes3d.impl.NtxElement3DNodeParser;
 import net.thevpc.ntexup.extension.shapes3d.impl.NtxShapes3dUtils;
 import net.thevpc.ntexup.extension.shapes3d.impl.RealToRelativeMapper;
@@ -24,7 +24,7 @@ public class Element3DConcatBuilder implements NtxElement3DNodeParser {
     }
 
     @Override
-    public NtxElement3D createElement3D(NTxNode node, NTxNodeRendererContext rendererContext, NTxBounds2D b, RealToRelativeMapper mapper, NtxElement3DNodeParserFactory parserFactory) {
+    public NtxElement3D createElement3D(NTxNode node, NTxRendererContext rendererContext, NTxBounds2D b, RealToRelativeMapper mapper, NtxElement3DNodeParserFactory parserFactory) {
         NTxRegion2D r = NTxElement2DFactory.region(NtxShapes3dUtils.nodeToElement(node)).orNull();
         if (r != null) {
             NTxPoint3D position = NtxShapes3dUtils.resolvePoint(node, NTxPropName.POSITION, "real-position", NTxPoint3D::ofZero, b, mapper);
