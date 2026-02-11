@@ -5,7 +5,7 @@ import net.thevpc.ntexup.api.document.elem2d.NTxPoint2D;
 import net.thevpc.ntexup.api.document.node.NTxItem;
 import net.thevpc.ntexup.api.document.node.NTxItemList;
 import net.thevpc.ntexup.api.document.node.NTxNode;
-import net.thevpc.ntexup.api.renderer.NTxNodeRendererContext;
+import net.thevpc.ntexup.api.renderer.NTxRendererContext;
 import net.thevpc.ntexup.api.source.NTxSource;
 import net.thevpc.ntexup.api.renderer.text.NTxTextOptions;
 import net.thevpc.nuts.elem.*;
@@ -374,9 +374,9 @@ public class NTxUtils {
         return null;
     }
 
-    public static Paint resolveForegroundColor(NTxTextOptions options, NTxNode node, NTxNodeRendererContext ctx) {
+    public static Paint resolveForegroundColor(NTxTextOptions options, NTxRendererContext ctx) {
         if (options.foregroundColorIndex != null) {
-            return NTxColors.resolveDefaultColorByIndex(options.foregroundColorIndex, null, node, ctx);
+            return NTxColors.resolveDefaultColorByIndex(options.foregroundColorIndex, null, ctx);
         } else if (options.foregroundColor instanceof Color) {
             return options.foregroundColor;
         }
@@ -415,23 +415,6 @@ public class NTxUtils {
             return a;
         }
         return Arrays.asList(anyVal);
-    }
-
-    public static Map<String, NElement> inheritedVarsMap(NTxItem c) {
-        Map<String, NElement> r = new HashMap<>();
-        NTxItem i = c;
-        while (i != null) {
-            if (i instanceof NTxNode) {
-                for (Map.Entry<String, NElement> e : ((NTxNode) i).getVars().entrySet()) {
-                    String k = e.getKey();
-                    if (!r.containsKey(k)) {
-                        r.put(k, e.getValue());
-                    }
-                }
-            }
-            i = i.parent();
-        }
-        return r;
     }
 
     public static NTxSource sourceOf(NTxItem node) {
