@@ -58,10 +58,10 @@ public class NTxNodeRendererConfig {
     }
 
     public NTxNodeRendererConfig withAnimate(boolean value) {
-        return setCapability(NTxNodeRendererContext.CAPABILITY_ANIMATE, value);
+        return setCapability(NTxRendererContext.CAPABILITY_ANIMATE, value);
     }
 
     public NTxNodeRendererConfig withPrint(boolean value) {
-        return setCapability(NTxNodeRendererContext.CAPABILITY_PRINT, value);
+        return setCapability(NTxRendererContext.CAPABILITY_PRINT, value);
     }
 }
