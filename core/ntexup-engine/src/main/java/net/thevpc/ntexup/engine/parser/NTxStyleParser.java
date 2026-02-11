@@ -2,7 +2,7 @@ package net.thevpc.ntexup.engine.parser;
 
 import net.thevpc.ntexup.api.document.NTxDocumentFactory;
 import net.thevpc.ntexup.api.document.style.*;
-import net.thevpc.ntexup.api.parser.NTxNodeFactoryParseContext;
+import net.thevpc.ntexup.api.eval.NTxResolutionContext;
 import net.thevpc.ntexup.api.util.NTxUtils;
 import net.thevpc.ntexup.api.eval.NTxValue;
 import net.thevpc.nuts.elem.*;
@@ -114,7 +114,7 @@ public class NTxStyleParser {
     }
 
 
-    public static NOptional<NTxStyleRuleSelector> parseStyleRuleSelector(List<NElement> selectors, NTxNodeFactoryParseContext context) {
+    public static NOptional<NTxStyleRuleSelector> parseStyleRuleSelector(List<NElement> selectors, NTxResolutionContext context) {
         if (selectors.isEmpty()) {
             return NOptional.of(DefaultNTxNodeSelector.ofAny());
         }
@@ -296,7 +296,7 @@ public class NTxStyleParser {
 //        }
     }
 
-    public static NOptional<NTxStyleRule[]> parseStyleRule(NElement e, NTxDocumentFactory f, NTxNodeFactoryParseContext context) {
+    public static NOptional<NTxStyleRule[]> parseStyleRule(NElement e, NTxDocumentFactory f, NTxResolutionContext context) {
         NMsg errMsg = NMsg.ofC("[%s] invalid style rule %s", NTxUtils.shortName(context.source()), e).asSevere();
         switch (e.type()) {
             case PAIR: {
@@ -336,7 +336,7 @@ public class NTxStyleParser {
         return NOptional.ofEmpty(errMsg);
     }
 
-    public static NOptional<NTxStyleRule[]> _parseStyleRule(NElement e, List<NElement> selectors, List<NElement> children, NTxDocumentFactory f, NTxNodeFactoryParseContext context, NMsg errMsg) {
+    public static NOptional<NTxStyleRule[]> _parseStyleRule(NElement e, List<NElement> selectors, List<NElement> children, NTxDocumentFactory f, NTxResolutionContext context, NMsg errMsg) {
         NOptional<NTxStyleRuleSelector> r = parseStyleRuleSelector(selectors, context);
         if (!r.isPresent()) {
             context.messages().log(errMsg, context.source());
@@ -359,7 +359,7 @@ public class NTxStyleParser {
     }
 
 
-    public static NOptional<NTxProp[]> parseStyle(NElement e, NTxNodeFactoryParseContext context) {
+    public static NOptional<NTxProp[]> parseStyle(NElement e, NTxResolutionContext context) {
         switch (e.type()) {
             case PAIR: {
                 NTxValue h = NTxValue.of(e.asPair().get().key());
