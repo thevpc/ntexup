@@ -3,11 +3,10 @@ package net.thevpc.ntexup.engine.util;
 import net.thevpc.ntexup.api.document.elem2d.NTxBounds2D;
 import net.thevpc.ntexup.api.document.elem2d.NTxDouble2;
 import net.thevpc.ntexup.api.document.elem2d.NTxSizeD;
-import net.thevpc.ntexup.api.document.node.NTxNode;
 import net.thevpc.ntexup.api.document.style.NTxPropName;
 import net.thevpc.ntexup.api.eval.NTxValueByName;
 import net.thevpc.ntexup.api.renderer.NTxGraphics;
-import net.thevpc.ntexup.api.renderer.NTxNodeRendererContext;
+import net.thevpc.ntexup.api.renderer.NTxRendererContext;
 import net.thevpc.ntexup.api.eval.NTxValue;
 import net.thevpc.nuts.elem.NElement;
 import net.thevpc.nuts.util.NOptional;
@@ -23,16 +22,16 @@ public class NTxNodeRendererUtils {
         );
     }
 
-    public static Stroke resolveStroke(NTxNode t, NTxGraphics g, NTxNodeRendererContext ctx) {
-        NElement strokeElem = NTxValueByName.getStroke(t, ctx);
+    public static Stroke resolveStroke(NTxGraphics g, NTxRendererContext ctx) {
+        NElement strokeElem = NTxValueByName.getStroke(ctx);
         if (strokeElem != null) {
             return ctx.graphics().createStroke(strokeElem);
         }
         return null;
     }
 
-    public static boolean withStroke(NTxNode t, NTxGraphics g, NTxNodeRendererContext ctx, Runnable r) {
-        Stroke strokeElem = resolveStroke(t, g, ctx);
+    public static boolean withStroke(NTxGraphics g, NTxRendererContext ctx, Runnable r) {
+        Stroke strokeElem = resolveStroke(g, ctx);
         if (strokeElem != null) {
             Stroke o = g.getStroke();
             g.setStroke(strokeElem);
@@ -45,8 +44,8 @@ public class NTxNodeRendererUtils {
         }
     }
 
-    public static boolean applyStroke(NTxNode t, NTxGraphics g, NTxNodeRendererContext ctx) {
-        Stroke strokeElem = resolveStroke(t, g, ctx);
+    public static boolean applyStroke(NTxGraphics g, NTxRendererContext ctx) {
+        Stroke strokeElem = resolveStroke(g, ctx);
         if (strokeElem != null) {
             g.setStroke(strokeElem);
             return true;
@@ -54,17 +53,17 @@ public class NTxNodeRendererUtils {
         return false;
     }
 
-    public static void applyFont(NTxNode t, NTxGraphics g, NTxNodeRendererContext ctx) {
-        g.setFont(NTxValueByName.getFont(t, ctx));
+    public static void applyFont(NTxGraphics g, NTxRendererContext ctx) {
+        g.setFont(NTxValueByName.getFont(ctx));
     }
 
-    public static NTxSizeD mapDim(double w, double h, NTxNodeRendererContext ctx) {
+    public static NTxSizeD mapDim(double w, double h, NTxRendererContext ctx) {
         NTxBounds2D size = ctx.parentBounds();
         return new NTxSizeD(w / 100 * size.getWidth(), h / 100 * size.getHeight());
     }
 
-    public static NTxBounds2D bounds(NTxNode t, NTxNodeRendererContext ctx) {
-        NTxValue oSize = NTxValue.of(ctx.computePropertyValue(t, NTxPropName.SIZE));
+    public static NTxBounds2D bounds(NTxRendererContext ctx) {
+        NTxValue oSize = NTxValue.of(ctx.computePropertyValue(NTxPropName.SIZE));
         NOptional<NElement[]> a = oSize.asElementArray();
         NTxDouble2 size=null;
         if(a.isPresent()){
@@ -97,11 +96,11 @@ public class NTxNodeRendererUtils {
         );
     }
 
-    public static boolean applyForeground(NTxNode t, NTxGraphics g, NTxNodeRendererContext ctx, boolean force) {
+    public static boolean applyForeground(NTxGraphics g, NTxRendererContext ctx, boolean force) {
         if (ctx.isDry()) {
             return false;
         }
-        Paint fg = NTxValueByName.getForegroundColor(t, ctx,force);
+        Paint fg = NTxValueByName.getForegroundColor(ctx,force);
         if (fg != null) {
             g.setPaint(fg);
             return true;
@@ -109,11 +108,11 @@ public class NTxNodeRendererUtils {
         return false;
     }
 
-    public static boolean applyBackgroundColor(NTxNode t, NTxGraphics g, NTxNodeRendererContext ctx) {
+    public static boolean applyBackgroundColor(NTxGraphics g, NTxRendererContext ctx) {
         if (ctx.isDry()) {
             return false;
         }
-        Paint bg = NTxValueByName.resolveBackgroundColor(t, ctx);
+        Paint bg = NTxValueByName.resolveBackgroundColor(ctx);
         if (bg != null) {
             g.setPaint(bg);
             return true;
@@ -121,11 +120,11 @@ public class NTxNodeRendererUtils {
         return false;
     }
 
-    public static boolean applyGridColor(NTxNode t, NTxGraphics g, NTxNodeRendererContext ctx, boolean force) {
+    public static boolean applyGridColor(NTxGraphics g, NTxRendererContext ctx, boolean force) {
         if (ctx.isDry()) {
             return false;
         }
-        Paint color = NTxValueByName.resolveGridColor(t, ctx);
+        Paint color = NTxValueByName.resolveGridColor(ctx);
         if (color != null) {
             g.setPaint(color);
             return true;
@@ -137,19 +136,19 @@ public class NTxNodeRendererUtils {
         return false;
     }
 
-    public static void drawDebugBox(NTxNode node, NTxNodeRendererContext ctx, NTxGraphics g, NTxBounds2D a, boolean force) {
+    public static void drawDebugBox(NTxRendererContext ctx, NTxGraphics g, NTxBounds2D a, boolean force) {
         if (ctx.isDry()) {
             return;
         }
-        if (force || NTxValueByName.isDebug(node, ctx)) {
-            g.setColor(NTxValueByName.getDebugColor(node, ctx));
+        if (force || NTxValueByName.isDebug(ctx)) {
+            g.setColor(NTxValueByName.getDebugColor(ctx));
             g.drawRect(a);
-            NTxBounds2D b = NTxValueByName.getNodeSizeNoCache(node, ctx).parentBoundsWithMargin;
+            NTxBounds2D b = NTxValueByName.getNodeSizeNoCache(ctx).parentBoundsWithMargin;
             g.drawRect(b);
-            NTxDouble2 origin = NTxValueByName.getOrigin(node, ctx,new NTxDouble2(a.getWidth(),a.getHeight()));
+            NTxDouble2 origin = NTxValueByName.getOrigin(ctx,new NTxDouble2(a.getWidth(),a.getHeight()));
             double x = origin.getX() + a.getX();
             double y = origin.getY() + a.getY();
-            g.setColor(NTxValueByName.getDebugColor(node, ctx));
+            g.setColor(NTxValueByName.getDebugColor(ctx));
             int originSize = 6;
             g.fillOval(
                     x - originSize / 2, y - originSize / 2,
@@ -158,8 +157,8 @@ public class NTxNodeRendererUtils {
         }
     }
 
-    public static void drawDebugBox(NTxNode t, NTxNodeRendererContext ctx, NTxGraphics g, NTxBounds2D a) {
-        drawDebugBox(t, ctx, g, a, false);
+    public static void drawDebugBox(NTxRendererContext ctx, NTxGraphics g, NTxBounds2D a) {
+        drawDebugBox(ctx, g, a, false);
     }
 
     public static NOptional<Color> colorFromPaint(Paint p) {
@@ -169,15 +168,15 @@ public class NTxNodeRendererUtils {
         return NOptional.ofNamedEmpty("color");
     }
 
-    public static void drawBorderLine(NTxNode t, NTxNodeRendererContext ctx, NTxGraphics g, NTxBounds2D a) {
+    public static void drawBorderLine(NTxRendererContext ctx, NTxGraphics g, NTxBounds2D a) {
         if (ctx.isDry()) {
             return;
         }
-        drawDebugBox(t, ctx, g, a);
-        if (NTxValueByName.isDrawContour(t, ctx)) {
-            if (applyForeground(t, g, ctx, true)) {
+        drawDebugBox(ctx, g, a);
+        if (NTxValueByName.isDrawContour(ctx)) {
+            if (applyForeground(g, ctx, true)) {
                 Stroke s = g.getStroke();
-                applyStroke(t, g, ctx);
+                applyStroke(g, ctx);
                 g.drawRect(a);
                 g.setStroke(s);
             }
@@ -185,12 +184,12 @@ public class NTxNodeRendererUtils {
 
     }
 
-    public static void paintBackground(NTxNode t, NTxNodeRendererContext ctx, NTxGraphics g, NTxBounds2D a) {
+    public static void paintBackground(NTxRendererContext ctx, NTxGraphics g, NTxBounds2D a) {
         if (ctx.isDry()) {
             return;
         }
 //        if (HPropValueByNameParser.requireFillBackground(t, ctx)) {
-        if (applyBackgroundColor(t, g, ctx)) {
+        if (applyBackgroundColor(g, ctx)) {
             g.fillRect(a);
         }
 //        }
