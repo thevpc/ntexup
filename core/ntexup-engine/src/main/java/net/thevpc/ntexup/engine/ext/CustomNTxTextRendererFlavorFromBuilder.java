@@ -1,7 +1,6 @@
 package net.thevpc.ntexup.engine.ext;
 
-import net.thevpc.ntexup.api.document.node.NTxNode;
-import net.thevpc.ntexup.api.renderer.NTxNodeRendererContext;
+import net.thevpc.ntexup.api.renderer.NTxRendererContext;
 import net.thevpc.ntexup.api.renderer.text.*;
 
 import java.util.*;
@@ -30,9 +29,9 @@ class CustomNTxTextRendererFlavorFromBuilder implements NTxTextRendererFlavor {
     }
 
     @Override
-    public void buildText(String text, NTxTextOptions options, NTxNode p, NTxNodeRendererContext ctx, NTxTextRendererBuilder builder) {
+    public void buildText(String text, NTxTextOptions options, NTxRendererContext ctx, NTxTextRendererBuilder builder) {
         if (this.ctx.renderTextAction.buildAction != null) {
-            this.ctx.renderTextAction.buildAction.buildText(text, options, p, ctx.withBuilderContext(this.ctx), builder);
+            this.ctx.renderTextAction.buildAction.buildText(text, options, ctx.withBuilderContext(this.ctx), builder);
         }
     }
 
