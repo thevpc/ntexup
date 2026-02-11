@@ -13,7 +13,7 @@ import net.thevpc.ntexup.api.document.style.NTxProperties;
 import net.thevpc.ntexup.api.engine.NTxNodeBuilderContext;
 import net.thevpc.ntexup.api.extension.NTxNodeBuilder;
 import net.thevpc.ntexup.api.parser.NTxAllArgumentReader;
-import net.thevpc.ntexup.api.renderer.NTxNodeRendererContext;
+import net.thevpc.ntexup.api.renderer.NTxRendererContext;
 import net.thevpc.ntexup.extension.shapes2d.container.util.NTxGridRendererHelper;
 import net.thevpc.nuts.elem.NElement;
 
@@ -46,7 +46,7 @@ public class NTxRowBuilder implements NTxNodeBuilder {
     }
 
 
-    public NTxBounds2D selfBounds(NTxNodeRendererContext rendererContext) {
+    public NTxBounds2D selfBounds(NTxRendererContext rendererContext) {
         NTxNode node = rendererContext.node();
         rendererContext = rendererContext.withDefaultStyles(defaultStyles);
         NTxBounds2D expectedBounds = rendererContext.defaultSelfBounds();
@@ -57,7 +57,7 @@ public class NTxRowBuilder implements NTxNodeBuilder {
         return h.computeBound(node, rendererContext, expectedBounds);
     }
 
-    public void renderMain(NTxNodeRendererContext rendererContext) {
+    public void renderMain(NTxRendererContext rendererContext) {
         rendererContext = rendererContext.withDefaultStyles(defaultStyles);
         NTxBounds2D expectedBounds = rendererContext.selfBounds();
         NTxGridRendererHelper h = new NTxGridRendererHelper(rendererContext.node().children());
