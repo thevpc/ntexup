@@ -6,11 +6,11 @@ import net.thevpc.ntexup.api.document.elem2d.NTxBounds2D;
 
 public interface NTxNodeRenderer {
 
-    NTxSizeRequirements sizeRequirements(NTxNodeRendererContext ctx);
+    NTxSizeRequirements sizeRequirements(NTxRendererContext ctx);
 
-    NTxBounds2D selfBounds(NTxNodeRendererContext ctx);
+    NTxBounds2D selfBounds(NTxRendererContext ctx);
 
-    void render(NTxNodeRendererContext rendererContext);
+    void render(NTxRendererContext rendererContext);
 
     String[] types();
 }
