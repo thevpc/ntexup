@@ -5,6 +5,7 @@ import net.thevpc.ntexup.api.document.node.NTxNode;
 import net.thevpc.ntexup.api.engine.NTxCompiledDocument;
 import net.thevpc.ntexup.api.engine.NTxCompiledPage;
 import net.thevpc.ntexup.api.util.NTxUtils;
+import net.thevpc.ntexup.engine.document.DefaultNTxNode;
 import net.thevpc.nuts.time.NChronometer;
 import net.thevpc.nuts.text.NMsg;
 import net.thevpc.nuts.util.NOptional;
@@ -38,6 +39,7 @@ public class NTxCompiledPageImpl implements NTxCompiledPage {
     public NTxNode compiledPage() {
         if(compiledPage == null) {
                 NChronometer c = NChronometer.startNow();
+                DefaultNTxNode g = DefaultNTxNode.ofGroup();
                 List<NTxNode> all = document.engine().compilePageNode(this.rawPage, document.compiledDocument());
                 this.compiledPage = NOptional.ofSingleton(all).get();
                 c.stop();
