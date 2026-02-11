@@ -1,7 +1,7 @@
 package net.thevpc.ntexup.engine.renderer;
 
 import net.thevpc.ntexup.api.document.node.NTxNode;
-import net.thevpc.ntexup.api.renderer.NTxNodeRendererContext;
+import net.thevpc.ntexup.api.renderer.NTxRendererContext;
 import net.thevpc.ntexup.api.document.NTxSizeRequirements;
 
 public abstract class ConvertedNTxNodeRenderer extends NTxNodeRendererBase {
@@ -10,15 +10,15 @@ public abstract class ConvertedNTxNodeRenderer extends NTxNodeRendererBase {
     }
 
     @Override
-    public NTxSizeRequirements sizeRequirements(NTxNodeRendererContext rendererContext) {
+    public NTxSizeRequirements sizeRequirements(NTxRendererContext rendererContext) {
         NTxNode node = rendererContext.node();
         NTxNode c = convert(node, rendererContext).setParent(node);
-        return rendererContext.sizeRequirementsOf(c);
+        return rendererContext.sizeRequirementsOf();
     }
 
-    public abstract NTxNode convert(NTxNode p, NTxNodeRendererContext rendererContext);
+    public abstract NTxNode convert(NTxNode p, NTxRendererContext rendererContext);
 
-    public void renderMain(NTxNodeRendererContext ctx) {
+    public void renderMain(NTxRendererContext ctx) {
         NTxNode p2 = convert(ctx.node(), ctx).setParent(ctx.node());
         ctx.withNode(p2).render();
     }
