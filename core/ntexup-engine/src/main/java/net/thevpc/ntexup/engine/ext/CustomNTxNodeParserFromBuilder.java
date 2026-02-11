@@ -1,7 +1,9 @@
 package net.thevpc.ntexup.engine.ext;
 
 import net.thevpc.ntexup.api.document.node.NTxItem;
+import net.thevpc.ntexup.api.engine.NTxEngine;
 import net.thevpc.ntexup.api.engine.NTxNodeBuilderContext;
+import net.thevpc.ntexup.api.eval.NTxResolutionContext;
 import net.thevpc.ntexup.api.parser.*;
 import net.thevpc.ntexup.api.source.NTxSource;
 import net.thevpc.ntexup.api.util.NTxUtils;
@@ -24,7 +26,7 @@ class CustomNTxNodeParserFromBuilder extends NTxNodeParserBase {
     }
 
     @Override
-    public NElement toElem(NTxNode item) {
+    public NElement toElem(NTxNode item, NTxEngine engine) {
         if (ctx.toElem != null) {
             NElement u = ctx.toElem.toElem(item, ctx);
             if (u != null) {
@@ -39,7 +41,7 @@ class CustomNTxNodeParserFromBuilder extends NTxNodeParserBase {
                     .addChildrenByName(ctx.knownArgNames.toArray(new String[0]))
                     .build();
         }
-        return super.toElem(item);
+        return super.toElem(item,engine);
     }
 
     @Override
@@ -60,7 +62,7 @@ class CustomNTxNodeParserFromBuilder extends NTxNodeParserBase {
     }
 
     @Override
-    public NScoredCallable<NTxItem> parseNode(NTxNodeFactoryParseContext context) {
+    public NScoredCallable<NTxItem> parseNode(NTxResolutionContext context) {
         NElement e = context.element();
         String s = acceptTypeName(e);
         if (s != null) {
@@ -79,7 +81,7 @@ class CustomNTxNodeParserFromBuilder extends NTxNodeParserBase {
             if (ctx.extraElementSupportByPredicate.test(e)) {
                 pp = new NTxNodeBuilderContext.NTxItemSpecialParser() {
                     @Override
-                    public NScoredCallable<NTxItem> parseElement(String id, NElement element, NTxNodeFactoryParseContext context) {
+                    public NScoredCallable<NTxItem> parseElement(String id, NElement element, NTxResolutionContext context) {
                         NTxNode p = context.documentFactory().of(resolveEffectiveId(id));
                         String compilerDeclarationPath = NTxUtils.getCompilerDeclarationPath(element);
                         NTxSource source = context.source();
@@ -90,7 +92,7 @@ class CustomNTxNodeParserFromBuilder extends NTxNodeParserBase {
                             }
                         }
                         p.setSource(source);
-                        NTxNodeFactoryParseContext context2 = context.push(p);
+                        NTxResolutionContext context2 = context.resolveNode(p);
                         onStartParsingItem(id, p, element, context);
                         NTxParseHelper.fillAnnotations(element, p);
                         NTxArgumentReaderImpl info = new NTxArgumentReaderImpl();
