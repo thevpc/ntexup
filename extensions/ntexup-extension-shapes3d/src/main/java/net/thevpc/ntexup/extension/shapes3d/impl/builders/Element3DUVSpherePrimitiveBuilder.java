@@ -10,7 +10,7 @@ import net.thevpc.ntexup.extension.shapes3d.impl.RealToRelativeMapper;
 import net.thevpc.ntexup.lib.geometry3d.*;
 import net.thevpc.ntexup.api.engine.NTxNodeBuilderContext;
 import net.thevpc.ntexup.api.extension.NTxNodeBuilder;
-import net.thevpc.ntexup.api.renderer.NTxNodeRendererContext;
+import net.thevpc.ntexup.api.renderer.NTxRendererContext;
 import net.thevpc.ntexup.lib.geometry3d.impl.NTx3DUtils;
 import net.thevpc.ntexup.lib.geometry3d.impl.composite.NTxMesh3D;
 import net.thevpc.ntexup.lib.geometry3d.impl.composite.NtxElement3DUVSphere;
@@ -44,7 +44,7 @@ public class Element3DUVSpherePrimitiveBuilder implements NTxElement3DRenderer, 
         );
     }
 
-    public void render(NTxNodeRendererContext rendererContext) {
+    public void render(NTxRendererContext rendererContext) {
         //do nothing in 2D
     }
 
@@ -132,7 +132,7 @@ public class Element3DUVSpherePrimitiveBuilder implements NTxElement3DRenderer, 
     }
 
     @Override
-    public NtxElement3D createElement3D(NTxNode node, NTxNodeRendererContext rendererContext, NTxBounds2D b, RealToRelativeMapper mapper, NtxElement3DNodeParserFactory parserFactory) {
+    public NtxElement3D createElement3D(NTxNode node, NTxRendererContext rendererContext, NTxBounds2D b, RealToRelativeMapper mapper, NtxElement3DNodeParserFactory parserFactory) {
         NTxPoint3D position = NtxShapes3dUtils.resolvePoint(node, NTxPropName.POSITION, "real-position", NTxPoint3D::ofZero, b, mapper);
         NTxPoint3D radius = NtxShapes3dUtils.resolvePoint(node, "radius", "real-radius", NTxPoint3D::ofOne, b, mapper);
         int meridians = NTxValue.ofProp(node, "meridians").asInt().orElse(60);
