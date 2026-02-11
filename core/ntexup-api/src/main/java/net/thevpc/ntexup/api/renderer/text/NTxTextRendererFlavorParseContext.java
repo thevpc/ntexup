@@ -1,12 +1,12 @@
 package net.thevpc.ntexup.api.renderer.text;
 
-import net.thevpc.ntexup.api.renderer.NTxNodeRendererContext;
+import net.thevpc.ntexup.api.renderer.NTxRendererContext;
 
 import java.util.List;
 import java.util.function.Function;
 
 public interface NTxTextRendererFlavorParseContext {
-    NTxNodeRendererContext rendererContext();
+    NTxRendererContext rendererContext();
 
     boolean hasNext();
 
