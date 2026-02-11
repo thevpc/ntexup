@@ -14,7 +14,7 @@ import net.thevpc.ntexup.engine.util.NTx2DUtils0;
 import net.thevpc.ntexup.engine.util.NTxNodeRendererUtils;
 import net.thevpc.ntexup.api.eval.NTxValueByName;
 import net.thevpc.ntexup.api.renderer.NTxGraphics;
-import net.thevpc.ntexup.api.renderer.NTxNodeRendererContext;
+import net.thevpc.ntexup.api.renderer.NTxRendererContext;
 import net.thevpc.nuts.elem.NElement;
 import net.thevpc.nuts.elem.NPairElement;
 import net.thevpc.nuts.elem.NUpletElement;
@@ -52,12 +52,12 @@ public class NTxTextRendererBuilderImpl implements NTxTextRendererBuilder {
         this.defaultFont = defaultFont;
     }
 
-    public void appendNText(String lang, String rawText, NText text, NTxNode node, NTxNodeRendererContext ctx) {
-        NTxHighlighterMapper.highlightNutsText(lang, rawText, text, node, ctx, this);
+    public void appendNText(String lang, String rawText, NText text, NTxRendererContext ctx) {
+        NTxHighlighterMapper.highlightNutsText(lang, rawText, text, ctx, this);
     }
 
     @Override
-    public void appendText(String rawText, NTxTextOptions options, NTxNode node, NTxNodeRendererContext ctx) {
+    public void appendText(String rawText, NTxTextOptions options, NTxRendererContext ctx) {
         if (rawText == null || rawText.isEmpty()) {
             return;
         }
@@ -92,11 +92,11 @@ public class NTxTextRendererBuilderImpl implements NTxTextRendererBuilder {
             styles.add(NTextStyle.primary(options.backgroundColorIndex));
         }
         NText nText = nTexts.ofStyled(rawText, NTextStyles.of(styles.toArray(new NTextStyle[0])));
-        appendNText("", rawText, nText, node, ctx);
+        appendNText("", rawText, nText, ctx);
     }
 
     @Override
-    public void appendCustom(String lang, String rawText, NTxTextOptions options, NTxNode node, NTxNodeRendererContext ctx) {
+    public void appendCustom(String lang, String rawText, NTxTextOptions options, NTxRendererContext ctx) {
         if (rawText == null || rawText.isEmpty()) {
             return;
         }
@@ -104,10 +104,10 @@ public class NTxTextRendererBuilderImpl implements NTxTextRendererBuilder {
         if (hTextRendererFlavor == null) {
             hTextRendererFlavor = engine.textRendererFlavor("").get();
         }
-        hTextRendererFlavor.buildText(rawText, options, node, ctx, this);
+        hTextRendererFlavor.buildText(rawText, options, ctx, this);
     }
 
-    public void appendPlain(String text, NTxNodeRendererContext ctx) {
+    public void appendPlain(String text, NTxRendererContext ctx) {
         while (text.startsWith("\n")) {
             this.nextLine();
             text = text.substring(1);
@@ -152,7 +152,7 @@ public class NTxTextRendererBuilderImpl implements NTxTextRendererBuilder {
         return rows.get(rows.size() - 1);
     }
 
-    public NTxBounds2D computeBound(NTxNodeRendererContext ctx) {
+    public NTxBounds2D computeBound(NTxRendererContext ctx) {
         NTxGraphics g = ctx.graphics();
         Font oldFont = g.getFont();
         bounds = new Rectangle2D.Double(0, 0, 0, 0);
@@ -198,12 +198,12 @@ public class NTxTextRendererBuilderImpl implements NTxTextRendererBuilder {
         return rows.isEmpty();
     }
 
-    public void render(NTxNode p, NTxNodeRendererContext rendererContext, NTxBounds2D bgBounds, NTxBounds2D selfBounds) {
-        boolean debug = rendererContext.isDebug(p);
+    public void render(NTxNode p, NTxRendererContext rendererContext, NTxBounds2D bgBounds, NTxBounds2D selfBounds) {
+        boolean debug = rendererContext.isDebug();
         double x = selfBounds.getX();
         double y = selfBounds.getY();
         NTxGraphics g0 = rendererContext.graphics();
-        NtxFontInfo fontInfo = NTxValueByName.getFontInfo(p, rendererContext);
+        NtxFontInfo fontInfo = NTxValueByName.getFontInfo(rendererContext);
         if (fontInfo == null) {
             fontInfo = defaultFont == null ? new NtxFontInfo() : defaultFont.copy();
         } else {
@@ -211,11 +211,11 @@ public class NTxTextRendererBuilderImpl implements NTxTextRendererBuilder {
         }
         NTxTextOptions textOptions = new NTxTextOptions()
 //                .setFont(NTxValueByName.getFont(p, rendererContext))
-                .setForegroundColor(NTxValueByName.getForegroundColor(p, rendererContext, true));
+                .setForegroundColor(NTxValueByName.getForegroundColor(rendererContext, true));
 
 
-        NTxNodeRendererUtils.paintBackground(p, rendererContext, g0, bgBounds);
-        NOptional<NTxShadow> shadowOptional = NTxValueByName.readStyleAsShadow(p, NTxPropName.SHADOW, rendererContext);
+        NTxNodeRendererUtils.paintBackground(rendererContext, g0, bgBounds);
+        NOptional<NTxShadow> shadowOptional = NTxValueByName.readStyleAsShadow(NTxPropName.SHADOW, rendererContext);
         if (shadowOptional.isPresent()) {
             NTxShadow shadow = shadowOptional.get().copy();
             textOptions.setShadow(shadow);
@@ -228,7 +228,7 @@ public class NTxTextRendererBuilderImpl implements NTxTextRendererBuilder {
             }
         }
         textOptions.sr = rendererContext.sizeRef();
-        NTxTextPath tp = parseNTxTextPath(rendererContext.computePropertyValue(p, "text-path").orNull());
+        NTxTextPath tp = parseNTxTextPath(rendererContext.computePropertyValue("text-path").orNull());
         if (tp == null) {
             for (NTxRichTextRow row : this.rows) {
                 for (NTxRichTextToken col : row.tokens) {
@@ -307,7 +307,7 @@ public class NTxTextRendererBuilderImpl implements NTxTextRendererBuilder {
         rendererContext.drawContour();
     }
 
-    public void renderRowAlongCurve(NTxRichTextRow row, List<Point2D> curvePoints, List<Double> segmentLengths, NTxTextOptions baseOptions, NTxNodeRendererContext rendererContext, NtxFontInfo fontInfo) {
+    public void renderRowAlongCurve(NTxRichTextRow row, List<Point2D> curvePoints, List<Double> segmentLengths, NTxTextOptions baseOptions, NTxRendererContext rendererContext, NtxFontInfo fontInfo) {
         double s = 0; // distance along curve
         for (NTxRichTextToken token : row.tokens) {
             token.textOptions.defaultFont = fontInfo;
@@ -349,7 +349,7 @@ public class NTxTextRendererBuilderImpl implements NTxTextRendererBuilder {
             List<Double> segmentLengths,
             double tokenStartS,
             NTxTextOptions options,
-            NTxNodeRendererContext rendererContext) {
+            NTxRendererContext rendererContext) {
 
         if (text == null || text.isEmpty()) return;
 
@@ -378,7 +378,7 @@ public class NTxTextRendererBuilderImpl implements NTxTextRendererBuilder {
         g.setPaint(oldPaint);
     }
 
-    private double computeTokenWidth(NTxRichTextToken token, NTxNodeRendererContext rendererContext) {
+    private double computeTokenWidth(NTxRichTextToken token, NTxRendererContext rendererContext) {
         if (token.type == NTxRichTextTokenType.PLAIN || token.type == NTxRichTextTokenType.STYLED) {
             Font font = token.textOptions.getComputedFont();
             FontMetrics fm = rendererContext.graphics().getFontMetrics(font);
