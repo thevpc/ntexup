@@ -1,10 +1,9 @@
 package net.thevpc.ntexup.engine.base.functions.general;
 
+import net.thevpc.ntexup.api.eval.NTxResolutionContext;
 import net.thevpc.ntexup.api.extension.NTxFunction;
 import net.thevpc.ntexup.api.eval.NTxFunctionArg;
 import net.thevpc.ntexup.api.eval.NTxFunctionArgs;
-import net.thevpc.ntexup.api.eval.NTxFunctionContext;
-import net.thevpc.ntexup.api.util.NTxUtils;
 import net.thevpc.ntexup.engine.eval.NTxGitHelper;
 import net.thevpc.nuts.elem.NElement;
 import net.thevpc.nuts.io.NPath;
@@ -18,7 +17,7 @@ public class NTxFunctionEitherPath implements NTxFunction {
     }
 
     @Override
-    public NElement invoke(NTxFunctionArgs args, NTxFunctionContext context) {
+    public NElement invoke(NTxFunctionArgs args, NTxResolutionContext context) {
         for (NTxFunctionArg arg : args.args()) {
             NElement u = arg.eval();
             if (!NBlankable.isBlank(u)) {
@@ -30,7 +29,7 @@ public class NTxFunctionEitherPath implements NTxFunction {
                             return NElement.ofString(pp.toString());
                         } catch (Exception ex) {
                             //just ignore
-                            context.log().log(NMsg.ofC("include git folder not found, ignored %s : %s", NMsg.ofStyledPath(sp),ex).asSevere(), NTxUtils.sourceOf(context.node()));
+                            context.log().log(NMsg.ofC("include git folder not found, ignored %s : %s", NMsg.ofStyledPath(sp),ex).asSevere(), context.source());
                         }
                     } else {
                         NPath p = NPath.of(sp);
@@ -44,7 +43,7 @@ public class NTxFunctionEitherPath implements NTxFunction {
                                 return u;
                             }
                         }
-                        context.log().log(NMsg.ofC("include folder not found, ignored %s", p).asSevere(), NTxUtils.sourceOf(context.node()));
+                        context.log().log(NMsg.ofC("include folder not found, ignored %s", p).asSevere(), context.source());
                     }
                 }
             }
