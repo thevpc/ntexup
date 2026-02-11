@@ -10,7 +10,7 @@ import net.thevpc.ntexup.api.document.node.NTxNode;
 import net.thevpc.ntexup.api.document.style.NTxPropName;
 import net.thevpc.ntexup.api.source.NTxSource;
 import net.thevpc.ntexup.api.renderer.NTxGraphics;
-import net.thevpc.ntexup.api.renderer.NTxNodeRendererContext;
+import net.thevpc.ntexup.api.renderer.NTxRendererContext;
 import net.thevpc.ntexup.api.util.NTxUtils;
 import net.thevpc.nuts.util.NBlankable;
 import net.thevpc.nuts.text.NMsg;
@@ -53,7 +53,7 @@ public abstract class PlantUmlBuilderBase implements NTxNodeBuilder {
     }
 
 
-    public void renderMain(NTxNodeRendererContext rendererContext) {
+    public void renderMain(NTxRendererContext rendererContext) {
         NTxNode node = rendererContext.node();
         rendererContext = rendererContext.withDefaultStyles(defaultStyles);
         String txt = NTxValue.of(node.getPropertyValue(NTxPropName.VALUE).orNull()).asStringOrName().orNull();
@@ -120,11 +120,11 @@ public abstract class PlantUmlBuilderBase implements NTxNodeBuilder {
         if (image != null) {
 
             if (!rendererContext.isDry()) {
-                if (rendererContext.applyBackgroundColor(node)) {
+                if (rendererContext.applyBackgroundColor()) {
                     g.fillRect((int) x, (int) y, NTxUtils.intOf(b.getWidth()), NTxUtils.intOf(b.getHeight()));
                 }
 
-                rendererContext.applyForeground(node, false);
+                rendererContext.applyForeground(false);
                 if (image != null) {
                     // would resize?
                     int w = NTxUtils.intOf(b.getWidth());
