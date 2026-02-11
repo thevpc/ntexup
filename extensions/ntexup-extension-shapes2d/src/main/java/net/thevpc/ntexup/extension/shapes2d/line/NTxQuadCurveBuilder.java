@@ -13,7 +13,7 @@ import net.thevpc.ntexup.api.document.node.NTxNode;
 import net.thevpc.ntexup.api.document.node.NTxNodeType;
 import net.thevpc.ntexup.api.document.style.NTxPropName;
 import net.thevpc.ntexup.api.renderer.NTxGraphics;
-import net.thevpc.ntexup.api.renderer.NTxNodeRendererContext;
+import net.thevpc.ntexup.api.renderer.NTxRendererContext;
 import net.thevpc.ntexup.api.eval.NTxValue;
 import net.thevpc.ntexup.lib.geometry2d.NTxElement2DFactory;
 
@@ -32,7 +32,7 @@ public class NTxQuadCurveBuilder implements NTxNodeBuilder {
     }
 
 
-    public void renderMain(NTxNodeRendererContext rendererContext) {
+    public void renderMain(NTxRendererContext rendererContext) {
         NTxNode node = rendererContext.node();
         rendererContext = rendererContext.withDefaultStyles(defaultStyles);
         NTxBounds2D b = rendererContext.selfBounds();
@@ -45,11 +45,11 @@ public class NTxQuadCurveBuilder implements NTxNodeBuilder {
                 .plus(translation);
         NTxGraphics g = rendererContext.graphics();
         if (!rendererContext.isDry()) {
-            Paint fc = rendererContext.getForegroundColor(node, true);
+            Paint fc = rendererContext.getForegroundColor(true);
             NtxElement2DQuadCurve li = NTxElement2DFactory.quad(from, ctrl, to)
-                    .setStartArrow(NTxValueByType.getArrow(node, rendererContext, NTxPropName.START_ARROW).orNull())
-                    .setEndArrow(NTxValueByType.getArrow(node, rendererContext, NTxPropName.END_ARROW).orNull());
-            NTxArrow darrow = NTxValueByType.getArrow(node, rendererContext, "arrow").orNull();
+                    .setStartArrow(NTxValueByType.getArrow(rendererContext, NTxPropName.START_ARROW).orNull())
+                    .setEndArrow(NTxValueByType.getArrow(rendererContext, NTxPropName.END_ARROW).orNull());
+            NTxArrow darrow = NTxValueByType.getArrow(rendererContext, "arrow").orNull();
             if (darrow != null) {
                 if (li.getStartArrow() == null) {
                     li.setStartArrow(darrow);
@@ -59,7 +59,7 @@ public class NTxQuadCurveBuilder implements NTxNodeBuilder {
                 }
             }
             g.draw2D(li
-                    .setLineStroke(g.createStroke(rendererContext.getStroke(node)))
+                    .setLineStroke(g.createStroke(rendererContext.getStroke()))
                     .setLinePaint(fc)
             );
         }
