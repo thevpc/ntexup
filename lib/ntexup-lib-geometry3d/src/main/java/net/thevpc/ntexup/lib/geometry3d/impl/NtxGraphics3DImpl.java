@@ -3,7 +3,7 @@ package net.thevpc.ntexup.lib.geometry3d.impl;
 import net.thevpc.ntexup.api.document.elem2d.NTxPoint2D;
 import net.thevpc.ntexup.api.document.elem2d.primitives.NtxElement2DLine;
 import net.thevpc.ntexup.api.renderer.NTxGraphics;
-import net.thevpc.ntexup.api.renderer.NTxNodeRendererContext;
+import net.thevpc.ntexup.api.renderer.NTxRendererContext;
 import net.thevpc.ntexup.api.util.NTxColors;
 
 import net.thevpc.ntexup.lib.geometry3d.*;
@@ -17,7 +17,7 @@ import java.util.Comparator;
 
 public class NtxGraphics3DImpl implements NtxGraphics3D {
     private NTxGraphics graphics;
-    private NTxNodeRendererContext rendererContext;
+    private NTxRendererContext rendererContext;
     private NTxMatrix3D transform3D = NTxMatrix3D.identity();
     private NTxLight3DImpl light3D = new NTxLight3DImpl();
     private NTxCamera3D camera = NTxCamera3DImpl.defaultCamera();
@@ -34,7 +34,7 @@ public class NtxGraphics3DImpl implements NtxGraphics3D {
         }
     };
 
-    public NtxGraphics3DImpl(NTxGraphics graphics, NTxNodeRendererContext rendererContext) {
+    public NtxGraphics3DImpl(NTxGraphics graphics, NTxRendererContext rendererContext) {
         this.graphics = graphics;
         this.rendererContext = rendererContext;
     }
