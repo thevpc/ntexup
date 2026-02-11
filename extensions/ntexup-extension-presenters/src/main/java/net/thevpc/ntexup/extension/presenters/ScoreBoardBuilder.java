@@ -5,7 +5,7 @@ import net.thevpc.ntexup.api.engine.NTxNodeBuilderContext;
 import net.thevpc.ntexup.api.extension.NTxNodeBuilder;
 import net.thevpc.ntexup.api.document.node.NTxNode;
 import net.thevpc.ntexup.api.renderer.NTxGraphics;
-import net.thevpc.ntexup.api.renderer.NTxNodeRendererContext;
+import net.thevpc.ntexup.api.renderer.NTxRendererContext;
 
 import java.awt.*;
 
@@ -23,11 +23,11 @@ public class ScoreBoardBuilder implements NTxNodeBuilder {
     }
 
 
-    public void renderMain(NTxNodeRendererContext rendererContext) {
+    public void renderMain(NTxRendererContext rendererContext) {
         NTxNode node = rendererContext.node();
-        NTxBounds2D b = rendererContext.selfBounds(node, null, null);
+        NTxBounds2D b = rendererContext.selfBounds(null, null);
 
-        Paint color = rendererContext.getForegroundColor(node, true);
+        Paint color = rendererContext.getForegroundColor(true);
 
         NTxGraphics g = rendererContext.graphics();
         if (!rendererContext.isDry()) {
