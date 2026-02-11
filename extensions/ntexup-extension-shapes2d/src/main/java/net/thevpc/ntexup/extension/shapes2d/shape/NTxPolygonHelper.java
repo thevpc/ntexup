@@ -5,7 +5,7 @@ import net.thevpc.ntexup.api.document.elem2d.NTxPoint2D;
 import net.thevpc.ntexup.api.document.node.NTxNode;
 import net.thevpc.ntexup.api.document.style.NTxProperties;
 import net.thevpc.ntexup.api.renderer.NTxGraphics;
-import net.thevpc.ntexup.api.renderer.NTxNodeRendererContext;
+import net.thevpc.ntexup.api.renderer.NTxRendererContext;
 import net.thevpc.ntexup.lib.geometry2d.NTxElement2DFactory;
 
 import java.awt.*;
@@ -14,7 +14,7 @@ import java.util.Arrays;
 public final class NTxPolygonHelper {
 
 
-    public static void renderPointsCount(int count, NTxNodeRendererContext ctx, NTxProperties defaultStyles) {
+    public static void renderPointsCount(int count, NTxRendererContext ctx, NTxProperties defaultStyles) {
         ctx = ctx.withDefaultStyles(defaultStyles);
         NTxPoint2D[] points = null;
         if (count < 3) {
@@ -34,13 +34,13 @@ public final class NTxPolygonHelper {
         }
         renderPoints(points, ctx);
     }
-    public static void renderPoints(NTxPoint2D[] points, NTxNodeRendererContext rendererContext) {
+    public static void renderPoints(NTxPoint2D[] points, NTxRendererContext rendererContext) {
         NTxBounds2D b = rendererContext.selfBounds();
         NTxGraphics g = rendererContext.graphics();
         NTxNode node = rendererContext.node();
         if (!rendererContext.isDry()) {
-            Paint bc = rendererContext.resolveBackgroundColor(node);
-            Paint fc = rendererContext.getForegroundColor(node, bc == null);
+            Paint bc = rendererContext.resolveBackgroundColor();
+            Paint fc = rendererContext.getForegroundColor(bc == null);
             NTxPoint2D[] points2 = Arrays.stream(points)
                     .map(p -> new NTxPoint2D(
                             p.x / 100 * b.getWidth() + b.getMinX(),
@@ -50,7 +50,7 @@ public final class NTxPolygonHelper {
             g.draw2D(NTxElement2DFactory.polygon(points2)
                     .setFill(bc != null)
                     .setContour(fc != null)
-                    .setLineStroke(rendererContext.resolveStroke(node))
+                    .setLineStroke(rendererContext.resolveStroke())
                     .setBackgroundPaint(bc)
                     .setLinePaint(fc));
         }
