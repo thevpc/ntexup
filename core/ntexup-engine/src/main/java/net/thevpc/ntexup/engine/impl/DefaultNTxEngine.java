@@ -20,6 +20,9 @@ import net.thevpc.ntexup.api.document.style.DefaultNTxNodeSelector;
 import net.thevpc.ntexup.api.document.style.NTxProp;
 import net.thevpc.ntexup.api.document.style.NTxStyleRule;
 import net.thevpc.ntexup.api.engine.*;
+import net.thevpc.ntexup.api.engine.CompileNodeVisitor;
+import net.thevpc.ntexup.api.eval.NTxVar;
+import net.thevpc.ntexup.api.extension.NTxFunction;
 import net.thevpc.ntexup.api.renderer.text.NTxTextRendererFlavor;
 import net.thevpc.ntexup.api.source.NTxSource;
 import net.thevpc.ntexup.engine.eval.*;
@@ -312,6 +315,23 @@ public class DefaultNTxEngine implements NTxEngine {
         return factory;
     }
 
+    @Override
+    public NTxEngine processNewNode(NElement element, Consumer<NOptional<NTxItem>> consumer, NTxResolutionContext ctx) {
+        NAssert.requireNamedNonNull(ctx, "context");
+        NAssert.requireNamedNonNull(element, "element");
+        if (ctx.source() == null) {
+            throw new IllegalArgumentException("unexpected source null");
+        }
+        if (element.isFragment()) {
+            for (NElement child : element.asFragment().get().children()) {
+                processNewNode(child, consumer, ctx);
+            }
+            return this;
+        }
+        NOptional<NTxItem> a = newNode(element, ctx);
+        consumer.accept(a);
+        return this;
+    }
 
     @Override
     public NOptional<NTxItem> newNode(NElement element, NTxResolutionContext ctx) {
@@ -320,9 +340,20 @@ public class DefaultNTxEngine implements NTxEngine {
         if (ctx.source() == null) {
             throw new IllegalArgumentException("unexpected source null");
         }
+        if (element.isFragment()) {
+            NTxItemList all = new NTxItemList();
+            for (NElement child : element.asFragment().get().children()) {
+                NOptional<NTxItem> q = newNode(child, ctx);
+                if (!q.isPresent()) {
+                    return q;
+                }
+                all.add(q.get());
+            }
+            return NOptional.of(all);
+        }
         NTxResolutionContext finalCtx = ctx.withElement(element);
         NOptional<NTxItem> optional = NScorable.<NScoredCallable<NTxItem>>query()
-                .withName(NMsg.ofC("support for node from type '%s' value '%s'", element.type().id(), NTxUtils.snippet(element)))
+                .withName(()->NMsg.ofC("support for node from type '%s' value '%s'", element.type().id(), NTxUtils.snippet(element)))
                 .fromStream(
                         nodeParserFactories.list().stream()
                                 .map(x -> x.parseNode(finalCtx))
@@ -452,25 +483,46 @@ public class DefaultNTxEngine implements NTxEngine {
     }
 
     @Override
-    public List<NTxNode> compilePageNode(NTxNode node, NTxDocument document) {
-        NTxNode o = (NTxNode) node.parent();
+    public List<NTxNode> compilePageNode(NTxNode node, NTxDocument document, NTxResolutionContext parentContext) {
+        NTxNode o = DefaultNTxNode.ofGroup();
+        o.setParent((NTxNode) node.parent());
         node = node.copy();
-        if (o != null) {
-            o = o.copy();
-        } else {
-            o = DefaultNTxNode.ofGroup();
-        }
-        o.children().clear();
         node.setParent(o);
-        NTxResolutionContext c = newContext(node, document).withInPage(true);
-        new NTxCompiler(this).compilePageNode(c);
+        NTxResolutionContext c = newContext(node, document,parentContext).setInPage(true);
+        new NTxCompiler(this).compilePageNode(c,new FillNodeCompileNodeVisitor(o));
         return o.children();
+    }
+
+
+    public void runNode(NTxNode node, NTxDocument document, NTxResolutionContext context, CompileNodeVisitor visitor) {
+        node = node.copy();
+        NTxResolutionContext c = newContext(node, document,context).setInPage(true);
+        new NTxCompiler(this).compileNodeTree(c,visitor);
     }
 
     @Override
     public NTxResolutionContext newContext(NTxNode node, NTxDocument document) {
         NTxNode p = node == null ? null : (NTxNode) node.parent();
         return new NTxResolutionContextImpl(p, node, NElement.ofNull(), true, this, document);
+    }
+
+    public NTxResolutionContext newContext(NTxNode node, NTxDocument document,NTxResolutionContext parentContext) {
+        List<NTxNode> p=new ArrayList<>();
+        if(node!=null){
+            if(node.parent()!=null) {
+                p.add((NTxNode) node.parent());
+            }
+        }
+        p.add(node);
+        LinkedHashMap<String, NTxVar> vars = new LinkedHashMap<>();
+        LinkedHashMap<String, NTxNodeDef> definitions = new LinkedHashMap<>();
+        LinkedHashMap<String, NTxFunction> functions = new LinkedHashMap<>();
+        if(parentContext!=null){
+            vars.putAll(((NTxResolutionContextImpl)parentContext).getVars());
+            definitions.putAll(((NTxResolutionContextImpl)parentContext).getDefinitions());
+            functions.putAll(((NTxResolutionContextImpl)parentContext).getFunctions());
+        }
+        return new NTxResolutionContextImpl((NTxNode[])p.toArray(new NTxNode[0]), NElement.ofNull(),null, true, this, document, vars, definitions, functions);
     }
 
 //    @Override
@@ -1037,7 +1089,7 @@ public class DefaultNTxEngine implements NTxEngine {
                 new NTxNode[]{node}, this, hg, null,
                 new NTxBounds2D(0, 0, dimension.getWidth(), dimension.getHeight()),
                 new NTxBounds2D(0, 0, dimension.getWidth(), dimension.getHeight()),
-                page, true, System.currentTimeMillis(), capabilities,null,null,page.document().compiledDocument());
+                page, true, System.currentTimeMillis(), capabilities, null, null, page.document().compiledDocument());
         renderer.render(context);
         g.dispose();
         return newImage;
