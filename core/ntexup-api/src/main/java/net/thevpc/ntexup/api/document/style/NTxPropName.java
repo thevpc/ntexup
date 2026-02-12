@@ -49,6 +49,7 @@ public class NTxPropName {
     public static final String MAX_X="xmax";
     public static final String MAX_Y="ymax";
     public static final String VALUE="value";
+    public static final String DISPLAY_NAME="display-name";
     public static final String MODE="mode";
     public static final String FILE="file";
     public static final String LANG="lang";
