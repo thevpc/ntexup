@@ -13,6 +13,8 @@ import net.thevpc.nuts.elem.NElement;
 import net.thevpc.nuts.io.NPath;
 import net.thevpc.nuts.util.NOptional;
 
+import java.util.function.Consumer;
+
 public interface NTxResolutionContext {
     NTxDocument document();
 
@@ -22,6 +24,7 @@ public interface NTxResolutionContext {
 
     NTxResolutionContext copy();
 
+    NTxResolutionContext doWithPush(NTxNode newPush, Consumer<NTxResolutionContext> newContext);
     NTxResolutionContext pushNode(NTxNode parent);
 
     NTxResolutionContext popNode();
@@ -57,6 +60,9 @@ public interface NTxResolutionContext {
 
     NTxResolutionContext withParentOnly(NTxNode parent);
 
+    NTxNodeDef getDef();
+    NTxResolutionContext setDef(NTxNodeDef def);
+    NTxResolutionContext setPath(NTxNode[] def);
     NTxResolutionContext withParentOnly();
 
     NTxResolutionContext withDef(NTxNodeDef def);
