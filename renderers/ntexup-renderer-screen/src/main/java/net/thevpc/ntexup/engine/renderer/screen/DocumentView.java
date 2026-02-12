@@ -285,8 +285,8 @@ public class DocumentView implements NTxDocumentView {
             contentPane.removeAll();
             pagesMapById.clear();
             pagesMapByIndex.clear();
-            for (int i = 0; i < compiledDocument.pages().size(); i++) {
-                pageViews.add(createPageView(compiledDocument.pages().get(i)));
+            for (NTxCompiledPage page : compiledDocument.pages()) {
+                pageViews.add(createPageView(page));
             }
             for (PageView pageView : pageViews) {
                 contentPane.add(new RatioPanel(pageView.component(), documentRatio, new Color(NColor.GRAY_15.getRGB())), pageView.id());
