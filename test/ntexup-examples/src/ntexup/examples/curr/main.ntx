@@ -1,6 +1,6 @@
 @define my-custom(str){
-    text(str,font-size:20)
-    image(str,font-size:20)
+    text(value:str,font-size:20,at:center)
+    //image(str,font-size:20)
 }
 
 my-custom(str:"Hello")
