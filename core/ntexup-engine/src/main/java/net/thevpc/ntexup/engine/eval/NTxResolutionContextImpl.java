@@ -18,6 +18,7 @@ import net.thevpc.nuts.text.NMsg;
 import net.thevpc.nuts.util.*;
 
 import java.util.*;
+import java.util.function.Consumer;
 
 public class NTxResolutionContextImpl implements NTxResolutionContext {
     protected NElement element;
@@ -83,10 +84,11 @@ public class NTxResolutionContextImpl implements NTxResolutionContext {
         return this;
     }
 
-    protected void setPath(NTxNode[] path) {
+    public NTxResolutionContext setPath(NTxNode[] path) {
         this.path = Arrays.copyOf(path, path.length);
         this.node = path[path.length - 1];
         this.parent = (path.length - 2 >= 0) ? path[path.length - 2] : null;
+        return this;
     }
 
     @Override
@@ -138,6 +140,17 @@ public class NTxResolutionContextImpl implements NTxResolutionContext {
     @Override
     public NTxResolutionContext copy() {
         return copyAs(path, element, def, isInPage, engine, document, vars, definitions, functions);
+    }
+
+    @Override
+    public NTxResolutionContext doWithPush(NTxNode newPush, Consumer<NTxResolutionContext> me) {
+        try{
+            pushNode(newPush);
+            me.accept(this);
+        }finally {
+            popNode();
+        }
+        return this;
     }
 
     @Override
@@ -203,6 +216,17 @@ public class NTxResolutionContextImpl implements NTxResolutionContext {
             return this;
         }
         return copyAs(path, element, null, isInPage, engine, document, vars, definitions, functions);
+    }
+
+    @Override
+    public NTxResolutionContext setDef(NTxNodeDef def) {
+        this.def=def;
+        return this;
+    }
+
+    @Override
+    public NTxNodeDef getDef() {
+        return def;
     }
 
     @Override
@@ -434,4 +458,15 @@ public class NTxResolutionContextImpl implements NTxResolutionContext {
         return engine().documentFactory();
     }
 
+    public Map<String, ? extends NTxVar> getVars() {
+        return new LinkedHashMap<>(vars);
+    }
+
+    public Map<String, ? extends NTxNodeDef> getDefinitions() {
+        return new LinkedHashMap<>(definitions);
+    }
+
+    public Map<String, ? extends NTxFunction> getFunctions() {
+        return new LinkedHashMap<>(functions);
+    }
 }
