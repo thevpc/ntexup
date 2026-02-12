@@ -40,7 +40,7 @@ public class DefaultNTxDocumentItemParserFactory
     @Override
     public NScoredCallable<NTxItem> parseNode(NTxResolutionContext context) {
         NElement c = context.element();
-        NTxEngine engine = context.engine();
+//        NTxEngine engine = context.engine();
         if (c.annotations().stream().anyMatch(x -> NTxNodeType.CTRL_DEFINE.equals(x.name()))) {
             return parseNodeAsDefine(c, context);
         }
@@ -136,15 +136,22 @@ public class DefaultNTxDocumentItemParserFactory
     private NScoredCallable<NTxItem> parseNodeAsNamedListContainer(NElement c, NTxResolutionContext context) {
         NTxValue ee = NTxValue.of(c);
         String uid = NTxUtils.uid(ee.name());
-        NTxNodeParser p = context.engine().nodeTypeParser(uid).orNull();
-        if (p != null) {
-            return p.parseNode(context);
+        if(context.inPage()){
+            NTxNodeParser p = context.engine().nodeTypeParser(uid).orNull();
+            if (p != null) {
+                return p.parseNode(context);
+            }
+            if (c.isNamedUplet() || c.isAnyObject()) {
+                NElement finalC2 = c;
+                return NScoredCallable.ofValid(() -> createCtrlNodeCall(finalC2, context));
+            }
+            return _invalidSupport(NMsg.ofC("[%s] unable to resolve node : %s", NTxUtils.shortName(context.source()), NTxUtils.snippet(c)), context);
         }
-        if (c.isNamedUplet() || c.isAnyObject()) {
-            NElement finalC2 = c;
-            return NScoredCallable.ofValid(() -> createCtrlNodeCall(finalC2, context));
+        //just do not compile if still not in page mode!!!
+        if(context.node() instanceof CtrNTxNodelUncompiled && context.node().getRaw()==c){
+            return NScoredCallable.ofValid(context.node());
         }
-        return _invalidSupport(NMsg.ofC("[%s] unable to resolve node : %s", NTxUtils.shortName(context.source()), NTxUtils.snippet(c)), context);
+        return NScoredCallable.ofValid(new CtrNTxNodelUncompiled(c, context.source()));
     }
 
     private NScoredCallable<NTxItem> parseNodeAsUplet(NTxResolutionContext context) {
