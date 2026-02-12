@@ -72,6 +72,8 @@ public interface NTxEngine {
 
     NTxDocumentFactory documentFactory();
 
+    NTxEngine processNewNode(NElement element, Consumer<NOptional<NTxItem>> consumer, NTxResolutionContext ctx);
+
     NOptional<NTxItem> newNode(NElement element, NTxResolutionContext ctx);
 
     NOptional<NTxDocumentStreamRenderer> newStreamRenderer(String type);
@@ -86,9 +88,13 @@ public interface NTxEngine {
 
     NTxDocumentLoadingResult compileDocument(NTxDocument document);
 
-    List<NTxNode> compilePageNode(NTxNode node, NTxDocument document);
+    List<NTxNode> compilePageNode(NTxNode node, NTxDocument document, NTxResolutionContext parentContext);
+
+    void runNode(NTxNode node, NTxDocument document, NTxResolutionContext context, CompileNodeVisitor visitor);
 
     NTxResolutionContext newContext(NTxNode node, NTxDocument document);
+
+    NTxResolutionContext newContext(NTxNode node, NTxDocument document, NTxResolutionContext parentContext);
 
     boolean validateNode(NTxNode node);
 
