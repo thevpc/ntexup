@@ -38,6 +38,7 @@ import java.awt.*;
 import java.awt.image.ImageObserver;
 import java.util.*;
 import java.util.List;
+import java.util.function.Consumer;
 
 
 public class DefaultNTxRendererContext extends NTxResolutionContextImpl implements NTxRendererContext {
@@ -173,6 +174,7 @@ public class DefaultNTxRendererContext extends NTxResolutionContextImpl implemen
         all.add(NAssert.requireNamedNonNull(node, "parent"));
         return copyAsRenderer(page, all.toArray(new NTxNode[0]), engine, g3, null, parentBounds == null ? selfBounds() : parentBounds, globalBound, compiledPage, someChange, pageStartTime, capabilities, imageObserver, repainter, defaultStyles, dry, buildContext, element, def, document, vars, definitions, functions);
     }
+
 
     @Override
     public NTxRendererContext resolveNode(NTxNode node) {
