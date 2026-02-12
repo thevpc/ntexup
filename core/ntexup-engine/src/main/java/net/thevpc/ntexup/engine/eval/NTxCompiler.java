@@ -4,6 +4,7 @@ import net.thevpc.ntexup.api.document.node.*;
 import net.thevpc.ntexup.api.document.style.NTxProp;
 import net.thevpc.ntexup.api.document.style.NTxPropName;
 import net.thevpc.ntexup.api.document.style.NTxStyleRule;
+import net.thevpc.ntexup.api.engine.CompileNodeVisitor;
 import net.thevpc.ntexup.api.extension.NTxFunction;
 import net.thevpc.ntexup.api.eval.*;
 import net.thevpc.ntexup.api.engine.NTxEngine;
@@ -29,6 +30,7 @@ import net.thevpc.nuts.util.*;
 
 
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class NTxCompiler {
@@ -44,20 +46,13 @@ public class NTxCompiler {
         SilentNTxLogger slog = new SilentNTxLogger();
         try {
             engine.addLog(slog);
-            NTxNode preRoot = DefaultNTxNode.ofGroup();
-            NTxNode root = documentCopy.root().copy();
-            root.setParent(preRoot);
-            compileNodeTree(new NTxResolutionContextImpl(preRoot, root, NElement.ofNull(), false, engine, documentCopy));
-            if (root.children().size() == 1) {
-                root = root.children().get(0);
-            }
-//            checkNode(root,null);
-            NTxItemBag b = new NTxItemBag((List) root.children());
-            root = b.compress(false, source);
-            processRootPages(root);
-            if (documentCopy.root() != root) {
-                documentCopy.root().reset();
-                documentCopy.root().copyFrom(root);
+            NTxNode root = documentCopy.root();
+            List<NTxNode> rootChildren = root.children();
+            root.clearChildren();
+            try (FillDocumentCompileNodeVisitor visitor = new FillDocumentCompileNodeVisitor(root, engine)) {
+                for (NTxNode rootChild : rootChildren) {
+                    compileNodeTree(new NTxResolutionContextImpl(root, rootChild, NElement.ofNull(), false, engine, documentCopy), visitor);
+                }
             }
             return new NTxDocumentLoadingResultImpl(documentCopy, source, slog.getErrorCount() == 0);
         } finally {
@@ -65,81 +60,11 @@ public class NTxCompiler {
         }
     }
 
-    public boolean processRootPages(NTxNode node) {
-        switch (node.type()) {
-            case NTxNodeType.PAGE_GROUP: {
-                boolean someChanges = false;
-//                for (NTxNode child : node.children()) {
-//                    NTxUtils.checkNode(child);
-//                }
-                List<NTxNode> children = new ArrayList<>(node.children());
-                List<NTxNode> newChildren = new ArrayList<>();
-                List<NTxNode> pending = null;
-                for (NTxNode c : children) {
-                    if (c == null) {
-                        someChanges = true;
-                    } else {
-                        someChanges |= processRootPages(c);
-                        if (Objects.equals(c.type(), NTxNodeType.PAGE_GROUP)
-                                || Objects.equals(c.type(), NTxNodeType.PAGE)
-                                //assign are retained in the same level!
-                                || Objects.equals(c.type(), NTxNodeType.CTRL_ASSIGN)
-                        ) {
-                            if (pending != null && !pending.isEmpty()) {
-                                NTxNode newPage = engine.documentFactory().of(NTxNodeType.PAGE);
-                                newPage.setSource(node.source());
-                                newChildren.add(newPage);
-                                newPage.addChildren(pending.toArray(new NTxNode[0]));
-                                pending = null;
-                            }
-                            newChildren.add(c);
-                        } else {
-                            someChanges = true;
-                            if (pending == null) {
-                                pending = new ArrayList<>();
-                            }
-                            pending.add(c);
-                        }
-                    }
-                }
-                if (pending != null && pending.size() > 0) {
-                    NTxNode newPage = engine.documentFactory().of(NTxNodeType.PAGE);
-                    newPage.setSource(node.source());
-                    newPage.addChildren(pending.toArray(new NTxNode[0]));
-                    newChildren.add(newPage);
-                }
-                if (someChanges) {
-                    node.children().clear();
-                    node.addChildren(newChildren.toArray(new NTxNode[0]));
-                }
-                return someChanges;
-            }
-            default: {
-                return false;
-            }
-        }
-    }
-
-//    public NOptional<NTxNodeDef> findDefinition(NTxItem node, String name) {
-//        NTxItem currNode = node;
-//        while (currNode != null) {
-//            if (currNode instanceof NTxNode) {
-//                for (NTxNodeDef o : ((NTxNode) currNode).definitions()) {
-//                    if (NNameFormat.equalsIgnoreFormat(o.name(), name)) {
-//                        return NOptional.of(o);
-//                    }
-//                }
-//            }
-//            currNode = currNode.parent();
-//        }
-//        return NOptional.ofNamedEmpty("definition for " + name);
-//    }
-
-    private NTxNodeDef compileNodeDef(NTxNodeDef item, NTxResolutionContext context) {
+    private NTxNodeDef compileNodeDef(NTxNodeDef item, NTxResolutionContext context, CompileNodeVisitor visitor) {
         DefaultNTxNode bodyContainer = DefaultNTxNode.ofGroup(context.parent());
-        NTxResolutionContext newContext = context.withNode(bodyContainer).withDef(item); // replace itemDef
+        NTxResolutionContext newContext = context.setNode(bodyContainer).withDef(item); // replace itemDef
         for (NTxNode b : item.body()) {
-            compileNodeTree(newContext.resolveNode(b));
+            newContext.doWithPush(b, nTxResolutionContext -> compileNodeTree(nTxResolutionContext, visitor));
         }
         List<NTxNode> newBody = new NTxItemBag(bodyContainer.children()).compressToNodes(context.inPage(), item.source());
         bodyContainer.clearChildren();
@@ -156,7 +81,7 @@ public class NTxCompiler {
         );
     }
 
-    private void compileNodeTree(NTxResolutionContext context) {
+    public void compileNodeTree(NTxResolutionContext context, CompileNodeVisitor visitor) {
         NTxItem item = context.node();
         NAssert.requireNamedNonNull(context, "context");
         boolean wasInPage = context.inPage();
@@ -167,120 +92,161 @@ public class NTxCompiler {
                 context.setInPage(true);
             }
             if (!wasInPage && context.inPage()) {
-                context.parent().add(node);
+                visitor.visitNode(node, context);
                 return;
             }
             if (node instanceof CtrNTxNodelUncompiled) {
                 NElement raw = node.getRaw();
-                NOptional<NTxItem> o = engine.newNode(raw, context.withElement(raw));
-                if (o.isPresent()) {
-                    NTxNode oldNode = context.node();
-                    try {
-                        NTxItem v = o.get();
-                        NTxItemBag ib = new NTxItemBag();
-                        ib.add(v);
-                        for (NTxItem a : ib.all()) {
-                            if (a instanceof NTxNode) {
-                                //update reference!
-                                compileNodeTree(context.setNode((NTxNode) a));
-                            } else {
-                                context.parent().add(a);
+                NElement oldElement = context.element();
+                try {
+                    context.setElement(raw);
+                    NTxResolutionContext finalContext = context;
+                    engine.processNewNode(raw, o -> {
+                        if (o.isPresent()) {
+                            NTxNode oldNode = finalContext.node();
+                            try {
+                                NTxItem v = o.get();
+                                if(v==node){
+                                    visitor.visitNode(node, finalContext);
+                                    return;
+                                }
+                                NTxItemBag ib = new NTxItemBag();
+                                ib.add(v);
+                                for (NTxItem a : ib.all()) {
+                                    if (a instanceof NTxNode) {
+                                        //update reference!
+                                        NTxResolutionContext cc = finalContext.setNode((NTxNode) a);
+                                        compileNodeTree(cc, new CompileNodeVisitorWithContext(finalContext, visitor));
+                                    } else {
+                                        dispatchVisit(a, visitor, finalContext);
+                                    }
+                                }
+                            } finally {
+                                finalContext.setNode(oldNode);
                             }
+                            return;
                         }
-                    } finally {
-                        context.setNode(oldNode);
-                    }
-                    return;
+                    }, context);
+                } finally {
+                    context.setElement(oldElement);
                 }
                 return;
             }
-            node = node.copy();
+//            node = node.copy();
             node.setTemplateDefinition(context.def());
             //temporarely set parent, it will be changed later!!
             NTxUtils.setNodeParent(node, context.parent());
-            context = context.withNode(node);
-//            NTxUtils.setNodeParent(node, context.parent());
-            switch (node.type()) {
-                case NTxNodeType.CTRL_IF: {
-                    compileNodeTree_if(context.withParentOnly());
-                    return;
+
+            NTxNode[] oldPath = context.path();
+            NTxNodeDef oldDef = context.getDef();
+            context = context.setNode(node);
+            try {
+                context.setDef(null);
+                switch (node.type()) {
+                    case NTxNodeType.CTRL_IF: {
+                        compileNodeTree_if(context, visitor);
+                        return;
+                    }
+                    case NTxNodeType.CTRL_NAME: {
+                        compileNodeTree_name(context, visitor);
+                        return;
+                    }
+                    case NTxNodeType.CTRL_INCLUDE: {
+                        compileNodeTree_include(context, visitor);
+                        return;
+                    }
+                    case NTxNodeType.CTRL_IMPORT: {
+                        compileNodeTree_import(context, visitor);
+                        return;
+                    }
+                    case NTxNodeType.CTRL_FOR: {
+                        compileNodeTree_for(context, visitor);
+                        return;
+                    }
+                    case NTxNodeType.CTRL_ASSIGN: {
+                        compileNodeTree_assign(context, visitor);
+                        return;
+                    }
+                    case NTxNodeType.CTRL_EXPR: {
+                        compileNodeTree_expr(context, visitor);
+                        return;
+                    }
+                    case NTxNodeType.CTRL_CALL: {
+                        compileNodeTree_call(context, visitor);
+                        return;
+                    }
+                    case NTxNodeType.CTRL_DEFINE: {
+                        compileNodeTree_define(context, visitor);
+                        return;
+                    }
                 }
-                case NTxNodeType.CTRL_NAME: {
-                    compileNodeTree_name(context.withParentOnly());
-                    return;
-                }
-                case NTxNodeType.CTRL_INCLUDE: {
-                    compileNodeTree_include(context.withParentOnly());
-                    return;
-                }
-                case NTxNodeType.CTRL_IMPORT: {
-                    compileNodeTree_import(context.withParentOnly());
-                    return;
-                }
-                case NTxNodeType.CTRL_FOR: {
-                    compileNodeTree_for(context.withParentOnly());
-                    return;
-                }
-                case NTxNodeType.CTRL_ASSIGN: {
-                    compileNodeTree_assign(context.withParentOnly());
-                    return;
-                }
-                case NTxNodeType.CTRL_EXPR: {
-                    compileNodeTree_expr(context.withParentOnly());
-                    return;
-                }
-                case NTxNodeType.CTRL_CALL: {
-                    compileNodeTree_call(context.withParentOnly());
-                    return;
-                }
-                case NTxNodeType.CTRL_DEFINE: {
-                    compileNodeTree_define(context.withParentOnly());
-                    return;
-                }
+                compileNodeTree_default(context, visitor);
+            } finally {
+                context.setPath(oldPath);
+                context.setDef(oldDef);
             }
-            compileNodeTree_default(context);
-            return;
         } else if (item instanceof NTxItemList) {
+            NTxNode[] oldPath = context.path();
             for (NTxItem subItem : ((NTxItemList) item).getItems()) {
-                if (subItem instanceof NTxProp) {
-                    context.parent().setProperty((NTxProp) subItem);
-                    return;
-                } else if (subItem instanceof NTxStyleRule) {
-                    context.parent().addRule((NTxStyleRule) subItem);
-                    return;
+                if (subItem instanceof NTxNode) {
+                    compileNodeTree(context.setNode((NTxNode) subItem), new CompileNodeVisitorWithContext(context, visitor));
                 } else {
-                    compileNodeTree(context.withNode((NTxNode) subItem));
+                    dispatchVisit(subItem, visitor, context);
                 }
             }
-            return;
+            context.setPath(oldPath);
         } else if (item instanceof NTxProp) {
-            context.parent().setProperty((NTxProp) item);
-            return;
+            dispatchVisit(item, visitor, context);
         } else if (item instanceof NTxStyleRule) {
-            context.parent().addRule((NTxStyleRule) item);
-            return;
+            dispatchVisit(item, visitor, context);
         } else {
             throw new IllegalArgumentException("what are you talking about?");
         }
     }
 
-    private void compileNodeTree_default(NTxResolutionContext context) {
-        context.parent().add(context.node());
-        for (NTxNode child : context.node().children()) {
-            context.pushNode(child);
-            compileNodeTree(context);
-            context.popNode();
+    private void dispatchVisit(NTxItem a, CompileNodeVisitor visitor, NTxResolutionContext context) {
+        if (a instanceof NTxNodeDef) {
+            visitor.visitDefinition((NTxNodeDef) a, context);
+        } else if (a instanceof NTxNode) {
+            visitor.visitNode((NTxNode) a, context);
+        } else if (a instanceof NTxStyleRule) {
+            visitor.visitRule((NTxStyleRule) a, context);
+        } else if (a instanceof NTxFunction) {
+            visitor.visitFunction((NTxFunction) a, context);
+        } else if (a instanceof NTxProp) {
+            visitor.visitProperty((NTxProp) a, context);
+        } else {
+            throw new NIllegalArgumentException(NMsg.ofC("unexpected"));
         }
     }
 
-    private void compileNodeTree_expr(NTxResolutionContext context) {
-        NElement varExpr = context.node().getProperty(NTxPropName.VALUE).get().getValue();
-        NElement element = context.evalExpression(varExpr).get();
-        NTxItem h2 = engine.newNode(element, context.withElement(element)).get();
-        context.parent().mergeNode(h2);
+    private void compileNodeTree_default(NTxResolutionContext context, CompileNodeVisitor visitor) {
+        NTxNode node = context.node();
+        List<NTxNode> children = node.children();
+        node.clearChildren();
+        for (NTxNode child : children) {
+            context.doWithPush(child, new Consumer<NTxResolutionContext>() {
+                @Override
+                public void accept(NTxResolutionContext ctx) {
+                    compileNodeTree(ctx, new FillNodeCompileNodeVisitor(node));
+                }
+            });
+        }
+        visitor.visitNode(node, context);
     }
 
-    private void compileNodeTree_assign(NTxResolutionContext context) {
+    private void compileNodeTree_expr(NTxResolutionContext context, CompileNodeVisitor visitor) {
+        NElement varExpr = context.node().getProperty(NTxPropName.VALUE).get().getValue();
+        NElement element = context.evalExpression(varExpr).get();
+        engine.processNewNode(element,
+                a -> {
+                    context.parent().mergeNode(a.get());
+                },
+                context.withElement(element)
+        );
+    }
+
+    private void compileNodeTree_assign(NTxResolutionContext context, CompileNodeVisitor visitor) {
         NTxNode node = context.node();
         String varName = node.getProperty(NTxPropName.NAME).get().getValue().asStringValue().get();
         NElement varExpr = node.getProperty(NTxPropName.VALUE).get().getValue();
@@ -296,7 +262,7 @@ public class NTxCompiler {
         }
     }
 
-    private void compileNodeTree_name(NTxResolutionContext context) {
+    private void compileNodeTree_name(NTxResolutionContext context, CompileNodeVisitor visitor) {
         CtrlNTxNodeName node = (CtrlNTxNodeName) context.node();
         NElement c = node.getVarName();
         String name = c.asStringValue().get();
@@ -304,9 +270,9 @@ public class NTxCompiler {
         if (v.isPresent()) {
             DefaultNTxNode e = DefaultNTxNode.ofExpr(c, context.parent().source());
             e.setParent(context.parent());
-            compileNodeTree(context.withParentOnly().withNode(e));
+            compileNodeTree(context.setDef(null).setNode(e), visitor);
         } else if (NTxUtils.isComponentBody(name)) {
-            context.parent().add(node);
+            visitor.visitNode(node, context);
         } else {
             NTxNodeParser p = engine.nodeTypeParser(name).orNull();
             if (p != null) {
@@ -316,20 +282,22 @@ public class NTxCompiler {
             }
             DefaultNTxNode t = DefaultNTxNode.ofText(name);
             t.setSource(node.source());
-            context.parent().add(t);
+            visitor.visitNode(t, context);
         }
     }
 
-    private void _process_call_node(NTxNodeDef d, CtrlNTxNodeCall c, NTxResolutionContext h) {
+    private void _process_call_node(NTxNodeDef d, CtrlNTxNodeCall c, final NTxResolutionContext context, CompileNodeVisitor visitor) {
         NTxNodeDefParam[] expectedParams = d.params();
         //first unset any parent COMPONENT_BODY_VAR_NAME and create a new context!
-        h = h.withVar(NTxUtils.COMPONENT_BODY_VAR_NAME, null);
+        DefaultNTxNode fragment = DefaultNTxNode.ofFragment();
+
+        List<NTxNode> assigns = new ArrayList<>();
         for (NTxNodeDefParam expectedParam : expectedParams) {
             if (expectedParam.value() != null) {
-                h.setVar(NTxUtils.COMPONENT_BODY_VAR_NAME, NTxVar.ofNonEvaluatedExpression(expectedParam.value()));
+                assigns.add(DefaultNTxNode.ofAssign(expectedParam.name(), expectedParam.value(), context.source()));
             }
         }
-        h.setVar(NTxUtils.COMPONENT_BODY_VAR_NAME, NTxVar.ofNonEvaluatedExpression(NElement.ofArray(c.getCallBody().toArray(new NElement[0]))));
+        assigns.add(DefaultNTxNode.ofAssign(NTxUtils.COMPONENT_BODY_VAR_NAME, NElement.ofArray(c.getCallBody().toArray(new NElement[0])), context.source()));
 
         List<NElement> callArgs = c.getCallArgs();
 
@@ -337,29 +305,46 @@ public class NTxCompiler {
             for (NElement e : callArgs) {
                 NPairElement p = e.asPair().get();
                 String n = p.key().asStringValue().get();
-                h.setVar(n, NTxVar.ofNonEvaluatedExpression(NTxUtils.addCompilerDeclarationPath(p.value(), c.source())));
+                assigns.add(DefaultNTxNode.ofAssign(n, NTxUtils.addCompilerDeclarationPath(p.value(), c.source()), context.source()));
             }
         } else if (callArgs.stream().noneMatch(NElement::isNamedPair)) {
             for (int i = 0; i < Math.min(expectedParams.length, callArgs.size()); i++) {
-                h.setVar(expectedParams[i].name(), NTxVar.ofNonEvaluatedExpression(NTxUtils.addCompilerDeclarationPath(callArgs.get(i), c.source())));
+                assigns.add(DefaultNTxNode.ofAssign(expectedParams[i].name(), NTxUtils.addCompilerDeclarationPath(callArgs.get(i), c.source()), context.source()));
             }
         } else {
             NMsg errMsg = NMsg.ofC("cannot mix named and non named params in %s, all params ignored", callArgs.stream().map(x -> NTxUtils.snippet(x)).collect(Collectors.toList()));
             engine.log().log(errMsg, c.source());
         }
         NTxNode[] oldBody = d.body();
-        NTxResolutionContext newContext = h.withDef(d);
-        for (int i = 0; i < oldBody.length; i++) {
-            compileNodeTree(newContext.withNode(oldBody[i]));
-        }
+        NTxResolutionContext newContext = context.withDef(d);
+        FillNodeCompileNodeVisitor fill = new FillNodeCompileNodeVisitor(fragment);
+        newContext.doWithPush(fragment, cc -> {
+            for (NTxNode assign : assigns) {
+                cc.doWithPush(assign, new Consumer<NTxResolutionContext>() {
+                    @Override
+                    public void accept(NTxResolutionContext nTxResolutionContext) {
+                        compileNodeTree(cc, fill);
+                    }
+                });
+            }
+            for (int i = 0; i < oldBody.length; i++) {
+                cc.doWithPush(oldBody[i], new Consumer<NTxResolutionContext>() {
+                    @Override
+                    public void accept(NTxResolutionContext nTxResolutionContext) {
+                        compileNodeTree(cc, fill);
+                    }
+                });
+            }
+        });
+        visitor.visitNode(fragment, context);
     }
 
-    private void compileNodeTree_define(NTxResolutionContext context) {
-        context.parent().add(context.node());
+    private void compileNodeTree_define(NTxResolutionContext context, CompileNodeVisitor visitor) {
+        visitor.visitNode(context.node(), context);
         context.setNamedDef((NTxNodeDef) context.node());
     }
 
-    private void compileNodeTree_call(NTxResolutionContext context) {
+    private void compileNodeTree_call(NTxResolutionContext context, CompileNodeVisitor visitor) {
         CtrlNTxNodeCall c = (CtrlNTxNodeCall) context.node();
         String uid = c.getCallName();
         NTxNodeParser p = engine.nodeTypeParser(uid).orNull();
@@ -375,26 +360,26 @@ public class NTxCompiler {
             if (NScorable.isValidScore(n, scc)) {
                 NTxItem t = n.call();
                 if (t != null) {
-                    context.parent().add(t);
+                    dispatchVisit(t, visitor, context);
                 }
             }
         }
 //                NTxNode currNode = NTxUtils.firstNodeUp(node.parent());
         NOptional<NTxNodeDef> dd = context.getNamedDef(uid);
         if (dd.isPresent()) {
-            _process_call_node(dd.get(), c, context);
+            _process_call_node(dd.get(), c, context, visitor);
             return;
         } else {
             NOptional<NTxFunction> t = context.getFunction(uid);
             if (t.isPresent()) {
-                _process_call_fct(t.get(), c, context);
+                _process_call_fct(t.get(), c, context, visitor);
                 return;
             }
-            addErr(NMsg.ofC("undefined node %s", NMsg.ofStyledError(uid)), context);
+            addErr(NMsg.ofC("undefined node %s", NMsg.ofStyledError(uid)), context, visitor);
         }
     }
 
-    private void compileNodeTree_include(NTxResolutionContext context) {
+    private void compileNodeTree_include(NTxResolutionContext context, CompileNodeVisitor visitor) {
         CtrlNTxNodeInclude node = (CtrlNTxNodeInclude) context.node();
         for (NElement callArg : node.getCallArgs()) {
             NElement r = context.evalExpression(NTxUtils.addCompilerDeclarationPath(callArg, NTxUtils.sourceOf(node))).orNull();
@@ -412,7 +397,7 @@ public class NTxCompiler {
                         if (se.isPresent()) {
                             NTxItem item = se.get();
                             NTxUtils.setNodeParent(item, context.parent());
-                            compileNodeTree(context.withParentOnly().withNode((NTxNode) item));
+                            compileNodeTree(context.setDef(null).setNode((NTxNode) item), visitor);
                         } else {
                             context.messages().log(NMsg.ofC("invalid include. error loading : %s", nPath).asSevere(), NTxUtils.sourceOf(node));
                         }
@@ -427,7 +412,7 @@ public class NTxCompiler {
 
     }
 
-    private void compileNodeTree_import(NTxResolutionContext context) {
+    private void compileNodeTree_import(NTxResolutionContext context, CompileNodeVisitor visitor) {
         CtrlNTxNodeImport node = (CtrlNTxNodeImport) context.node();
         List<String> toImport = new ArrayList<>();
         for (NElement callArg : node.getCallArgs()) {
@@ -442,7 +427,7 @@ public class NTxCompiler {
         engine.importDependencies(toImport.toArray(new String[0]));
     }
 
-    private void compileNodeTree_if(NTxResolutionContext context) {
+    private void compileNodeTree_if(NTxResolutionContext context, CompileNodeVisitor visitor) {
         CtrlNTxNodeIf node = (CtrlNTxNodeIf) context.node();
         NElement cond = node.getCond();
         NElement r = context.evalExpression(cond).orNull();
@@ -453,7 +438,7 @@ public class NTxCompiler {
                 for (NTxNode d : tb) {
                     d = d.copy();
                     d.setParent(context.parent());
-                    compileNodeTree(context.withParentOnly().withNode(d));
+                    compileNodeTree(context.setDef(null).setNode(d), visitor);
                 }
             }
         } else {
@@ -463,13 +448,13 @@ public class NTxCompiler {
                 for (NTxNode d : tb) {
                     d = d.copy();
                     d.setParent(context.parent());
-                    compileNodeTree(context.withParentOnly().withNode(d));
+                    compileNodeTree(context.setDef(null).setNode(d), visitor);
                 }
             }
         }
     }
 
-    private void compileNodeTree_for(NTxResolutionContext context) {
+    private void compileNodeTree_for(NTxResolutionContext context, CompileNodeVisitor visitor) {
         CtrlNTxNodeFor node = (CtrlNTxNodeFor) context.node();
         NElement varName = node.getVarName();
         NElement varExpr = node.getVarExpr();
@@ -477,7 +462,7 @@ public class NTxCompiler {
         if (varName.isName()) {
             varNameStr = varName.asStringValue().get();
         } else {
-            addErr(NMsg.ofC("expected varName in for construct : %s", node), context);
+            addErr(NMsg.ofC("expected varName in for construct : %s", node), context, visitor);
         }
         NElement anyVal = context.evalExpression(varExpr).orNull();
         List<NElement> b = new ArrayList<>();
@@ -489,53 +474,55 @@ public class NTxCompiler {
         for (NElement o : b) {
             NTxResolutionContext icontext = context.withVar(varNameStr, NTxVar.ofEvaluatedExpression(o));
             for (NElement e : node.getBody()) {
-                NTxNode node2 = (NTxNode) engine.newNode(e, icontext.withElement(e)).get();
-                NTxUtils.setNodeParent(node2, context.parent());
-                compileNodeTree(icontext.withParentOnly().withNode(node2));
+                engine.processNewNode(e,
+                        node2 -> {
+                            NTxUtils.setNodeParent(node2.get(), context.parent());
+                            compileNodeTree(icontext.setDef(null).setNode((NTxNode) node2.get()), visitor);
+                        },
+                        icontext.withElement(e));
             }
         }
     }
 
-    private void addErr(NMsg msg, NTxResolutionContext context) {
+    private void addErr(NMsg msg, NTxResolutionContext context, CompileNodeVisitor visitor) {
         engine.log().log(msg.asError());
-        context.parent().add(new CtrlNTxNodeError(context.source(), msg));
+        visitor.visitNode(new CtrlNTxNodeError(context.source(), msg), context);
     }
 
-    private void _process_call_fct(NTxFunction t, CtrlNTxNodeCall c, NTxResolutionContext context) {
+    private void _process_call_fct(NTxFunction t, CtrlNTxNodeCall c, NTxResolutionContext context, CompileNodeVisitor visitor) {
         NTxSource source = NTxUtils.sourceOf(c);
         NElement result = t.invoke(new NTxFunctionArgsImpl(c.getCallArgs(), c, context), context);
         if (result == null) {
-            context.parent().add(new CtrlNTxNodeSimpleResult(source, NElement.ofNull()));
+            visitor.visitNode(new CtrlNTxNodeSimpleResult(source, NElement.ofNull()), context);
+            return;
         }
-        NOptional<NTxItem> n = engine.newNode(result, context.withElement(result));
-        if (n.isPresent()) {
-            NTxItem nn = n.get();
-            if (nn instanceof NTxNode) {
-                compileNodeTree(context.withNode((NTxNode) nn));
-                return;
-            } else if (nn instanceof NTxItemList && ((NTxItemList) nn).getItems().stream().allMatch(x -> x instanceof NTxItem)) {
-                for (NTxItem item : ((NTxItemList) nn).getItems()) {
-                    compileNodeTree(context.withNode((NTxNode) item));
+        engine.processNewNode(result, n -> {
+            if (n.isPresent()) {
+                NTxItem nn = n.get();
+                if (nn instanceof NTxNode) {
+                    compileNodeTree(context.setNode((NTxNode) nn), visitor);
+                } else if (nn instanceof NTxItemList && ((NTxItemList) nn).getItems().stream().allMatch(x -> x instanceof NTxItem)) {
+                    for (NTxItem item : ((NTxItemList) nn).getItems()) {
+                        compileNodeTree(context.setNode((NTxNode) item), visitor);
+                    }
+                } else {
+                    addErr(NMsg.ofC("unexpected node type %s", nn.getClass()), context, visitor);
                 }
-                return;
             } else {
-                addErr(NMsg.ofC("unexpected node type %s", nn.getClass()), context);
-                return;
+                addErr(NMsg.ofC("not found node for %s : %s", result.type().id(), NTxUtils.snippet(result)), context, visitor);
             }
-        } else {
-            addErr(NMsg.ofC("not found node for %s : %s", result.type().id(), NTxUtils.snippet(result)), context);
-        }
+        }, context.withElement(result));
     }
 
 
-    public void compilePageNode(NTxResolutionContext context) {
+    public void compilePageNode(NTxResolutionContext context, CompileNodeVisitor visitor) {
         if (context.engine() != engine) {
             throw new NIllegalArgumentException(NMsg.ofC("invalid engine"));
         }
-        context = context.withInPage(true);
+        context = context.setInPage(true);
         NAssert.requireNamedNonNull(context.node(), "page");
         NAssert.requireNamedEquals(NTxNodeType.PAGE, context.node().type(), "page");
-        compileNodeTree(context);
+        compileNodeTree(context, visitor);
     }
 
 
@@ -548,4 +535,5 @@ public class NTxCompiler {
                 resource
         );
     }
+
 }
