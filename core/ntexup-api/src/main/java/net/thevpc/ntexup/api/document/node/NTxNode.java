@@ -4,14 +4,12 @@ import net.thevpc.ntexup.api.document.elem2d.NTxDouble2;
 import net.thevpc.ntexup.api.document.elem2d.NTxAlign;
 import net.thevpc.ntexup.api.document.style.NTxProp;
 import net.thevpc.ntexup.api.document.style.NTxStyleRule;
-import net.thevpc.ntexup.api.extension.NTxFunction;
 import net.thevpc.ntexup.api.source.NTxSource;
 import net.thevpc.nuts.elem.NElement;
 import net.thevpc.nuts.elem.NToElement;
 import net.thevpc.nuts.util.NOptional;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.function.Supplier;
 
