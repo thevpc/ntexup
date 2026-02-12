@@ -65,8 +65,23 @@ public class DefaultNTxNode implements NTxNode {
         DefaultNTxNode t = new DefaultNTxNode(NTxNodeType.GROUP);
         return t;
     }
+
     public static DefaultNTxNode ofGroup(NTxNode parent) {
         DefaultNTxNode t = new DefaultNTxNode(NTxNodeType.GROUP);
+        if(parent!=null){
+            t.setParent(parent);
+            t.setSource(parent.source());
+        }
+        return t;
+    }
+
+    public static DefaultNTxNode ofFragment() {
+        DefaultNTxNode t = new DefaultNTxNode(NTxNodeType.FRAGMENT);
+        return t;
+    }
+
+    public static DefaultNTxNode ofFragment(NTxNode parent) {
+        DefaultNTxNode t = new DefaultNTxNode(NTxNodeType.FRAGMENT);
         if(parent!=null){
             t.setParent(parent);
             t.setSource(parent.source());
@@ -838,15 +853,15 @@ public class DefaultNTxNode implements NTxNode {
         if (NTxNodeType.CTRL_ASSIGN.equals(type())) {
             return NElement.ofPair("$" + getName(), getPropertyValue(NTxPropName.VALUE).orNull());
         }
-        String componentName = getPropertyValue(NTxPropName.VALUE).flatMap(x -> x.asStringValue()).orNull();
+        String displayName = getPropertyValue(NTxPropName.DISPLAY_NAME).flatMap(x -> x.asStringValue()).orNull();
         String[] styleClasses = getStyleClasses();
         if (!styleRules.isEmpty() || !children.isEmpty()) {
             NObjectElementBuilder o = NElement.ofObjectBuilder(nodeType);
             if (styleClasses.length > 0) {
                 o.addAnnotation(null, Arrays.stream(styleClasses).map(x -> NElement.ofString(x)).toArray(NElement[]::new));
             }
-            if (!NBlankable.isBlank(componentName)) {
-                o.add(NElement.ofPair("componentName", NElement.ofString(componentName)));
+            if (!NBlankable.isBlank(displayName)) {
+                o.add(NElement.ofPair("displayName", NElement.ofString(displayName)));
             }
             if (source != null) {
                 o.add(NElement.ofPair("source", NElement.ofString(source.shortName())));
@@ -877,8 +892,8 @@ public class DefaultNTxNode implements NTxNode {
             if (styleClasses.length > 0) {
                 o.addAnnotation(null, Arrays.stream(styleClasses).map(x -> NElement.ofString(x)).toArray(NElement[]::new));
             }
-            if (!NBlankable.isBlank(componentName)) {
-                o.add(NElement.ofPair("componentName", NElement.ofString(componentName)));
+            if (!NBlankable.isBlank(displayName)) {
+                o.add(NElement.ofPair("displayName", NElement.ofString(displayName)));
             }
             if (source != null) {
                 o.add(NElement.ofPair("source", NElement.ofString(String.valueOf(source))));
