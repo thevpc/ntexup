@@ -3,6 +3,7 @@ package net.thevpc.ntexup.api.document.node;
 public class NTxNodeType {
     public static final String PAGE_GROUP="page-group";
     public static final String PAGE="page";
+    public static final String FRAGMENT ="fragment";
     public static final String GROUP ="group";
     public static final String FLOW="flow";
     public static final String GRID="grid";
