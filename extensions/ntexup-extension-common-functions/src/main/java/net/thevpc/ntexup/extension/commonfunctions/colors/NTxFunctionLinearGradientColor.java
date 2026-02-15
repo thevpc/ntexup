@@ -27,8 +27,8 @@ public class NTxFunctionLinearGradientColor implements NTxFunction {
         NTxDouble2 end = null;
         NTxBounds2D selfBounds = NTxValue.of(context.getVar("selfBounds").map(x->x.get()).orNull()).asBounds2().orNull();
         java.util.List<Color> colors = new ArrayList<>();
-        for (NTxFunctionArg arg : args.args()) {
-            NElement v = arg.eval();
+        for (int i = 0; i < args.size(); i++) {
+            NElement v = args.eval(i);
             NTxValue vv = NTxValue.of(v);
             if(vv.isBoolean()) {
                 cyclic = v.asBooleanValue().get();
