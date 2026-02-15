@@ -9,6 +9,8 @@ import net.thevpc.ntexup.extension.commonfunctions.util.NTxColorUtils;
 import net.thevpc.nuts.elem.NElement;
 import net.thevpc.nuts.text.NMsg;
 
+import java.awt.*;
+
 public class NTxFunctionCubehelixColor implements NTxFunction {
     @Override
     public String name() {
@@ -17,13 +19,12 @@ public class NTxFunctionCubehelixColor implements NTxFunction {
 
     @Override
     public NElement invoke(NTxFunctionArgs args, NTxResolutionContext context) {
-        if (args.size() == 0) {
+        if (args.checkTooFewArgs(1)) {
             return NElement.ofNull();
         }
-        if (args.size() > 1) {
-            context.log().log(NMsg.ofC("%s: expected 1 argument, got %s", NMsg.ofStyledKeyword(name()), args.size()));
-        }
-        float c = NTxValue.of(args.eval(0)).asFloat().get();
+        args.checkTooManyArgs(1);
+        float c = args.eval(0, x -> NTxValue.of(x).asFloat(), "ratio", null);
         return NTxElementUtils.toElement(NTxColorUtils.cubehelix(c));
+
     }
 }
