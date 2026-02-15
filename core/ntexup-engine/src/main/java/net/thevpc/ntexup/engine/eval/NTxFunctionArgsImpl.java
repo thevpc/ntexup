@@ -4,23 +4,36 @@ import net.thevpc.ntexup.api.document.node.NTxNode;
 import net.thevpc.ntexup.api.eval.NTxResolutionContext;
 import net.thevpc.ntexup.api.eval.NTxFunctionArg;
 import net.thevpc.ntexup.api.eval.NTxFunctionArgs;
+import net.thevpc.ntexup.api.eval.NTxValue;
 import net.thevpc.nuts.elem.NElement;
+import net.thevpc.nuts.text.NMsg;
+import net.thevpc.nuts.util.NExceptions;
+import net.thevpc.nuts.util.NOptional;
+import net.thevpc.nuts.util.NStringUtils;
 
+import java.awt.*;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 public class NTxFunctionArgsImpl implements NTxFunctionArgs {
+    private String functionName;
+    private NTxResolutionContext context;
     private NTxFunctionArg[] args;
 
-    public NTxFunctionArgsImpl(NElement[] callArgs, NTxResolutionContext context) {
-        this(Arrays.stream(callArgs).map(x -> new NTxFunctionArgImpl(x, context)).toArray(NTxFunctionArg[]::new));
-    }
-    public NTxFunctionArgsImpl(List<NElement> callArgs, NTxNode node, NTxResolutionContext context) {
-        this(callArgs.stream().map(x -> new NTxFunctionArgImpl(x, context)).toArray(NTxFunctionArg[]::new));
+    public NTxFunctionArgsImpl(String functionName, NElement[] callArgs, NTxResolutionContext context) {
+        this(functionName, Arrays.stream(callArgs).map(x -> new NTxFunctionArgImpl(x, context)).toArray(NTxFunctionArg[]::new), context);
     }
 
-    public NTxFunctionArgsImpl(NTxFunctionArg[] args) {
+    public NTxFunctionArgsImpl(String functionName, List<NElement> callArgs, NTxNode node, NTxResolutionContext context) {
+        this(functionName, callArgs.stream().map(x -> new NTxFunctionArgImpl(x, context)).toArray(NTxFunctionArg[]::new), context);
+    }
+
+    public NTxFunctionArgsImpl(String functionName, NTxFunctionArg[] args, NTxResolutionContext context) {
         this.args = args;
+        this.context = context;
+        this.functionName = functionName;
     }
 
     @Override
@@ -40,12 +53,88 @@ public class NTxFunctionArgsImpl implements NTxFunctionArgs {
 
     @Override
     public NElement src(int index) {
+        if (index < 0 || index >= args.length) {
+            context.log().log(NMsg.ofC("%s: source for arg at %s could not be evaluated : %s", NMsg.ofStyledKeyword(functionName), index,
+                    NMsg.ofC("invalid index, should be in [%s...%s]", 0, args.length)).asError());
+            return null;
+        }
         return args[index].src();
     }
 
     @Override
     public NElement eval(int index) {
-        return args[index].eval();
+        return eval(index, NOptional::of, "element", NElement::ofNull);
+    }
+
+    @Override
+    public boolean checkTooManyArgs(int maxArgs) {
+        if (size() > maxArgs) {
+            context.log().log(NMsg.ofC("%s: too many arguments, got %s > %s", NMsg.ofStyledKeyword(functionName), size(), maxArgs).asError());
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public boolean checkTooFewArgs(int minArgs) {
+        if (size() < minArgs) {
+            context.log().log(NMsg.ofC("%s: too few arguments, got %s < %s", NMsg.ofStyledKeyword(functionName), size(), minArgs).asError());
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public <T> T eval(int index, Function<NElement, NOptional<T>> converter, String convertName, Supplier<T> whenError) {
+        T c;
+        Supplier<T> safeSupplier = new Supplier<T>() {
+            @Override
+            public T get() {
+                try {
+                    if (whenError != null) {
+                        return whenError.get();
+                    }
+                } catch (Exception ex) {
+                    context.log().log(NMsg.ofC("%s: arg at %s could not be evaluated as safe %s : %s", NMsg.ofStyledKeyword(functionName), index, convertName,
+                            NMsg.ofC("error evaluating : %s", ex)).asError());
+                }
+                return null;
+            }
+        };
+        if (index < 0 || index >= args.length) {
+            c = safeSupplier.get();
+            context.log().log(NMsg.ofC("%s: arg at %s could not be evaluated as %s : %s", NMsg.ofStyledKeyword(functionName), index, convertName,
+                    NMsg.ofC("invalid index, should be in [%s...%s]", 0, args.length)).asError());
+            return c;
+        }
+        NTxFunctionArg arg = args[index];
+        NElement arg0;
+        try {
+            arg0 = args[index].eval();
+        } catch (Exception ex) {
+            c = safeSupplier.get();
+            context.log().log(NMsg.ofC("%s: arg at %s (as %s) could not be evaluated as %s : %s", NMsg.ofStyledKeyword(functionName), index, arg, convertName,
+                    NMsg.ofC("error evaluating : %s", ex)).asError());
+            return c;
+        }
+        NOptional<T> oc;
+        try {
+            oc = converter.apply(arg0);
+        } catch (Exception ex) {
+            c = safeSupplier.get();
+            context.log().log(NMsg.ofC("%s: arg at %s (as %s) could not be converted as %s (from %s) : %s", NMsg.ofStyledKeyword(functionName), index, arg, convertName,
+                    arg0,
+                    NMsg.ofC("error converting : %s", ex)).asError());
+            return c;
+        }
+        if (!oc.isPresent()) {
+            c = safeSupplier.get();
+            context.log().log(NMsg.ofC("%s: arg at %s as %s could not be evaluated as %s : %s", NMsg.ofStyledKeyword(functionName), index, arg, convertName,
+                    oc.getMessage().get()).asError());
+        } else {
+            c = oc.get();
+        }
+        return c;
     }
 
     @Override
