@@ -1,0 +1,30 @@
+import(
+    common-functions
+    plantuml
+    animated-gif
+    svg
+    shapes2d
+    shapes3d
+    plot2d
+    presenters
+    latex
+)
+page{
+       styles{
+            "*" :{
+                font-size:20%P
+            }
+            ".red":{
+                color:red
+            }
+       }
+    grid(2,2){
+
+       // will be red because with class red!!
+       void()
+       @(red) ¶ A [[eq:x^2]] in red
+
+       text("B [[eq:y^2]]",debug,at:left,color:gold)
+       text("C [[eq:a_j^F]]",debug,at:right,color:silver)
+   }
+}
