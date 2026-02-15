@@ -7,7 +7,6 @@ import net.thevpc.ntexup.api.engine.NTxEngine;
 import net.thevpc.ntexup.api.extension.NTxFunction;
 import net.thevpc.ntexup.api.log.NTxLogger;
 import net.thevpc.ntexup.api.document.NTxDocument;
-import net.thevpc.ntexup.api.renderer.NTxRendererContext;
 import net.thevpc.ntexup.api.source.NTxSource;
 import net.thevpc.nuts.elem.NElement;
 import net.thevpc.nuts.io.NPath;
@@ -24,15 +23,19 @@ public interface NTxResolutionContext {
 
     NTxResolutionContext copy();
 
-    NTxResolutionContext doWithPush(NTxNode newPush, Consumer<NTxResolutionContext> newContext);
+    NTxResolutionContext doWithChild(NTxNode newPush, Consumer<NTxResolutionContext> newContext);
+    NTxResolutionContext doWithChild(NTxNode newPush, NTxNodeDef d, Consumer<NTxResolutionContext> newContext);
+    NTxResolutionContext doWithSibling(NTxNode newPush, Consumer<NTxResolutionContext> newContext);
+    NTxResolutionContext doWithSibling(NTxNode newPush, NTxNodeDef d,Consumer<NTxResolutionContext> newContext);
+
     NTxResolutionContext pushNode(NTxNode parent);
 
     NTxResolutionContext popNode();
 
+    NTxResolutionContext setNode(NTxNode node);
     NTxResolutionContext resolveNode(NTxNode parent);
 
     NTxResolutionContext setElement(NElement element);
-    NTxResolutionContext setNode(NTxNode parent);
 
     NTxResolutionContext withNode(NTxNode parent);
 
@@ -60,9 +63,10 @@ public interface NTxResolutionContext {
 
     NTxResolutionContext withParentOnly(NTxNode parent);
 
-    NTxNodeDef getDef();
     NTxResolutionContext setDef(NTxNodeDef def);
+
     NTxResolutionContext setPath(NTxNode[] def);
+
     NTxResolutionContext withParentOnly();
 
     NTxResolutionContext withDef(NTxNodeDef def);
@@ -116,4 +120,10 @@ public interface NTxResolutionContext {
     NPath resolvePath(NElement path);
 
     NTxDocumentFactory documentFactory();
+
+    NTxResolutionContext pushContext();
+
+    NTxResolutionContext parentContext();
+
+    NTxResolutionContext popContext();
 }
