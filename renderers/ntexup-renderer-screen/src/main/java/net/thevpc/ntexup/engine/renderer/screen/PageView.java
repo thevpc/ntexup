@@ -79,9 +79,10 @@ public class PageView extends JComponent {
         if (page.isCompiled()) {
             NChronometer c = NChronometer.startNow();
             Dimension size = getSize();
+            Dimension lastSize=null;
             boolean someChange = false;
             synchronized (this) {
-                Dimension lastSize = this.lastSize.get();
+                lastSize = this.lastSize.get();
                 someChange = !size.equals(lastSize);
                 if (someChange) {
                     this.lastSize.set(size);
@@ -126,7 +127,7 @@ public class PageView extends JComponent {
 //            }
             c.stop();
             if (someChange) {
-                engine().log().log(NMsg.ofC("paintComponent %s", c, NTxUtils.sourceOf(pageNode.get())));
+                engine().log().log(NMsg.ofC("[%s] paintComponent %s in %s (%s -> %s)", NTxUtils.sourceOf(pageNode.get()), page.index(), c, lastSize,size));
             }
         }
     }
