@@ -20,19 +20,18 @@ public class NTxDebugPanel extends JPanel {
         model.setMessageList(textAreaHMessageList);
         JTabbedPane pane = new JTabbedPane();
         add(pane);
-        pane.addTab("Page", page = new NTxNodePanel(
+        pane.addTab("Page", page = new NTxNodePanel("Page",
                 model.getEngine(),
                 () -> model.getCurrentPage()
+
         ));
-        pane.addTab("Document", compiledDocument = new NTxDocumentPanel(
+        pane.addTab("Document", compiledDocument = new NTxDocumentPanel("Document",
                 model.getEngine(),
-                () -> model.getCompiledDocument(),
-                textAreaHMessageList
+                () -> model.getCompiledDocument()
         ));
-        pane.addTab("Raw", rawDocument = new NTxDocumentPanel(
+        pane.addTab("Raw", rawDocument = new NTxDocumentPanel("Raw",
                 model.getEngine(),
-                () -> model.getRawDocument(),
-                textAreaHMessageList
+                () -> model.getRawDocument()
         ));
         pane.addTab("Messages", textAreaHMessageList);
     }
