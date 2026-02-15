@@ -46,6 +46,7 @@ public class NTxNodeBuilderContextImpl implements NTxNodeBuilderContext {
     MyRenderTextAction renderTextAction;
     RenderConvertAction renderConvertAction;
     ProcessNodeAction processChildren;
+    CompileNodeAction compileNodeAction;
 
     public NTxNodeBuilderContextImpl(NTxNodeBuilder builder, NTxEngine engine) {
         this.builder = builder;
@@ -257,6 +258,12 @@ public class NTxNodeBuilderContextImpl implements NTxNodeBuilderContext {
     @Override
     public NTxNodeBuilderContext processChildren(ProcessNodeAction processChildren) {
         this.processChildren = processChildren;
+        return this;
+    }
+
+    @Override
+    public NTxNodeBuilderContext compileNode(CompileNodeAction e) {
+        this.compileNodeAction=e;
         return this;
     }
 
