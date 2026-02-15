@@ -185,8 +185,11 @@ public interface NTxRendererContext extends NTxResolutionContext {
 
     /// ///////
     NTxRendererContext resolveNode(NTxNode node);
+
     NTxRendererContext withElement(NElement element);
+
     NTxRendererContext withNode(NTxNode parent);
+
     NTxRendererContext pushNode(NTxNode node);
 
     NTxRendererContext popNode();
