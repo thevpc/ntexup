@@ -21,9 +21,12 @@ import java.util.List;
 
 public class NTxUtils {
 
-    public static final String COMPONENT_BODY_VAR_NAME = "componentBody";
+    public static final String COMPONENT_BODY_VAR_NAME = "body";
     public static final String COMPILER_DECLARATION_PATH = "CompilerDeclarationPath";
 
+    public static boolean isOneIndexed(NElement element) {
+        return false;
+    }
     public static boolean hasCompilerDeclarationPath(NElement element) {
         return getCompilerDeclarationPath(element) != null;
     }
