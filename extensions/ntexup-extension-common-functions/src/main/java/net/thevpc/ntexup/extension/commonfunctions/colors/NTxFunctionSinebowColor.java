@@ -20,10 +20,8 @@ public class NTxFunctionSinebowColor implements NTxFunction {
         if (args.size() == 0) {
             return NElement.ofNull();
         }
-        if (args.size() > 1) {
-            context.log().log(NMsg.ofC("%s: expected 1 argument, got %s", NMsg.ofStyledKeyword(name()), args.size()));
-        }
-        float c = NTxValue.of(args.eval(0)).asFloat().get();
-        return NTxElementUtils.toElement(NTxColorUtils.sinebow(c));
+        args.checkTooManyArgs(1);
+        float ratio = args.eval(0, x -> NTxValue.of(x).asFloat(), "ratio", () -> 0.0f);
+        return NTxElementUtils.toElement(NTxColorUtils.sinebow(ratio));
     }
 }
