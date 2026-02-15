@@ -20,6 +20,7 @@ import net.thevpc.ntexup.api.document.style.NTxStyleRule;
 import net.thevpc.ntexup.api.eval.NTxResolutionContext;
 import net.thevpc.ntexup.api.document.node.NTxItem;
 import net.thevpc.ntexup.api.document.node.NTxNode;
+import net.thevpc.ntexup.api.extension.NTxFunction;
 import net.thevpc.ntexup.api.log.NTxLogger;
 import net.thevpc.ntexup.api.parser.NTxNodeParser;
 import net.thevpc.ntexup.api.renderer.*;
@@ -60,6 +61,8 @@ public interface NTxEngine {
 
     NTxLogger addLog(NTxLogger messages);
 
+    NOptional<NTxFunction> findFunction(String name);
+
     NTxLogger removeLog(NTxLogger messages);
 
     List<NTxNodeParser> nodeTypeFactories();
@@ -72,9 +75,7 @@ public interface NTxEngine {
 
     NTxDocumentFactory documentFactory();
 
-    NTxEngine processNewNode(NElement element, Consumer<NOptional<NTxItem>> consumer, NTxResolutionContext ctx);
-
-    NOptional<NTxItem> newNode(NElement element, NTxResolutionContext ctx);
+    NTxEngine parseNode(NElement element, NTxResolutionContext ctx, Consumer<NOptional<NTxItem>> consumer);
 
     NOptional<NTxDocumentStreamRenderer> newStreamRenderer(String type);
 
@@ -85,14 +86,6 @@ public interface NTxEngine {
     NOptional<NTxDocumentScreenRenderer> newScreenRenderer();
 
     NOptional<NTxDocumentRenderer> newRenderer(String type);
-
-    NTxDocumentLoadingResult compileDocument(NTxDocument document);
-
-    List<NTxNode> compilePageNode(NTxNode node, NTxDocument document, NTxResolutionContext parentContext);
-
-    void runNode(NTxNode node, NTxDocument document, NTxResolutionContext context, CompileNodeVisitor visitor);
-
-    NTxResolutionContext newContext(NTxNode node, NTxDocument document);
 
     NTxResolutionContext newContext(NTxNode node, NTxDocument document, NTxResolutionContext parentContext);
 
@@ -149,4 +142,14 @@ public interface NTxEngine {
     <T> NOptional<T> computeIfAbsent(String name, Function<String, T> fct);
 
     NTxEngine setEnv(String env, Object value);
+
+    NTxDocumentLoadingResult compileDocument(NTxDocument document);
+
+    void compileNode(NTxNode node, NTxDocument document, NTxResolutionContext context, CompileNodeVisitor visitor);
+
+    void compileNode(NTxResolutionContext ctx, CompileNodeVisitor visitor);
+
+    void defaultCompileNodeProperties(NTxNode node, NTxResolutionContext context);
+
+    void defaultCompileNodeChildren(NTxNode node, NTxResolutionContext context);
 }
