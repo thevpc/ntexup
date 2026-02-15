@@ -19,17 +19,19 @@ public class NTxFunctionColorBrightness implements NTxFunction {
 
     @Override
     public NElement invoke(NTxFunctionArgs args, NTxResolutionContext context) {
-        if (args.size() == 0) {
+        if (args.checkTooFewArgs(1)) {
+            return NElement.ofNull();
+        }
+        args.checkTooManyArgs(2);
+        Color c = args.eval(0, x -> NTxValue.of(x).asColor(), "color", null);
+        if(c==null){
             return NElement.ofNull();
         }
         if (args.size() == 1) {
-            return args.eval(0);
+            return NTxElementUtils.toElement(c);
         }
-        if (args.size() > 2) {
-            context.log().log(NMsg.ofC("%s: expected 2 arguments, got %s", NMsg.ofStyledKeyword(name()), args.size()));
-        }
-        Color c = NTxValue.of(args.eval(0)).asColor().get();
-        float factor = NTxValue.of(args.eval(1)).asFloat().get();
-        return NTxElementUtils.toElement(NTxColorUtils.adjustBrightness(c, factor));
+        float degrees = args.eval(1, x -> NTxValue.of(x).asFloat(), "degrees", () -> 0.0f);
+        return NTxElementUtils.toElement(NTxColorUtils.adjustBrightness(c, degrees));
+
     }
 }
