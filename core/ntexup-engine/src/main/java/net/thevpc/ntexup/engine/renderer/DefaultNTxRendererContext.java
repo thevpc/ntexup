@@ -2,15 +2,12 @@ package net.thevpc.ntexup.engine.renderer;
 
 import net.thevpc.ntexup.api.document.NTxDocument;
 import net.thevpc.ntexup.api.document.elem2d.*;
-import net.thevpc.ntexup.api.document.node.NTxItem;
 import net.thevpc.ntexup.api.document.node.NTxNode;
 import net.thevpc.ntexup.api.document.node.NTxNodeDef;
 import net.thevpc.ntexup.api.document.style.NTxProp;
 import net.thevpc.ntexup.api.document.style.NTxProperties;
-import net.thevpc.ntexup.api.engine.NTxCompiledDocument;
-import net.thevpc.ntexup.api.engine.NTxCompiledPage;
-import net.thevpc.ntexup.api.engine.NTxEngine;
-import net.thevpc.ntexup.api.engine.NTxNodeBuilderContext;
+import net.thevpc.ntexup.api.document.style.NTxStyleRule;
+import net.thevpc.ntexup.api.engine.*;
 import net.thevpc.ntexup.api.eval.NTxResolutionContext;
 import net.thevpc.ntexup.api.eval.NTxValueByName;
 import net.thevpc.ntexup.api.eval.NTxVar;
@@ -23,8 +20,8 @@ import net.thevpc.ntexup.api.util.NTxUtils;
 import net.thevpc.ntexup.api.renderer.NTxGraphics;
 import net.thevpc.ntexup.api.renderer.NTxRendererContext;
 import net.thevpc.ntexup.api.util.NTxSizeRef;
+import net.thevpc.ntexup.engine.eval.DispatchCompileNodeVisitor;
 import net.thevpc.ntexup.engine.eval.NTxResolutionContextImpl;
-import net.thevpc.ntexup.engine.parser.DefaultNTxNodeFactoryParseContext;
 import net.thevpc.ntexup.engine.renderer.text.NTxHighlighterMapper;
 import net.thevpc.ntexup.engine.util.NTxNodeRendererUtils;
 import net.thevpc.nuts.elem.NElement;
@@ -38,7 +35,6 @@ import java.awt.*;
 import java.awt.image.ImageObserver;
 import java.util.*;
 import java.util.List;
-import java.util.function.Consumer;
 
 
 public class DefaultNTxRendererContext extends NTxResolutionContextImpl implements NTxRendererContext {
@@ -69,7 +65,7 @@ public class DefaultNTxRendererContext extends NTxResolutionContextImpl implemen
                 null, null, document,
                 null,
                 null,
-                null);
+                null, null);
     }
 
     public DefaultNTxRendererContext(NTxCompiledPage page, NTxNode[] path, NTxEngine engine, NTxGraphics g, NTxBounds2D selfBounds, NTxBounds2D parentBounds, NTxBounds2D globalBound, NTxCompiledPage compiledPage,
@@ -80,8 +76,9 @@ public class DefaultNTxRendererContext extends NTxResolutionContextImpl implemen
                                      Map<String, NTxVar> vars,
                                      Map<String, NTxNodeDef> definitions,
                                      Map<String, NTxFunction> functions
+            , NTxResolutionContext parentContext
     ) {
-        super(path, element, def, true, engine, document, vars, definitions, functions);
+        super(path, element, def, true, engine, document, vars, definitions, functions, parentContext);
         setVar("selfBounds", () -> {
             NTxBounds2D nTxBounds2 = DefaultNTxRendererContext.this.selfBounds();
             return NTxUtils.toElement(nTxBounds2);
@@ -89,7 +86,6 @@ public class DefaultNTxRendererContext extends NTxResolutionContextImpl implemen
         this.page = page;
         this.selfBounds = selfBounds;
         this.parentBounds = parentBounds;
-//        this.parentBounds = new NTxBounds2(0, 0, parentBounds.getWidth(), parentBounds.getHeight());
         this.globalBound = globalBound;
         this.g3 = g;
         this.compiledPage = compiledPage;
@@ -107,11 +103,6 @@ public class DefaultNTxRendererContext extends NTxResolutionContextImpl implemen
     public NTxNodeBuilderContext buildContext() {
         return buildContext;
     }
-
-    //    public DefaultNTxNodeRendererContext(NTxNode node, NTxEngine engine, NTxGraphics g, NTxBounds2 selfBounds, Dimension parentBounds, NTxCompiledPage compiledPage, boolean someChange,
-//                                      long pageStartTime, Map<String, Object> capabilities, ImageObserver imageObserver, Runnable repainter) {
-//        this(node, engine, g, selfBounds, parentBounds, new NTxBounds2(0, 0, parentBounds.getWidth(), parentBounds.getHeight()), compiledPage, someChange, pageStartTime, capabilities,imageObserver,repainter);
-//    }
 
     public boolean isSomeChange() {
         return someChange;
@@ -160,19 +151,19 @@ public class DefaultNTxRendererContext extends NTxResolutionContextImpl implemen
 
     @Override
     public NTxRendererContext withDefaultStyles(NTxProperties defaultStyles) {
-        return copyAsRenderer(page, path, engine, g3, selfBounds, parentBounds, globalBound, compiledPage, someChange, pageStartTime, capabilities, imageObserver, repainter, defaultStyles, dry, buildContext, element, def, document, vars, definitions, functions);
+        return copyAsRenderer(page, path, engine, g3, selfBounds, parentBounds, globalBound, compiledPage, someChange, pageStartTime, capabilities, imageObserver, repainter, defaultStyles, dry, buildContext, element, def, document, vars, definitions, functions, parentContext);
     }
 
     @Override
     public NTxRendererContext withBuilderContext(NTxNodeBuilderContext builderContext) {
-        return copyAsRenderer(page, path, engine, g3, null, parentBounds == null ? selfBounds() : parentBounds, globalBound, compiledPage, someChange, pageStartTime, capabilities, imageObserver, repainter, defaultStyles, dry, builderContext, element, def, document, vars, definitions, functions);
+        return copyAsRenderer(page, path, engine, g3, null, parentBounds == null ? selfBounds() : parentBounds, globalBound, compiledPage, someChange, pageStartTime, capabilities, imageObserver, repainter, defaultStyles, dry, builderContext, element, def, document, vars, definitions, functions, parentContext);
     }
 
     @Override
     public NTxRendererContext resolveNode(NTxNode node, NTxBounds2D parentBounds) {
         List<NTxNode> all = new ArrayList<>(Arrays.asList(path));
         all.add(NAssert.requireNamedNonNull(node, "parent"));
-        return copyAsRenderer(page, all.toArray(new NTxNode[0]), engine, g3, null, parentBounds == null ? selfBounds() : parentBounds, globalBound, compiledPage, someChange, pageStartTime, capabilities, imageObserver, repainter, defaultStyles, dry, buildContext, element, def, document, vars, definitions, functions);
+        return copyAsRenderer(page, all.toArray(new NTxNode[0]), engine, g3, null, parentBounds == null ? selfBounds() : parentBounds, globalBound, compiledPage, someChange, pageStartTime, capabilities, imageObserver, repainter, defaultStyles, dry, buildContext, element, def, document, vars, definitions, functions, parentContext);
     }
 
 
@@ -193,7 +184,9 @@ public class DefaultNTxRendererContext extends NTxResolutionContextImpl implemen
 
     @Override
     public NTxRendererContext withNode(NTxNode node) {
-        return (NTxRendererContext) super.withNode(node);
+        DefaultNTxRendererContext n = (DefaultNTxRendererContext) super.withNode(node);
+        n.selfBounds=null;//just result cache
+        return n;
     }
 
     @Override
@@ -211,12 +204,12 @@ public class DefaultNTxRendererContext extends NTxResolutionContextImpl implemen
         if (parentBounds == null || Objects.equals(parentBounds, this.parentBounds)) {
             return this;
         }
-        return copyAsRenderer(page, path, engine, g3, selfBounds, parentBounds, globalBound, compiledPage, someChange, pageStartTime, capabilities, imageObserver, repainter, defaultStyles, dry, buildContext, element, def, document, vars, definitions, functions);
+        return copyAsRenderer(page, path, engine, g3, selfBounds, parentBounds, globalBound, compiledPage, someChange, pageStartTime, capabilities, imageObserver, repainter, defaultStyles, dry, buildContext, element, def, document, vars, definitions, functions, parentContext);
     }
 
     @Override
-    protected NTxResolutionContext copyAs(NTxNode[] path, NElement element, NTxNodeDef def, boolean isInPage, NTxEngine engine, NTxDocument document, Map<String, NTxVar> vars, Map<String, NTxNodeDef> definitions, Map<String, NTxFunction> functions) {
-        return copyAsRenderer(page, path, engine, g3, selfBounds, parentBounds, globalBound, compiledPage, someChange, pageStartTime, capabilities, imageObserver, repainter, defaultStyles, dry, buildContext, element, def, document, vars, definitions, functions);
+    protected NTxResolutionContext copyAs(NTxNode[] path, NElement element, NTxNodeDef def, boolean isInPage, NTxEngine engine, NTxDocument document, Map<String, NTxVar> vars, Map<String, NTxNodeDef> definitions, Map<String, NTxFunction> functions, NTxResolutionContext parentContext) {
+        return copyAsRenderer(page, path, engine, g3, selfBounds, parentBounds, globalBound, compiledPage, someChange, pageStartTime, capabilities, imageObserver, repainter, defaultStyles, dry, buildContext, element, def, document, vars, definitions, functions, parentContext);
     }
 
     @Override
@@ -224,7 +217,7 @@ public class DefaultNTxRendererContext extends NTxResolutionContextImpl implemen
         if (dry) {
             return this;
         }
-        return copyAsRenderer(page, path, engine, g3, selfBounds, parentBounds, globalBound, compiledPage, someChange, pageStartTime, capabilities, imageObserver, repainter, defaultStyles, true, buildContext, element, def, document, vars, definitions, functions);
+        return copyAsRenderer(page, path, engine, g3, selfBounds, parentBounds, globalBound, compiledPage, someChange, pageStartTime, capabilities, imageObserver, repainter, defaultStyles, true, buildContext, element, def, document, vars, definitions, functions, parentContext);
     }
 
     @Override
@@ -232,7 +225,7 @@ public class DefaultNTxRendererContext extends NTxResolutionContextImpl implemen
         if (graphics == null || graphics == g3) {
             return this;
         }
-        return copyAsRenderer(page, path, engine, graphics, selfBounds, parentBounds, globalBound, compiledPage, someChange, pageStartTime, capabilities, imageObserver, repainter, defaultStyles, dry, buildContext, element, def, document, vars, definitions, functions);
+        return copyAsRenderer(page, path, engine, graphics, selfBounds, parentBounds, globalBound, compiledPage, someChange, pageStartTime, capabilities, imageObserver, repainter, defaultStyles, dry, buildContext, element, def, document, vars, definitions, functions, parentContext);
     }
 
     @Override
@@ -258,7 +251,46 @@ public class DefaultNTxRendererContext extends NTxResolutionContextImpl implemen
 
     @Override
     public void renderDetachedNode(NElement childNode, NTxBounds2D relativeBounds) {
-        renderDetachedNode((NTxNode) newDetachedNode(childNode).get(), relativeBounds);
+        DefaultNTxRendererContext context=this;
+        engine().parseNode(childNode,
+                this.withElement(childNode), n->{
+                    if (!n.isPresent()) {
+                        messages().log(NMsg.ofC("unable to compile detached node '%s'", childNode).asWarning(), NTxUtils.sourceOf(node));
+                    } else {
+                        new DispatchCompileNodeVisitor(new CompileNodeVisitor() {
+                            @Override
+                            public void visitNode(NTxNode node, NTxResolutionContext context) {
+                                renderDetachedNode(node, relativeBounds);
+                            }
+
+                            @Override
+                            public void visitRule(NTxStyleRule a, NTxResolutionContext context) {
+                                messages().log(NMsg.ofC("unable to compile detached rule '%s'", a).asWarning(), NTxUtils.sourceOf(node));
+                            }
+
+                            @Override
+                            public void visitDefinition(NTxNodeDef a, NTxResolutionContext context) {
+                                messages().log(NMsg.ofC("unable to compile detached definition '%s'", a).asWarning(), NTxUtils.sourceOf(node));
+                            }
+
+                            @Override
+                            public void visitFunction(NTxFunction a, NTxResolutionContext context) {
+                                messages().log(NMsg.ofC("unable to compile detached function '%s'", a).asWarning(), NTxUtils.sourceOf(node));
+                            }
+
+                            @Override
+                            public void visitProperty(NTxProp a, NTxResolutionContext context) {
+                                messages().log(NMsg.ofC("unable to compile detached property '%s'", a).asWarning(), NTxUtils.sourceOf(node));
+                            }
+
+                            @Override
+                            public void visitVar(String varName, NTxVar nTxVar, NTxResolutionContext context) {
+                                messages().log(NMsg.ofC("unable to compile detached var '%s'", varName).asWarning(), NTxUtils.sourceOf(node));
+                            }
+                        }).visitItem(n.get(), context);
+                    }
+                }
+        );
     }
 
     @Override
@@ -276,23 +308,13 @@ public class DefaultNTxRendererContext extends NTxResolutionContextImpl implemen
             List<NTxNode> all = new ArrayList<>(Arrays.asList(path));
             all.add(NAssert.requireNamedNonNull(childNode, "parent"));
             NTxRendererContext d2 = copyAsRenderer(page, all.toArray(new NTxNode[0]), engine(), graphics(), sb, pb, getGlobalBounds(), compiledPage(),
-                    isSomeChange(), pageStartTime(), capabilities, imageObserver, repainter, null, false, buildContext, element, def, document, vars, definitions, functions);
+                    isSomeChange(), pageStartTime(), capabilities, imageObserver, repainter, null, false, buildContext, element, def, document, vars, definitions, functions, parentContext);
             renderer.get().render(d2);
         } else {
             engine().log().log(NMsg.ofC("%s for %s", renderer.getMessage().get(), NTxUtils.snippet(childNode)).asError(), NTxUtils.sourceOf(node()));
         }
     }
 
-    public NOptional<NTxItem> newDetachedNode(NElement element) {
-        DefaultNTxNodeFactoryParseContext r = new DefaultNTxNodeFactoryParseContext(
-                page.document().compiledDocument(),
-                null,
-                engine(),
-                new ArrayList<>(Arrays.asList(node())),
-                node().source()
-        );
-        return engine().newNode(element, this.withElement(element));
-    }
 
     @Override
     public NOptional<Paint> getColorProperty(String propName) {
@@ -685,13 +707,14 @@ public class DefaultNTxRendererContext extends NTxResolutionContextImpl implemen
                                                 Map<String, NTxVar> vars,
                                                 Map<String, NTxNodeDef> definitions,
                                                 Map<String, NTxFunction> functions
+            , NTxResolutionContext parentContext
     ) {
         return new DefaultNTxRendererContext(
                 page, path, engine, g, selfBounds, parentBounds, globalBound, compiledPage,
                 someChange, pageStartTime, capabilities, imageObserver, repainter,
                 defaultStyles, dry,
                 buildContext,
-                element, def, document, vars, definitions, functions
+                element, def, document, vars, definitions, functions, parentContext
         );
     }
 }
