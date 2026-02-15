@@ -77,7 +77,7 @@
       "patterns": [
         {
           "name": "keyword.control.ntexup",
-          "match": "\\b(page|page-group|import|include|if|else|true|false|styles|template|ntexup|json|xml|yaml|tson|arrayLeftRotate|arrayRightRotate|componentBody|either|eitherPath|rotateSinebowColor|lighterColor|darkerColor)\\b"
+          "match": "\\b(page|page-group|import|include|if|else|true|false|styles|template|ntexup|json|xml|yaml|tson|arrayLeftRotate|arrayRightRotate|body|either|eitherPath|rotateSinebowColor|lighterColor|darkerColor)\\b"
         }
       ]
     },
