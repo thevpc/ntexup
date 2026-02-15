@@ -3,8 +3,37 @@ package net.thevpc.ntexup.api.document.node;
 public class NTxNodeType {
     public static final String PAGE_GROUP="page-group";
     public static final String PAGE="page";
+
+    /**
+     * A transparent aggregator that provides no logical isolation.
+     * * <p>Fragments are purely organizational. They do not create a new
+     * {@code NTxResolutionContext}; instead, they operate directly on the
+     * parent's scope. Upon compilation, the fragment "dissolves," and its
+     * children are inflated directly into the parent container.</p>
+     * * <b>Behavior:</b> No Context / Inflates into Parent.
+     */
     public static final String FRAGMENT ="fragment";
+
+    /**
+     * A structural unit that provides both logical and layout isolation.
+     * * <p>Groups create a new child {@code NTxResolutionContext}, protecting
+     * the parent scope from internal assignments. Unlike blocks or fragments,
+     * a group is a permanent node in the render tree, often serving as a
+     * coordinate system or layout container for its children.</p>
+     * * <b>Behavior:</b> Creates Context / Retained as Unit.
+     */
     public static final String GROUP ="group";
+
+    /**
+     * A logical scope boundary that is transparent to the render tree.
+     * * <p>Blocks are used for lexical isolation. They create a new child
+     * {@code NTxResolutionContext} for internal logic and variable safety,
+     * but the block node itself is removed during compilation. Its
+     * processed children are then inflated into the parent container.</p>
+     * * <b>Behavior:</b> Creates Context / Inflates into Parent.
+     */
+    public static final String BLOCK ="block";
+
     public static final String FLOW="flow";
     public static final String GRID="grid";
     public static final String ROW="row";
