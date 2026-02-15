@@ -24,6 +24,9 @@ public class NTxFunctionInvertColor implements NTxFunction {
             context.log().log(NMsg.ofC("%s: expected 1 argument, got %s",NMsg.ofStyledKeyword(name()), args.size()));
         }
         Color c = NTxValue.of(args.eval(0)).asColor().get();
+        if(c==null){
+            return NElement.ofNull();
+        }
         return NTxElementUtils.toElement(NTxColorUtils.invert(c));
     }
 }
