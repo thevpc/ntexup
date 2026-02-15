@@ -9,11 +9,10 @@ import java.util.function.Supplier;
 
 public class NTxNodePanel extends NTxTsonPanel {
     private Supplier<NTxNode> model;
-    private NTxEngine engine;
 
-    public NTxNodePanel(NTxEngine engine, Supplier<NTxNode> model) {
+    public NTxNodePanel(String name,NTxEngine engine, Supplier<NTxNode> model) {
+        super(name,engine);
         this.model = model;
-        this.engine = engine;
     }
 
     @Override
