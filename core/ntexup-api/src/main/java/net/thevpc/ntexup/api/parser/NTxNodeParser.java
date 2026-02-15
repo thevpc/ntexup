@@ -18,7 +18,9 @@ public interface NTxNodeParser {
 
     NScoredCallable<NTxItem> parseNode(NTxResolutionContext context);
 
-    NElement toElem(NTxNode item,NTxEngine engine);
+    void compileNode(NTxNode node, NTxResolutionContext context);
+
+    NElement toElem(NTxNode item, NTxEngine engine);
 
     NTxNode newNode();
 
