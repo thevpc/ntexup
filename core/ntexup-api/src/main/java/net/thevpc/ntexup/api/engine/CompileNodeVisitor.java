@@ -5,6 +5,7 @@ import net.thevpc.ntexup.api.document.node.NTxNodeDef;
 import net.thevpc.ntexup.api.document.style.NTxProp;
 import net.thevpc.ntexup.api.document.style.NTxStyleRule;
 import net.thevpc.ntexup.api.eval.NTxResolutionContext;
+import net.thevpc.ntexup.api.eval.NTxVar;
 import net.thevpc.ntexup.api.extension.NTxFunction;
 
 public interface CompileNodeVisitor {
@@ -17,4 +18,6 @@ public interface CompileNodeVisitor {
     void visitFunction(NTxFunction a, NTxResolutionContext context);
 
     void visitProperty(NTxProp a, NTxResolutionContext context);
+
+    void visitVar(String varName, NTxVar nTxVar, NTxResolutionContext context);
 }
