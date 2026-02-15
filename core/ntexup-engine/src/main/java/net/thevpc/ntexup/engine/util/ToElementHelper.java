@@ -1,11 +1,13 @@
 package net.thevpc.ntexup.engine.util;
 
+import net.thevpc.ntexup.api.document.node.NTxNodeType;
 import net.thevpc.ntexup.api.document.style.NTxProp;
 import net.thevpc.ntexup.api.document.style.NTxPropName;
 import net.thevpc.ntexup.api.document.style.NTxStyleRule;
 import net.thevpc.ntexup.api.engine.NTxEngine;
 import net.thevpc.ntexup.api.document.node.NTxNode;
 import net.thevpc.ntexup.api.eval.NTxValue;
+import net.thevpc.ntexup.api.parser.NTxNodeParser;
 import net.thevpc.ntexup.api.util.NTxUtils;
 import net.thevpc.nuts.elem.*;
 import net.thevpc.nuts.util.NBlankable;
@@ -64,9 +66,7 @@ public class ToElementHelper {
             }
             ch.addAll(children);
             for (NTxNode child : node.children()) {
-                ch.add(
-                        engine.nodeTypeParser(child.type()).get().toElem(child,engine)
-                );
+                ch.add(defaultToElement(child));
             }
             NObjectElementBuilder u = NElement.ofObjectBuilder(name).addParams(args2).addAll(ch);
             applyAnnotations(u);
@@ -76,6 +76,34 @@ public class ToElementHelper {
             applyAnnotations(u);
             return u.build();
         }
+    }
+    private NElement defaultToElement(NTxNode child){
+        NOptional<NTxNodeParser> p = engine.nodeTypeParser(child.type());
+        if(p.isPresent()){
+            return p.get().toElem(child, engine);
+        }
+        NElement raw = child.getRaw();
+        switch (NTxUtils.uid(child.type())){
+            case NTxNodeType.CTRL_DEFINE:{
+                return raw ==null?NElement.ofNamedUplet("define"): raw;
+            }
+            case NTxNodeType.BLOCK:{
+                return NElement.ofNamedObject("block",
+                        child.children().stream().map(x->defaultToElement(x)).toArray(NElement[]::new)
+                        );
+            }
+            case NTxNodeType.FRAGMENT:{
+                return NElement.ofNamedObject("fragment",
+                        child.children().stream().map(x->defaultToElement(x)).toArray(NElement[]::new)
+                        );
+            }
+            case NTxNodeType.CTRL_UNCOMPILED:{
+                return NElement.ofNamedObject("uncompiled",
+                        child.getRaw()
+                        );
+            }
+        }
+        return raw ==null?NElement.ofNamedUplet("unknown"): raw;
     }
 
     private void applyAnnotations(NElementBuilder u) {
