@@ -29,6 +29,9 @@ public class NTxFunctionRotateHueColor implements NTxFunction {
             context.log().log(NMsg.ofC("%s: expected 2 arguments, got %s", NMsg.ofStyledKeyword(name()), args.size()));
         }
         Color c = NTxValue.of(args.eval(0)).asColor().get();
+        if(c==null){
+            return NElement.ofNull();
+        }
         float degrees = NTxValue.of(args.eval(1)).asFloat().get();
         return NTxElementUtils.toElement(NTxColorUtils.rotateHue(c, degrees));
     }
