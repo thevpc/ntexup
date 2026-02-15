@@ -57,6 +57,7 @@ public interface NTxNodeBuilderContext {
     NTxNodeBuilderContext afterParsingAllParams(ProcessNodeAction e);
 
     NTxNodeBuilderContext processChildren(ProcessNodeAction e);
+    NTxNodeBuilderContext compileNode(CompileNodeAction e);
 
     NTxLogger log();
     NTxEngine engine();
@@ -176,5 +177,8 @@ public interface NTxNodeBuilderContext {
 
     interface ProcessNodeAction {
         void processNode(NTxAllArgumentReader info, NTxNodeBuilderContext buildContext);
+    }
+    interface CompileNodeAction {
+        void compileNode(NTxNode node, NTxResolutionContext context);
     }
 }
