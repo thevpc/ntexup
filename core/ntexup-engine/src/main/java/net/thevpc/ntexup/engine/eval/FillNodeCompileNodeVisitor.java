@@ -6,7 +6,9 @@ import net.thevpc.ntexup.api.document.style.NTxProp;
 import net.thevpc.ntexup.api.document.style.NTxStyleRule;
 import net.thevpc.ntexup.api.engine.CompileNodeVisitor;
 import net.thevpc.ntexup.api.eval.NTxResolutionContext;
+import net.thevpc.ntexup.api.eval.NTxVar;
 import net.thevpc.ntexup.api.extension.NTxFunction;
+import net.thevpc.ntexup.engine.document.DefaultNTxNode;
 
 public class FillNodeCompileNodeVisitor implements CompileNodeVisitor {
     private final NTxNode root;
@@ -33,6 +35,11 @@ public class FillNodeCompileNodeVisitor implements CompileNodeVisitor {
     @Override
     public void visitFunction(NTxFunction a, NTxResolutionContext context) {
         throw new IllegalArgumentException("unsupported");
+    }
+
+    @Override
+    public void visitVar(String varName, NTxVar nTxVar, NTxResolutionContext context) {
+        visitNode(DefaultNTxNode.ofAssign(varName,nTxVar.get(),context.source()),context);
     }
 
     @Override
