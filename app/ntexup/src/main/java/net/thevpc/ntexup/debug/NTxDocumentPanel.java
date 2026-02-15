@@ -9,13 +9,10 @@ import java.util.function.Supplier;
 
 public class NTxDocumentPanel extends NTxTsonPanel {
     private Supplier<NTxDocument> model;
-    private NTxEngine engine;
-    private NTxLogger logger;
 
-    public NTxDocumentPanel(NTxEngine engine, Supplier<NTxDocument> model, NTxLogger logger) {
+    public NTxDocumentPanel(String name,NTxEngine engine, Supplier<NTxDocument> model) {
+        super(name,engine);
         this.model = model;
-        this.engine = engine;
-        this.logger = logger;
     }
 
     @Override
