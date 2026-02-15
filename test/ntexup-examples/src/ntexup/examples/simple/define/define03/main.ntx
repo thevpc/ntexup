@@ -1,0 +1,5 @@
+@define my-custom(str){
+    text(value:str,font-size:20,at:left)
+}
+
+my-custom(str:"Hello")
