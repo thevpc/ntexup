@@ -1,0 +1,9 @@
+@define my-custom(str){
+    text(value:str,font-size:20,at:left)
+    //image(str,font-size:20)
+    page{
+        text(value:str,font-size:20,at:right)
+    }
+}
+
+my-custom(str:"Hello")
