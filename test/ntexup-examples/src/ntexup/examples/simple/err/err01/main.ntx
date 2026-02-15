@@ -85,7 +85,7 @@ documentColors:=arrayLeftRotate(["#26355D","#AF47D2","#DE3163","#1d8147","#FF8F0
                 if(themeShowPalette){
                     Palette()
                 }
-                componentBody
+                body
             }
         }
 
@@ -113,7 +113,7 @@ documentColors:=arrayLeftRotate(["#26355D","#AF47D2","#DE3163","#1d8147","#FF8F0
                     stroke:zigzag(amplitude:5,wavelength:5,basic(width:4))
                 )
                 image("images/error.png", position:(95,-40),size:(10,80))
-                componentBody
+                body
             }
         }
     //    @define HintWarning{
@@ -183,7 +183,7 @@ documentColors:=arrayLeftRotate(["#26355D","#AF47D2","#DE3163","#1d8147","#FF8F0
                         foreground-color:dark-gray
                     }
                 }
-                componentBody
+                body
             }
         }
         @define body2a{
@@ -199,7 +199,7 @@ documentColors:=arrayLeftRotate(["#26355D","#AF47D2","#DE3163","#1d8147","#FF8F0
                         foreground-color:dark-gray
                     }
                 }
-                componentBody
+                body
             }
         }
         @define body2b{
@@ -216,7 +216,7 @@ documentColors:=arrayLeftRotate(["#26355D","#AF47D2","#DE3163","#1d8147","#FF8F0
                         foreground-color:dark-gray
                     }
                 }
-                componentBody
+                body
             }
         }
         @define body3a{
@@ -233,7 +233,7 @@ documentColors:=arrayLeftRotate(["#26355D","#AF47D2","#DE3163","#1d8147","#FF8F0
                         foreground-color:dark-gray
                     }
                 }
-                componentBody
+                body
             }
         }
         @define body3b{
@@ -250,7 +250,7 @@ documentColors:=arrayLeftRotate(["#26355D","#AF47D2","#DE3163","#1d8147","#FF8F0
                         foreground-color:dark-gray
                     }
                 }
-                componentBody
+                body
             }
         }
         @define body3c{
@@ -266,7 +266,7 @@ documentColors:=arrayLeftRotate(["#26355D","#AF47D2","#DE3163","#1d8147","#FF8F0
                         foreground-color:dark-gray
                     }
                 }
-                componentBody
+                body
             }
         }
        rectangle(
@@ -275,19 +275,19 @@ documentColors:=arrayLeftRotate(["#26355D","#AF47D2","#DE3163","#1d8147","#FF8F0
         header {
             text("${title}"),
         }
-        componentBody
+        body
     }
 }
 
 @define miniPage{
     group(background:white,draw-contour){
-        componentBody
+        body
     }
 }
 
 @define miniCode{
     group(background:Gray89,draw-contour,margin:5){
-        componentBody
+        body
     }
 }
 
