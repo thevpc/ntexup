@@ -23,7 +23,7 @@ syn match ntexupSymbol "[:(){}\[\];,+\-*/=<>!|&]"
 syn keyword ntexupKwd1 page page-group import include if else true false
 syn keyword ntexupKwd1 styles template ntexup json xml yaml tson
 syn keyword ntexupKwd1 arrayLeftRotate arrayRightRotate
-syn keyword ntexupKwd1 componentBody either eitherPath
+syn keyword ntexupKwd1 body either eitherPath
 syn keyword ntexupKwd1 rotateSinebowColor lighterColor darkerColor
 
 " Keywords2 (drawing primitives)
