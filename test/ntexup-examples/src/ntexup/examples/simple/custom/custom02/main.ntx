@@ -1,6 +1,0 @@
-@define my-custom(str){
-    text(str,font-size:20)
-    image(str,font-size:20)
-}
-
-my-custom(str:"Hello")
