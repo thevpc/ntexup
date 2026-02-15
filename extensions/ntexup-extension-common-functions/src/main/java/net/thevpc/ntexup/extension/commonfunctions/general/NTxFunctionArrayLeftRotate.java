@@ -7,6 +7,7 @@ import net.thevpc.nuts.elem.NElement;
 import net.thevpc.nuts.text.NMsg;
 import net.thevpc.nuts.util.NOptional;
 
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -20,33 +21,17 @@ public class NTxFunctionArrayLeftRotate implements NTxFunction {
 
     @Override
     public NElement invoke(NTxFunctionArgs args, NTxResolutionContext context) {
-        if (args.size() == 0) {
+        if (args.checkTooFewArgs(1)) {
             return NElement.ofNull();
         }
-        if (args.size() == 1) {
-            return args.eval(0);
+        args.checkTooManyArgs(2);
+        NElement[] c = args.eval(0, x -> NTxValue.of(x).asElementArray(), "array", null);
+        if (c == null || c.length == 0) {
+            return NElement.ofNull();
         }
-        if (args.size() > 2) {
-            context.log().log(NMsg.ofC("%s: expected 2 arguments, got %s", NMsg.ofStyledKeyword(name()), args.size()));
-        }
-        NElement ue0 = args.eval(0);
-        NOptional<NElement[]> uv0 = NTxValue.of(ue0).asElementArray();
-        if (!uv0.isPresent()) {
-            context.log().log(NMsg.ofC("unable to call %s, first arg '%s' is not a color array", NMsg.ofStyledKeyword(name()), NTxUtils.snippet(ue0)));
-            return ue0;
-        }
-
-        NElement ue1 = args.eval(1);
-        NOptional<Number> uv1 = NTxValue.of(ue1).asNumber();
-        if (!uv1.isPresent()) {
-            context.log().log(NMsg.ofC("unable to call %s, second arg '%s' is not a number", NMsg.ofStyledKeyword(name()), NTxUtils.snippet(ue1)));
-            return ue0;
-        }
-        if (uv0.get().length == 0) {
-            return ue0;
-        }
-        List<NElement> list = new ArrayList<>(Arrays.asList(uv0.get()));
-        Collections.rotate(list, -uv1.get().intValue());
+        Number n = args.size() == 1 ? 1 : args.eval(1, x -> NTxValue.of(x).asNumber(), "number", () -> 1);
+        List<NElement> list = new ArrayList<>(Arrays.asList(c));
+        Collections.rotate(list, -n.intValue());
         return NElement.ofArray(list.toArray(new NElement[0]));
     }
 }
