@@ -15,8 +15,12 @@ public class NTxFunctionEither implements NTxFunction {
 
     @Override
     public NElement invoke(NTxFunctionArgs args, NTxResolutionContext context) {
-        for (NTxFunctionArg arg : args.args()) {
-            NElement u = arg.eval();
+        for (int i = 0; i < args.size(); i++) {
+            NElement u = args.eval(i);
+            if (i < args.size() - 1 && u.isName() && u.equals(args.arg(i).src())) {
+                // this is a var that could not be resolved, just skip
+                continue;
+            }
             if (!NBlankable.isBlank(u)) {
                 return u;
             }
