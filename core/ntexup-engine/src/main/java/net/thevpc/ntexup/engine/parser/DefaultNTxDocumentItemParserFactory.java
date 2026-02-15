@@ -134,6 +134,23 @@ public class DefaultNTxDocumentItemParserFactory
     }
 
     private NScoredCallable<NTxItem> parseNodeAsNamedListContainer(NElement c, NTxResolutionContext context) {
+        String name = NTxUtils.uid(c.asNamed().get().name().get());
+        switch (name){
+            case NTxNodeType.PAGE_GROUP:
+            case NTxNodeType.PAGE:
+            case NTxNodeType.GROUP:
+            case NTxNodeType.FRAGMENT:
+            case NTxNodeType.BLOCK:
+            case NTxNodeType.CTRL_FOR:
+            case NTxNodeType.CTRL_IF:
+            case NTxNodeType.CTRL_INCLUDE:
+            case NTxNodeType.CTRL_IMPORT:
+            {
+                NTxNodeParser p = context.engine().nodeTypeParser(name).orNull();
+                return p.parseNode(context);
+            }
+        }
+
         NTxValue ee = NTxValue.of(c);
         String uid = NTxUtils.uid(ee.name());
         if(context.inPage()){
@@ -141,17 +158,18 @@ public class DefaultNTxDocumentItemParserFactory
             if (p != null) {
                 return p.parseNode(context);
             }
-            if (c.isNamedUplet() || c.isAnyObject()) {
-                NElement finalC2 = c;
-                return NScoredCallable.ofValid(() -> createCtrlNodeCall(finalC2, context));
-            }
-            return _invalidSupport(NMsg.ofC("[%s] unable to resolve node : %s", NTxUtils.shortName(context.source()), NTxUtils.snippet(c)), context);
         }
-        //just do not compile if still not in page mode!!!
-        if(context.node() instanceof CtrNTxNodelUncompiled && context.node().getRaw()==c){
-            return NScoredCallable.ofValid(context.node());
+        if (c.isNamedUplet() || c.isAnyObject()) {
+            NElement finalC2 = c;
+            return NScoredCallable.ofValid(() -> createCtrlNodeCall(finalC2, context));
         }
-        return NScoredCallable.ofValid(new CtrNTxNodelUncompiled(c, context.source()));
+        return _invalidSupport(NMsg.ofC("[%s] unable to resolve node : %s", NTxUtils.shortName(context.source()), NTxUtils.snippet(c)), context);
+
+//        //just do not compile if still not in page mode!!!
+//        if(context.node() instanceof CtrNTxNodelUncompiled && context.node().getRaw()==c){
+//            return NScoredCallable.ofValid(context.node());
+//        }
+//        return NScoredCallable.ofValid(new CtrNTxNodelUncompiled(c, context.source()));
     }
 
     private NScoredCallable<NTxItem> parseNodeAsUplet(NTxResolutionContext context) {
@@ -203,13 +221,15 @@ public class DefaultNTxDocumentItemParserFactory
                 }
                 DefaultNTxNode bodyContainer = new DefaultNTxNode(NTxNodeType.GROUP);
                 bodyContainer.addAll(defBody.toArray(new NTxItem[0]));
-                return new NTxNodeDefImpl(
+                NTxNodeDefImpl d = new NTxNodeDefImpl(
                         context.parent(),
                         templateName,
                         params.toArray(new NTxNodeDefParam[0]),
                         bodyContainer,
                         source
                 );
+                d.setRaw(c);
+                return d;
             });
         } else {
             return _invalidSupport(NMsg.ofC("invalid defineNode syntax, expected @define <NAME>(...){....}"), context);
