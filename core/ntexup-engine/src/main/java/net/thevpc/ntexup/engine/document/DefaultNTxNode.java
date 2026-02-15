@@ -30,6 +30,7 @@ public class DefaultNTxNode implements NTxNode {
     private List<NTxNode> children = new ArrayList<>();
     private List<NTxStyleRule> styleRules = new ArrayList<>();
     private NTxNodeDef templateDefinition;
+    public boolean compiling;
 
     public static DefaultNTxNode ofText(String message) {
         DefaultNTxNode t = new DefaultNTxNode(NTxNodeType.TEXT);
@@ -77,6 +78,11 @@ public class DefaultNTxNode implements NTxNode {
 
     public static DefaultNTxNode ofFragment() {
         DefaultNTxNode t = new DefaultNTxNode(NTxNodeType.FRAGMENT);
+        return t;
+    }
+
+    public static DefaultNTxNode ofBlock() {
+        DefaultNTxNode t = new DefaultNTxNode(NTxNodeType.BLOCK);
         return t;
     }
 
