@@ -41,7 +41,7 @@ class CustomNTxNodeParserFromBuilder extends NTxNodeParserBase {
                     .addChildrenByName(ctx.knownArgNames.toArray(new String[0]))
                     .build();
         }
-        return super.toElem(item,engine);
+        return super.toElem(item, engine);
     }
 
     @Override
@@ -144,6 +144,18 @@ class CustomNTxNodeParserFromBuilder extends NTxNodeParserBase {
             for (NTxNodeBuilderContext.ProcessNodeAction a : ctx.afterProcessAllArgumentsList) {
                 a.processNode(info, ctx);
             }
+        }
+    }
+
+    @Override
+    public void compileNode(NTxNode node, NTxResolutionContext context) {
+        if (ctx.compileNodeAction != null) {
+            ctx.compileNodeAction.compileNode(node, context);
+        }else{
+            //default compile
+            NTxEngine engine = context.engine();
+            engine.defaultCompileNodeProperties(node,context);
+            engine.defaultCompileNodeChildren(node,context);
         }
     }
 }
