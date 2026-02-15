@@ -1,6 +1,7 @@
 package net.thevpc.ntexup.engine.parser.nodeparsers;
 
 import net.thevpc.ntexup.api.document.node.NTxItem;
+import net.thevpc.ntexup.api.document.node.NTxNode;
 import net.thevpc.ntexup.api.document.node.NTxNodeType;
 import net.thevpc.ntexup.api.eval.NTxResolutionContext;
 import net.thevpc.ntexup.api.util.NTxUtils;
@@ -32,6 +33,11 @@ public class ImportSpecialParser extends NTxNodeParserBase {
         return NScoredCallable.ofInvalid(NMsg.ofC("missing import from %s", NTxUtils.snippet(tsonElement)).asError());
     }
 
+
+    @Override
+    public void compileNode(NTxNode node, NTxResolutionContext context) {
+
+    }
 
 
 }
