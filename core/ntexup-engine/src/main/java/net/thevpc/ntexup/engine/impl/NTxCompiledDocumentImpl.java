@@ -2,17 +2,20 @@ package net.thevpc.ntexup.engine.impl;
 
 import net.thevpc.ntexup.api.document.NTxDocument;
 import net.thevpc.ntexup.api.document.node.NTxNode;
+import net.thevpc.ntexup.api.document.node.NTxNodeDef;
 import net.thevpc.ntexup.api.document.node.NTxNodeType;
+import net.thevpc.ntexup.api.document.style.NTxProp;
+import net.thevpc.ntexup.api.document.style.NTxStyleRule;
+import net.thevpc.ntexup.api.engine.CompileNodeVisitor;
 import net.thevpc.ntexup.api.engine.NTxCompiledDocument;
 import net.thevpc.ntexup.api.engine.NTxCompiledPage;
 import net.thevpc.ntexup.api.engine.NTxEngine;
 import net.thevpc.ntexup.api.eval.NTxResolutionContext;
+import net.thevpc.ntexup.api.eval.NTxVar;
+import net.thevpc.ntexup.api.extension.NTxFunction;
 import net.thevpc.ntexup.api.source.NTxSource;
-import net.thevpc.ntexup.engine.parser.resources.NTxSourceNew;
 import net.thevpc.nuts.text.NMsg;
 import net.thevpc.nuts.util.NCollections;
-import net.thevpc.nuts.util.NIllegalArgumentException;
-import net.thevpc.nuts.util.NUtils;
 
 import java.util.*;
 
@@ -20,17 +23,18 @@ public class NTxCompiledDocumentImpl implements NTxCompiledDocument {
     private NTxDocument rawDocument;
     private NTxDocument document;
     private NTxEngine engine;
-    private List<NTxCompiledPage> compiledPages=new ArrayList<>();
+    private List<NTxCompiledPage> compiledPages = new ArrayList<>();
     private Throwable currentThrowable;
-    private Deque<NTxNodeAndContext> unparsed=new ArrayDeque<>();
-    private List<NTxNodeAndContext> trailingInstrs=new ArrayList<>();
+    private Deque<NTxNodeAndContext> unparsed = new ArrayDeque<>();
+    private List<NTxNodeAndContext> trailingInstrs = new ArrayList<>();
+
     public NTxCompiledDocumentImpl(NTxDocument rawDocument, NTxEngine engine) {
         this.rawDocument = rawDocument;
         this.engine = engine;
     }
 
     @Override
-    public NTxSource source(){
+    public NTxSource source() {
         return rawDocument.source();
     }
 
@@ -39,7 +43,7 @@ public class NTxCompiledDocumentImpl implements NTxCompiledDocument {
         if (document == null) {
             try {
                 document = engine.compileDocument(rawDocument.copy()).get();
-                unparsed.push(new NTxNodeAndContext(document.root(),null));
+                unparsed.push(new NTxNodeAndContext(document.root(), null));
             } catch (Exception ex) {
                 engine.log().log(NMsg.ofC("compile document failed %s", ex));
                 this.currentThrowable = ex;
@@ -88,14 +92,15 @@ public class NTxCompiledDocumentImpl implements NTxCompiledDocument {
     @Override
     public Iterator<NTxCompiledPage> pagesIterator() {
         return new Iterator<NTxCompiledPage>() {
-            int index=0;
+            int index = 0;
+
             @Override
             public boolean hasNext() {
-                while(true) {
+                while (true) {
                     if (index < compiledPages.size()) {
                         return true;
                     } else {
-                        if(!readMore()){
+                        if (!readMore()) {
                             return false;
                         }
                     }
@@ -111,76 +116,193 @@ public class NTxCompiledDocumentImpl implements NTxCompiledDocument {
         };
     }
 
+    private static class PendingAutoPage {
+        NTxNode newPage;
+        public NTxResolutionContext context;
+    }
+
     private boolean readMore() {
-        List<NTxNodeAndContext> pendingInstr=new ArrayList<>();
-        while(!unparsed.isEmpty()){
+        List<NTxNodeAndContext> pendingInstr = new ArrayList<>();
+        PendingAutoPage pendingAutoPage = null;
+        MyNTxPageCompileListener onCompile = new MyNTxPageCompileListener();
+        while (!unparsed.isEmpty()) {
             NTxNodeAndContext part = unparsed.pop();
+            if (part.node.isDisabled()) {
+                continue;
+            }
             switch (part.node.type()) {
                 case NTxNodeType.PAGE: {
-                    NTxNode p = part.node;
-                    if (!p.isDisabled()) {
-                        NTxResolutionContext c = engine.newContext(part.node, document, part.context);
-                        compiledPages.add(new NTxCompiledPageImpl(p, this, compiledPages.size(), c, pendingInstr, new NTxPageCompileListener() {
-                            @Override
-                            public void onBeforeCompile(NTxCompiledPage a) {
-                                onBeforeCompileImpl(a);
-                            }
-
-                            @Override
-                            public void onAfterCompile(NTxCompiledPage a) {
-                                onAfterCompileImpl(a);
-                            }
-                        }));
+                    if (pendingAutoPage != null) {
+                        compiledPages.add(new NTxCompiledPageImpl(pendingAutoPage.newPage, this, compiledPages.size(), pendingAutoPage.context, pendingInstr, onCompile));
                         pendingInstr.clear();
-                        return true;
+                        pendingAutoPage = null;
                     }
-                    break;
+                    compiledPages.add(new NTxCompiledPageImpl(part.node, this, compiledPages.size(), part.context, pendingInstr, onCompile));
+                    pendingInstr.clear();
+                    return true;
                 }
                 case NTxNodeType.CTRL_ASSIGN:
-                case NTxNodeType.CTRL_DEFINE:
-                {
+                case NTxNodeType.CTRL_DEFINE: {
+                    if (pendingAutoPage != null) {
+                        compiledPages.add(new NTxCompiledPageImpl(pendingAutoPage.newPage, this, compiledPages.size(), pendingAutoPage.context, pendingInstr, onCompile));
+                        pendingInstr.clear();
+                        pendingAutoPage = null;
+                    }
                     pendingInstr.add(part);
                     break;
                 }
-                case NTxNodeType.PAGE_GROUP:
-                case NTxNodeType.GROUP: {
-                    if (!part.node.isDisabled()) {
-                        NTxResolutionContext c = engine.newContext(part.node, document, part.context);
-                        List<NTxNode> children = part.node.children();
-                        for (int i = children.size() - 1; i >= 0; i--) {
-                            unparsed.push(new NTxNodeAndContext(children.get(i),c));
+                case NTxNodeType.PAGE_GROUP: {
+                    if (pendingAutoPage != null) {
+                        compiledPages.add(new NTxCompiledPageImpl(pendingAutoPage.newPage, this, compiledPages.size(), pendingAutoPage.context, pendingInstr, onCompile));
+                        pendingInstr.clear();
+                        pendingAutoPage = null;
+                    }
+                    NTxResolutionContext c = engine.newContext(part.node, document, part.context);
+                    List<NTxNode> children = part.node.children();
+                    for (int i = children.size() - 1; i >= 0; i--) {
+                        unparsed.push(new NTxNodeAndContext(children.get(i), c));
+                    }
+                    break;
+                }
+                case NTxNodeType.BLOCK: {
+                    NTxResolutionContext c = engine.newContext(part.node, document, part.context);
+                    List<NTxNode> children = part.node.children();
+                    for (int i = children.size() - 1; i >= 0; i--) {
+                        unparsed.push(new NTxNodeAndContext(children.get(i), c));
+                    }
+                    break;
+                }
+                case NTxNodeType.FRAGMENT: {
+                    NTxResolutionContext c = part.context;
+                    List<NTxNode> children = part.node.children();
+                    for (int i = children.size() - 1; i >= 0; i--) {
+                        unparsed.push(new NTxNodeAndContext(children.get(i), c));
+                    }
+                    break;
+                }
+                case NTxNodeType.CTRL_CALL: {
+                    if(part.context.inPage()){
+                        if (pendingAutoPage == null) {
+                            pendingAutoPage = new PendingAutoPage();
+                            pendingAutoPage.context = part.context;
+                            pendingAutoPage.newPage = engine.documentFactory().ofPage();
+                            pendingAutoPage.newPage.setSource(part.node.source());
+                            pendingAutoPage.newPage.addChild(part.node);
+                        } else if (pendingAutoPage.context != part.context) {
+                            compiledPages.add(new NTxCompiledPageImpl(pendingAutoPage.newPage, this, compiledPages.size(), pendingAutoPage.context, pendingInstr, onCompile));
+                            pendingInstr.clear();
+
+                            pendingAutoPage = new PendingAutoPage();
+                            pendingAutoPage.context = part.context;
+                            pendingAutoPage.newPage = engine.documentFactory().ofPage();
+                            pendingAutoPage.newPage.addChild(part.node);
+                            pendingAutoPage.newPage.setSource(part.node.source());
+
+                            return true;
+                        } else {
+                            pendingAutoPage.newPage.addChild(part.node);
+                        }
+                    }else {
+                        NTxResolutionContext c = part.context.copy();
+                        List<NTxNode> pushMe=new ArrayList<>();
+                        c.doWithChild(part.node, null, cc -> {
+                            engine.compileNode(cc, new CompileNodeVisitor() {
+                                @Override
+                                public void visitNode(NTxNode node, NTxResolutionContext context) {
+                                    pushMe.add(node);
+                                }
+
+                                @Override
+                                public void visitRule(NTxStyleRule a, NTxResolutionContext context) {
+                                    part.node.addRule(a);
+                                }
+
+                                @Override
+                                public void visitDefinition(NTxNodeDef a, NTxResolutionContext context) {
+                                    pushMe.add(a);
+                                }
+
+                                @Override
+                                public void visitFunction(NTxFunction a, NTxResolutionContext context) {
+
+                                }
+
+                                @Override
+                                public void visitProperty(NTxProp a, NTxResolutionContext context) {
+                                    part.node.setProperty(a);
+                                }
+
+                                @Override
+                                public void visitVar(String varName, NTxVar nTxVar, NTxResolutionContext context) {
+
+                                }
+                            });
+                        });
+                        for (int i = pushMe.size() - 1; i >= 0; i--) {
+                            unparsed.push(new NTxNodeAndContext(pushMe.get(i), c));
                         }
                     }
                     break;
                 }
-                default:{
-                    throw new NIllegalArgumentException(NMsg.ofC("unexpected"));
+                case NTxNodeType.GROUP:
+                default: {
+                    if (pendingAutoPage == null) {
+                        pendingAutoPage = new PendingAutoPage();
+                        pendingAutoPage.context = part.context;
+                        pendingAutoPage.newPage = engine.documentFactory().ofPage();
+                        pendingAutoPage.newPage.setSource(part.node.source());
+                        pendingAutoPage.newPage.addChild(part.node);
+                    } else if (pendingAutoPage.context != part.context) {
+                        compiledPages.add(new NTxCompiledPageImpl(pendingAutoPage.newPage, this, compiledPages.size(), pendingAutoPage.context, pendingInstr, onCompile));
+                        pendingInstr.clear();
+
+                        pendingAutoPage = new PendingAutoPage();
+                        pendingAutoPage.context = part.context;
+                        pendingAutoPage.newPage = engine.documentFactory().ofPage();
+                        pendingAutoPage.newPage.addChild(part.node);
+                        pendingAutoPage.newPage.setSource(part.node.source());
+
+                        return true;
+                    } else {
+                        pendingAutoPage.newPage.addChild(part.node);
+                    }
                 }
             }
+        }
+        if (pendingAutoPage != null) {
+            compiledPages.add(new NTxCompiledPageImpl(pendingAutoPage.newPage, this, compiledPages.size(), pendingAutoPage.context, pendingInstr, onCompile));
+            pendingInstr.clear();
+            pendingAutoPage = null;
+            return true;
         }
         trailingInstrs.addAll(pendingInstr);
         return false;
     }
 
-    public void onBeforeCompileImpl(NTxCompiledPage a){
+    public void onBeforeCompileImpl(NTxCompiledPage a) {
         for (int i = 0; i < compiledPages.size(); i++) {
-            if(i<a.index()){
+            if (i < a.index()) {
                 compiledPages.get(i).compiledPage();
+            } else {
+                break;
             }
         }
     }
 
-    public void onAfterCompileImpl(NTxCompiledPage a){
+    public void onAfterCompileImpl(NTxCompiledPage a) {
         for (int i = 0; i < compiledPages.size(); i++) {
-            if(!compiledPages.get(i).isCompiled()){
+            if (!compiledPages.get(i).isCompiled()) {
                 return;
             }
         }
-        if(!unparsed.isEmpty()){
+        if (!unparsed.isEmpty()) {
             return;
         }
         for (NTxNodeAndContext trailingInstr : trailingInstrs) {
-            engine.runNode(trailingInstr.node, document, trailingInstr.context, new CompileNodeVisitorRunner());
+            trailingInstr.context.doWithChild(
+                    trailingInstr.node,
+                    cc -> engine.compileNode(trailingInstr.node, document, cc, new CompileNodeVisitorRunner())
+            );
         }
     }
 
@@ -189,4 +311,15 @@ public class NTxCompiledDocumentImpl implements NTxCompiledDocument {
         return currentThrowable;
     }
 
+    private class MyNTxPageCompileListener implements NTxPageCompileListener {
+        @Override
+        public void onBeforeCompile(NTxCompiledPage a) {
+            onBeforeCompileImpl(a);
+        }
+
+        @Override
+        public void onAfterCompile(NTxCompiledPage a) {
+            onAfterCompileImpl(a);
+        }
+    }
 }
