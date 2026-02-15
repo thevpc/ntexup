@@ -285,7 +285,8 @@ public class DocumentView implements NTxDocumentView {
             contentPane.removeAll();
             pagesMapById.clear();
             pagesMapByIndex.clear();
-            for (NTxCompiledPage page : compiledDocument.pages()) {
+            List<NTxCompiledPage> pages = compiledDocument.pages();
+            for (NTxCompiledPage page : pages) {
                 pageViews.add(createPageView(page));
             }
             for (PageView pageView : pageViews) {
@@ -302,11 +303,11 @@ public class DocumentView implements NTxDocumentView {
                     if (oo != null) {
                         showPage(oo.index());
                     } else {
-                        showPage(1);
+                        showPage(0);
                     }
                 }
             } else {
-                showPage(1);
+                showPage(0);
             }
         } finally {
             this.inLoadDocument = false;
@@ -324,11 +325,11 @@ public class DocumentView implements NTxDocumentView {
     }
 
     void lastPage() {
-        showPage(getPagesCount());
+        showPage(getPagesCount()-1);
     }
 
     void firstPage() {
-        showPage(1);
+        showPage(0);
     }
 
     public PageView createPageView(NTxCompiledPage node) {
@@ -361,7 +362,7 @@ public class DocumentView implements NTxDocumentView {
     }
 
     public void show() {
-        showPage(1);
+        showPage(0);
     }
 
     public void showPage(int index) {
@@ -372,12 +373,12 @@ public class DocumentView implements NTxDocumentView {
             this.showPage(null);
             return;
         }
-        if (index > count) {
-            index = count;
-        } else if (index < 1) {
-            index = 1;
+        if (index >= count) {
+            index = count-1;
+        } else if (index < 0) {
+            index = 0;
         }
-        PageView pageView = pageViews.get(index - 1);
+        PageView pageView = pageViews.get(index);
         this.showPage(pageView);
     }
 
@@ -397,7 +398,7 @@ public class DocumentView implements NTxDocumentView {
     public void previousPage() {
         if (currentShowingPage != null) {
             int i = currentShowingPage.index();
-            if (i - 1 >= 1) {
+            if (i - 1 >= 0) {
                 showPage(i - 1);
             }
         }
