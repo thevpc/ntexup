@@ -1,5 +1,6 @@
 package net.thevpc.ntexup.engine.parser.nodeparsers;
 
+import net.thevpc.ntexup.api.document.node.NTxNode;
 import net.thevpc.ntexup.api.eval.NTxResolutionContext;
 import net.thevpc.ntexup.engine.parser.NTxNodeParserBase;
 import net.thevpc.ntexup.api.document.node.NTxItem;
@@ -75,7 +76,9 @@ public class ForSpecialParser extends NTxNodeParserBase {
     }
 
 
+    @Override
+    public void compileNode(NTxNode node, NTxResolutionContext context) {
 
-
+    }
 }
 
