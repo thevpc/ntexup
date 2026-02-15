@@ -31,7 +31,7 @@ public class NTxNodeEval implements NTxObjectEvalContext {
 
     public NElement evalVar(String varName) {
         NOptional<NTxVar> v = context.getVar(varName);
-        if(!v.isPresent()){
+        if (!v.isPresent()) {
             context.engine().log().log(NMsg.ofC("var not found %s", varName).asWarning(), context.parent().source());
             return null;
         }
@@ -40,32 +40,52 @@ public class NTxNodeEval implements NTxObjectEvalContext {
 
 
     public NElement evalArray(NElement element, NElement[] indices) {
-        if (element == null) {
-            return NElement.ofNull();
-        }
-        if (indices.length == 0) {
-            return element;
-        }
-        NElement u = eval(indices[0]);
-        NOptional<Integer> i = NTxValue.of(u).asInt();
-        if (i.isPresent()) {
-            int ii = i.get();
-            NOptional<Object[]> asObjectArray = NTxValue.of(element).asObjectArray();
-            if (asObjectArray.isPresent()) {
-                Object[] obj = asObjectArray.get();
-                int len = obj.length;
-                if (ii == 0) {
-                    ii = 1;
-                }
-                if (ii < 0) {
-                    ii = len + len;
-                }
-                if (ii - 1 >= 0 && ii - 1 < len) {
-                    return (NElement) obj[ii - 1];
-                }
+        if (element == null || indices.length == 0) return NElement.ofNull();
+        NElement current = element;
+        for (int k = 0; k < indices.length; k++) {
+            // Evaluate the current index in the loop
+            NElement u = eval(indices[k]);
+            NOptional<Integer> i = NTxValue.of(u).asInt();
+            if (!i.isPresent()) return NElement.ofNull();
+
+            int ii0 = i.get();
+            int ii = ii0;
+
+            // Try to see the current level as an array
+            NOptional<Object[]> asObjectArray = NTxValue.of(current).asObjectArray();
+            if (!asObjectArray.isPresent()) {
+                // Die Never: User tried to index into something that isn't an array
+                context.engine().log().log(NMsg.ofC("Cannot index into non-array element: %s",
+                        current),NTxUtils.sourceOf(context.node()));
+                return NElement.ofNull();
+            }
+
+            Object[] obj = asObjectArray.get();
+            int len = obj.length;
+
+            // Apply 1-based or 0-based logic based on the CURRENT element's metadata
+            if (NTxUtils.isOneIndexed(current)) {
+                if (ii > 0) ii--;
+                else if (ii < 0) ii = len + ii;
+                else ii = -1; // Force 0 to fail
+            } else {
+                if (ii < 0) ii = len + ii;
+            }
+
+            // Check bounds for this specific level
+            if (ii >= 0 && ii < len) {
+                current = (NElement) obj[ii];
+                // If there are more indices, the loop continues using 'current'
+            } else {
+                // Log and break
+                String msg = NTxUtils.isOneIndexed(current) ? "invalid (one based) index" : "invalid index";
+                context.engine().log().log(NMsg.ofC("%s %s for array of length %s",
+                        msg, ii0, len), NTxUtils.sourceOf(context.node()));
+                return NElement.ofNull();
             }
         }
-        return null;
+
+        return current; // Return the final leaf element
     }
 
     @Override
@@ -115,8 +135,9 @@ public class NTxNodeEval implements NTxObjectEvalContext {
                 }
                 case NAMED_UPLET: {
                     NUpletElement ff = ((NUpletElement) elementExpr);
-                    NTxFunctionArgsImpl args = new NTxFunctionArgsImpl(ff.params().toArray(new NElement[0]), context);
-                    NOptional<NTxFunction> f = context.getFunction(ff.name().get()/*, args.args()*/);
+                    String functionName = ff.name().get();
+                    NTxFunctionArgsImpl args = new NTxFunctionArgsImpl(functionName, ff.params().toArray(new NElement[0]), context);
+                    NOptional<NTxFunction> f = context.getFunction(functionName/*, args.args()*/);
                     if (f.isPresent()) {
                         return eval(f.get().invoke(args, context));
                     }
