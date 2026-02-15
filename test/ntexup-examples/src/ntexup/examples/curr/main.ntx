@@ -1,6 +1,22 @@
-@define my-custom(str){
-    text(value:str,font-size:20,at:center)
-    //image(str,font-size:20)
+import(
+    "common-functions"
+    "plantuml"
+    "animated-gif"
+    "svg"
+    "shapes2d"
+    "shapes3d"
+    "plot2d"
+    "presenters"
+    "latex"
+)
+documentColors:=arrayLeftRotate(["#26355D","#AF47D2","#DE3163","#1d8147","#FF8F00","#FF7F50","#FFBF00","#FFDB00","#9FE2BF","#40E0D0","#CCCCFF","#6495ED"],either(documentColorAccent,0))
+
+@define content-slide(title){
+    page{
+        body
+    }
 }
 
-my-custom(str:"Hello")
+content-slide(title:"Hello World"){
+    hello
+}
