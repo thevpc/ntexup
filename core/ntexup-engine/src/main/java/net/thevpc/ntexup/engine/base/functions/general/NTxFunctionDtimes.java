@@ -16,7 +16,6 @@ public class NTxFunctionDtimes implements NTxFunction {
 
     @Override
     public NElement invoke(NTxFunctionArgs args, NTxResolutionContext context) {
-        List<String> all = new ArrayList<>();
         NTxFunctionArg[] argsed = args.args();
         if(argsed.length==0){
             return NElement.ofArray();
