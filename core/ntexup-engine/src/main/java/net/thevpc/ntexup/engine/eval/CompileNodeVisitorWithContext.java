@@ -6,6 +6,7 @@ import net.thevpc.ntexup.api.document.style.NTxProp;
 import net.thevpc.ntexup.api.document.style.NTxStyleRule;
 import net.thevpc.ntexup.api.engine.CompileNodeVisitor;
 import net.thevpc.ntexup.api.eval.NTxResolutionContext;
+import net.thevpc.ntexup.api.eval.NTxVar;
 import net.thevpc.ntexup.api.extension.NTxFunction;
 
 public class CompileNodeVisitorWithContext implements CompileNodeVisitor {
@@ -19,26 +20,31 @@ public class CompileNodeVisitorWithContext implements CompileNodeVisitor {
 
     @Override
     public void visitNode(NTxNode node, NTxResolutionContext context) {
-        visitor.visitNode(node,this.context==null?context:this.context);
+        visitor.visitNode(node, this.context == null ? context : this.context);
     }
 
     @Override
     public void visitRule(NTxStyleRule rule, NTxResolutionContext context) {
-        visitor.visitRule(rule,this.context==null?context:this.context);
+        visitor.visitRule(rule, this.context == null ? context : this.context);
     }
 
     @Override
     public void visitDefinition(NTxNodeDef def, NTxResolutionContext context) {
-        visitor.visitDefinition(def,this.context==null?context:this.context);
+        visitor.visitDefinition(def, this.context == null ? context : this.context);
     }
 
     @Override
     public void visitFunction(NTxFunction fct, NTxResolutionContext context) {
-        visitor.visitFunction(fct,this.context==null?context:this.context);
+        visitor.visitFunction(fct, this.context == null ? context : this.context);
     }
 
     @Override
     public void visitProperty(NTxProp a, NTxResolutionContext context) {
-        visitor.visitProperty(a,this.context==null?context:this.context);
+        visitor.visitProperty(a, this.context == null ? context : this.context);
+    }
+
+    @Override
+    public void visitVar(String varName, NTxVar nTxVar, NTxResolutionContext context) {
+        visitor.visitVar(varName, nTxVar, this.context == null ? context : this.context);
     }
 }
