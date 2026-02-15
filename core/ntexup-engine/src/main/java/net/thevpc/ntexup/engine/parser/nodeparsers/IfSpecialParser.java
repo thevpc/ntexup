@@ -93,5 +93,10 @@ public class IfSpecialParser extends NTxNodeParserBase {
         return NScoredCallable.ofInvalid(NMsg.ofC("missing if construct from %s", NTxUtils.snippet(tsonElement)).asError());
     }
 
+    @Override
+    public void compileNode(NTxNode node, NTxResolutionContext context) {
+
+    }
+
 }
 
