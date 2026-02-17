@@ -1,0 +1,63 @@
+styles {
+    // The "Catch-All" Global Reset
+    (*) {
+        font-family : "SansSerif",
+        font-size   : 5%P,        // Comfortable for presentation viewing
+        color       : "#1A1A1A",      // Soft black for eye comfort
+        at          : center,
+        line-height : 1.2,
+    }
+
+    // Default Page Behavior
+    page {
+        background  : White,
+        margin      : 5%P,          // "Safety zone" for projectors
+    }
+
+    // Standard Presentation Titles (assuming you use a .title class)
+    (.title) {
+        font-size   : 7%P,
+        font-bold,
+        at          : center,
+        margin      : (0, 0, 10%P, 0),
+    }
+
+    // List Handling
+    (.ul-item) {
+        margin : (2%P, 0),
+        at     : left,
+    }
+    (.ul-bullet) {
+        background : "#444444",
+        at         : left,
+        size       : 1.5%P,
+    }
+
+    // Code/Source Blocks (Technical Default)
+    source {
+        font-family : "monospaced",
+        font-size   : 2.8%P,
+        background  : "#F5F5F5",
+        padding     : 2%P,
+        // Using common palette indices if documentColors is available
+        source-primary-color  : "#2B2B2B",
+        source-keyword-color  : "#0033B3",
+        source-string-color   : "#067D17",
+        source-comments-color : "#8C8C8C",
+        source-number-color   : "#1750EB",
+    }
+
+    // Figure/Image Captions
+    (.image-fig-legend) {
+        at        : bottom,
+        font-size : 2.5%P,
+        color     : "#555555",
+    }
+
+    // Graphical Node Defaults
+    (ellipse,arc,rectangle) {
+        at     : center,
+        stroke : "#1A1A1A",
+        fill   : Transparent,
+    }
+}
