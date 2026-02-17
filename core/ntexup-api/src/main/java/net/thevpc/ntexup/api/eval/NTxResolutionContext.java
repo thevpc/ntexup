@@ -15,24 +15,30 @@ import net.thevpc.nuts.util.NOptional;
 import java.util.function.Consumer;
 
 public interface NTxResolutionContext {
-    NTxDocument document();
+    String uid();
 
-    NTxLogger messages();
+    NTxDocument document();
 
     NTxEngine engine();
 
     NTxResolutionContext copy();
 
+    NTxResolutionContext doWithElement(NElement newPush, Consumer<NTxResolutionContext> newContext);
+
     NTxResolutionContext doWithChild(NTxNode newPush, Consumer<NTxResolutionContext> newContext);
+
     NTxResolutionContext doWithChild(NTxNode newPush, NTxNodeDef d, Consumer<NTxResolutionContext> newContext);
+
     NTxResolutionContext doWithSibling(NTxNode newPush, Consumer<NTxResolutionContext> newContext);
-    NTxResolutionContext doWithSibling(NTxNode newPush, NTxNodeDef d,Consumer<NTxResolutionContext> newContext);
+
+    NTxResolutionContext doWithSibling(NTxNode newPush, NTxNodeDef d, Consumer<NTxResolutionContext> newContext);
 
     NTxResolutionContext pushNode(NTxNode parent);
 
     NTxResolutionContext popNode();
 
     NTxResolutionContext setNode(NTxNode node);
+
     NTxResolutionContext resolveNode(NTxNode parent);
 
     NTxResolutionContext setElement(NElement element);
