@@ -415,7 +415,7 @@ class CustomNamedParamAction implements NTxNodeBuilderContext.NamedParamAction, 
                 }
             }
         } catch (Exception ex) {
-            info.parseContext().messages().log(
+            info.parseContext().log().log(
                     NMsg.ofC("unable to set %s : %s", NTxUtils.snippet(p), ex).asSevere()
             );
         }
