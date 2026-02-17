@@ -2,7 +2,6 @@ package net.thevpc.ntexup.engine.document;
 
 import net.thevpc.ntexup.api.document.node.*;
 import net.thevpc.ntexup.api.document.style.*;
-import net.thevpc.ntexup.api.extension.NTxFunction;
 import net.thevpc.ntexup.api.document.elem2d.NTxDouble2;
 import net.thevpc.ntexup.api.document.elem2d.NTxAlign;
 import net.thevpc.ntexup.api.source.NTxSource;
@@ -50,14 +49,13 @@ public class DefaultNTxNode implements NTxNode {
         return t;
     }
 
-    public static DefaultNTxNode ofAssignIfEmpty(String name, NElement value, NTxSource source) {
+    public static DefaultNTxNode ofAssignDefault(String name, NElement value, NTxSource source) {
         if (value == null) {
             value = NElement.ofNull();
         }
-        DefaultNTxNode t = new DefaultNTxNode(NTxNodeType.CTRL_ASSIGN, source);
+        DefaultNTxNode t = new DefaultNTxNode(NTxNodeType.CTRL_ASSIGN_DEFAULT, source);
         t.setProperty(NTxPropName.NAME, NTxUtils.addCompilerDeclarationPath(NElement.ofString(name), source));
         t.setProperty(NTxPropName.VALUE, NTxUtils.addCompilerDeclarationPath(value, source));
-        t.setProperty("ifempty", NElement.ofBoolean(true));
         t.setRaw(NElement.ofBinaryInfixOperator(NOperatorSymbol.COLON_EQ, NElement.ofString(name), value));
         return t;
     }
@@ -857,7 +855,10 @@ public class DefaultNTxNode implements NTxNode {
 //
     private NElement toElem0() {
         if (NTxNodeType.CTRL_ASSIGN.equals(type())) {
-            return NElement.ofPair("$" + getName(), getPropertyValue(NTxPropName.VALUE).orNull());
+            return NElement.ofBinaryInfixOperator(NOperatorSymbol.EQ, NElement.ofNameOrString(getName()), getPropertyValue(NTxPropName.VALUE).orNull());
+        }
+        if (NTxNodeType.CTRL_ASSIGN_DEFAULT.equals(type())) {
+            return NElement.ofBinaryInfixOperator(NOperatorSymbol.COLON_EQ, NElement.ofNameOrString(getName()), getPropertyValue(NTxPropName.VALUE).orNull());
         }
         String displayName = getPropertyValue(NTxPropName.DISPLAY_NAME).flatMap(x -> x.asStringValue()).orNull();
         String[] styleClasses = getStyleClasses();
