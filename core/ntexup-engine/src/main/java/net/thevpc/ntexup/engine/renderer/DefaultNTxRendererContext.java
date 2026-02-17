@@ -255,7 +255,7 @@ public class DefaultNTxRendererContext extends NTxResolutionContextImpl implemen
         engine().parseNode(childNode,
                 this.withElement(childNode), n->{
                     if (!n.isPresent()) {
-                        messages().log(NMsg.ofC("unable to compile detached node '%s'", childNode).asWarning(), NTxUtils.sourceOf(node));
+                        this.log().log(NMsg.ofC("unable to compile detached node '%s'", childNode).asWarning(), NTxUtils.sourceOf(node));
                     } else {
                         new DispatchCompileNodeVisitor(new CompileNodeVisitor() {
                             @Override
@@ -265,27 +265,27 @@ public class DefaultNTxRendererContext extends NTxResolutionContextImpl implemen
 
                             @Override
                             public void visitRule(NTxStyleRule a, NTxResolutionContext context) {
-                                messages().log(NMsg.ofC("unable to compile detached rule '%s'", a).asWarning(), NTxUtils.sourceOf(node));
+                                DefaultNTxRendererContext.this.log().log(NMsg.ofC("unable to compile detached rule '%s'", a).asWarning(), NTxUtils.sourceOf(node));
                             }
 
                             @Override
                             public void visitDefinition(NTxNodeDef a, NTxResolutionContext context) {
-                                messages().log(NMsg.ofC("unable to compile detached definition '%s'", a).asWarning(), NTxUtils.sourceOf(node));
+                                DefaultNTxRendererContext.this.log().log(NMsg.ofC("unable to compile detached definition '%s'", a).asWarning(), NTxUtils.sourceOf(node));
                             }
 
                             @Override
                             public void visitFunction(NTxFunction a, NTxResolutionContext context) {
-                                messages().log(NMsg.ofC("unable to compile detached function '%s'", a).asWarning(), NTxUtils.sourceOf(node));
+                                DefaultNTxRendererContext.this.log().log(NMsg.ofC("unable to compile detached function '%s'", a).asWarning(), NTxUtils.sourceOf(node));
                             }
 
                             @Override
                             public void visitProperty(NTxProp a, NTxResolutionContext context) {
-                                messages().log(NMsg.ofC("unable to compile detached property '%s'", a).asWarning(), NTxUtils.sourceOf(node));
+                                DefaultNTxRendererContext.this.log().log(NMsg.ofC("unable to compile detached property '%s'", a).asWarning(), NTxUtils.sourceOf(node));
                             }
 
                             @Override
                             public void visitVar(String varName, NTxVar nTxVar, NTxResolutionContext context) {
-                                messages().log(NMsg.ofC("unable to compile detached var '%s'", varName).asWarning(), NTxUtils.sourceOf(node));
+                                DefaultNTxRendererContext.this.log().log(NMsg.ofC("unable to compile detached var '%s'", varName).asWarning(), NTxUtils.sourceOf(node));
                             }
                         }).visitItem(n.get(), context);
                     }
