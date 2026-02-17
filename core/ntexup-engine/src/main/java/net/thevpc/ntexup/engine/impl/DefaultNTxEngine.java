@@ -445,7 +445,7 @@ public class DefaultNTxEngine implements NTxEngine {
         if (context == null) {
             context = newContext(node, document, null);
         }
-        context.setInPage(true);
+//        context.setInPage(true);
         compileNode(context, visitor);
     }
 
