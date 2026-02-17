@@ -79,7 +79,7 @@ public class NTxPropCalculator {
             return NOptional.of(
                     new NTxStyleAndMagnitude(
                             u.get(),
-                            new NTxStyleMagnitude(0, DefaultNTxNodeSelector.ofImportant())
+                            new NTxStyleMagnitude(0, DefaultNTxNodeSelector.ofAny())
                     )
             );
         }
@@ -155,7 +155,7 @@ public class NTxPropCalculator {
             found.put(property.getName(),
                     new NTxStyleAndMagnitude(
                             property,
-                            new NTxStyleMagnitude(0, DefaultNTxNodeSelector.ofImportant())
+                            new NTxStyleMagnitude(0, DefaultNTxNodeSelector.ofAny())
                     )
             );
         }
