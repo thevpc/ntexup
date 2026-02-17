@@ -255,7 +255,7 @@ public class NTxServiceHelper {
                         NLog.of(NTxServiceHelper.class).log(NMsg.ofC("failed : %s", ex).asFinestFail(ex));
                     }
                 } else {
-                    System.out.println("Desktop is not supported on this system.");
+                    engine.log().log(NMsg.ofC("Desktop is not supported on this system."));
                 }
             }
         }
