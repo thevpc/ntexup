@@ -2,6 +2,7 @@ net.thevpc.ntexup.engine.parser.nodeparsers.NTxPageGroupParser
 net.thevpc.ntexup.engine.parser.nodeparsers.NTxPageParser
 net.thevpc.ntexup.engine.parser.nodeparsers.ForSpecialParser
 net.thevpc.ntexup.engine.parser.nodeparsers.AssignSpecialParser
+net.thevpc.ntexup.engine.parser.nodeparsers.AssignDefaultSpecialParser
 net.thevpc.ntexup.engine.parser.nodeparsers.ExprSpecialParser
 net.thevpc.ntexup.engine.parser.nodeparsers.NameSpecialParser
 net.thevpc.ntexup.engine.parser.nodeparsers.CallSpecialParser
