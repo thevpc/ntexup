@@ -18,7 +18,6 @@ public class RuntimeProgressLayer implements NTxDocumentLayer {
             double x0 = (int) size.getWidth() / 2 /*- w2 / 2 - 5*/;
             double y0 = (int) size.getHeight() / 2 /*- w2 / 2 - 5*/;
             long v = System.currentTimeMillis() / 10;
-            //System.out.println(v);
             double to = (v % 360) / 360.0 * 100;
             double from = to/2;
             drawProgress(null, new Color(0xff5500), from, to, x0, y0, w1, w2, g);
