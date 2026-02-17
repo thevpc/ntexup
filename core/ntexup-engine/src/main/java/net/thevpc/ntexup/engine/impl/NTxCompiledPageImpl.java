@@ -25,6 +25,7 @@ public class NTxCompiledPageImpl implements NTxCompiledPage {
     private NTxResolutionContext pageContext;
     private int index;
     private NTxPageCompileListener onCompile;
+    private boolean prefixExecuted;
 
 
     public NTxCompiledPageImpl(NTxNode rawPage, NTxCompiledDocument document, int index, NTxResolutionContext parentContext, List<NTxNodeAndContext> prefixInstructions,NTxPageCompileListener onCompile) {
@@ -46,16 +47,24 @@ public class NTxCompiledPageImpl implements NTxCompiledPage {
         return document;
     }
 
+    public void initialize() {
+        if(!prefixExecuted){
+            NChronometer c = NChronometer.startNow();
+            for (NTxNodeAndContext outerInstruction : prefixInstructions) {
+                outerInstruction.run(document.compiledDocument(), document().engine());
+            }
+            c.stop();
+            prefixExecuted=true;
+            document.engine().log().log(NMsg.ofC("page %s initialized in %s", (index + 1), c), NTxUtils.sourceOf(this.rawPage));
+        }
+    }
+
     @Override
     public NTxNode compiledPage() {
         if (compiledPage == null) {
             onCompile.onBeforeCompile(this);
+            initialize();
             NChronometer c = NChronometer.startNow();
-            for (NTxNodeAndContext outerInstruction : prefixInstructions) {
-                outerInstruction.context.doWithChild(outerInstruction.node,
-                        cc->document.engine().compileNode(outerInstruction.node, document.compiledDocument(), cc, new CompileNodeVisitorRunner())
-                );
-            }
             pageContext = document.engine().newContext(this.rawPage, document.compiledDocument(), parentContext).setInPage(true);
 
             NTxNode o = DefaultNTxNode.ofBlock();
