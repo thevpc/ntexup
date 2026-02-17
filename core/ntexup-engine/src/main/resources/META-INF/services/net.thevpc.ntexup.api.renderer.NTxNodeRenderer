@@ -2,5 +2,6 @@ net.thevpc.ntexup.engine.renderer.page.NTxPageRenderer
 net.thevpc.ntexup.engine.renderer.page.NTxFragmentRenderer
 net.thevpc.ntexup.engine.renderer.special.NTxImportRenderer
 net.thevpc.ntexup.engine.renderer.special.NTxAssignRenderer
+net.thevpc.ntexup.engine.renderer.special.NTxAssignDefaultRenderer
 
 
