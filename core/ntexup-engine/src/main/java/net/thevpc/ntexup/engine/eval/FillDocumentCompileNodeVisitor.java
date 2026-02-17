@@ -27,14 +27,12 @@ public class FillDocumentCompileNodeVisitor implements CompileNodeVisitor, AutoC
 
     @Override
     public void visitVar(String varName, NTxVar nTxVar, NTxResolutionContext context) {
-        System.out.println("Document visitVar " + varName);
         //visitNode(DefaultNTxNode.ofAssign(varName, nTxVar.get(), context.source()), context);
     }
 
 
     @Override
     public void visitNode(NTxNode node, NTxResolutionContext context) {
-        System.out.println("Document visitNode " + node);
         container.add(node);
     }
 
@@ -46,25 +44,21 @@ public class FillDocumentCompileNodeVisitor implements CompileNodeVisitor, AutoC
     }
 
     public void visitRule(NTxStyleRule rule, NTxResolutionContext context) {
-        System.out.println("Document visitRule " + rule);
         container.addRule(rule);
     }
 
     @Override
     public void visitDefinition(NTxNodeDef def, NTxResolutionContext context) {
-        System.out.println("Document visitDefinition " + def);
         container.add(def);
     }
 
     @Override
     public void visitFunction(NTxFunction fct, NTxResolutionContext context) {
-        System.out.println("Document visitFunction " + fct);
         throw new IllegalArgumentException("unsupported");
     }
 
     @Override
     public void visitProperty(NTxProp prop, NTxResolutionContext context) {
-        System.out.println("Document visitProperty " + prop);
         container.setProperty(prop);
     }
 
