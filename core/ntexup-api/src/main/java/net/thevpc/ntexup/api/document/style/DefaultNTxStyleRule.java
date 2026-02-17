@@ -16,20 +16,9 @@ public class DefaultNTxStyleRule implements NTxStyleRule {
     private final NTxSource source;
     private final NTxNode parent;
 
-    public static DefaultNTxStyleRule ofAny(NTxNode parent, NTxSource source, NTxProp... styles) {
-        return new DefaultNTxStyleRule(parent, source, DefaultNTxNodeSelector.ofAny(), styles);
-    }
-
-    public static DefaultNTxStyleRule ofType(NTxNode parent, NTxSource source, String type, NTxProp... styles) {
-        return of(parent, source, type == null ? DefaultNTxNodeSelector.ofAny() : DefaultNTxNodeSelector.ofType(type), styles);
-    }
-
-    public static DefaultNTxStyleRule ofName(NTxNode parent, NTxSource source, String name, NTxProp... styles) {
-        return of(parent, source, name == null ? DefaultNTxNodeSelector.ofAny() : DefaultNTxNodeSelector.ofName(name), styles);
-    }
 
     public static DefaultNTxStyleRule ofClass(NTxNode parent, NTxSource source, String name, NTxProp... styles) {
-        return of(parent, source, name == null ? DefaultNTxNodeSelector.ofAny() : DefaultNTxNodeSelector.ofClasses(name), styles);
+        return of(parent, source, name == null ? DefaultNTxNodeSelector.ofAny() : DefaultNTxNodeSelector.of(NTxStyleRuleSelectorItem.ofClasses(name)), styles);
     }
 
     public static DefaultNTxStyleRule of(NTxNode parent, NTxSource source, NTxStyleRuleSelector filter, NTxProp... styles) {
