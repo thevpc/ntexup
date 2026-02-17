@@ -1,7 +1,9 @@
 package net.thevpc.ntexup.engine.eval;
 
 import net.thevpc.ntexup.api.document.node.*;
+import net.thevpc.ntexup.api.document.style.NTxProp;
 import net.thevpc.ntexup.api.document.style.NTxPropName;
+import net.thevpc.ntexup.api.document.style.NTxStyleRule;
 import net.thevpc.ntexup.api.engine.CompileNodeVisitor;
 import net.thevpc.ntexup.api.extension.NTxFunction;
 import net.thevpc.ntexup.api.eval.*;
@@ -15,7 +17,9 @@ import net.thevpc.ntexup.engine.log.SilentNTxLogger;
 import net.thevpc.ntexup.engine.parser.NTxDocumentLoadingResultImpl;
 import net.thevpc.ntexup.engine.document.DefaultNTxNode;
 import net.thevpc.ntexup.engine.parser.ctrlnodes.*;
+import net.thevpc.ntexup.engine.parser.nodeparsers.StylesSpecialParser;
 import net.thevpc.nuts.concurrent.NScoredCallable;
+import net.thevpc.nuts.elem.NElementReader;
 import net.thevpc.nuts.text.NMsg;
 import net.thevpc.nuts.time.NChronometer;
 import net.thevpc.nuts.elem.NElement;
@@ -46,6 +50,45 @@ public class NTxCompiler {
             List<NTxNode> rootChildren = root.children();
             root.clearChildren();
             NTxResolutionContextImpl context = new NTxResolutionContextImpl(new NTxNode[]{root}, NElement.ofNull(), null, false, engine, documentCopy, null, null, null, null);
+            NElement stylesNode = NElementReader.ofTson().read(NPath.of("classpath:/net/thevpc/ntexup/default-style.ntx", Thread.currentThread().getContextClassLoader()).readString());
+
+            DispatchCompileNodeVisitor dv = new DispatchCompileNodeVisitor(new CompileNodeVisitor() {
+                @Override
+                public void visitNode(NTxNode node, NTxResolutionContext context) {
+
+                }
+
+                @Override
+                public void visitRule(NTxStyleRule a, NTxResolutionContext context) {
+                    root.addRule(a);
+                }
+
+                @Override
+                public void visitDefinition(NTxNodeDef a, NTxResolutionContext context) {
+
+                }
+
+                @Override
+                public void visitFunction(NTxFunction a, NTxResolutionContext context) {
+
+                }
+
+                @Override
+                public void visitProperty(NTxProp a, NTxResolutionContext context) {
+
+                }
+
+                @Override
+                public void visitVar(String varName, NTxVar nTxVar, NTxResolutionContext context) {
+
+                }
+            });
+
+            context.doWithElement(stylesNode,cc->{
+                NTxItem sc = new StylesSpecialParser().parseNode(cc).call();
+                dv.visitItem(sc,cc);
+            });
+
             try (FillDocumentCompileNodeVisitor visitor = new FillDocumentCompileNodeVisitor(root, engine)) {
                 for (NTxNode rootChild : rootChildren) {
                     context.doWithChild(rootChild, cc -> {
@@ -137,6 +180,10 @@ public class NTxCompiler {
                         }
                         case NTxNodeType.CTRL_ASSIGN: {
                             compileNodeTree_assign(cc, visitor);
+                            return;
+                        }
+                        case NTxNodeType.CTRL_ASSIGN_DEFAULT: {
+                            compileNodeTree_assignDefault(cc, visitor);
                             return;
                         }
                         case NTxNodeType.CTRL_EXPR: {
@@ -265,7 +312,7 @@ public class NTxCompiler {
         String nodeType = node.type();
         NTxNodeParser p = engine.nodeTypeParser(nodeType).orNull();
         if (p != null) {
-            context.messages().log(NMsg.ofC("variable '%s' not found, rendering as plain text.  If you meant a component, use '%s()' syntax", nodeType, nodeType).asWarning(), NTxUtils.sourceOf(node));
+            context.log().log(NMsg.ofC("variable '%s' not found, rendering as plain text.  If you meant a component, use '%s()' syntax", nodeType, nodeType).asWarning(), NTxUtils.sourceOf(node));
             p.compileNode(node, context);
         } else {
             List<NTxNode> children = node.children();
@@ -325,15 +372,18 @@ public class NTxCompiler {
         NTxNode node = context.node();
         String varName = node.getProperty(NTxPropName.NAME).get().getValue().asStringValue().get();
         NElement varExpr = node.getProperty(NTxPropName.VALUE).get().getValue();
-        boolean ifempty = NTxValue.of(node.getProperty("ifempty").map(x -> x.getValue()).orNull()).asBoolean().orElse(false);
         NElement evaluatedExpr = context.evalExpression(varExpr).orNull();
-        if (ifempty) {
-            NTxVar v = context.getVar(varName).orNull();
-            if (v == null) {
-                context.setVar(varName, NTxVar.ofEvaluatedExpression(evaluatedExpr));
-                visitor.visitNode(node, context);
-            }
-        } else {
+        context.setVar(varName, NTxVar.ofEvaluatedExpression(evaluatedExpr));
+        visitor.visitNode(node, context);
+    }
+
+    private void compileNodeTree_assignDefault(NTxResolutionContext context, CompileNodeVisitor visitor) {
+        NTxNode node = context.node();
+        String varName = node.getProperty(NTxPropName.NAME).get().getValue().asStringValue().get();
+        NElement varExpr = node.getProperty(NTxPropName.VALUE).get().getValue();
+        NElement evaluatedExpr = context.evalExpression(varExpr).orNull();
+        NTxVar v = context.getVar(varName).orNull();
+        if (v == null) {
             context.setVar(varName, NTxVar.ofEvaluatedExpression(evaluatedExpr));
             visitor.visitNode(node, context);
         }
@@ -356,7 +406,7 @@ public class NTxCompiler {
             for (NElement e : all) {
                 engine.parseNode(e, context, n -> {
                     if (!n.isPresent()) {
-                        context.messages().log(NMsg.ofC("variable '%s' as '%s' could not be evaluated as a valid node", name, e).asWarning(), NTxUtils.sourceOf(node));
+                        context.log().log(NMsg.ofC("variable '%s' as '%s' could not be evaluated as a valid node", name, e).asWarning(), NTxUtils.sourceOf(node));
                     } else {
                         new DispatchCompileNodeVisitor(visitor).visitItem(n.get(), context);
                     }
@@ -368,9 +418,9 @@ public class NTxCompiler {
         } else {
             NTxNodeParser p = engine.nodeTypeParser(name).orNull();
             if (p != null) {
-                context.messages().log(NMsg.ofC("variable '%s' not found, rendering as plain text.  If you meant a component, use '%s()' syntax", name, name).asWarning(), NTxUtils.sourceOf(node));
+                context.log().log(NMsg.ofC("variable '%s' not found, rendering as plain text.  If you meant a component, use '%s()' syntax", name, name).asWarning(), NTxUtils.sourceOf(node));
             } else {
-                context.messages().log(NMsg.ofC("variable '%s' not found, rendering as plain text", name).asWarning(), NTxUtils.sourceOf(node));
+                context.log().log(NMsg.ofC("variable '%s' not found, rendering as plain text", name).asWarning(), NTxUtils.sourceOf(node));
             }
             DefaultNTxNode t = DefaultNTxNode.ofText(name);
             t.setSource(node.source());
@@ -382,7 +432,7 @@ public class NTxCompiler {
         NTxNodeDefParam[] expectedParams = d.params();
         //first unset any parent COMPONENT_BODY_VAR_NAME and create a new context!
         DefaultNTxNode block = DefaultNTxNode.ofBlock();
-
+        block.setParent(d);
         List<NTxNode> assigns = new ArrayList<>();
         for (NTxNodeDefParam expectedParam : expectedParams) {
             if (expectedParam.value() != null) {
@@ -505,14 +555,14 @@ public class NTxCompiler {
                             NTxUtils.setNodeParent(item, context.parent());
                             new DispatchCompileNodeVisitor(visitor).visitItem(item, context);
                         } else {
-                            context.messages().log(NMsg.ofC("invalid include. error loading : %s", nPath).asSevere(), NTxUtils.sourceOf(node));
+                            context.log().log(NMsg.ofC("invalid include. error loading : %s", nPath).asSevere(), NTxUtils.sourceOf(node));
                         }
                     } else {
-                        context.messages().log(NMsg.ofC("invalid include. error loading : %s", nPath).asWarning(), NTxUtils.sourceOf(node));
+                        context.log().log(NMsg.ofC("invalid include. error loading : %s", nPath).asWarning(), NTxUtils.sourceOf(node));
                     }
                 }
             } else {
-                context.messages().log(NMsg.ofC("invalid include. error loading : %s", path).asWarning(), NTxUtils.sourceOf(node));
+                context.log().log(NMsg.ofC("invalid include. error loading : %s", path).asWarning(), NTxUtils.sourceOf(node));
             }
         }
     }
