@@ -201,7 +201,7 @@ public class DefaultNTxDocumentItemParserFactory
                                             null
                                     );
                                 } else {
-                                    context.messages().log(NMsg.ofC("invalid definition param, expected var name %s in %s", x, object).asError());
+                                    context.log().log(NMsg.ofC("invalid definition param, expected var name %s in %s", x, object).asError());
                                     return null;
                                 }
                             }).filter(x -> x != null).collect(Collectors.toList());
@@ -216,7 +216,7 @@ public class DefaultNTxDocumentItemParserFactory
                     if (b.isNodes()) {
                         defBody.addAll(b.nodes());
                     } else {
-                        context.messages().log(NMsg.ofC("expected nodes, but got other items when creating node from %s", NTxUtils.snippet(child)).asError());
+                        context.log().log(NMsg.ofC("expected nodes, but got other items when creating node from %s", NTxUtils.snippet(child)).asError());
                     }
                 }
                 DefaultNTxNode bodyContainer = new DefaultNTxNode(NTxNodeType.GROUP);
@@ -245,7 +245,7 @@ public class DefaultNTxDocumentItemParserFactory
             NOptional<String> nn = kh.asStringOrName();
             if (nn.isPresent()) {
                 String nnn = NStringUtils.trim(nn.get());
-                return NScoredCallable.ofValid(() -> DefaultNTxNode.ofAssignIfEmpty(nnn, v, context.source()));
+                return NScoredCallable.ofValid(() -> DefaultNTxNode.ofAssignDefault(nnn, v, context.source()));
             } else {
                 return _invalidSupport(NMsg.ofC("unable to interpret left hand of assignment as a valid var : %s", k), context);
             }
@@ -302,7 +302,7 @@ public class DefaultNTxDocumentItemParserFactory
 
     private NScoredCallable<NTxItem> _invalidSupport(NMsg msg, NTxResolutionContext context) {
         msg = msg.asError();
-        context.messages().log(msg.asError());
+        context.log().log(msg.asError());
         return NScoredCallable.ofInvalid(msg);
     }
 
@@ -341,7 +341,7 @@ public class DefaultNTxDocumentItemParserFactory
                 __callBody.addAll(fb.children());
                 c = fb.build();
             } else {
-                context.messages().log(NMsg.ofC("unexpected call : %s (ignored)", c).asError(), context.source());
+                context.log().log(NMsg.ofC("unexpected call : %s (ignored)", c).asError(), context.source());
             }
         } else {
             if (c.isNamedUplet()) {
@@ -357,7 +357,7 @@ public class DefaultNTxDocumentItemParserFactory
                 }
                 __callBody.addAll(fb.children());
             } else {
-                context.messages().log(NMsg.ofC("unexpected call : %s (ignored)", c).asError(), context.source());
+                context.log().log(NMsg.ofC("unexpected call : %s (ignored)", c).asError(), context.source());
             }
         }
         cc.setCallName(__name);
