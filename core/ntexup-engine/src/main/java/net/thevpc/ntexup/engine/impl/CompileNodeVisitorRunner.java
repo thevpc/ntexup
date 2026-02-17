@@ -9,7 +9,7 @@ import net.thevpc.ntexup.api.eval.NTxResolutionContext;
 import net.thevpc.ntexup.api.eval.NTxVar;
 import net.thevpc.ntexup.api.extension.NTxFunction;
 
-class CompileNodeVisitorRunner implements CompileNodeVisitor {
+public class CompileNodeVisitorRunner implements CompileNodeVisitor {
     @Override
     public void visitNode(NTxNode node, NTxResolutionContext context) {
 
