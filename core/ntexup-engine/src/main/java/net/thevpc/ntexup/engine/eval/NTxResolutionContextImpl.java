@@ -18,9 +18,12 @@ import net.thevpc.nuts.text.NMsg;
 import net.thevpc.nuts.util.*;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
 public class NTxResolutionContextImpl implements NTxResolutionContext {
+    protected static AtomicInteger ID=new AtomicInteger();
+    protected String uid;
     protected NElement element;
     protected NTxNode node;
     protected NTxResolutionContext parentContext;
@@ -36,6 +39,7 @@ public class NTxResolutionContextImpl implements NTxResolutionContext {
     protected Map<String, NTxFunction> functions = new LinkedHashMap<>();
 
     public NTxResolutionContextImpl(NTxNode[] path, NElement element, NTxNodeDef def, boolean isInPage, NTxEngine engine, NTxDocument document, Map<String, NTxVar> vars, Map<String, NTxNodeDef> definitions, Map<String, NTxFunction> functions, NTxResolutionContext parentContext) {
+        this.uid = ((parentContext!=null)?(parentContext.uid()+"/"):"")+String.valueOf(ID.incrementAndGet());
         this.path = Arrays.copyOf(path, path.length);
         this.node = path[path.length - 1];
         this.parent = (path.length - 2 >= 0) ? path[path.length - 2] : null;
@@ -67,6 +71,10 @@ public class NTxResolutionContextImpl implements NTxResolutionContext {
         }
 
         this.parentContext = parentContext;
+    }
+
+    public String uid() {
+        return uid;
     }
 
     protected NTxResolutionContext copyAs(NTxNode[] path, NElement element, NTxNodeDef def, boolean isInPage, NTxEngine engine, NTxDocument document, Map<String, NTxVar> vars, Map<String, NTxNodeDef> definitions, Map<String, NTxFunction> functions, NTxResolutionContext parentContext) {
@@ -135,10 +143,6 @@ public class NTxResolutionContextImpl implements NTxResolutionContext {
         return document;
     }
 
-    public NTxLogger messages() {
-        return engine.log();
-    }
-
     public NTxEngine engine() {
         return engine;
     }
@@ -155,6 +159,18 @@ public class NTxResolutionContextImpl implements NTxResolutionContext {
             me.accept(this);
         } finally {
             popNode();
+        }
+        return this;
+    }
+
+    @Override
+    public NTxResolutionContext doWithElement(NElement element, Consumer<NTxResolutionContext> me) {
+        NElement old = element();
+        try {
+            setElement(element);
+            me.accept(this);
+        } finally {
+            setElement(old);
         }
         return this;
     }
@@ -533,5 +549,19 @@ public class NTxResolutionContextImpl implements NTxResolutionContext {
 
     public Map<String, ? extends NTxFunction> getFunctions() {
         return new LinkedHashMap<>(functions);
+    }
+
+    @Override
+    public String toString() {
+        return "NTxResolutionContextImpl{" +
+                "uid=" + this.uid +
+                ", element=" + element +
+                ", path=" + Arrays.toString(path) +
+                ", def=" + def +
+                ", isInPage=" + isInPage +
+                ", vars=" + vars +
+                ", definitions=" + definitions +
+                ", functions=" + functions +
+                '}';
     }
 }
