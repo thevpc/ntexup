@@ -3,137 +3,51 @@ package net.thevpc.ntexup.api.document.style;
 import net.thevpc.ntexup.api.document.node.NTxItem;
 import net.thevpc.ntexup.api.document.node.NTxNode;
 import net.thevpc.nuts.elem.NElement;
-import net.thevpc.nuts.util.NNameFormat;
-import net.thevpc.nuts.util.NStringUtils;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
 public class DefaultNTxNodeSelector implements NTxStyleRuleSelector {
 
-    private static DefaultNTxNodeSelector ANY = new DefaultNTxNodeSelector(null, null, null, false);
-    private static DefaultNTxNodeSelector IMPORTANT = new DefaultNTxNodeSelector(null, null, null, true);
-    private final Set<String> names = new HashSet<>();
-    private final Set<String> types = new HashSet<>();
-    private final Set<String> classes = new HashSet<>();
-    private final boolean important;
+    public static NTxStyleRuleSelectorItem NONE_ITEM = new NTxStyleRuleSelectorItem.NoneItem();
+    public static NTxStyleRuleSelectorItem ANY_ITEM = new NTxStyleRuleSelectorItem.AnyItem();
+    private static DefaultNTxNodeSelector ANY = new DefaultNTxNodeSelector(new HashSet<>(Arrays.asList(ANY_ITEM)));
+    private static DefaultNTxNodeSelector NONE = new DefaultNTxNodeSelector(new HashSet<>(Arrays.asList(NONE_ITEM)));
+    private final Set<NTxStyleRuleSelectorItem> items = new HashSet<>();
 
     public static DefaultNTxNodeSelector ofAny() {
         return ANY;
     }
 
-    public static DefaultNTxNodeSelector of(String[] names, String[] types, String[] classes) {
-        if (
-                (names == null || names.length == 0)
-                        && (types == null || types.length == 0)
-                        && (classes == null || classes.length == 0)
-        ) {
-            return ofAny();
+    public static DefaultNTxNodeSelector of(NTxStyleRuleSelectorItem... items) {
+        if (items == null || items.length==0 || Arrays.stream(items).anyMatch(x->Objects.equals(x,ANY_ITEM))) {
+            return ANY;
         }
-        return new DefaultNTxNodeSelector(names, types, classes, false);
-    }
-
-    public static DefaultNTxNodeSelector ofClasses(String... cls) {
-        return ANY.andClass(cls);
-    }
-
-    public static DefaultNTxNodeSelector ofName(String... names) {
-        return ANY.andName(names);
-    }
-
-    public static DefaultNTxNodeSelector ofType(String... types) {
-        return ANY.andType(types);
-    }
-
-    public DefaultNTxNodeSelector(String[] names, String[] types, String[] classes, boolean important) {
-        this.important = important;
-        if (names != null) {
-            for (String i : names) {
-                String n = NStringUtils.trimToNull(i);
-                if (n != null) {
-                    if (!n.equals("*")) {
-                        this.names.add(n);
-                    }
+        boolean none=false;
+        HashSet<NTxStyleRuleSelectorItem> items2 = new HashSet<>();
+        for (NTxStyleRuleSelectorItem item : items) {
+            if(item!=null){
+                if(item.equals(ANY_ITEM)) {
+                    return ANY;
+                }else if(item.equals(NONE_ITEM)){
+                    none=true;
+                }else{
+                    items2.add(item);
                 }
             }
         }
-        if (classes != null) {
-            for (String i : classes) {
-                String n = NStringUtils.trimToNull(i);
-                if (n != null) {
-                    if (!n.equals("*")) {
-                        this.classes.add(NNameFormat.LOWER_SNAKE_CASE.format(n));
-                    }
-                }
-            }
+        if(none){
+            return NONE;
         }
-        if (types != null) {
-            for (String i : types) {
-                if (i != null) {
-                    this.types.add(i);
-                }
-            }
+        if (items2.isEmpty()) {
+            return ANY;
         }
-        if (important) {
-            if (
-                    !this.names.isEmpty()
-                            || !this.classes.isEmpty()
-                            || !this.types.isEmpty()
-            ) {
-                throw new IllegalArgumentException("invalid important");
-            }
-        }
+        return new DefaultNTxNodeSelector(items2);
     }
 
-    public static NTxStyleRuleSelector ofImportant() {
-        return IMPORTANT;
-    }
 
-    public DefaultNTxNodeSelector andName(String... names) {
-        return and(names, null, null, important);
-    }
-
-    public DefaultNTxNodeSelector andType(String... types) {
-        return and(null, types, null, important);
-    }
-
-    public DefaultNTxNodeSelector andClass(String... classes) {
-        return and(null, null, classes, important);
-    }
-
-    public DefaultNTxNodeSelector and(String[] names, String[] types, String[] classes, boolean important) {
-        if (
-                (names == null || names.length == 0 || (names.length == 1 && names[0] == null))
-                        && (types == null || types.length == 0 || (types.length == 1 && types[0] == null))
-                        && (classes == null || classes.length == 0 || (classes.length == 1 && classes[0] == null))
-        ) {
-            return this;
-        }
-        Set<String> names0 = new HashSet<>(this.names);
-        Set<String> types0 = new HashSet<>(this.types);
-        Set<String> classes0 = new HashSet<>(this.classes);
-        if (names != null) {
-            names0.addAll(Arrays.asList(names));
-        }
-        if (classes != null) {
-            classes0.addAll(Arrays.asList(classes));
-        }
-        if (types != null) {
-            types0.addAll(Arrays.asList(types));
-        }
-        if (important) {
-            return IMPORTANT;
-        }
-        DefaultNTxNodeSelector c = new DefaultNTxNodeSelector(
-                names0.toArray(new String[0]),
-                types0.toArray(new String[0]),
-                classes0.toArray(new String[0]),
-                false
-        );
-        if (c.equals(this)) {
-            return this;
-        }
-        return c;
+    private DefaultNTxNodeSelector(Set<NTxStyleRuleSelectorItem> items) {
+        this.items.addAll(items);
     }
 
     private Set<String> computeClasses(NTxItem n) {
@@ -147,192 +61,57 @@ public class DefaultNTxNodeSelector implements NTxStyleRuleSelector {
         return all;
     }
 
-    public boolean isOne() {
-        int x = 0;
-        x += hasClasses() ? 1 : 0;
-        x = hasNames() ? 1 : 0;
-        x = hasTypes() ? 1 : 0;
-        return x == 1;
-    }
-
-    public boolean isAny() {
-        return names.isEmpty() && types.isEmpty() && classes.isEmpty();
-    }
-
-    public boolean isImportant() {
-        return important;
-    }
-
-
-    public boolean hasClasses() {
-        return !classes.isEmpty();
-    }
-
-    public boolean hasNames() {
-        return !names.isEmpty();
-    }
-
-    public boolean hasTypes() {
-        return !types.isEmpty();
-    }
-
     public Set<String> getClasses() {
-        return Collections.unmodifiableSet(classes);
-    }
-
-    public Set<String> getNames() {
-        return Collections.unmodifiableSet(names);
-    }
-
-    public Set<String> getTypes() {
-        return Collections.unmodifiableSet(types);
+        Set<String> c = new HashSet<>();
+        for (NTxStyleRuleSelectorItem item : items) {
+            if (item instanceof NTxStyleRuleSelectorItem.SimpleItem) {
+                c.addAll(((NTxStyleRuleSelectorItem.SimpleItem) item).getClasses());
+            }
+        }
+        return Collections.unmodifiableSet(c);
     }
 
     @Override
     public boolean acceptNode(NTxNode n) {
-        if (important) {
-            return true;
-        }
-        if (!names.isEmpty()) {
-            String nn = NStringUtils.trimLeftToNull(n.name());
-            if (nn == null) {
-                return false;
-            }
-            if (!names.contains(n.name())) {
-                return false;
+        for (NTxStyleRuleSelectorItem item : items) {
+            if (item.acceptNode(n)) {
+                return true;
             }
         }
-        if (!classes.isEmpty()) {
-            Set<String> cc = computeClasses(n);
-            for (String c : classes) {
-                if (!cc.contains(c)) {
-                    return false;
-                }
-            }
-        }
-        if (!types.isEmpty()) {
-            if (!types.contains(n.type())) {
-                return false;
-            }
-        }
-        return true;
+        return false;
     }
 
     @Override
     public String toString() {
-        if (important) {
-            return "important";
-        }
-        if (types.isEmpty() && names.isEmpty() && classes.isEmpty()) {
-            return "any";
-        }
-        StringBuilder sb = new StringBuilder();
-        if (!names.isEmpty()) {
-            sb.append("names(").append(names).append(")");
-        }
-        if (!types.isEmpty()) {
-            if (sb.length() > 0) {
-                sb.append(",");
-            }
-            sb.append("types(").append(types).append(")");
-        }
-        if (!classes.isEmpty()) {
-            if (sb.length() > 0) {
-                sb.append(",");
-            }
-            sb.append("classes(").append(classes).append(")");
-        }
-        return sb.toString();
+        return "(" + items.stream().map(x -> x.toString()).collect(Collectors.joining(", ")) + ")";
     }
 
     @Override
     public NElement toElement() {
-        if (important) {
-            return NElement.ofString("$");
-        }
-        List<NElement> c = new ArrayList<>();
-        if (!names.isEmpty()) {
-            for (String name : names) {
-                c.add(NElement.ofString(name));
-            }
-        }
-        if (!types.isEmpty()) {
-            for (String name : types) {
-                c.add(NElement.ofName(NNameFormat.LOWER_KEBAB_CASE.format(name)));
-            }
-        }
-        if (!classes.isEmpty()) {
-            for (String name : classes) {
-                c.add(NElement.ofName("." + name));
-            }
-        }
-        if (c.isEmpty()) {
-            return NElement.ofString("*");
-        }
-        if (c.size() == 1) {
-            return c.get(0);
-        }
-        return NElement.ofUplet(c.toArray(new NElement[0]));
+        return NElement.ofUplet(
+                items.stream().map(x -> NElement.ofNameOrString(x.toString())).toArray(NElement[]::new)
+        );
     }
 
     @Override
     public int compareTo(NTxStyleRuleSelector o) {
-        if (o == null) {
-            return -1;
-        }
-        if (o instanceof DefaultNTxNodeSelector) {
-            DefaultNTxNodeSelector op = (DefaultNTxNodeSelector) o;
-            if (this.important && op.important) {
-                return 0;
-            }
-            if (this.important) {
-                return -1;
-            }
-            if (op.important) {
-                return 1;
-            }
-            int c = Integer.compare(names.size(), op.names.size());
-            if (c != 0) {
-                return -c;
-            }
+        if (o == null) return -1;
+        if (!(o instanceof DefaultNTxNodeSelector)) return 1;
 
-            c = Integer.compare(types.size(), op.types.size());
-            if (c != 0) {
-                return -c;
-            }
+        DefaultNTxNodeSelector op = (DefaultNTxNodeSelector) o;
 
-            c = Integer.compare(classes.size(), op.classes.size());
-            if (c != 0) {
-                return -c;
-            }
-            String[] a = new TreeSet<String>(names).toArray(new String[0]);
-            String[] b = new TreeSet<String>(op.names).toArray(new String[0]);
-            for (int j = 0; j < a.length; j++) {
-                c = a[j].compareTo(b[j]);
-                if (c != 0) {
-                    return c;
-                }
-            }
-            a = new TreeSet<String>(types.stream().map(x -> x).collect(Collectors.toSet())).toArray(new String[0]);
-            b = new TreeSet<String>(op.types.stream().map(x -> x).collect(Collectors.toSet())).toArray(new String[0]);
-            for (int j = 0; j < a.length; j++) {
-                c = a[j].compareTo(b[j]);
-                if (c != 0) {
-                    return c;
-                }
-            }
-            a = new TreeSet<String>(classes).toArray(new String[0]);
-            b = new TreeSet<String>(op.classes).toArray(new String[0]);
-            for (int j = 0; j < a.length; j++) {
-                c = a[j].compareTo(b[j]);
-                if (c != 0) {
-                    return c;
-                }
-            }
-            return 0;
-        } else {
-            return 1;
-        }
+        // 1. Find the "Best" (Most Specific) Item in each collection
+        NTxStyleRuleSelectorItem bestThis = findBestItem(this.items);
+        NTxStyleRuleSelectorItem bestOther = findBestItem(op.items);
+
+        // 2. Compare the two best items
+        return compareSpecificItems(bestThis, bestOther);
+    }
+
+    private NTxStyleRuleSelectorItem findBestItem(Set<NTxStyleRuleSelectorItem> items) {
+        return items.stream()
+                .min(this::compareSpecificItems) // Minimum result = Higher specificity
+                .orElse(ANY_ITEM);
     }
 
     @Override
@@ -340,14 +119,51 @@ public class DefaultNTxNodeSelector implements NTxStyleRuleSelector {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         DefaultNTxNodeSelector that = (DefaultNTxNodeSelector) o;
-        return
-                important == that.important
-                        && Objects.equals(names, that.names)
-                        && Objects.equals(types, that.types) && Objects.equals(classes, that.classes);
+        return Objects.equals(items, that.items);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(important, names, types, classes);
+        return Objects.hash(items);
+    }
+
+
+
+    private int compareSpecificItems(NTxStyleRuleSelectorItem a, NTxStyleRuleSelectorItem b) {
+        if (a.equals(b)) return 0;
+
+        // Tier 1: SimpleItem (The actual logic-heavy selectors)
+        if (a instanceof NTxStyleRuleSelectorItem.SimpleItem && b instanceof NTxStyleRuleSelectorItem.SimpleItem) {
+            NTxStyleRuleSelectorItem.SimpleItem sa = (NTxStyleRuleSelectorItem.SimpleItem) a;
+            NTxStyleRuleSelectorItem.SimpleItem sb = (NTxStyleRuleSelectorItem.SimpleItem) b;
+
+            // Specificity: Names > Types > Classes
+            int c = Integer.compare(sb.getNames().size(), sa.getNames().size());
+            if (c != 0) return c;
+
+            c = Integer.compare(sb.getTypes().size(), sa.getTypes().size());
+            if (c != 0) return c;
+
+            c = Integer.compare(sb.getClasses().size(), sa.getClasses().size());
+            if (c != 0) return c;
+
+            return sa.toString().compareTo(sb.toString());
+        }
+
+        // Tier 2: AnyItem (*) - Matches everything, so it has low specificity
+        if (a instanceof NTxStyleRuleSelectorItem.AnyItem) {
+            // AnyItem is more specific than NoneItem, but less than SimpleItem
+            return (b instanceof NTxStyleRuleSelectorItem.NoneItem) ? -1 : 1;
+        }
+        if (b instanceof NTxStyleRuleSelectorItem.AnyItem) {
+            return (a instanceof NTxStyleRuleSelectorItem.NoneItem) ? 1 : -1;
+        }
+
+        // Tier 3: NoneItem (!) - The "Void".
+        // It never matches, so it has the lowest possible "functional" priority.
+        if (a instanceof NTxStyleRuleSelectorItem.NoneItem) return 1;
+        if (b instanceof NTxStyleRuleSelectorItem.NoneItem) return -1;
+
+        return 0;
     }
 }
