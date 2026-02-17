@@ -96,8 +96,6 @@ public class NTxFontBySizeResolver {
                 maxSize = midSize - 1;
             }
         }
-
-//        System.out.println("Best font size: " + bestSize + " for box (" + boxWidth + "x" + boxHeight + ")");
         return bestFont;
     }
 }
