@@ -116,9 +116,22 @@ public class NTxCompiledDocumentImpl implements NTxCompiledDocument {
         };
     }
 
-    private static class PendingAutoPage {
+    private class PendingAutoPage {
         NTxNode newPage;
         public NTxResolutionContext context;
+
+        public PendingAutoPage(NTxResolutionContext context) {
+            this.context=context;
+            newPage = engine.documentFactory().ofPage();
+            newPage.setParent(context.node());
+        }
+
+        public void addChild(NTxNodeAndContext part) {
+            if(newPage.source()==null) {
+                newPage.setSource(part.node.source());
+            }
+            newPage.add(part.node);
+        }
     }
 
     private boolean readMore() {
@@ -142,12 +155,14 @@ public class NTxCompiledDocumentImpl implements NTxCompiledDocument {
                     return true;
                 }
                 case NTxNodeType.CTRL_ASSIGN:
+                case NTxNodeType.CTRL_ASSIGN_DEFAULT:
                 case NTxNodeType.CTRL_DEFINE: {
                     if (pendingAutoPage != null) {
                         compiledPages.add(new NTxCompiledPageImpl(pendingAutoPage.newPage, this, compiledPages.size(), pendingAutoPage.context, pendingInstr, onCompile));
                         pendingInstr.clear();
                         pendingAutoPage = null;
                     }
+                    part.run(compiledDocument(),engine);
                     pendingInstr.add(part);
                     break;
                 }
@@ -181,30 +196,23 @@ public class NTxCompiledDocumentImpl implements NTxCompiledDocument {
                     break;
                 }
                 case NTxNodeType.CTRL_CALL: {
-                    if(part.context.inPage()){
+                    if (part.context.inPage()) {
                         if (pendingAutoPage == null) {
-                            pendingAutoPage = new PendingAutoPage();
-                            pendingAutoPage.context = part.context;
-                            pendingAutoPage.newPage = engine.documentFactory().ofPage();
-                            pendingAutoPage.newPage.setSource(part.node.source());
-                            pendingAutoPage.newPage.addChild(part.node);
+                            pendingAutoPage = new PendingAutoPage(part.context);
+                            pendingAutoPage.addChild(part);
                         } else if (pendingAutoPage.context != part.context) {
                             compiledPages.add(new NTxCompiledPageImpl(pendingAutoPage.newPage, this, compiledPages.size(), pendingAutoPage.context, pendingInstr, onCompile));
                             pendingInstr.clear();
 
-                            pendingAutoPage = new PendingAutoPage();
-                            pendingAutoPage.context = part.context;
-                            pendingAutoPage.newPage = engine.documentFactory().ofPage();
-                            pendingAutoPage.newPage.addChild(part.node);
-                            pendingAutoPage.newPage.setSource(part.node.source());
-
+                            pendingAutoPage = new PendingAutoPage(part.context);
+                            pendingAutoPage.addChild(part);
                             return true;
                         } else {
-                            pendingAutoPage.newPage.addChild(part.node);
+                            pendingAutoPage.addChild(part);
                         }
-                    }else {
+                    } else {
                         NTxResolutionContext c = part.context.copy();
-                        List<NTxNode> pushMe=new ArrayList<>();
+                        List<NTxNode> pushMe = new ArrayList<>();
                         c.doWithChild(part.node, null, cc -> {
                             engine.compileNode(cc, new CompileNodeVisitor() {
                                 @Override
@@ -247,24 +255,17 @@ public class NTxCompiledDocumentImpl implements NTxCompiledDocument {
                 case NTxNodeType.GROUP:
                 default: {
                     if (pendingAutoPage == null) {
-                        pendingAutoPage = new PendingAutoPage();
-                        pendingAutoPage.context = part.context;
-                        pendingAutoPage.newPage = engine.documentFactory().ofPage();
-                        pendingAutoPage.newPage.setSource(part.node.source());
-                        pendingAutoPage.newPage.addChild(part.node);
+                        pendingAutoPage = new PendingAutoPage(part.context);
+                        pendingAutoPage.addChild(part);
                     } else if (pendingAutoPage.context != part.context) {
                         compiledPages.add(new NTxCompiledPageImpl(pendingAutoPage.newPage, this, compiledPages.size(), pendingAutoPage.context, pendingInstr, onCompile));
                         pendingInstr.clear();
 
-                        pendingAutoPage = new PendingAutoPage();
-                        pendingAutoPage.context = part.context;
-                        pendingAutoPage.newPage = engine.documentFactory().ofPage();
-                        pendingAutoPage.newPage.addChild(part.node);
-                        pendingAutoPage.newPage.setSource(part.node.source());
-
+                        pendingAutoPage = new PendingAutoPage(part.context);
+                        pendingAutoPage.addChild(part);
                         return true;
                     } else {
-                        pendingAutoPage.newPage.addChild(part.node);
+                        pendingAutoPage.addChild(part);
                     }
                 }
             }
@@ -282,7 +283,8 @@ public class NTxCompiledDocumentImpl implements NTxCompiledDocument {
     public void onBeforeCompileImpl(NTxCompiledPage a) {
         for (int i = 0; i < compiledPages.size(); i++) {
             if (i < a.index()) {
-                compiledPages.get(i).compiledPage();
+                NTxCompiledPageImpl nTxCompiledPage = (NTxCompiledPageImpl) compiledPages.get(i);
+                nTxCompiledPage.initialize();
             } else {
                 break;
             }
@@ -299,10 +301,7 @@ public class NTxCompiledDocumentImpl implements NTxCompiledDocument {
             return;
         }
         for (NTxNodeAndContext trailingInstr : trailingInstrs) {
-            trailingInstr.context.doWithChild(
-                    trailingInstr.node,
-                    cc -> engine.compileNode(trailingInstr.node, document, cc, new CompileNodeVisitorRunner())
-            );
+            trailingInstr.run(document,engine);
         }
     }
 
