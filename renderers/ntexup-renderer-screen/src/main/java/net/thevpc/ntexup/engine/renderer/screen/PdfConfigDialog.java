@@ -257,10 +257,10 @@ public class PdfConfigDialog extends JDialog {
                         try {
                             Desktop.getDesktop().open(sf);
                         } catch (IOException ex) {
-                            NLog.of(PdfConfigDialog.class).log(NMsg.ofC("failed : %s", ex).asFinestFail(ex));
+                            engine.log().log(NMsg.ofC("failed : %s", ex).asFinestFail(ex));
                         }
                     } else {
-                        System.out.println("Desktop is not supported on this system.");
+                        engine.log().log(NMsg.ofC("Desktop is not supported on this system.").asSevere());
                     }
                     SwingUtilities.invokeLater(() -> {
                         setVisible(false);
