@@ -9,14 +9,15 @@ import(
     "presenters"
     "latex"
 )
-documentColors:=arrayLeftRotate(["#26355D","#AF47D2","#DE3163","#1d8147","#FF8F00","#FF7F50","#FFBF00","#FFDB00","#9FE2BF","#40E0D0","#CCCCFF","#6495ED"],either(documentColorAccent,0))
-
-@define content-slide(title){
-    page{
-        body
+page{
+    styles:{
+        "*" :{
+            font-size:20%P
+        }
     }
-}
-
-content-slide(title:"Hello World"){
-    hello
+    column{
+       ¶ Hello [[eq:x^2]]
+       text("Helloj [[eq:x^2]]",debug)
+       text("Helloj [[eq:a_j^F]]",debug)
+   }
 }
