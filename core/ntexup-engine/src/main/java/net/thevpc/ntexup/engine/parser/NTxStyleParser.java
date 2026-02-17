@@ -114,186 +114,160 @@ public class NTxStyleParser {
     }
 
 
-    public static NOptional<NTxStyleRuleSelector> parseStyleRuleSelector(List<NElement> selectors, NTxResolutionContext context) {
-        if (selectors.isEmpty()) {
-            return NOptional.of(DefaultNTxNodeSelector.ofAny());
-        }
-        List<String> names = new ArrayList<>();
-        List<String> classes = new ArrayList<>();
-        List<String> types = new ArrayList<>();
-        List<NElement> selectors2 = new ArrayList<>(selectors);
-        while (!selectors2.isEmpty()) {
-            NElement child = selectors2.remove(0);
-            switch (child.type()) {
-                case OPERATOR_SYMBOL: {
-                    switch (child.asOperatorSymbol().get().symbol()){
-                        case MUL:
-                        {
-                            return NOptional.of(DefaultNTxNodeSelector.ofAny());
-                        }
-                    }
-                    NMsg errMsg = NMsg.ofC("[%s] invalid style rule selector %s. expected *", NTxUtils.shortName(context.source()), child).asSevere();
-                    context.messages().log(errMsg, context.source());
-                    return NOptional.ofEmpty(errMsg);
-                }
-                case PAIR: {
-                    NPairElement pair = child.asPair().get();
-                    NTxValue h = NTxValue.of(pair.key());
-                    NOptional<String> k = h.asStringOrName();
-                    if (k.isPresent()) {
-                        switch (NTxUtils.uid(k.get())) {
-                            case "class": {
-                                NTxValue h2 = NTxValue.of(pair.value());
-                                NOptional<String[]> cc = h2.asStringArrayOrString();
-                                if (cc.isPresent()) {
-                                    classes.addAll(Arrays.asList(cc.get()));
-                                } else {
-                                    NMsg errMsg = NMsg.ofC("[%s] invalid style rule selector %s. expected a string or a string array", NTxUtils.shortName(context.source()), child).asSevere();
-                                    context.messages().log(errMsg, context.source());
-                                    return NOptional.ofEmpty(errMsg);
-                                }
-                            }
-                            case "name": {
-                                NTxValue h2 = NTxValue.of(pair.value());
-                                NOptional<String[]> cc = h2.asStringArrayOrString();
-                                if (cc.isPresent()) {
-                                    names.addAll(Arrays.asList(cc.get()));
-                                } else {
-                                    NMsg errMsg = NMsg.ofC("[%s] invalid style rule selector %s. expected a string or a string array.", NTxUtils.shortName(context.source()), child).asSevere();
-                                    context.messages().log(errMsg, context.source());
-                                    return NOptional.ofEmpty(errMsg);
-                                }
-                            }
-                            case "type": {
-                                NTxValue h2 = NTxValue.of(pair.value());
-                                NOptional<String[]> cc = h2.asStringArrayOrString();
-                                if (cc.isPresent()) {
-                                    types.addAll(Arrays.asList(cc.get()));
-                                } else {
-                                    NMsg errMsg = NMsg.ofC("[%s] invalid style rule selector %s. expected a valid node type or array", NTxUtils.shortName(context.source()), child).asSevere();
-                                    context.messages().log(errMsg, context.source());
-                                    return NOptional.ofEmpty(errMsg);
-                                }
-                            }
-                            default: {
-                                NMsg errMsg = NMsg.ofC("[%s] invalid style rule selector %s. expected one of 'name', 'class' or 'type'", NTxUtils.shortName(context.source()), child).asSevere();
-                                context.messages().log(errMsg, context.source());
-                                return NOptional.ofEmpty(errMsg);
-                            }
-                        }
+    private static void parsePair(NPairElement pair, NTxResolutionContext context,
+                                  List<String> types,
+                                  List<String> names,
+                                  List<String> classes
+    ) {
+        NTxValue h = NTxValue.of(pair.key());
+        NOptional<String> k = h.asStringOrName();
+        if (k.isPresent()) {
+            switch (NTxUtils.uid(k.get())) {
+                case "class":
+                case "classes": {
+                    NTxValue h2 = NTxValue.of(pair.value());
+                    NOptional<String[]> cc = h2.asStringArrayOrString();
+                    if (cc.isPresent()) {
+                        classes.addAll(Arrays.asList(cc.get()));
                     } else {
-                        NMsg errMsg = NMsg.ofC("[%s] invalid style rule selector %s. expected one of 'name', 'class' or 'type'", NTxUtils.shortName(context.source()), child).asSevere();
-                        context.messages().log(errMsg, context.source());
-                        return NOptional.ofEmpty(errMsg);
-                    }
-                }
-                case NAME: {
-                    String s = child.asStringValue().get().trim();
-                    if (s.isEmpty() || s.equals("*")) {
-                        //
-                    } else if (s.startsWith(".")) {
-                        classes.add(s.substring(1));
-                    } else {
-                        types.add(s);
+                        NMsg errMsg = NMsg.ofC("[%s] invalid style rule selector %s. expected a string or a string array", NTxUtils.shortName(context.source()), pair).asSevere();
+                        context.log().log(errMsg, context.source());
                     }
                     break;
                 }
-                case FLAT_EXPR: {
-                    List<NElement> fes = new ArrayList<>(child.asFlatExpression().get().children());
-                    while (!fes.isEmpty()) {
-                        NElement c = fes.remove(0);
-                        if (c.isOperatorSymbol(NOperatorSymbol.DOT) && !fes.isEmpty() && (fes.get(0).isAnyString() || fes.get(0).isName())) {
-                            NElement c2 = fes.remove(0);
-                            String s = c2.asStringValue().get();
-                            if (s.isEmpty() || s.equals("*")) {
-                                return NOptional.of(DefaultNTxNodeSelector.ofAny());
-                            } else if (s.startsWith(".")) {
-                                classes.add(s.substring(1));
-                            } else {
-                                classes.add(s);
-                            }
-                        }else if (c.isOperatorSymbol(NOperatorSymbol.MUL)) {
-                            return NOptional.of(DefaultNTxNodeSelector.ofAny());
-                        } else if (c.isAnyString() || c.isName()) {
-                            String s = c.asStringValue().get();
-                            if (s.isEmpty() || s.equals("*")) {
-                                return NOptional.of(DefaultNTxNodeSelector.ofAny());
-                            } else if (s.startsWith(".")) {
-                                classes.add(s.substring(1));
-                            } else {
-                                types.add(s);
-                            }
-                        } else {
-                            NMsg errMsg = NMsg.ofC("[%s] invalid style rule selector %s. error at %s", NTxUtils.shortName(context.source()), child, c).asSevere();
-                            context.messages().log(errMsg, context.source());
-                            return NOptional.ofEmpty(errMsg);
-                        }
+                case "name":
+                case "names": {
+                    NTxValue h2 = NTxValue.of(pair.value());
+                    NOptional<String[]> cc = h2.asStringArrayOrString();
+                    if (cc.isPresent()) {
+                        names.addAll(Arrays.asList(cc.get()));
+                    } else {
+                        NMsg errMsg = NMsg.ofC("[%s] invalid style rule selector %s. expected a string or a string array.", NTxUtils.shortName(context.source()), pair).asSevere();
+                        context.log().log(errMsg, context.source());
                     }
                     break;
                 }
-                case DOUBLE_QUOTED_STRING:
-                case SINGLE_QUOTED_STRING:
-                case BACKTICK_STRING:
-                case TRIPLE_DOUBLE_QUOTED_STRING:
-                case TRIPLE_SINGLE_QUOTED_STRING:
-                case TRIPLE_BACKTICK_STRING:
-                case LINE_STRING: {
-                    String s = child.asStringValue().get().trim();
-                    if (s.isEmpty() || s.equals("*")) {
-                        //
-                    } else if (s.startsWith(".")) {
-                        classes.add(s.substring(1));
+                case "type":
+                case "types": {
+                    NTxValue h2 = NTxValue.of(pair.value());
+                    NOptional<String[]> cc = h2.asStringArrayOrString();
+                    if (cc.isPresent()) {
+                        types.addAll(Arrays.asList(cc.get()));
                     } else {
-                        names.add(s);
+                        NMsg errMsg = NMsg.ofC("[%s] invalid style rule selector %s. expected a valid node type or array", NTxUtils.shortName(context.source()), pair).asSevere();
+                        context.log().log(errMsg, context.source());
                     }
                     break;
                 }
                 default: {
-                    NMsg errMsg = NMsg.ofC("[%s] invalid style rule selector %s", context.source(), child).asSevere();
-                    context.messages().log(errMsg, context.source());
-                    return NOptional.ofEmpty(errMsg);
+                    NMsg errMsg = NMsg.ofC("[%s] invalid style rule selector %s. expected one of 'name', 'class' or 'type'", NTxUtils.shortName(context.source()), pair).asSevere();
+                    context.log().log(errMsg, context.source());
                 }
             }
+        } else {
+            NMsg errMsg = NMsg.ofC("[%s] invalid style rule selector %s. expected one of 'name', 'class' or 'type'", NTxUtils.shortName(context.source()), pair).asSevere();
+            context.log().log(errMsg, context.source());
         }
-        return NOptional.of(DefaultNTxNodeSelector.of(
-                names.toArray(new String[0]),
-                types.toArray(new String[0]),
-                classes.toArray(new String[0])
-        ));
-//        switch (e.type()) {
-//            case DOUBLE_QUOTED_STRING:
-//            case SINGLE_QUOTED_STRING:
-//            case BACKTICK_STRING:
-//            case TRIPLE_DOUBLE_QUOTED_STRING:
-//            case TRIPLE_SINGLE_QUOTED_STRING:
-//            case TRIPLE_BACKTICK_STRING:
-//            case LINE_STRING: {
-//                String s = e.asStringValue().get();
-//                if (s.isEmpty() || s.equals("*")) {
-//                    return NOptional.of(DefaultNTxNodeSelector.ofAny());
-//                }
-//                if (s.startsWith(".")) {
-//                    return NOptional.of(DefaultNTxNodeSelector.ofClasses(s.substring(1)));
-//                }
-//                return NOptional.of(DefaultNTxNodeSelector.ofName(s));
-//            }
-//            case NAME: {
-//                String n = e.asStringValue().get();
-//                if (n.startsWith(".")) {
-//                    return NOptional.of(DefaultNTxNodeSelector.ofClasses(n.substring(1)));
-//                }
-//                return NOptional.of(DefaultNTxNodeSelector.ofType(n));
-//            }
-//            case UPLET:
-//            case NAMED_UPLET: {
-//
-//            }
-//            default: {
-//                NMsg errMsg = NMsg.ofC("[%s] invalid style rule selector %s", NTxUtils.shortName(context.source()), e).asSevere();
-//                context.messages().log(errMsg, context.source());
-//                return NOptional.ofEmpty(errMsg);
-//            }
-//        }
+    }
+
+    public static void parseStyleRuleSelectorItem(NElement selector, NTxResolutionContext context, List<NTxStyleRuleSelectorItem> items) {
+        switch (selector.type()) {
+            case NAME:
+            case BACKTICK_STRING:
+            case SINGLE_QUOTED_STRING:
+            case DOUBLE_QUOTED_STRING:
+            case TRIPLE_BACKTICK_STRING:
+            case TRIPLE_DOUBLE_QUOTED_STRING:
+            case TRIPLE_SINGLE_QUOTED_STRING:
+            case LINE_STRING:
+            case BLOCK_STRING: {
+                NTxStyleRuleSelectorItem n = ofSelectorItem(selector.asStringValue().get(), context).orNull();
+                if (n != null) {
+                    items.add(n);
+                }
+                return;
+            }
+            case FLAT_EXPR: {
+                NTxStyleRuleSelectorItem n = ofSelectorItem(selector.asFlatExpression().get().toCompactString(), context).orNull();
+                if (n != null) {
+                    items.add(n);
+                }
+                return;
+            }
+            case OPERATOR_SYMBOL: {
+                switch (selector.asOperatorSymbol().get().symbol()) {
+                    case MUL: {
+                        items.add(DefaultNTxNodeSelector.ANY_ITEM);
+                        return;
+                    }
+                }
+                break;
+            }
+            case PAIR: {
+                List<String> classes = new ArrayList<>();
+                List<String> types = new ArrayList<>();
+                List<String> names = new ArrayList<>();
+                NPairElement pair = selector.asPair().get();
+                parsePair(pair, context, types, names, classes);
+                items.add(NTxStyleRuleSelectorItem.of(types.toArray(new String[0]), names.toArray(new String[0]), classes.toArray(new String[0])));
+                return;
+            }
+            case UPLET: {
+                NUpletElement u = selector.asUplet().get();
+                if (isExactUpletPair(selector)) {
+                    List<String> classes = new ArrayList<>();
+                    List<String> types = new ArrayList<>();
+                    List<String> names = new ArrayList<>();
+                    for (NElement child : u.children()) {
+                        if (child.isNamedPair()) {
+                            parsePair(child.asPair().get(), context, types, names, classes);
+                        }
+                    }
+                    items.add(NTxStyleRuleSelectorItem.of(types.toArray(new String[0]), names.toArray(new String[0]), classes.toArray(new String[0])));
+                } else {
+                    for (NElement item : u.children()) {
+                        parseStyleRuleSelectorItem(item, context, items);
+                    }
+                }
+                return;
+            }
+        }
+        NMsg msg = NMsg.ofC("unable to resolve style selector from %s", selector).asError();
+        context.log().log(msg);
+    }
+
+    private static boolean isExactUpletPair(NElement e) {
+        if (e.isUplet()) {
+            NUpletElement u = e.asUplet().get();
+            return (u.children().stream().allMatch(x -> x.isNamedPair(s -> {
+                switch (NTxUtils.uid(s)) {
+                    case "class":
+                    case "classes":
+                    case "name":
+                    case "names":
+                    case "type":
+                    case "types":
+                        return true;
+                }
+                return false;
+            })));
+        }
+        return false;
+    }
+
+
+    public static NOptional<NTxStyleRuleSelectorItem> ofSelectorItem(String item, NTxResolutionContext context) {
+        return NTxStyleRuleSelectorItem.of(item, context.log());
+    }
+
+
+    public static NOptional<NTxStyleRuleSelector> parseStyleRuleSelector(NElement selectors, NTxResolutionContext context) {
+        if (selectors.isEmpty()) {
+            return NOptional.of(DefaultNTxNodeSelector.ofAny());
+        }
+        List<NTxStyleRuleSelectorItem> items = new ArrayList<>();
+        parseStyleRuleSelectorItem(selectors, context, items);
+        return NOptional.of(DefaultNTxNodeSelector.of(items.toArray(new NTxStyleRuleSelectorItem[0])));
     }
 
     public static NOptional<NTxStyleRule[]> parseStyleRule(NElement e, NTxDocumentFactory f, NTxResolutionContext context) {
@@ -307,13 +281,13 @@ public class NTxStyleParser {
                     case FULL_OBJECT:
                     case PARAM_OBJECT:
                     case NAMED_OBJECT: {
-                        return _parseStyleRule(e, Arrays.asList(key), v.toObject().get().children(), f, context, errMsg);
+                        return _parseStyleRule(e, key, v.toObject().get().children(), f, context, errMsg);
                     }
                     case ARRAY:
                     case FULL_ARRAY:
                     case PARAM_ARRAY:
                     case NAMED_ARRAY: {
-                        return _parseStyleRule(e, Arrays.asList(key), v.toArray().get().children(), f, context, errMsg);
+                        return _parseStyleRule(e, key, v.toArray().get().children(), f, context, errMsg);
                     }
                 }
                 break;
@@ -322,24 +296,23 @@ public class NTxStyleParser {
             case PARAM_ARRAY: {
                 List<NElement> params = e.asParametrizedContainer().get().params().get();
                 List<NElement> children = e.asListContainer().get().children();
-                return _parseStyleRule(e, params, children, f, context, errMsg);
+                return _parseStyleRule(e, NElement.ofUplet(params.toArray(new NElement[0])), children, f, context, errMsg);
             }
             case NAMED_OBJECT:
-            case NAMED_ARRAY:
-            {
+            case NAMED_ARRAY: {
                 String name = e.asNamed().get().name().get();
                 List<NElement> children = e.asListContainer().get().children();
-                return _parseStyleRule(e, Arrays.asList(NElement.ofString(name)), children, f, context, errMsg);
+                return _parseStyleRule(e, NElement.ofString(name), children, f, context, errMsg);
             }
         }
-        context.messages().log(errMsg, context.source());
+        context.log().log(errMsg, context.source());
         return NOptional.ofEmpty(errMsg);
     }
 
-    public static NOptional<NTxStyleRule[]> _parseStyleRule(NElement e, List<NElement> selectors, List<NElement> children, NTxDocumentFactory f, NTxResolutionContext context, NMsg errMsg) {
+    public static NOptional<NTxStyleRule[]> _parseStyleRule(NElement e, NElement selectors, List<NElement> children, NTxDocumentFactory f, NTxResolutionContext context, NMsg errMsg) {
         NOptional<NTxStyleRuleSelector> r = parseStyleRuleSelector(selectors, context);
         if (!r.isPresent()) {
-            context.messages().log(errMsg, context.source());
+            context.log().log(errMsg, context.source());
             return NOptional.ofEmpty(errMsg);
         }
         List<NTxProp> styles = new ArrayList<>();
