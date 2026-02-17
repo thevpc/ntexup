@@ -56,18 +56,6 @@ public class NTxListHelper {
             child.childSelfBounds = ctx.resolveNode(child.child, new NTxBounds2D(sb.getX() + indentWidth + bulletWidth + childHeight, y0,
                     sb.getMaxX() - (sb.getX() + bulletWidth + childHeight)
                     , h)).selfBounds();
-            if ("t".equals(child.child.getComponentName())) {
-                System.out.println(child.child.getComponentName() + ": " + child.childSelfBounds);
-            }
-//            ctx.engine().getRenderer(child.child.type()).get().render(
-//                    ctx.withNode(child.child).withParentBounds()
-//            );
-
-//            child.childSelfBounds = ctx.engine().getRenderer(child.child.type()).get().selfBounds(
-//                    ctx.withParentBounds(new NTxBounds2(0, 0, child.bulletSelfBounds.getMaxX(), childHeight))
-////                    , new NTxDouble2(child.bulletSelfBounds.getMaxX() + 10, childHeight)
-////                    , new NTxDouble2(childWidth, childHeight)
-//            );
             child.height = Math.max(Math.max(Math.max(child.childSelfBounds.getMaxY() - y0, 0), childHeight), child.bulletSelfBounds.getHeight());
             y0 += child.height;
         }
