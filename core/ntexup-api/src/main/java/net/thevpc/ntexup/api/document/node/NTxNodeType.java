@@ -80,6 +80,7 @@ public class NTxNodeType {
     public static final String PLOT2D = "plot2d";
 
     public static final String CTRL_ASSIGN ="assign";
+    public static final String CTRL_ASSIGN_DEFAULT ="defaultassign";
     public static final String CTRL_EXPR ="expr";
     public static final String CTRL_CALL ="call";
     public static final String CTRL_FOR ="for";
