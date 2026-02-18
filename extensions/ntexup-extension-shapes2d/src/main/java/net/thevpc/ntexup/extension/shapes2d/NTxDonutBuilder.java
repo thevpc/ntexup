@@ -48,7 +48,7 @@ public class NTxDonutBuilder implements NTxNodeBuilder {
         NTxNode node=rendererContext.node();
         rendererContext = rendererContext.withDefaultStyles(defaultStyles);
 
-        NTxBounds2D b = rendererContext.selfBounds(null, null);
+        NTxBounds2D b = rendererContext.selfBounds();
         double x = b.getX();
         double y = b.getY();
         double width = b.getWidth();
