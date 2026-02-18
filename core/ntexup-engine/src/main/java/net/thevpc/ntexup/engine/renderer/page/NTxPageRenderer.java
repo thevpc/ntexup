@@ -20,7 +20,7 @@ public class NTxPageRenderer extends NTxNodeRendererBase {
 
     @Override
     public void renderMain(NTxRendererContext ctx) {
-        NTxBounds2D b = ctx.selfBounds(null, null);
+        NTxBounds2D b = ctx.selfBounds();
 
         drawBackground(ctx.node(), ctx.graphics(), ctx, b);
 //        drawGrid(ctx.graphics(), b);
