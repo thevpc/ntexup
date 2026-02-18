@@ -58,6 +58,7 @@ public interface NTxNodeBuilderContext {
 
     NTxNodeBuilderContext processChildren(ProcessNodeAction e);
     NTxNodeBuilderContext compileNode(CompileNodeAction e);
+    NTxNodeBuilderContext initializeNodeAction(InitializeNodeAction e);
 
     NTxLogger log();
     NTxEngine engine();
@@ -149,6 +150,9 @@ public interface NTxNodeBuilderContext {
 
     interface RenderConvertAction {
         NTxNode convert(NTxNode p, NTxRendererContext ctx);
+    }
+    interface InitializeNodeAction {
+        void initializeNode(NTxNode p, NTxNodeBuilderContext ctx);
     }
 
     interface RenderTextParseTokensAction {
