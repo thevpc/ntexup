@@ -29,7 +29,7 @@ public class NTxMyShapeBuilder implements NTxNodeBuilder {
 
     public void render(NTxRendererContext rendererContext) {
         NTxNode node=rendererContext.node();
-        NTxBounds2D b = rendererContext.selfBounds(null, null);
+        NTxBounds2D b = rendererContext.selfBounds();
         double x = b.getX();
         double y = b.getY();
         double width = b.getWidth();
