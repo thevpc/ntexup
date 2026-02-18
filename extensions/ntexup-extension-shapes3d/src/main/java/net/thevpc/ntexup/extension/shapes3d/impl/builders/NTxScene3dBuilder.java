@@ -48,7 +48,7 @@ public class NTxScene3dBuilder implements NTxNodeBuilder {
 
     public void render(NTxRendererContext rendererContext) {
         NTxNode node = rendererContext.node();
-        NTxBounds2D b = rendererContext.selfBounds(null, null);
+        NTxBounds2D b = rendererContext.selfBounds();
         NTxPoint3D realSize = NTx3DUtils.asPoint3D(node, "real-size").orNull();
         NElement c = NTxValue.ofProp(node, "camera").asElement().orNull();
         NTxCamera3DImpl camera = null;
