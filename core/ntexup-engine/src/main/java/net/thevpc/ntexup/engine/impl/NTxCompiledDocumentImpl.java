@@ -247,7 +247,25 @@ public class NTxCompiledDocumentImpl implements NTxCompiledDocument {
                             });
                         });
                         for (int i = pushMe.size() - 1; i >= 0; i--) {
-                            unparsed.push(new NTxNodeAndContext(pushMe.get(i), c));
+                            NTxNodeAndContext pp = new NTxNodeAndContext(pushMe.get(i), c);
+                            if(pp.node ==part.node){
+                                System.out.println("why");
+                                if (pendingAutoPage == null) {
+                                    pendingAutoPage = new PendingAutoPage(pp.context);
+                                    pendingAutoPage.addChild(pp);
+                                } else if (pendingAutoPage.context != pp.context) {
+                                    compiledPages.add(new NTxCompiledPageImpl(pendingAutoPage.newPage, this, compiledPages.size(), pendingAutoPage.context, pendingInstr, onCompile));
+                                    pendingInstr.clear();
+
+                                    pendingAutoPage = new PendingAutoPage(pp.context);
+                                    pendingAutoPage.addChild(pp);
+                                    return true;
+                                } else {
+                                    pendingAutoPage.addChild(pp);
+                                }
+                            }else {
+                                unparsed.push(pp);
+                            }
                         }
                     }
                     break;
