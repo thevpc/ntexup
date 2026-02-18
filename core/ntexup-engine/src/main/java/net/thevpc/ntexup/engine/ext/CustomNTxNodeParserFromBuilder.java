@@ -144,6 +144,14 @@ class CustomNTxNodeParserFromBuilder extends NTxNodeParserBase {
             for (NTxNodeBuilderContext.ProcessNodeAction a : ctx.afterProcessAllArgumentsList) {
                 a.processNode(info, ctx);
             }
+            initializeNode(info.node());
+        }
+    }
+
+    @Override
+    public void initializeNode(NTxNode node) {
+        if (ctx.initializeNodeAction != null) {
+            ctx.initializeNodeAction.initializeNode(node, ctx);
         }
     }
 
@@ -151,11 +159,13 @@ class CustomNTxNodeParserFromBuilder extends NTxNodeParserBase {
     public void compileNode(NTxNode node, NTxResolutionContext context) {
         if (ctx.compileNodeAction != null) {
             ctx.compileNodeAction.compileNode(node, context);
-        }else{
+            initializeNode(node);
+        } else {
             //default compile
             NTxEngine engine = context.engine();
-            engine.defaultCompileNodeProperties(node,context);
-            engine.defaultCompileNodeChildren(node,context);
+            engine.defaultCompileNodeProperties(node, context);
+            engine.defaultCompileNodeChildren(node, context);
+            initializeNode(node);
         }
     }
 }
