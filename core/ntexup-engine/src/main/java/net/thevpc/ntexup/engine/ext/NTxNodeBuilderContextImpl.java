@@ -47,6 +47,7 @@ public class NTxNodeBuilderContextImpl implements NTxNodeBuilderContext {
     RenderConvertAction renderConvertAction;
     ProcessNodeAction processChildren;
     CompileNodeAction compileNodeAction;
+    InitializeNodeAction initializeNodeAction;
 
     public NTxNodeBuilderContextImpl(NTxNodeBuilder builder, NTxEngine engine) {
         this.builder = builder;
@@ -114,7 +115,7 @@ public class NTxNodeBuilderContextImpl implements NTxNodeBuilderContext {
     @Override
     public NTxNodeBuilderContext ids(String... ids) {
         requireNonCompiled();
-        if(ids.length>0){
+        if (ids.length > 0) {
             this.id = ids[0];
             this.aliases = Arrays.copyOfRange(ids, 1, ids.length - 1);
         }
@@ -133,6 +134,7 @@ public class NTxNodeBuilderContextImpl implements NTxNodeBuilderContext {
         }
         return s.toArray(new String[0]);
     }
+
     @Override
     public String[] idAndAliases() {
         LinkedHashSet<String> s = new LinkedHashSet<>();
@@ -263,7 +265,13 @@ public class NTxNodeBuilderContextImpl implements NTxNodeBuilderContext {
 
     @Override
     public NTxNodeBuilderContext compileNode(CompileNodeAction e) {
-        this.compileNodeAction=e;
+        this.compileNodeAction = e;
+        return this;
+    }
+
+    @Override
+    public NTxNodeBuilderContext initializeNodeAction(InitializeNodeAction e) {
+        this.initializeNodeAction = e;
         return this;
     }
 
@@ -322,7 +330,7 @@ public class NTxNodeBuilderContextImpl implements NTxNodeBuilderContext {
         if (createdRenderer == null) {
             if (renderConvertAction != null) {
                 createdRenderer = new NTxNodeRendererAsConverter(this);
-            } else if(renderMainAction != null) {
+            } else if (renderMainAction != null) {
                 createdRenderer = new NTxNodeRendererAsDefault(this);
             } else if (renderTextAction != null) {
                 createdRenderer = new NTxNodeRendererAsText(this);
