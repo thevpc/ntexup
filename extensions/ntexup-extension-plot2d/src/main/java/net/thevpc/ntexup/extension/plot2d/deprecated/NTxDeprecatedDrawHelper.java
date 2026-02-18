@@ -16,7 +16,7 @@ import java.awt.*;
 
 public class NTxDeprecatedDrawHelper {
     public static void drawCurves(NTxNode p, NTxRendererContext rendererContext, NTxDrawContext drawContext) {
-        NTxBounds2D selfBounds = rendererContext.selfBounds(null, null);
+        NTxBounds2D selfBounds = rendererContext.selfBounds();
         NTxGraphics g = rendererContext.graphics();
         drawAxises(drawContext, g, p, rendererContext);
         for (NTxPlot2DData pd : drawContext.allData) {
