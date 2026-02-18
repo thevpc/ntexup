@@ -4,8 +4,10 @@ styles {
         font-family : "SansSerif",
         font-size   : 5%P,        // Comfortable for presentation viewing
         color       : "#1A1A1A",      // Soft black for eye comfort
-        at          : center,
         line-height : 1.2,
+        origin      : (0,0),
+        position    : (0,0),
+        size        : (100,100),
     }
 
     // Default Page Behavior
@@ -14,9 +16,13 @@ styles {
         margin      : 5%P,          // "Safety zone" for projectors
     }
 
+    group {
+    }
+
     // Standard Presentation Titles (assuming you use a .title class)
     (.title) {
         font-size   : 7%P,
+        color       : "DarkBlue",      // Soft black for eye comfort
         font-bold,
         at          : center,
         margin      : (0, 0, 10%P, 0),
@@ -28,9 +34,11 @@ styles {
         at     : left,
     }
     (.ul-bullet) {
-        background : "#444444",
+        margin : (2%P, 2%P),
+        background : "#393a3a8",
         at         : left,
         size       : 1.5%P,
+        debug      :false
     }
 
     // Code/Source Blocks (Technical Default)
