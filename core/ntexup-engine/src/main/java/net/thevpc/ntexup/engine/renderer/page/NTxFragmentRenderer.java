@@ -19,7 +19,7 @@ public class NTxFragmentRenderer extends NTxNodeRendererBase {
 
     @Override
     public void renderMain(NTxRendererContext ctx) {
-        NTxBounds2D b = ctx.selfBounds(null, null);
+        NTxBounds2D b = ctx.selfBounds();
         for (NTxNode child : ctx.node().children()) {
             ctx.resolveNode(child, b)
                     .render();
