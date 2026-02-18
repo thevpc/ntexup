@@ -398,7 +398,7 @@ public class DefaultNTxNode implements NTxNode {
     private static String validateClassName(String className) {
         className = NStringUtils.trimToNull(className);
         if (className != null) {
-            className = NNameFormat.LOWER_SNAKE_CASE.format(className);
+            className = className.replace(" ","_");
         }
         return className;
     }
