@@ -25,7 +25,7 @@ public class ScoreBoardBuilder implements NTxNodeBuilder {
 
     public void renderMain(NTxRendererContext rendererContext) {
         NTxNode node = rendererContext.node();
-        NTxBounds2D b = rendererContext.selfBounds(null, null);
+        NTxBounds2D b = rendererContext.selfBounds();
 
         Paint color = rendererContext.getForegroundColor(true);
 
