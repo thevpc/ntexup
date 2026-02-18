@@ -6,6 +6,7 @@ import net.thevpc.ntexup.api.document.node.NTxNode;
 import net.thevpc.ntexup.api.document.node.NTxNodeType;
 import net.thevpc.ntexup.api.document.style.DefaultNTxStyleRule;
 import net.thevpc.ntexup.api.document.style.NTxProp;
+import net.thevpc.ntexup.api.document.style.NTxPropName;
 import net.thevpc.ntexup.api.renderer.NTxRendererContext;
 import net.thevpc.ntexup.api.util.NTxSizeRef;
 import net.thevpc.ntexup.api.util.NTxUtils;
@@ -43,18 +44,25 @@ public class NTxListHelper {
         double childHeight = nTxSizeRef.getParentHeight() / (all.isEmpty() ? 1 : all.size());
 //        NTxBounds2 bounds = ctx.getParentBounds();
 //        double lastY = bounds.getY();
-        double indentFactor = Math.min(nTxSizeRef.getParentWidth() / 10, childHeight);
-        double bulletWidthFactor = ordered ? 0.3 : 0.1;
+        double rw = nTxSizeRef.getRootWidth();
+        double indentRatio = 0.03;
+        double marginRatio = 0.01;
+        double orderedWidthRatio = 0.1;
+        double unorderedWidthRatio = 0.01;
+        double bulletMargin = 0.01;
+        double indentFactor = Math.min(rw * indentRatio, childHeight);
+        double bulletWidthFactor = ordered ? orderedWidthRatio : unorderedWidthRatio;
+        double marginWidth = marginRatio * rw;
         int childrenCount = all.size();
         NTxBounds2D sb = ctx.defaultSelfBounds();
         double h = sb.getHeight() / childrenCount;
         double y0 = sb.getY();
         for (NodeWithIndent child : all) {
             double indentWidth = indentFactor * child.indent;
-            double bulletWidth = (nTxSizeRef.getParentWidth() - indentWidth) * bulletWidthFactor;
-            child.bulletSelfBounds = ctx.resolveNode(child.bullet, new NTxBounds2D(sb.getX() + indentWidth, y0, bulletWidth + childHeight, h)).selfBounds();
-            child.childSelfBounds = ctx.resolveNode(child.child, new NTxBounds2D(sb.getX() + indentWidth + bulletWidth + childHeight, y0,
-                    sb.getMaxX() - (sb.getX() + bulletWidth + childHeight)
+            double bulletWidth = (rw) * bulletWidthFactor/* - indentWidth*/;
+            child.bulletSelfBounds = ctx.resolveNode(child.bullet, new NTxBounds2D(sb.getX() + indentWidth, y0, bulletWidth, h)).selfBounds();
+            child.childSelfBounds = ctx.resolveNode(child.child, new NTxBounds2D(sb.getX() + indentWidth + bulletWidth + marginWidth, y0,
+                    sb.getMaxX() - (sb.getX() + bulletWidth + marginWidth)
                     , h)).selfBounds();
             child.height = Math.max(Math.max(Math.max(child.childSelfBounds.getMaxY() - y0, 0), childHeight), child.bulletSelfBounds.getHeight());
             y0 += child.height;
@@ -62,9 +70,8 @@ public class NTxListHelper {
         y0 = sb.getY();
         for (NodeWithIndent child : all) {
             double indentWidth = indentFactor * child.indent;
-            double bulletWidth = (nTxSizeRef.getParentWidth() - indentWidth) * bulletWidthFactor;
-            double childWidth = nTxSizeRef.getParentWidth() - indentWidth - bulletWidth;
-
+            double bulletWidth = (rw) * bulletWidthFactor/* - indentWidth*/;
+            double childWidth = rw - indentWidth - bulletWidth;
             child.bulletBounds = new NTxBounds2D(sb.getX() + indentWidth, y0, bulletWidth, childHeight);
             child.childBounds = new NTxBounds2D(child.bulletBounds.getMaxX(), y0, childWidth, child.height);
             child.rowBounds = child.bulletBounds.expand(child.childBounds);
@@ -120,11 +127,11 @@ public class NTxListHelper {
                                         NTxProp.of("origin", NElement.ofString("center"))
                                         , NTxProp.of("position", NElement.ofDoubleArray(50, 50))
 //                                        , NTxProp.of("margin", NElement.ofDoubleArray(10))
-                                        )
+                                )
                         );
-                        if(ordered) {
+                        if (ordered) {
                             styles.add(NTxProp.of("size", NElement.ofDouble(5, "%P")));
-                        }else{
+                        } else {
                             styles.add(NTxProp.of("size", NElement.ofDouble(2.5, "%P")));
                             styles.add(NTxProp.of("background", NElement.ofString("blue")));
                         }
@@ -137,9 +144,20 @@ public class NTxListHelper {
                             .addStyleClasses(specialStyle)
                             .setSource(p.source());
                 } else {
-                    g.bullet = f.ofSphere()
+//                    g.bullet =f.ofGroup()
+//                                    .setSource(p.source())
+//                                        .setProperty("background",NElement.ofName("yellow"))
+//                                        .setProperty("color",NElement.ofName("blue"))
+//                                            .add(f.ofCircle()
+//                                                    .addStyleClasses(specialStyle)
+//                                                    .setProperty("at",NElement.ofName("center"))
+//                                                    .setProperty("align",NElement.ofName("center"))
+//                                                    .setSource(p.source()))
+//                            ;
+                    g.bullet = f.ofCircle()
                             .addStyleClasses(specialStyle)
-                            .setSource(p.source());
+                            .setSource(p.source())
+                    ;
                 }
                 g.bullet.setParent(p.parent());
                 if (allClasses.contains(clsPrefix + "-item-" + (indent + 1))) {
@@ -152,7 +170,7 @@ public class NTxListHelper {
                                         , NTxProp.of("origin", NElement.ofString("left"))
                                         , NTxProp.of("position", NElement.ofString("left"))
                                         , NTxProp.of("size", NElement.ofDouble(3, "%P"))
-                                        , NTxProp.of("margin", NElement.ofDoubleArray(0,0,0,0))
+                                        , NTxProp.of("margin", NElement.ofDoubleArray(0, 0, 0, 0))
                                 )
                         );
                     }
