@@ -17,6 +17,7 @@ import java.awt.*;
 import java.util.Map;
 
 public class NTxValueByName {
+    public static final boolean AUTO_FORCE=false;
     public static NOptional<Paint> getColorProperty(String propName, NTxRendererContext ctx) {
         NTxValue r = NTxValue.of(ctx.computePropertyValue(propName).orElse(null));
         return NOptional.of(r.asColor().orElse(null));
@@ -26,34 +27,34 @@ public class NTxValueByName {
         return getNodeSizeCache(ctx).preserveRatio;
     }
 
-    private static NTxDouble2 getSize(NTxDouble2 minSize, NTxRendererContext ctx) {
-        NTxDouble2 size = getNodeSizeCache(ctx).componentSize;
-
-        boolean shapeRatio = isPreserveShapeRatio(ctx);
-        //ratio depends on the smallest
-        double sx = size.getX();
-        double sy = size.getY();
-        if (minSize != null) {
-            sx = Math.max(minSize.getX(), sx);
-            sy = Math.max(minSize.getY(), sy);
-        }
-        if (shapeRatio) {
-            if (sx > sy) {
-                sx = sy;
-            }
-            if (sy > sx) {
-                sy = sx;
-            }
-            return new NTxDouble2(
-                    sx,
-                    sy
-            );
-        }
-        return new NTxDouble2(
-                sx,
-                sy
-        );
-    }
+//    private static NTxDouble2 getSize(NTxDouble2 minSize, NTxRendererContext ctx) {
+//        NTxDouble2 size = getNodeSizeCache(ctx).componentSize;
+//
+//        boolean shapeRatio = isPreserveShapeRatio(ctx);
+//        //ratio depends on the smallest
+//        double sx = size.getX();
+//        double sy = size.getY();
+//        if (minSize != null) {
+//            sx = Math.max(minSize.getX(), sx);
+//            sy = Math.max(minSize.getY(), sy);
+//        }
+//        if (shapeRatio) {
+//            if (sx > sy) {
+//                sx = sy;
+//            }
+//            if (sy > sx) {
+//                sy = sx;
+//            }
+//            return new NTxDouble2(
+//                    sx,
+//                    sy
+//            );
+//        }
+//        return new NTxDouble2(
+//                sx,
+//                sy
+//        );
+//    }
 
     public static NTxDouble2 getOrigin(NTxRendererContext ctx, NTxDouble2 a) {
         NTxElemNumber2 double2OrHAlign = getNodeSizeCache(ctx).origin;
@@ -63,6 +64,27 @@ public class NTxValueByName {
                 sr.y(double2OrHAlign.getY()).get()
         );
     }
+
+    public static NTxDouble2 getInnerOrigin(NTxRendererContext ctx) {
+        NTxDouble2 size = getNodeSizeCache(ctx).parentBoundsWithMargin.size();
+        NTxElemNumber2 double2OrHAlign = getNodeSizeCache(ctx).innerOrigin;
+        NTxSizeRef sr = new NTxSizeRef(size.getX(), size.getY(), size.getX(), size.getY());
+        return new NTxDouble2(
+                sr.x(double2OrHAlign.getX()).get(),
+                sr.y(double2OrHAlign.getY()).get()
+        );
+    }
+
+    public static NTxDouble2 getInnerPosition(NTxRendererContext ctx) {
+        NTxDouble2 size = getNodeSizeCache(ctx).parentBoundsWithMargin.size();
+        NTxElemNumber2 double2OrHAlign = getNodeSizeCache(ctx).innerPosition;
+        NTxSizeRef sr = new NTxSizeRef(size.getX(), size.getY(), size.getX(), size.getY());
+        return new NTxDouble2(
+                sr.x(double2OrHAlign.getX()).get(),
+                sr.y(double2OrHAlign.getY()).get()
+        );
+    }
+
 
     public static NTxRotation getRotation(NTxRendererContext ctx) {
         return NTxValueByType.getRotation(ctx, NTxPropName.ROTATE).orNull();
@@ -81,33 +103,80 @@ public class NTxValueByName {
         return getNodeCommonCache(ctx).stroke;
     }
 
+    public static NTxBounds2D defaultSelfBounds(NTxRendererContext ctx) {
+        //        NTxBounds2 parentBounds = ctx.parentBounds();
+        NTxSizeRef parentSizeWithMarginRef = getNodeSizeCache(ctx).parentWithMarginRef;
+        NTxBounds2D parentBoundsWithMargin = getNodeSizeCache(ctx).parentBoundsWithMargin;
+
+        NTxDouble2 referenceSelfSize = getNodeSizeCache(ctx).referenceComponentSize;
+
+        NTxDouble2 pos = getPosition(ctx, new NTxDouble2(parentSizeWithMarginRef.getParentWidth(), parentSizeWithMarginRef.getParentHeight()));
+
+        NTxDouble2 origin = getOrigin(ctx, referenceSelfSize);
+
+
+        NTxBounds2D p2 = new NTxBounds2D(
+                pos.getX() - origin.getX() + parentBoundsWithMargin.getX(),
+                pos.getY() - origin.getY() + parentBoundsWithMargin.getY(),
+                referenceSelfSize.getX(),
+                referenceSelfSize.getY()
+        );
+
+        NTxDouble2 pos2 = getInnerPosition(ctx);
+
+        NTxDouble2 origin2 = getInnerOrigin(ctx);
+
+        NTxBounds2D p3 = new NTxBounds2D(
+                pos2.getX() - origin2.getX() + p2.getX(),
+                pos2.getY() - origin2.getY() + p2.getY(),
+                referenceSelfSize.getX(),
+                referenceSelfSize.getY()
+        );
+//        if(true){
+//            return p2;
+//        }
+        return p3;
+    }
+
     public static NTxBounds2D selfBounds(NTxDouble2 selfSize, NTxDouble2 minSize, NTxRendererContext ctx) {
 //        NTxBounds2 parentBounds = ctx.parentBounds();
         NTxSizeRef parentWithMarginRef = getNodeSizeCache(ctx).parentWithMarginRef;
         NTxBounds2D parentBoundsWithMargin = getNodeSizeCache(ctx).parentBoundsWithMargin;
 
-        if (selfSize == null) {
-            selfSize = getSize(minSize, ctx);
-        }
+//        if (selfSize == null) {
+//            selfSize = getSize(minSize, ctx);
+//        }
 
         NTxDouble2 pos = getPosition(ctx, new NTxDouble2(parentWithMarginRef.getParentWidth(), parentWithMarginRef.getParentHeight()));
 
         NTxDouble2 origin = getOrigin(ctx, selfSize);
 
-        double x = pos.getX() - origin.getX() + parentBoundsWithMargin.getX();
-        double y = pos.getY() - origin.getY() + parentBoundsWithMargin.getY();
 
-
-        return new NTxBounds2D(
-                x,
-                y,
+        NTxBounds2D p2 = new NTxBounds2D(
+                pos.getX() - origin.getX() + parentBoundsWithMargin.getX(),
+                pos.getY() - origin.getY() + parentBoundsWithMargin.getY(),
                 selfSize.getX(),
                 selfSize.getY()
         );
+
+        NTxDouble2 pos2 = getInnerPosition(ctx);
+
+        NTxDouble2 origin2 = getInnerOrigin(ctx);
+
+        NTxBounds2D p3 = new NTxBounds2D(
+                pos2.getX() - origin2.getX() + p2.getX(),
+                pos2.getY() - origin2.getY() + p2.getY(),
+                selfSize.getX(),
+                selfSize.getY()
+        );
+//        if(true){
+//            return p2;
+//        }
+        return p3;
     }
 
     public static boolean isVisible(NTxRendererContext ctx) {
-        return (boolean) ctx.node().getAndSetRenderCache("visible", false,
+        return (boolean) ctx.node().getAndSetRenderCache("visible", AUTO_FORCE,
                 () -> {
                     NOptional<Boolean> b = NTxValueByType.getBoolean(ctx, NTxPropName.HIDE);
                     if (b.isPresent()) {
@@ -169,12 +238,11 @@ public class NTxValueByName {
         renderInfo.drawContour = NTxValueByType.getBoolean(ctx, NTxPropName.DRAW_CONTOUR, "contour").orElse(false);
         return renderInfo;
     }
+
     public static NTxValueSizeCache getNodeSizeNoCache(NTxRendererContext ctx) {
         NTxValueSizeCache renderInfo = new NTxValueSizeCache();
-        NElement e = NTxValueByType.getElement(ctx, NTxPropName.FONT_SIZE).orNull();
         NTxSizeRef sr = ctx.sizeRef();
         renderInfo.preserveRatio = NTxValue.of(ctx.computePropertyValue(NTxPropName.PRESERVE_ASPECT_RATIO).orNull()).asBoolean().orElse(false);
-
         {
 
             NElement marginElement = ctx.computePropertyValue(NTxPropName.MARGIN).orNull();
@@ -248,26 +316,58 @@ public class NTxValueByName {
                     Math.max(pw - renderInfo.margin.getLeft() - renderInfo.margin.getRight(), 0),
                     Math.max(ph - renderInfo.margin.getTop() - renderInfo.margin.getBottom(), 0)
             );
+
             renderInfo.origin = NTxValueByType.getNNumberElement2Or1OrHAlign(ctx, NTxPropName.ORIGIN)
                     .orElseGetOptionalFrom(() -> NTxValueByType.getNNumberElement2Or1OrHAlign(ctx, NTxPropName.AT))
                     .orElse(new NTxElemNumber2(NElement.ofDouble(0), NElement.ofDouble(0)));
+
+            renderInfo.innerOrigin = NTxValueByType.getNNumberElement2Or1OrHAlign(ctx, NTxPropName.CONTENT_ORIGIN)
+                    .orElseGetOptionalFrom(() -> NTxValueByType.getNNumberElement2Or1OrHAlign(ctx, NTxPropName.ALIGN))
+                    .orElse(new NTxElemNumber2(NElement.ofDouble(0), NElement.ofDouble(0)));
+
             renderInfo.position = NTxValueByType.getNNumberElement2Or1OrHAlign(ctx, NTxPropName.POSITION)
                     .orElseGetOptionalFrom(() -> NTxValueByType.getNNumberElement2Or1OrHAlign(ctx, NTxPropName.AT))
+                    .orElse(new NTxElemNumber2(NElement.ofDouble(0), NElement.ofDouble(0)));
+
+            renderInfo.innerPosition = NTxValueByType.getNNumberElement2Or1OrHAlign(ctx, NTxPropName.CONTENT_POSITION)
+                    .orElseGetOptionalFrom(() -> NTxValueByType.getNNumberElement2Or1OrHAlign(ctx, NTxPropName.ALIGN))
                     .orElse(new NTxElemNumber2(NElement.ofDouble(0), NElement.ofDouble(0)));
 
             {
                 NTxElemNumber2 double2OrHAlign = NTxValueByType.getNNumberElement2Or1OrHAlign(ctx, NTxPropName.SIZE).orElse(
                         new NTxElemNumber2((NNumberElement) NElement.ofDouble(100.0), (NNumberElement) NElement.ofDouble(100.0))
                 );
-
-                renderInfo.componentSize = new NTxDouble2(
+                renderInfo.allowedComponentSize = new NTxDouble2(
                         renderInfo.parentWithMarginRef.x(double2OrHAlign.getX()).get(),
                         renderInfo.parentWithMarginRef.y(double2OrHAlign.getY()).get()
                 );
             }
+
+            //ratio depends on the smallest
+            double sx = renderInfo.allowedComponentSize.getX();
+            double sy = renderInfo.allowedComponentSize.getY();
+            if (renderInfo.preserveRatio) {
+                if (sx > sy) {
+                    sx = sy;
+                }
+                if (sy > sx) {
+                    sy = sx;
+                }
+                renderInfo.referenceComponentSize=new NTxDouble2(
+                        sx,
+                        sy
+                );
+            }else {
+                renderInfo.referenceComponentSize=new NTxDouble2(
+                        sx,
+                        sy
+                );
+            }
+
         }
         return renderInfo;
     }
+
     public static NTxValueFontCache getNodeFontNoCache(NTxRendererContext ctx) {
         NTxValueFontCache renderInfo = new NTxValueFontCache();
         NElement e = NTxValueByType.getElement(ctx, NTxPropName.FONT_SIZE).orNull();
@@ -299,19 +399,19 @@ public class NTxValueByName {
     }
 
     public static NTxValueCommonCache getNodeCommonCache(NTxRendererContext ctx) {
-        return ctx.node().getAndSetRenderCache(NTxValueCommonCache.class, false,
+        return ctx.node().getAndSetRenderCache(NTxValueCommonCache.class, AUTO_FORCE,
                 () -> getNodeCommonNoCache(ctx)
         ).get();
     }
 
     public static NTxValueSizeCache getNodeSizeCache(NTxRendererContext ctx) {
-        return ctx.node().getAndSetRenderCache(NTxValueSizeCache.class, false,
+        return ctx.node().getAndSetRenderCache(NTxValueSizeCache.class, AUTO_FORCE,
                 () -> getNodeSizeNoCache(ctx)
         ).get();
     }
 
     public static NTxValueFontCache getNodeFontCache(NTxRendererContext ctx) {
-        return ctx.node().getAndSetRenderCache(NTxValueFontCache.class, false,
+        return ctx.node().getAndSetRenderCache(NTxValueFontCache.class, AUTO_FORCE,
                 () -> getNodeFontNoCache(ctx)
         ).get();
     }
@@ -329,7 +429,7 @@ public class NTxValueByName {
     }
 
     public static int getColSpan(NTxRendererContext ctx) {
-        return (int) ctx.node().getAndSetRenderCache("colspan", false,
+        return (int) ctx.node().getAndSetRenderCache("colspan", AUTO_FORCE,
                 () -> {
                     {
                         Integer i = NTxValueByType.getInt(ctx, NTxPropName.COLSPAN).orElse(1);
@@ -346,7 +446,7 @@ public class NTxValueByName {
     }
 
     public static int getRowSpan(NTxRendererContext ctx) {
-        return (int) ctx.node().getAndSetRenderCache("rowspan", false,
+        return (int) ctx.node().getAndSetRenderCache("rowspan", AUTO_FORCE,
                 () -> {
                     {
                         Integer i = NTxValueByType.getInt(ctx, NTxPropName.ROWSPAN).orElse(1);
@@ -363,7 +463,7 @@ public class NTxValueByName {
     }
 
     public static double getColWeight(NTxRendererContext ctx) {
-        return (double) ctx.node().getAndSetRenderCache(NTxPropName.COLWEIGHT, false,
+        return (double) ctx.node().getAndSetRenderCache(NTxPropName.COLWEIGHT, AUTO_FORCE,
                 () -> {
                     {
                         Double i = NTxValueByType.getDouble(ctx, NTxPropName.COLWEIGHT).orElse(0.0);
@@ -380,7 +480,7 @@ public class NTxValueByName {
     }
 
     public static double getRowWeight(NTxRendererContext ctx) {
-        return (double) ctx.node().getAndSetRenderCache(NTxPropName.ROWWEIGHT, false,
+        return (double) ctx.node().getAndSetRenderCache(NTxPropName.ROWWEIGHT, AUTO_FORCE,
                 () -> {
                     {
                         Double i = NTxValueByType.getDouble(ctx, NTxPropName.ROWWEIGHT).orElse(0.0);
@@ -417,7 +517,7 @@ public class NTxValueByName {
                     case "origin": {
                         NOptional<NTxPoint2D> d = e.getValue().asPoint2DOrDouble();
                         if (d.isPresent()) {
-                            shadow.setTranslation(NTxUtils.point2DasRelative(d.get(),sr));
+                            shadow.setTranslation(NTxUtils.point2DasRelative(d.get(), sr));
                         } else {
                             //return (NOptional) d;
                         }
@@ -444,7 +544,7 @@ public class NTxValueByName {
                     case "shear": {
                         NOptional<NTxPoint2D> d = e.getValue().asPoint2DOrDouble();
                         if (d.isPresent()) {
-                            shadow.setShear(NTxUtils.point2DasRelative(d.get(),sr));
+                            shadow.setShear(NTxUtils.point2DasRelative(d.get(), sr));
                         } else {
                             //return (NOptional) d;
                         }
@@ -453,7 +553,7 @@ public class NTxValueByName {
                     case "zoom": {
                         NOptional<NTxPoint2D> d = e.getValue().asPoint2DOrDouble();
                         if (d.isPresent()) {
-                            shadow.setZoom(NTxUtils.point2DasRelative(d.get(),sr));
+                            shadow.setZoom(NTxUtils.point2DasRelative(d.get(), sr));
                         } else {
                             //return (NOptional) d;
                         }
@@ -473,10 +573,10 @@ public class NTxValueByName {
                     }
                 }
             }
-            if(shadow.getTranslation()==null){
-                shadow.setTranslation(NTxUtils.point2DasRelative(new NTxPoint2D(1, 1),sr));
+            if (shadow.getTranslation() == null) {
+                shadow.setTranslation(NTxUtils.point2DasRelative(new NTxPoint2D(1, 1), sr));
             }
-            if(shadow.getRadius()<=0){
+            if (shadow.getRadius() <= 0) {
                 shadow.setRadius(2);
             }
             return NOptional.of(shadow);
@@ -485,7 +585,7 @@ public class NTxValueByName {
         if (rb.isPresent()) {
             if (rb.get()) {
                 NTxShadow ss = new NTxShadow();
-                ss.setTranslation(NTxUtils.point2DasRelative(new NTxPoint2D(1, 1),sr));
+                ss.setTranslation(NTxUtils.point2DasRelative(new NTxPoint2D(1, 1), sr));
                 ss.setRadius(2);
                 return NOptional.of(ss);
             }
@@ -493,7 +593,7 @@ public class NTxValueByName {
         NOptional<NTxPoint2D> rd = NTxValue.of(sv).asPoint2DOrDouble();
         if (rd.isPresent()) {
             NTxShadow ss = new NTxShadow();
-            ss.setTranslation(NTxUtils.point2DasRelative(new NTxPoint2D(rd.get().getX(), rd.get().getY()),sr));
+            ss.setTranslation(NTxUtils.point2DasRelative(new NTxPoint2D(rd.get().getX(), rd.get().getY()), sr));
             ss.setRadius(2);
             return NOptional.of(ss);
         }
@@ -560,7 +660,7 @@ public class NTxValueByName {
                         n.get().doubleValue() / 100.0 * hh
                 ));
             }
-        } else if(o.isBoolean()){
+        } else if (o.isBoolean()) {
             return NOptional.of(new NTxPoint2D(
                     1 / 100.0 * ww,
                     1 / 100.0 * hh
