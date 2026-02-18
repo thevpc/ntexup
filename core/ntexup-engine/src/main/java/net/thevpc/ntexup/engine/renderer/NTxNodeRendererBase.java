@@ -100,15 +100,16 @@ public abstract class NTxNodeRendererBase implements NTxNodeRenderer {
     public abstract void renderMain(NTxRendererContext ctx);
 
     public NTxBounds2D bgBounds(NTxNode p, NTxRendererContext ctx) {
-        return ctx.selfBounds(null, null);
+        return selfBounds(ctx);
     }
 
     public NTxBounds2D selfBounds(NTxRendererContext ctx) {
-        return NTxValueByName.selfBounds(null, null, ctx);
+        NTxDouble2 size = defaultSelfBounds(ctx).size();
+        return NTxValueByName.selfBounds(size, null, ctx);
     }
 
     public NTxBounds2D defaultSelfBounds(NTxRendererContext ctx) {
-        return NTxValueByName.selfBounds(null, null, ctx);
+        return NTxValueByName.defaultSelfBounds(ctx);
     }
 
 }
