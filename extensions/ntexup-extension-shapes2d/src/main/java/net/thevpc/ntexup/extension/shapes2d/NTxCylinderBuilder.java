@@ -43,7 +43,7 @@ public class NTxCylinderBuilder implements NTxNodeBuilder {
         NOptional<NTxShadow> shadowOptional = rendererContext.readStyleAsShadow(NTxPropName.SHADOW);
 
 
-        NTxBounds2D b = rendererContext.selfBounds(null, null);
+        NTxBounds2D b = rendererContext.selfBounds();
         double x = b.getX();
         double y = b.getY();
         double width = b.getWidth();
