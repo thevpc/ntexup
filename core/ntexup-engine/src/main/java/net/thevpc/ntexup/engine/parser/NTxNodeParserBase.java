@@ -365,7 +365,13 @@ public abstract class NTxNodeParserBase implements NTxNodeParser {
 
     @Override
     public NTxNode newNode() {
-        return engine().newDefaultNode(id());
+        NTxNode n = engine().newDefaultNode(id());
+        initializeNode(n);
+        return n;
+    }
+
+    public void initializeNode(NTxNode node) {
+
     }
 
     @Override
