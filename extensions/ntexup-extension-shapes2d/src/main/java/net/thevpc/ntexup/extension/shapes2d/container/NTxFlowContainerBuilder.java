@@ -28,9 +28,14 @@ public class NTxFlowContainerBuilder implements NTxNodeBuilder {
     public void build(NTxNodeBuilderContext builderContext) {
         builderContext.id(NTxNodeType.FLOW)
                 .renderComponent(this::renderMain)
-                .sizeRequirements(this::sizeRequirements);
+                .sizeRequirements(this::sizeRequirements)
+                .selfBounds(this::selfBounds)
+        ;
     }
 
+    public NTxBounds2D selfBounds(NTxRendererContext rendererContext) {
+        return preComputed(rendererContext).selfBounds;
+    }
 
     private static class Elems {
         Elem[] elems;
@@ -103,40 +108,66 @@ public class NTxFlowContainerBuilder implements NTxNodeBuilder {
         );
     }
 
+    private static class PreComputed {
+        NTxBounds2D defaultSelfBounds;
+        NTxBounds2D selfBounds;
+        Elems ee;
+    }
+
+    public PreComputed preComputed(NTxRendererContext rendererContext) {
+        PreComputed u = (PreComputed) rendererContext.node().getRenderCache(PreComputed.class.getName()).orNull();
+        if (u == null) {
+            u = new PreComputed();
+            rendererContext = rendererContext.withDefaultStyles(defaultStyles);
+            NTxGraphics g = rendererContext.graphics();
+            NTxNode node = rendererContext.node();
+
+            NTxBounds2D defaultSelfBounds = rendererContext.defaultSelfBounds();
+            NTxBounds2D selfBounds = defaultSelfBounds;
+            Elems ee = compute(node, selfBounds, rendererContext);
+            NTxBounds2D newExpectedBounds = rendererContext.selfBounds(ee.size, null);
+
+//        g.setColor(Color.BLUE);
+//        g.drawRect(newExpectedBounds);
+            NTxRendererContext ctx2 = rendererContext.withParentBounds(newExpectedBounds);
+            u.ee = compute(node, newExpectedBounds, ctx2);
+
+            selfBounds = selfBounds.expand(newExpectedBounds);
+            u.defaultSelfBounds = defaultSelfBounds;
+            u.selfBounds = selfBounds;
+            rendererContext.node().setRenderCache(PreComputed.class.getName(), u);
+        }
+        return u;
+    }
+
     public void renderMain(NTxRendererContext rendererContext) {
         rendererContext = rendererContext.withDefaultStyles(defaultStyles);
         NTxGraphics g = rendererContext.graphics();
         NTxNode node = rendererContext.node();
+        PreComputed preComputed = preComputed(rendererContext);
 
-        NTxBounds2D bg = rendererContext.selfBounds();
-        Elems ee = compute(node, bg, rendererContext);
-        NTxBounds2D newExpectedBounds = rendererContext.selfBounds(ee.size, null);
 
 //        g.setColor(Color.BLUE);
 //        g.drawRect(newExpectedBounds);
         if (rendererContext.getDebugLevel() >= 10) {
             g.debugString(
                     "Flow:\n"
-                            + "expected=" + bg + "\n"
-                            + "fullSize=" + ee.fullSize.toString() + "\n"
-                            + "newExpectedBounds=" + newExpectedBounds.toString(),
+                            + "expected=" + preComputed.defaultSelfBounds + "\n"
+                            + "fullSize=" + preComputed.ee.fullSize.toString() + "\n"
+                            + "newExpectedBounds=" + preComputed.selfBounds.toString(),
                     30, 30
             );
         }
-        NTxRendererContext ctx2 = rendererContext.withParentBounds(newExpectedBounds);
-        ee = compute(node, newExpectedBounds, ctx2);
-
-        bg = bg.expand(newExpectedBounds);
         if (!rendererContext.isDry()) {
-            rendererContext.paintBackground(bg);
+            rendererContext.paintBackground(preComputed.defaultSelfBounds);
         }
 
-        for (Elem elem : ee.elems) {
+        for (Elem elem : preComputed.ee.elems) {
             NTxRendererContext ctx3 = rendererContext.resolveNode(elem.node, elem.bounds);
             ctx3.render();
         }
 
 
-        rendererContext.paintBorderLine(bg);
+        rendererContext.paintBorderLine(preComputed.defaultSelfBounds);
     }
 }
