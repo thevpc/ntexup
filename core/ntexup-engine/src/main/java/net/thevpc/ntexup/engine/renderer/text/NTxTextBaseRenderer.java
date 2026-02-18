@@ -9,6 +9,7 @@ import net.thevpc.ntexup.api.eval.NTxValueByName;
 import net.thevpc.ntexup.api.renderer.NTxGraphics;
 import net.thevpc.ntexup.api.renderer.text.NTxTextRendererBuilder;
 import net.thevpc.ntexup.api.renderer.NTxRendererContext;
+import net.thevpc.ntexup.api.util.NTxSizeRef;
 import net.thevpc.ntexup.engine.util.NTxNodeRendererUtils;
 import net.thevpc.ntexup.engine.renderer.NTxNodeRendererBase;
 import net.thevpc.nuts.elem.NElement;
@@ -40,14 +41,10 @@ public abstract class NTxTextBaseRenderer extends NTxNodeRendererBase {
     }
 
     public NTxBounds2D bgBounds(NTxNode p, NTxRendererContext ctx) {
-        return ctx.selfBounds(null, null);
+        return ctx.selfBounds();
     }
 
     public NTxBounds2D selfBounds(NTxRendererContext ctx) {
-        return defaultSelfBounds(ctx);
-    }
-
-    public NTxBounds2D defaultSelfBounds(NTxRendererContext ctx) {
         Cache0 renderInfo = renderInfo0(ctx);
         return NTxValueByName.selfBounds(new NTxDouble2(renderInfo.computedBound.getWidth(), renderInfo.computedBound.getHeight()), null, ctx);
     }
