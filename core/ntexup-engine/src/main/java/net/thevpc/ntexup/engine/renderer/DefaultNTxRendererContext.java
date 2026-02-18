@@ -146,7 +146,7 @@ public class DefaultNTxRendererContext extends NTxResolutionContextImpl implemen
 
     @Override
     public NTxBounds2D defaultSelfBounds() {
-        return NTxValueByName.selfBounds(null, null, this);
+        return NTxValueByName.defaultSelfBounds( this);
     }
 
     @Override
