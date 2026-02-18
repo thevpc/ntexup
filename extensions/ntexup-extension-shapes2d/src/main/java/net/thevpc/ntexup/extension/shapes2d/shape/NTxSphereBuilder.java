@@ -21,13 +21,13 @@ public class NTxSphereBuilder implements NTxNodeBuilder {
                 .id(NTxNodeType.SPHERE)
                 .renderComponent(this::renderMain)
         ;
-        defaultStyles.set(NTxPropName.PRESERVE_ASPECT_RATIO, NElement.ofTrue());
+        defaultStyles.set(NTxPropName.PRESERVE_ASPECT_RATIO, NElement.ofFalse());
     }
 
     public void renderMain(NTxRendererContext rendererContext) {
         NTxNode node = rendererContext.node();
         rendererContext = rendererContext.withDefaultStyles(defaultStyles);
-        NTxBounds2D b = rendererContext.selfBounds(null, null);
+        NTxBounds2D b = rendererContext.selfBounds();
         double x = b.getX();
         double y = b.getY();
         NTxGraphics g = rendererContext.graphics();
