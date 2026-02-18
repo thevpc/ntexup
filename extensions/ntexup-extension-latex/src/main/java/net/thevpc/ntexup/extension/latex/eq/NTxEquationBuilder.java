@@ -22,6 +22,7 @@ import net.thevpc.ntexup.api.util.NTxColors;
 import net.thevpc.ntexup.api.util.NTxUtils;
 import net.thevpc.nuts.elem.NElement;
 import net.thevpc.nuts.text.NMsg;
+import net.thevpc.nuts.util.NOptional;
 import net.thevpc.nuts.util.NStringUtils;
 import org.scilab.forge.jlatexmath.TeXConstants;
 import org.scilab.forge.jlatexmath.TeXFormula;
@@ -69,32 +70,54 @@ public class NTxEquationBuilder implements NTxNodeBuilder {
     }
 
     public NTxBounds2D selfBounds(NTxRendererContext rendererContext) {
-        NTxNode node = rendererContext.node();
-        String message = NTxValue.ofProp(node, NTxPropName.VALUE).asStringOrName().orNull();
-        if (message == null) {
-            message = "";
-        }
-        NTxGraphics g = rendererContext.graphics();
-        String tex = NStringUtils.trim(message);
-        if (tex.isEmpty()) {
-            return new NTxBounds2D(rendererContext.parentBounds().getX(), rendererContext.parentBounds().getY(), 0.0, 0.0);
-        } else {
-            TeXFormula formula;
-            try {
-                formula = new TeXFormula(tex);
-            } catch (Exception ex) {
-                formula = new TeXFormula("?error?");
-                rendererContext.log().log(NMsg.ofC("error evaluating latex formula %s : %s", tex, ex), NTxUtils.sourceOf(node));
-            }
-            float size = (float) NTxValueByName.getFontSize(rendererContext);
-            TeXIcon icon = formula.createTeXIcon(TeXConstants.STYLE_DISPLAY, size);
-
-            // insert a border
-            icon.setInsets(new Insets(0, 0, 0, 0));
-            return new NTxBounds2D(rendererContext.parentBounds().getX(), rendererContext.parentBounds().getY(), icon.getIconWidth(), icon.getIconHeight());
-        }
+        return precompute(rendererContext).selfBounds;
     }
 
+    static class PreComputed{
+        NTxBounds2D selfBounds;
+    }
+
+    public PreComputed precompute(NTxRendererContext rendererContext) {
+        PreComputed u = (PreComputed) rendererContext.node().getRenderCache(PreComputed.class.getName()).orNull();
+        if(u==null){
+            u=new PreComputed();
+            NTxNode node = rendererContext.node();
+            NElement vElemExpr = node.getPropertyValue(NTxPropName.VALUE).orNull();
+            NElement vElemValue = rendererContext.evalExpression(vElemExpr).orNull();
+            String text = NTxValue.of(vElemValue).asStringOrName().orElse("");
+
+            String tex = NStringUtils.trim(rendererContext.engine().tools().trimBloc(text));
+            if (tex.isEmpty()) {
+                u.selfBounds = rendererContext.defaultSelfBounds();
+            } else {
+                TeXFormula formula;
+                boolean error = false;
+                try {
+                    formula = new TeXFormula(tex);
+                } catch (Exception ex) {
+                    error = true;
+                    formula = new TeXFormula("?error?");
+                    rendererContext.log().log(NMsg.ofC("error evaluating latex formula %s : %s", tex, ex), NTxUtils.sourceOf(node));
+                }
+
+                NTxTextOptions oo=new NTxTextOptions();
+                oo.defaultFont=NTxValueByName.getFontInfo(rendererContext);
+                oo.sr=rendererContext.sizeRef();
+                Font font = oo.resolveFont(rendererContext.graphics());
+                TeXIcon icon = formula.createTeXIcon(TeXConstants.STYLE_DISPLAY, font.getSize());
+
+                // insert a border
+                icon.setInsets(new Insets(0, 0, 0, 0));
+
+                u.selfBounds = rendererContext.selfBounds(
+                        new NTxDouble2(icon.getIconWidth(), icon.getIconHeight())
+                        , null
+                );
+            }
+            rendererContext.node().setRenderCache(PreComputed.class.getName(),u);
+        }
+        return u;
+    }
 
     public void renderMain(NTxRendererContext rendererContext) {
         NTxNode node = rendererContext.node();
