@@ -19,6 +19,7 @@ import net.thevpc.ntexup.api.document.node.*;
 import net.thevpc.ntexup.api.document.style.DefaultNTxNodeSelector;
 import net.thevpc.ntexup.api.document.style.NTxProp;
 import net.thevpc.ntexup.api.document.style.NTxStyleRule;
+import net.thevpc.ntexup.api.document.style.NTxStyleRuleSelector;
 import net.thevpc.ntexup.api.engine.*;
 import net.thevpc.ntexup.api.engine.CompileNodeVisitor;
 import net.thevpc.ntexup.api.extension.NTxFunction;
@@ -718,8 +719,9 @@ public class DefaultNTxEngine implements NTxEngine {
     @Override
     public Set<String> computeDeclaredStylesClasses(NTxNode node) {
         return computeDeclaredStyles(node).stream().flatMap(x -> {
-            if (x instanceof DefaultNTxNodeSelector) {
-                DefaultNTxNodeSelector y = (DefaultNTxNodeSelector) x;
+            NTxStyleRuleSelector s = x.selector();
+            if (s instanceof DefaultNTxNodeSelector) {
+                DefaultNTxNodeSelector y = (DefaultNTxNodeSelector) s;
                 return y.getClasses().stream();
             }
             return Stream.empty();
