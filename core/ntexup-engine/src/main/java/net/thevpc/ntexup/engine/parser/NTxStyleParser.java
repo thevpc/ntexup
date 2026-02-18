@@ -59,7 +59,10 @@ public class NTxStyleParser {
                 NTxPropName.DRAW_CONTOUR,
                 NTxPropName.CLASS,
                 NTxPropName.AT,
-                NTxPropName.COMPONENT_NAME
+                NTxPropName.COMPONENT_NAME,
+                NTxPropName.CONTENT_ORIGIN,
+                NTxPropName.CONTENT_POSITION,
+                NTxPropName.ALIGN
         ));
 
         COMMON_FLAG_STYLE_PROPS.addAll(Arrays.asList(
