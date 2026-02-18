@@ -23,6 +23,10 @@ public class NTxBounds2D {
         return x;
     }
 
+    public NTxDouble2 size() {
+        return new NTxDouble2(getWidth(),getHeight());
+    }
+
     public Double getY() {
         return y;
     }
