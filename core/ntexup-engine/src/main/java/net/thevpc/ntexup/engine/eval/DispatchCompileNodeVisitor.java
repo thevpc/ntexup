@@ -77,7 +77,9 @@ public class DispatchCompileNodeVisitor implements CompileNodeVisitor {
 
     @Override
     public void visitDefinition(NTxNodeDef def, NTxResolutionContext context) {
-        visitor.visitDefinition(def, getContext(context));
+        NTxResolutionContext context1 = getContext(context);
+        context1.setNamedDef(def);
+        visitor.visitDefinition(def, context1);
     }
 
     @Override
