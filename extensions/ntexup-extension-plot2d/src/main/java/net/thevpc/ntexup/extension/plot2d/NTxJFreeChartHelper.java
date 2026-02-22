@@ -36,6 +36,9 @@ public class NTxJFreeChartHelper {
         xAxis.setAutoRangeIncludesZero(false);
         NumberAxis yAxis = new NumberAxis(NStringUtils.firstNonBlankTrimmed(drawContext.yLabel,"Y"));
         yAxis.setAutoRange(false); // disable auto-scaling
+        if(drawContext.gridMaxY<=drawContext.gridMinY){
+            drawContext.gridMaxY=drawContext.gridMinY+1E-9;
+        }
         yAxis.setRange(drawContext.gridMinY, drawContext.gridMaxY); // fixed min/max
         XYPlot plot = new XYPlot();
         plot.setRangeAxis(yAxis);
