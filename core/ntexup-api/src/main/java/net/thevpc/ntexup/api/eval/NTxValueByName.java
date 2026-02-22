@@ -317,16 +317,13 @@ public class NTxValueByName {
                     Math.max(ph - renderInfo.margin.getTop() - renderInfo.margin.getBottom(), 0)
             );
 
-            renderInfo.origin = NTxValueByType.getNNumberElement2Or1OrHAlign(ctx, NTxPropName.ORIGIN)
-                    .orElseGetOptionalFrom(() -> NTxValueByType.getNNumberElement2Or1OrHAlign(ctx, NTxPropName.AT))
+            renderInfo.origin = NTxValueByType.getNNumberElement2Or1OrHAlign(ctx, NTxPropName.ORIGIN,NTxPropName.AT)
                     .orElse(new NTxElemNumber2(NElement.ofDouble(0), NElement.ofDouble(0)));
 
-            renderInfo.innerOrigin = NTxValueByType.getNNumberElement2Or1OrHAlign(ctx, NTxPropName.CONTENT_ORIGIN)
-                    .orElseGetOptionalFrom(() -> NTxValueByType.getNNumberElement2Or1OrHAlign(ctx, NTxPropName.ALIGN))
+            renderInfo.innerOrigin = NTxValueByType.getNNumberElement2Or1OrHAlign(ctx, NTxPropName.CONTENT_ORIGIN,NTxPropName.ALIGN)
                     .orElse(new NTxElemNumber2(NElement.ofDouble(0), NElement.ofDouble(0)));
 
-            renderInfo.position = NTxValueByType.getNNumberElement2Or1OrHAlign(ctx, NTxPropName.POSITION)
-                    .orElseGetOptionalFrom(() -> NTxValueByType.getNNumberElement2Or1OrHAlign(ctx, NTxPropName.AT))
+            renderInfo.position = NTxValueByType.getNNumberElement2Or1OrHAlign(ctx, NTxPropName.POSITION,NTxPropName.AT)
                     .orElse(new NTxElemNumber2(NElement.ofDouble(0), NElement.ofDouble(0)));
 
             renderInfo.innerPosition = NTxValueByType.getNNumberElement2Or1OrHAlign(ctx, NTxPropName.CONTENT_POSITION)
