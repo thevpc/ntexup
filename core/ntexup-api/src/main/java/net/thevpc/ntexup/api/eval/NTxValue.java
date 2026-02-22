@@ -506,6 +506,7 @@ public class NTxValue {
                 case TRIPLE_SINGLE_QUOTED_STRING:
                 case TRIPLE_BACKTICK_STRING:
                 case LINE_STRING:
+                case BLOCK_STRING:
                 case NAME: {
                     NTxValue h = NTxValue.of(element);
                     String s = h.asStringOrName().get();
@@ -643,6 +644,7 @@ public class NTxValue {
                 case TRIPLE_SINGLE_QUOTED_STRING:
                 case TRIPLE_BACKTICK_STRING:
                 case LINE_STRING:
+                case BLOCK_STRING:
                 case NAME: {
                     NTxValue h = NTxValue.of(element);
                     String s = h.asStringOrName().get();
@@ -872,7 +874,9 @@ public class NTxValue {
                 case TRIPLE_DOUBLE_QUOTED_STRING:
                 case TRIPLE_SINGLE_QUOTED_STRING:
                 case TRIPLE_BACKTICK_STRING:
-                case LINE_STRING: {
+                case LINE_STRING:
+                case BLOCK_STRING:
+                {
                     return NLiteral.of(te.asStringValue()).asBoolean();
                 }
                 case NAME: {
