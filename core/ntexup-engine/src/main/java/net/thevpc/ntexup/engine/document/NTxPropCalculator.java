@@ -2,6 +2,7 @@ package net.thevpc.ntexup.engine.document;
 
 import net.thevpc.ntexup.api.document.node.NTxNode;
 import net.thevpc.ntexup.api.document.style.*;
+import net.thevpc.ntexup.api.engine.NTxEngine;
 import net.thevpc.ntexup.api.util.NTxUtils;
 import net.thevpc.nuts.util.NOptional;
 
@@ -10,6 +11,11 @@ import java.util.stream.Collectors;
 
 public class NTxPropCalculator {
 
+    private NTxEngine engine;
+
+    public NTxPropCalculator(NTxEngine engine) {
+        this.engine = engine;
+    }
 
     public NOptional<NTxProp> computeProperty(NTxNode node, String[] propertyNames) {
         return computePropertyMagnitude(node, propertyNames).map(NTxStyleAndMagnitude::getStyle);
@@ -19,20 +25,20 @@ public class NTxPropCalculator {
         NTxStyleRule rule;
         NTxProp property;
         int distance;
+        int index;
 
-        public HStyleRuleResult2(NTxStyleRule rule, NTxProp property) {
-            this.rule = rule;
-            this.property = property;
-        }
-        public HStyleRuleResult2(NTxStyleRule rule, NTxProp property, int distance) {
+        public HStyleRuleResult2(NTxStyleRule rule, NTxProp property, int distance, int index) {
             this.rule = rule;
             this.property = property;
             this.distance = distance;
+            this.index = index;
         }
-        public HStyleRuleResult2(HStyleRuleResult2 other,int distance) {
+
+        public HStyleRuleResult2(HStyleRuleResult2 other, int distance, int index) {
             this.rule = other.rule;
             this.property = other.property;
             this.distance = distance;
+            this.index = index;
         }
 
         @Override
@@ -40,6 +46,7 @@ public class NTxPropCalculator {
             return "HStyleRuleResult2{" +
                     "rule=" + rule +
                     ", property=" + property +
+                    ", index=" + index +
                     '}';
         }
     }
@@ -47,10 +54,28 @@ public class NTxPropCalculator {
     private HStyleRuleResult2[] _HStyleRuleResult2s(NTxNode t, NTxNode p) {
         NTxStyleRule[] rules = p.rules();
         List<HStyleRuleResult2> rr = new ArrayList<>();
-        for (NTxStyleRule rule : rules) {
+        for (int j = 0; j < rules.length; j++) {
+            NTxStyleRule rule = rules[j];
             if (rule.acceptNode(t)) {
-                for (NTxProp style : rule.styles().toList()) {
-                    rr.add(new HStyleRuleResult2(rule, style));
+                List<NTxProp> list = rule.styles().toList();
+                for (int i = 0; i < list.size(); i++) {
+                    NTxProp style = list.get(i);
+                    rr.add(new HStyleRuleResult2(rule, style, 0, i));
+                }
+            }
+        }
+        return rr.toArray(new HStyleRuleResult2[0]);
+    }
+
+    private HStyleRuleResult2[] _HStyleRuleResult2(NTxNode t, NTxStyleRule[] rules, String[] propertyNames) {
+        List<HStyleRuleResult2> rr = new ArrayList<>();
+        for (int i = 0; i < rules.length; i++) {
+            NTxStyleRule rule = rules[i];
+            if (rule.acceptNode(t)) {
+                NOptional<NTxProp> ok = rule.styles().get(propertyNames);
+                if (ok.isPresent()) {
+                    rr.add(new HStyleRuleResult2(rule, ok.get(), 0, i));
+//                    break;
                 }
             }
         }
@@ -59,17 +84,7 @@ public class NTxPropCalculator {
 
     private HStyleRuleResult2[] _HStyleRuleResult2(NTxNode t, NTxNode p, String[] propertyNames) {
         NTxStyleRule[] rules = p.rules();
-        List<HStyleRuleResult2> rr = new ArrayList<>();
-        for (NTxStyleRule rule : rules) {
-            if (rule.acceptNode(t)) {
-                NOptional<NTxProp> ok = rule.styles().get(propertyNames);
-                if (ok.isPresent()) {
-                    rr.add(new HStyleRuleResult2(rule, ok.get()));
-//                    break;
-                }
-            }
-        }
-        return rr.toArray(new HStyleRuleResult2[0]);
+        return _HStyleRuleResult2(t, rules, propertyNames);
     }
 
     public NOptional<NTxStyleAndMagnitude> computePropertyMagnitude(NTxNode node, String[] propertyNames) {
@@ -79,7 +94,7 @@ public class NTxPropCalculator {
             return NOptional.of(
                     new NTxStyleAndMagnitude(
                             u.get(),
-                            new NTxStyleMagnitude(0, DefaultNTxNodeSelector.ofAny())
+                            new NTxStyleMagnitude(0, 0, DefaultNTxNodeSelector.ofAny())
                     )
             );
         }
@@ -87,12 +102,13 @@ public class NTxPropCalculator {
         int distance = 1;
         NTxProp bestStyle = null;
         NTxStyleMagnitude bestMag = null;
-        List<HStyleRuleResult2> acceptable=new ArrayList<>();
+        List<HStyleRuleResult2> acceptable = new ArrayList<>();
         while (p != null) {
             HStyleRuleResult2[] validRules = _HStyleRuleResult2(node, p, propertyNames);
-            for (HStyleRuleResult2 rule : validRules) {
-                NTxStyleMagnitude m2 = new NTxStyleMagnitude(distance, rule.rule.selector());
-                acceptable.add(new HStyleRuleResult2(rule,distance));
+            for (int i = 0; i < validRules.length; i++) {
+                HStyleRuleResult2 rule = validRules[i];
+                NTxStyleMagnitude m2 = new NTxStyleMagnitude(distance, rule.index, rule.rule.selector());
+                acceptable.add(new HStyleRuleResult2(rule, distance, rule.index));
                 if (bestMag == null || m2.compareTo(bestMag) < 0) {
                     bestMag = m2;
                     bestStyle = rule.property;
@@ -111,11 +127,26 @@ public class NTxPropCalculator {
             distance++;
             p = NTxUtils.firstNodeUp(p.parent());
         }
+        //finally apply default styles
+        {
+            HStyleRuleResult2[] validRules = _HStyleRuleResult2(node, engine.getDefaultStyles().toArray(new NTxStyleRule[0]), propertyNames);
+            for (int i = 0; i < validRules.length; i++) {
+                HStyleRuleResult2 rule = validRules[i];
+                NTxStyleMagnitude m2 = new NTxStyleMagnitude(distance, rule.index, rule.rule.selector());
+                acceptable.add(new HStyleRuleResult2(rule, distance, rule.index));
+                if (bestMag == null || m2.compareTo(bestMag) < 0) {
+                    bestMag = m2;
+                    bestStyle = rule.property;
+                }
+            }
+            distance++;
+        }
+
         if (bestMag != null) {
             return NOptional.of(
                     new NTxStyleAndMagnitude(
                             bestStyle,
-                            new NTxStyleMagnitude(distance, bestMag.getSelector())
+                            bestMag//new NTxStyleMagnitude(distance, bestMag.getIndex(), bestMag.getSelector())
                     )
             );
         }
@@ -149,13 +180,14 @@ public class NTxPropCalculator {
         }
         return found;
     }
+
     public List<NTxStyleAndMagnitude> computePropertiesMagnitude(NTxNode node) {
         Map<String, NTxStyleAndMagnitude> found = new LinkedHashMap<>();
         for (NTxProp property : node.getProperties()) {
             found.put(property.getName(),
                     new NTxStyleAndMagnitude(
                             property,
-                            new NTxStyleMagnitude(0, DefaultNTxNodeSelector.ofAny())
+                            new NTxStyleMagnitude(0, 0, DefaultNTxNodeSelector.ofAny())
                     )
             );
         }
@@ -163,8 +195,9 @@ public class NTxPropCalculator {
         int distance = 1;
         while (p != null) {
             HStyleRuleResult2[] validRules = _HStyleRuleResult2s(node, p);
-            for (HStyleRuleResult2 rule : validRules) {
-                NTxStyleAndMagnitude m2 = new NTxStyleAndMagnitude(rule.property, new NTxStyleMagnitude(distance, rule.rule.selector()));
+            for (int i = 0; i < validRules.length; i++) {
+                HStyleRuleResult2 rule = validRules[i];
+                NTxStyleAndMagnitude m2 = new NTxStyleAndMagnitude(rule.property, new NTxStyleMagnitude(distance, i, rule.rule.selector()));
                 NTxStyleAndMagnitude hStyleAndMagnitude = found.get(rule.property.getName());
                 if (hStyleAndMagnitude == null || m2.getMagnetude().compareTo(hStyleAndMagnitude.getMagnetude()) <= 0) {
                     found.put(rule.property.getName(), m2);
