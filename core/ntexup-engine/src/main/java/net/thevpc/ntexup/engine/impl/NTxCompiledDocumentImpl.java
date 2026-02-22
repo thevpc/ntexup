@@ -249,7 +249,7 @@ public class NTxCompiledDocumentImpl implements NTxCompiledDocument {
                         for (int i = pushMe.size() - 1; i >= 0; i--) {
                             NTxNodeAndContext pp = new NTxNodeAndContext(pushMe.get(i), c);
                             if(pp.node ==part.node){
-                                System.out.println("why");
+                                engine.log().log(NMsg.ofC("unable to compile %s", part.node));
                                 if (pendingAutoPage == null) {
                                     pendingAutoPage = new PendingAutoPage(pp.context);
                                     pendingAutoPage.addChild(pp);
