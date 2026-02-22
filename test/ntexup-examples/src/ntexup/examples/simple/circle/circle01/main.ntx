@@ -1,0 +1,7 @@
+import(
+    "common-functions"
+    "shapes2d"
+)
+page{
+    circle(at:bottom,size:50)
+}
