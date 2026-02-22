@@ -5,10 +5,12 @@ import java.util.Objects;
 public class NTxStyleMagnitude implements Comparable<NTxStyleMagnitude> {
     private NTxStyleRuleSelector selector;
     private int distance;
+    private int index;
     private int score;
 
-    public NTxStyleMagnitude(int distance, NTxStyleRuleSelector selector) {
+    public NTxStyleMagnitude(int distance, int index,NTxStyleRuleSelector selector) {
         this.distance = distance;
+        this.index = index;
         this.selector = selector == null ? DefaultNTxNodeSelector.ofAny() : selector;
     }
 
@@ -24,18 +26,29 @@ public class NTxStyleMagnitude implements Comparable<NTxStyleMagnitude> {
         return distance;
     }
 
+    public int getIndex() {
+        return index;
+    }
+
     @Override
     public int compareTo(NTxStyleMagnitude o) {
+        if (this.distance != o.distance) {
+            int u = Integer.compare(this.distance, o.distance);
+            if (u != 0) {
+                return u;
+            }
+        }
         if (this.selector != o.selector) {
             int u = this.selector.compareTo(o.selector);
             if (u != 0) {
                 return u;
             }
         }
-        if (this.distance != o.distance) {
-            int u = Integer.compare(this.distance, o.distance);
+        if (this.index != o.index) {
+            int u = Integer.compare(this.index, o.index);
             if (u != 0) {
-                return u;
+                //last index first!!
+                return -u;
             }
         }
         if (this.score != o.score) {
@@ -55,7 +68,7 @@ public class NTxStyleMagnitude implements Comparable<NTxStyleMagnitude> {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         NTxStyleMagnitude that = (NTxStyleMagnitude) o;
-        return distance == that.distance && score == that.score && Objects.equals(selector, that.selector);
+        return distance == that.distance && score == that.score&& index == that.index && Objects.equals(selector, that.selector);
     }
 
     @Override
@@ -68,6 +81,7 @@ public class NTxStyleMagnitude implements Comparable<NTxStyleMagnitude> {
         return "HStyleMagnitude{" +
                 "selector=" + selector +
                 ", distance=" + distance +
+                ", index=" + index +
                 ", support=" + score +
                 '}';
     }
