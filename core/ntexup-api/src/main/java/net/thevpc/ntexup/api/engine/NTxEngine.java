@@ -141,6 +141,8 @@ public interface NTxEngine {
 
     <T> NOptional<T> computeIfAbsent(String name, Function<String, T> fct);
 
+    List<NTxStyleRule> getDefaultStyles();
+
     NTxEngine setEnv(String env, Object value);
 
     NTxDocumentLoadingResult compileDocument(NTxDocument document);
