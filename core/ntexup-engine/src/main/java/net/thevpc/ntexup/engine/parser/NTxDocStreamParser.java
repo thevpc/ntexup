@@ -149,7 +149,7 @@ public class NTxDocStreamParser {
         List<NElement> np = processControlElements(child.params().orNull(), u);
         if (u.get()) {
             someChanges.set(true);
-            return NElement.ofAnnotation(child.name(), np.toArray(new NElement[0]));
+            return NElementAnnotation.of(child.name(), np.toArray(new NElement[0]));
         }
         return child;
     }
@@ -331,8 +331,9 @@ public class NTxDocStreamParser {
             u = NElementReader.ofTson().read(is);
             u = NTxUtils.addCompilerDeclarationPathAnnotations(u, source.path().map(NPath::toString).orNull());
         } catch (Exception ex) {
-            engine.log().log(NMsg.ofC("error loading tson document %s", is).asError(),source);
-            return NOptional.ofNamedError("error loading tson document", ex);
+            NMsg msg = NMsg.ofC("error loading tson document %s", is).asError();
+            engine.log().log(msg,source);
+            return NOptional.ofNamedError(msg, ex);
         }
         return parseElements(u);
     }
@@ -343,8 +344,9 @@ public class NTxDocStreamParser {
             u = NElementReader.ofTson().read(path);
             u = NTxUtils.addCompilerDeclarationPathAnnotations(u, source.path().map(NPath::toString).orNull());
         } catch (Exception ex) {
-            engine.log().log(NMsg.ofC("error loading tson document %s : %s", path,ex).asError(),source);
-            return NOptional.ofNamedError(NMsg.ofC("error loading tson document %s : %s", path, ex), ex);
+            NMsg msg = NMsg.ofC("error loading tson document %s : %s", path, ex).asError();
+            engine.log().log(msg,source);
+            return NOptional.ofNamedError(msg, ex);
         }
         return parseElements(u);
     }
