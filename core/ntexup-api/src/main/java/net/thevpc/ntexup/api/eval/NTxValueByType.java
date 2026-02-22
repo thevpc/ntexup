@@ -62,8 +62,8 @@ public class NTxValueByType {
         return NTxValue.of(ctx.computePropertyValue(s).orNull()).asDouble2OrHAlign();
     }
 
-    public static NOptional<NTxElemNumber2> getNNumberElement2Or1OrHAlign(NTxRendererContext ctx, String s) {
-        return NTxValue.of(ctx.computePropertyValue(s).orNull()).asNNumberElement2Or1OrHAlign();
+    public static NOptional<NTxElemNumber2> getNNumberElement2Or1OrHAlign(NTxRendererContext ctx, String s,String... synonyms) {
+        return NTxValue.of(ctx.computePropertyValue(s,synonyms).orNull()).asNNumberElement2Or1OrHAlign();
     }
 
     public static NOptional<NTxDouble4> getDouble4(NTxRendererContext ctx, String s) {
