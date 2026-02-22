@@ -1,14 +1,13 @@
 import(
     "common-functions"
-//    "plantuml"
-//    "animated-gif"
-//    "svg"
     "shapes2d"
-//    "shapes3d"
-//    "plot2d"
-//    "presenters"
-//    "latex"
 )
-page{
-    circle(at:top-right,size:50)
+a=red
+styles:{
+    "*":{
+        background:a
+    }
+}
+page {
+    Hello
 }
