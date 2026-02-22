@@ -4,7 +4,7 @@
     <artifactId>ntexup-extension-common-functions</artifactId>
     <version>0.8.9.0</version>
     <packaging>jar</packaging>
-    <name>ntexup :: Extension SVG</name>
+    <name>ntexup :: Extension Common Functions</name>
     <description>SVG</description>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
