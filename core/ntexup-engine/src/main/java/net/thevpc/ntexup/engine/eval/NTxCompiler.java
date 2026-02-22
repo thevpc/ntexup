@@ -50,8 +50,6 @@ public class NTxCompiler {
             List<NTxNode> rootChildren = root.children();
             root.clearChildren();
             NTxResolutionContextImpl context = new NTxResolutionContextImpl(new NTxNode[]{root}, NElement.ofNull(), null, false, engine, documentCopy, null, null, null, null);
-            NElement stylesNode = NElementReader.ofTson().read(NPath.of("classpath:/net/thevpc/ntexup/default-style.ntx", Thread.currentThread().getContextClassLoader()).readString());
-
             DispatchCompileNodeVisitor dv = new DispatchCompileNodeVisitor(new CompileNodeVisitor() {
                 @Override
                 public void visitNode(NTxNode node, NTxResolutionContext context) {
@@ -84,10 +82,6 @@ public class NTxCompiler {
                 }
             });
 
-            context.doWithElement(stylesNode,cc->{
-                NTxItem sc = new StylesSpecialParser().parseNode(cc).call();
-                dv.visitItem(sc,cc);
-            });
 
             try (FillDocumentCompileNodeVisitor visitor = new FillDocumentCompileNodeVisitor(root, engine)) {
                 for (NTxNode rootChild : rootChildren) {
