@@ -26,6 +26,7 @@ public class NTxParserUtils {
             case TRIPLE_SINGLE_QUOTED_STRING:
             case TRIPLE_BACKTICK_STRING:
             case LINE_STRING:
+            case BLOCK_STRING:
             case NAME:
             {
                 if (!isCommonStyleProperty(currentArg.asStringValue().get())) {
