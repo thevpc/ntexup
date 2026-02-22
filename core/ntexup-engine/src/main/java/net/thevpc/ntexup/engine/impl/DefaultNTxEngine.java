@@ -25,6 +25,7 @@ import net.thevpc.ntexup.api.engine.CompileNodeVisitor;
 import net.thevpc.ntexup.api.extension.NTxFunction;
 import net.thevpc.ntexup.api.renderer.text.NTxTextRendererFlavor;
 import net.thevpc.ntexup.api.source.NTxSource;
+import net.thevpc.ntexup.engine.document.DefaultNTxDocument;
 import net.thevpc.ntexup.engine.eval.*;
 import net.thevpc.ntexup.engine.log.DefaultNTxLogger;
 import net.thevpc.ntexup.api.log.NTxLogger;
@@ -34,6 +35,7 @@ import net.thevpc.ntexup.api.parser.*;
 import net.thevpc.ntexup.api.renderer.*;
 import net.thevpc.ntexup.api.util.NTxUtils;
 import net.thevpc.ntexup.engine.parser.ctrlnodes.CtrNTxNodelUncompiled;
+import net.thevpc.ntexup.engine.parser.nodeparsers.StylesSpecialParser;
 import net.thevpc.ntexup.engine.renderer.DefaultNTxRendererContext;
 import net.thevpc.ntexup.engine.document.DefaultNTxNode;
 import net.thevpc.ntexup.engine.ext.NTxNodeBuilderContextImpl;
@@ -78,7 +80,7 @@ public class DefaultNTxEngine implements NTxEngine {
     private NTxEngineTools tools;
     //    private List<NTxNodeBuilderContextImpl> customBuilderContexts;
     private NTxDocumentFactory factory;
-    private NTxPropCalculator propCalculator = new NTxPropCalculator();
+    private NTxPropCalculator propCalculator ;
     private NTxFunctionList functions;
     private NTxMessageList log = new NTxMessageList();
     NtxTextFlavorList textFlavors;
@@ -88,6 +90,7 @@ public class DefaultNTxEngine implements NTxEngine {
     private NTxImageTypeRendererFactoryList imageTypeRendererFactoryList;
     private Map<String, Object> env = new HashMap<>();
     private Set<String> dependenciesLoadingPerformed = new HashSet<>();
+    private volatile List<NTxStyleRule> defaultStyles;
 
     public DefaultNTxEngine() {
         init();
@@ -108,6 +111,7 @@ public class DefaultNTxEngine implements NTxEngine {
     }
 
     protected void init() {
+        propCalculator = new NTxPropCalculator(this);
         addLog(new DefaultNTxLogger());
         if (classLoader == null) {
             classLoader = NExtensions.of().createMutableClassLoader(Thread.currentThread().getContextClassLoader());
@@ -165,6 +169,32 @@ public class DefaultNTxEngine implements NTxEngine {
                 }
             });
         }
+    }
+
+
+    public List<NTxStyleRule> getDefaultStyles() {
+        if (defaultStyles == null) {
+            synchronized (this) {
+                if (defaultStyles == null) {
+                    NElement stylesNode = NElementReader.ofTson().read(NPath.of("classpath:/net/thevpc/ntexup/default-style.ntx", Thread.currentThread().getContextClassLoader()).readString());
+                    DefaultNTxNode root = new DefaultNTxNode(NTxNodeType.PAGE_GROUP);
+                    NTxResolutionContextImpl context = new NTxResolutionContextImpl(new NTxNode[]{root}, NElement.ofNull(), null, false, this, new DefaultNTxDocument(null), null, null, null, null);
+                    List<NTxStyleRule> styles = new ArrayList<>();
+                    context.doWithElement(stylesNode, cc -> {
+                        NTxItem sc = new StylesSpecialParser().parseNode(cc).call();
+                        if (sc instanceof NTxStyleRule) {
+                            styles.add((NTxStyleRule) sc);
+                        } else if (sc instanceof NTxItemList) {
+                            for (NTxItem item : ((NTxItemList) sc).getItems()) {
+                                styles.add((NTxStyleRule) item);
+                            }
+                        }
+                    });
+                    defaultStyles = Collections.unmodifiableList(styles);
+                }
+            }
+        }
+        return defaultStyles;
     }
 
 
