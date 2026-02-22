@@ -102,7 +102,9 @@ public class NTxNodeEval implements NTxObjectEvalContext {
                 case TRIPLE_BACKTICK_STRING:
                 case TRIPLE_SINGLE_QUOTED_STRING:
                 case TRIPLE_DOUBLE_QUOTED_STRING:
-                case LINE_STRING: {
+                case LINE_STRING:
+                case BLOCK_STRING:
+                {
                     String u = ee.asStringValue().get();
                     if (u.indexOf("$") >= 0) {
                         NPrimitiveElementBuilder b = ee.asPrimitive().get().builder();
