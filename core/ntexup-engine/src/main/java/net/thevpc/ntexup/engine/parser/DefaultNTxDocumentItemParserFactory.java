@@ -145,6 +145,7 @@ public class DefaultNTxDocumentItemParserFactory
             case NTxNodeType.CTRL_IF:
             case NTxNodeType.CTRL_INCLUDE:
             case NTxNodeType.CTRL_IMPORT:
+            case "styles":
             {
                 NTxNodeParser p = context.engine().nodeTypeParser(name).orNull();
                 return p.parseNode(context);
