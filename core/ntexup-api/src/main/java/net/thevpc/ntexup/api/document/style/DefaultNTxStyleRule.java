@@ -31,6 +31,7 @@ public class DefaultNTxStyleRule implements NTxStyleRule {
         this.source = source;
         this.magnetude = new NTxStyleMagnitude(
                 0,
+                0,
                 selector
         );
         this.selector = selector;
