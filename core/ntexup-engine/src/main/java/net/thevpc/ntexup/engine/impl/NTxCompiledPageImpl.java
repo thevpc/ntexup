@@ -8,7 +8,6 @@ import net.thevpc.ntexup.api.eval.NTxResolutionContext;
 import net.thevpc.ntexup.api.util.NTxUtils;
 import net.thevpc.ntexup.engine.document.DefaultNTxNode;
 import net.thevpc.ntexup.engine.eval.FillNodeCompileNodeVisitor;
-import net.thevpc.ntexup.engine.eval.NTxCompiler;
 import net.thevpc.nuts.time.NChronometer;
 import net.thevpc.nuts.text.NMsg;
 import net.thevpc.nuts.util.NOptional;
@@ -17,18 +16,18 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class NTxCompiledPageImpl implements NTxCompiledPage {
+
     private List<NTxNodeAndContext> prefixInstructions;
     private NTxCompiledDocument document;
     private NTxNode rawPage;
-    private NTxNode compiledPage;
+    private volatile NTxNode compiledPage;
     private NTxResolutionContext parentContext;
     private NTxResolutionContext pageContext;
     private int index;
     private NTxPageCompileListener onCompile;
     private boolean prefixExecuted;
 
-
-    public NTxCompiledPageImpl(NTxNode rawPage, NTxCompiledDocument document, int index, NTxResolutionContext parentContext, List<NTxNodeAndContext> prefixInstructions,NTxPageCompileListener onCompile) {
+    public NTxCompiledPageImpl(NTxNode rawPage, NTxCompiledDocument document, int index, NTxResolutionContext parentContext, List<NTxNodeAndContext> prefixInstructions, NTxPageCompileListener onCompile) {
         this.rawPage = rawPage;
         this.document = document;
         this.index = index;
@@ -48,13 +47,13 @@ public class NTxCompiledPageImpl implements NTxCompiledPage {
     }
 
     public void initialize() {
-        if(!prefixExecuted){
+        if (!prefixExecuted) {
             NChronometer c = NChronometer.startNow();
             for (NTxNodeAndContext outerInstruction : prefixInstructions) {
                 outerInstruction.run(document.compiledDocument(), document().engine());
             }
             c.stop();
-            prefixExecuted=true;
+            prefixExecuted = true;
             document.engine().log().log(NMsg.ofC("page %s initialized in %s", (index + 1), c), NTxUtils.sourceOf(this.rawPage));
         }
     }
@@ -62,24 +61,33 @@ public class NTxCompiledPageImpl implements NTxCompiledPage {
     @Override
     public NTxNode compiledPage() {
         if (compiledPage == null) {
-            onCompile.onBeforeCompile(this);
-            initialize();
-            NChronometer c = NChronometer.startNow();
-            pageContext = document.engine().newContext(this.rawPage, document.compiledDocument(), parentContext).setInPage(true);
+            synchronized (this) {
+                if (compiledPage == null) {
+                    onCompile.onBeforeCompile(this);
+                    initialize();
+                    NChronometer c = NChronometer.startNow();
+                    pageContext = document.engine().newContext(this.rawPage, document.compiledDocument(), parentContext).setInPage(true);
 
-            NTxNode o = DefaultNTxNode.ofBlock();
-            o.setParent(this.rawPage.parent());
-            NTxNode node = this.rawPage.copy();
-            node.setParent(o);
-            pageContext.doWithChild(node, cc->{
-                pageContext.engine().compileNode(cc, new FillNodeCompileNodeVisitor(o));
-            });
-            this.compiledPage = NOptional.ofSingleton(o.children()).get();
-            c.stop();
-            document.engine().log().log(NMsg.ofC("page %s compiled in %s", (index + 1), c), NTxUtils.sourceOf(this.rawPage));
-            onCompile.onAfterCompile(this);
+                    NTxNode o = DefaultNTxNode.ofBlock();
+                    o.setParent(this.rawPage.parent());
+                    NTxNode node = this.rawPage.copy();
+                    node.setParent(o);
+                    pageContext.doWithChild(node, cc -> {
+                        pageContext.engine().compileNode(cc, new FillNodeCompileNodeVisitor(o));
+                    });
+                    this.compiledPage = NOptional.ofSingleton(o.children()).get();
+                    c.stop();
+                    document.engine().log().log(NMsg.ofC("page %s compiled in %s", (index + 1), c), NTxUtils.sourceOf(this.rawPage));
+                    onCompile.onAfterCompile(this);
+                }
+            }
         }
         return compiledPage;
+    }
+
+    public NTxResolutionContext pageContext() {
+        compiledPage();
+        return pageContext;
     }
 
     @Override
@@ -97,7 +105,6 @@ public class NTxCompiledPageImpl implements NTxCompiledPage {
     public boolean isCompiled() {
         return compiledPage != null;
     }
-
 
     @Override
     public NTxNode rawPage() {
