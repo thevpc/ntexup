@@ -141,6 +141,7 @@ public class NTxGraphicsImpl implements NTxGraphics {
             case TRIPLE_SINGLE_QUOTED_STRING:
             case TRIPLE_BACKTICK_STRING:
             case LINE_STRING:
+            case BLOCK_STRING:
             {
                 return StrokeFactory.createStroke(o.asStringOrName().get(), e, this);
             }
