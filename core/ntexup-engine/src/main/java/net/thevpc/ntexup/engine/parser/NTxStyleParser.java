@@ -183,7 +183,8 @@ public class NTxStyleParser {
             case TRIPLE_DOUBLE_QUOTED_STRING:
             case TRIPLE_SINGLE_QUOTED_STRING:
             case LINE_STRING:
-            case BLOCK_STRING: {
+            case BLOCK_STRING:
+            {
                 NTxStyleRuleSelectorItem n = ofSelectorItem(selector.asStringValue().get(), context).orNull();
                 if (n != null) {
                     items.add(n);
