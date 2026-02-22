@@ -1,0 +1,17 @@
+styles{
+    page{
+        background:blue
+    }
+}
+
+page(background:blue){
+    group{
+        styles{
+            "*":{
+                at:bottom
+                color:red
+            }
+        }
+        circle(size:50)
+    }
+}
