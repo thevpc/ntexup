@@ -5,6 +5,7 @@ import net.thevpc.ntexup.api.engine.NTxCompiledDocument;
 import net.thevpc.ntexup.api.engine.NTxCompiledPage;
 import net.thevpc.ntexup.api.engine.NTxEngine;
 import net.thevpc.ntexup.api.document.node.NTxNode;
+import net.thevpc.ntexup.api.eval.NTxResolutionContext;
 import net.thevpc.ntexup.api.renderer.NTxNodeRenderer;
 import net.thevpc.ntexup.api.renderer.NTxRendererContext;
 import net.thevpc.ntexup.api.util.NTxUtils;
@@ -143,13 +144,20 @@ public class PageView extends JComponent {
         NTxNode p = page.compiledPage();
         pageNode.set(p);
         NTxNodeRenderer r = engine.getRenderer(p.type()).get();
-
+        NTxResolutionContext pageContext = page.pageContext();
 
         NTxBounds2D bounds = new NTxBounds2D(0, 0, width, height);
         NTxRendererContext ctx = new DefaultNTxRendererContext(page,
                 new NTxNode[]{p}, engine,
                 engine.createGraphics(g2d)
-                , bounds, bounds, bounds, page, someChange, pageStartTime, NMaps.of(NTxRendererContext.CAPABILITY_ANIMATE, true), this, this::repaint, page.document().compiledDocument());
+                , bounds, bounds, bounds, page, someChange, pageStartTime, NMaps.of(NTxRendererContext.CAPABILITY_ANIMATE, true), this, this::repaint,
+                null, false,
+                null,
+                null, null, page.document().compiledDocument(),
+                null,
+                null,
+                null, pageContext
+        );
         if (someChange) {
             p.invalidateRenderCache();
         }
