@@ -69,12 +69,12 @@ public class NTxFunctionLinearGradientColor implements NTxFunction {
         Point2D end2;
         if(selfBounds!=null){
             start2=new Point2D.Double(
-                    start.getX()/100*selfBounds.getWidth()+selfBounds.getX(),
-                    start.getY()/100*selfBounds.getHeight()+selfBounds.getY()
+                    start.getX()/100*selfBounds.widthX()+selfBounds.minX(),
+                    start.getY()/100*selfBounds.widthY()+selfBounds.minY()
             );
             end2=new Point2D.Double(
-                    end.getX()/100*selfBounds.getWidth()+selfBounds.getX(),
-                    end.getY()/100*selfBounds.getHeight()+selfBounds.getY()
+                    end.getX()/100*selfBounds.widthX()+selfBounds.minX(),
+                    end.getY()/100*selfBounds.widthY()+selfBounds.minY()
             );
         }else{
             start2 = new Point2D.Double(start.getX(), start.getY());

@@ -1,15 +1,12 @@
 package net.thevpc.ntexup.engine.renderer.screen;
 
-import net.thevpc.ntexup.api.document.elem2d.NTxBounds2D;
 import net.thevpc.ntexup.api.engine.NTxCompiledDocument;
 import net.thevpc.ntexup.api.engine.NTxCompiledPage;
 import net.thevpc.ntexup.api.engine.NTxEngine;
 import net.thevpc.ntexup.api.document.node.NTxNode;
-import net.thevpc.ntexup.api.eval.NTxResolutionContext;
-import net.thevpc.ntexup.api.renderer.NTxNodeRenderer;
+import net.thevpc.ntexup.api.renderer.NTxNodeRendererConfig;
 import net.thevpc.ntexup.api.renderer.NTxRendererContext;
 import net.thevpc.ntexup.api.util.NTxUtils;
-import net.thevpc.ntexup.engine.renderer.DefaultNTxRendererContext;
 import net.thevpc.nuts.time.NChronometer;
 import net.thevpc.nuts.util.NMaps;
 import net.thevpc.nuts.text.NMsg;
@@ -134,34 +131,15 @@ public class PageView extends JComponent {
     }
 
     private void renderPage(Graphics2D g2d, double width, double height, boolean someChange, NRef<NTxNode> pageNode) {
-        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
-        g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-        g2d.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_ON);
-        g2d.setRenderingHint(RenderingHints.KEY_COLOR_RENDERING, RenderingHints.VALUE_COLOR_RENDER_QUALITY);
-        g2d.setRenderingHint(RenderingHints.KEY_DITHERING, RenderingHints.VALUE_DITHER_ENABLE);
-        g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+        NTxNodeRendererConfig config = new NTxNodeRendererConfig();
+        config.setWidth(width);
+        config.setHeight(height);
+        config.setCapabilities(NMaps.of(NTxRendererContext.CAPABILITY_ANIMATE, true));
+        config.setStartTime(pageStartTime);
+        config.setUseCache(!someChange);
+        engine.renderPage(page, config,g2d,this,this::repaint);
         NTxNode p = page.compiledPage();
         pageNode.set(p);
-        NTxNodeRenderer r = engine.getRenderer(p.type()).get();
-        NTxResolutionContext pageContext = page.pageContext();
-
-        NTxBounds2D bounds = new NTxBounds2D(0, 0, width, height);
-        NTxRendererContext ctx = new DefaultNTxRendererContext(page,
-                new NTxNode[]{p}, engine,
-                engine.createGraphics(g2d)
-                , bounds, bounds, bounds, page, someChange, pageStartTime, NMaps.of(NTxRendererContext.CAPABILITY_ANIMATE, true), this, this::repaint,
-                null, false,
-                null,
-                null, null, page.document().compiledDocument(),
-                null,
-                null,
-                null, pageContext
-        );
-        if (someChange) {
-            p.invalidateRenderCache();
-        }
-        r.render(ctx);
     }
 
 

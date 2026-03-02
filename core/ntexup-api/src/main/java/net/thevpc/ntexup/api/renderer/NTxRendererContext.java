@@ -32,9 +32,19 @@ public interface NTxRendererContext extends NTxResolutionContext {
 
     boolean isSomeChange();
 
-    NTxBounds2D selfBounds();
+    NTxBounds2D selfBounds2D();
+    NTxBounds2D globalBounds2D();
+    NTxBounds2D parentBounds2D();
+    NTxBounds2D realBounds2D();
+    NTxBounds2D realGlobalBounds2D();
+    NTxBounds2D defaultSelfBounds2D();
 
-    NTxBounds2D defaultSelfBounds();
+    NTxBounds3D selfBounds3D();
+    NTxBounds3D globalBounds3D();
+    NTxBounds3D parentBounds3D();
+    NTxBounds3D realBounds3D();
+    NTxBounds3D realGlobalBounds3D();
+    NTxBounds3D defaultSelfBounds3D();
 
     NTxRendererContext dryMode();
 
@@ -44,11 +54,9 @@ public interface NTxRendererContext extends NTxResolutionContext {
 
     boolean isDry();
 
-    NTxBounds2D getGlobalBounds();
 
     NTxGraphics graphics();
 
-    NTxBounds2D parentBounds();
 
     void render();
 
@@ -91,7 +99,7 @@ public interface NTxRendererContext extends NTxResolutionContext {
 
     NElement getStroke();
 
-    NTxBounds2D selfBounds(NTxDouble2 selfSize, NTxDouble2 minSize);
+    NTxBounds2D selfBounds2D(NTxDouble2 selfSize, NTxDouble2 minSize);
 
     boolean isVisible();
 

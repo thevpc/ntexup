@@ -20,7 +20,7 @@ public class NTxPageRenderer extends NTxNodeRendererBase {
 
     @Override
     public void renderMain(NTxRendererContext ctx) {
-        NTxBounds2D b = ctx.selfBounds();
+        NTxBounds2D b = ctx.selfBounds2D();
 
         drawBackground(ctx.node(), ctx.graphics(), ctx, b);
 //        drawGrid(ctx.graphics(), b);
@@ -33,8 +33,8 @@ public class NTxPageRenderer extends NTxNodeRendererBase {
     }
 
     private void drawGrid(NTxGraphics g, NTxBounds2D b) {
-        int width = b.getWidth().intValue();
-        int height = b.getHeight().intValue();
+        int width = b.widthX().intValue();
+        int height = b.widthY().intValue();
         Color color = Color.gray;
         g.setColor(color);
         NElement rowsSize = NElement.ofDouble(10, "%");
@@ -46,7 +46,7 @@ public class NTxPageRenderer extends NTxNodeRendererBase {
 
         g.setStroke(dashed);
 
-        NTxSizeRef sizeRef = new NTxSizeRef(b.getWidth(), b.getHeight(), b.getWidth(), b.getHeight());
+        NTxSizeRef sizeRef = new NTxSizeRef(b.widthX(), b.widthY(), b.widthX(), b.widthY());
         double rowsSizeEff = sizeRef.x(rowsSize).get();
         double columnsSizeEff = sizeRef.y(columnsSize).get();
 

@@ -13,7 +13,7 @@ public class NTxBlockRenderer extends NTxNodeRendererBase {
 
     @Override
     public void renderMain(NTxRendererContext ctx) {
-        NTxBounds2D b = ctx.selfBounds();
+        NTxBounds2D b = ctx.selfBounds2D();
 
         for (NTxNode child : ctx.node().children()) {
             ctx.resolveNode(child, b)

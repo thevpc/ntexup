@@ -28,9 +28,9 @@ public class NTxSquareBuilder implements NTxNodeBuilder {
     public void renderMain(NTxRendererContext rendererContext) {
         rendererContext = rendererContext.withDefaultStyles(defaultStyles);
         NTxNode node = rendererContext.node();
-        NTxBounds2D b = rendererContext.selfBounds();
-        double x = b.getX();
-        double y = b.getY();
+        NTxBounds2D b = rendererContext.selfBounds2D();
+        double x = b.minX();
+        double y = b.minY();
         NTxGraphics g = rendererContext.graphics();
         Boolean threeD = rendererContext.get3D();
         Boolean raised = rendererContext.getRaised();
@@ -43,8 +43,8 @@ public class NTxSquareBuilder implements NTxNodeBuilder {
         boolean round = roundCorners != null;
         boolean d3 = threeD == null ? false : threeD;
         if (!rendererContext.isDry()) {
-            int ww = NTxUtils.intOf(b.getWidth());
-            int hh = NTxUtils.intOf(b.getHeight());
+            int ww = NTxUtils.intOf(b.widthX());
+            int hh = NTxUtils.intOf(b.widthY());
             ww = Math.min(ww, hh);
             hh = ww;
             int finalWw = ww;
@@ -60,8 +60,8 @@ public class NTxSquareBuilder implements NTxNodeBuilder {
                     });
                 }
             } else if (round) {
-                double cx = NTxUtils.doubleOf(roundCorners.getX()) / 100 * rendererContext.getGlobalBounds().getWidth();
-                double cy = NTxUtils.doubleOf(roundCorners.getY()) / 100 * rendererContext.getGlobalBounds().getHeight();
+                double cx = NTxUtils.doubleOf(roundCorners.getX()) / 100 * rendererContext.globalBounds2D().widthX();
+                double cy = NTxUtils.doubleOf(roundCorners.getY()) / 100 * rendererContext.globalBounds2D().widthY();
                 boolean someBG = false;
                 if (someBG = rendererContext.applyBackgroundColor()) {
                     g.fillRoundRect((int) x, (int) y, ww, hh, (int) cx, (int) cy);

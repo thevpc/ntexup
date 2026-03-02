@@ -58,8 +58,8 @@ public class NTxNodeRendererUtils {
     }
 
     public static NTxSizeD mapDim(double w, double h, NTxRendererContext ctx) {
-        NTxBounds2D size = ctx.parentBounds();
-        return new NTxSizeD(w / 100 * size.getWidth(), h / 100 * size.getHeight());
+        NTxBounds2D size = ctx.parentBounds2D();
+        return new NTxSizeD(w / 100 * size.widthX(), h / 100 * size.widthY());
     }
 
     public static NTxBounds2D bounds(NTxRendererContext ctx) {
@@ -86,11 +86,11 @@ public class NTxNodeRendererUtils {
             }
         }
         if (size == null) {
-            size = new NTxDouble2(ctx.parentBounds().getWidth(), ctx.parentBounds().getHeight());
+            size = new NTxDouble2(ctx.parentBounds2D().widthX(), ctx.parentBounds2D().widthY());
         }
-        return new NTxBounds2D(
-                ctx.parentBounds().getX(),
-                ctx.parentBounds().getY(),
+        return NTxBounds2D.ofWidth(
+                ctx.parentBounds2D().minX(),
+                ctx.parentBounds2D().minY(),
                 size.getX(),
                 size.getY()
         );
@@ -145,9 +145,9 @@ public class NTxNodeRendererUtils {
             g.drawRect(a);
             NTxBounds2D b = NTxValueByName.getNodeSizeNoCache(ctx).parentBoundsWithMargin;
             g.drawRect(b);
-            NTxDouble2 origin = NTxValueByName.getOrigin(ctx,new NTxDouble2(a.getWidth(),a.getHeight()));
-            double x = origin.getX() + a.getX();
-            double y = origin.getY() + a.getY();
+            NTxDouble2 origin = NTxValueByName.getOrigin(ctx,new NTxDouble2(a.widthX(),a.widthY()));
+            double x = origin.getX() + a.minX();
+            double y = origin.getY() + a.minY();
             g.setColor(NTxValueByName.getDebugColor(ctx));
             int originSize = 6;
             g.fillOval(

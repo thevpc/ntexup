@@ -12,6 +12,11 @@ public class NTxBounds2DBuilder {
     }
 
     public NTxBounds2D build() {
-        return new NTxBounds2D(xx.getMin(), yy.getMin(), xx.getMax() - xx.getMin(), yy.getMax() - yy.getMin());
+        return NTxBounds2D.of(
+                xx.getMin(),
+                xx.getMax(),
+                yy.getMin(),
+                yy.getMax()
+        );
     }
 }

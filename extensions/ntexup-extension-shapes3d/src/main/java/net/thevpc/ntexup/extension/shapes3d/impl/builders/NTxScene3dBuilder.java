@@ -39,7 +39,8 @@ public class NTxScene3dBuilder implements NTxNodeBuilder {
                         "scale",
                         "rotate-vector",
                         "rotate-line",
-                        "real-size"
+                        "real-size",
+                        "real-position"
                 ).end()
                 .renderComponent((rendererContext) -> render(rendererContext))
         ;
@@ -48,7 +49,7 @@ public class NTxScene3dBuilder implements NTxNodeBuilder {
 
     public void render(NTxRendererContext rendererContext) {
         NTxNode node = rendererContext.node();
-        NTxBounds2D b = rendererContext.selfBounds();
+        NTxBounds2D b = rendererContext.selfBounds2D();
         NTxPoint3D realSize = NTx3DUtils.asPoint3D(node, "real-size").orNull();
         NElement c = NTxValue.ofProp(node, "camera").asElement().orNull();
         NTxCamera3DImpl camera = null;
@@ -121,7 +122,7 @@ public class NTxScene3dBuilder implements NTxNodeBuilder {
         NtxGraphics3DImpl g3 = new NtxGraphics3DImpl(rendererContext.graphics(), rendererContext);
         g3.setMesh(new DefaultNTx3DMesh().configureScene(node, rendererContext));
         g3.setCamera(camera);
-        g3.draw3D(g, new NTxPoint2D(b.getX(), b.getY()));
+        g3.draw3D(g, new NTxPoint2D(b.minX(), b.minY()));
     }
 
     private NtxElement3D toNtxElement3D(NTxNode node, NTxRendererContext rendererContext, NTxBounds2D b, RealToRelativeMapper mapper, NtxElement3DNodeParserFactory parserFactory) {

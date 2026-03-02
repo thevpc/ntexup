@@ -1179,7 +1179,7 @@ public class NTxNodeGridBagLayout {
         info = getLayoutInfo(PREFERREDSIZE);
         d = getMinSize(info);
 
-        if (parentBounds.getWidth() < d.getWidth() || parentBounds.getHeight() < d.getHeight()) {
+        if (parentBounds.widthX() < d.getWidth() || parentBounds.widthY() < d.getHeight()) {
             info = getLayoutInfo(MINSIZE);
             d = getMinSize(info);
         }
@@ -1208,7 +1208,7 @@ public class NTxNodeGridBagLayout {
          * according to the weights.
          */
 
-        diffw = parentBounds.getWidth() - r.width;
+        diffw = parentBounds.widthX() - r.width;
         if (diffw != 0) {
             weight = 0.0;
             for (i = 0; i < info.width; i++)
@@ -1224,12 +1224,12 @@ public class NTxNodeGridBagLayout {
                     }
                 }
             }
-            diffw = parentBounds.getWidth() - r.width;
+            diffw = parentBounds.widthX() - r.width;
         } else {
             diffw = 0;
         }
 
-        diffh = parentBounds.getHeight() - r.height;
+        diffh = parentBounds.widthY() - r.height;
         if (diffh != 0) {
             weight = 0.0;
             for (i = 0; i < info.height; i++)
@@ -1245,7 +1245,7 @@ public class NTxNodeGridBagLayout {
                     }
                 }
             }
-            diffh = parentBounds.getHeight() - r.height;
+            diffh = parentBounds.widthY() - r.height;
         } else {
             diffh = 0;
         }
@@ -1277,7 +1277,7 @@ public class NTxNodeGridBagLayout {
                 for (i = 0; i < constraints.tempX; i++)
                     r.x += info.minWidth[i];
             } else {
-                r.x = parentBounds.getWidth() - (diffw / 2 + insets.right);
+                r.x = parentBounds.widthX() - (diffw / 2 + insets.right);
                 for (i = 0; i < constraints.tempX; i++)
                     r.x -= info.minWidth[i];
             }
@@ -1322,9 +1322,9 @@ public class NTxNodeGridBagLayout {
              */
 
             if ((r.width <= 0) || (r.height <= 0)) {
-                comp.bounds = new NTxBounds2D(parentBounds.getX(), parentBounds.getY(), 0, 0);
+                comp.bounds = NTxBounds2D.ofWidth(parentBounds.minX(), parentBounds.minY(), 0, 0);
             } else {
-                comp.bounds = new NTxBounds2D(parentBounds.getX() + r.x, parentBounds.getY() + r.y, r.width, r.height);
+                comp.bounds = NTxBounds2D.ofWidth(parentBounds.minX() + r.x, parentBounds.minY() + r.y, r.width, r.height);
             }
             comp.propagate();
         }

@@ -43,11 +43,11 @@ public class NTxCylinderBuilder implements NTxNodeBuilder {
         NOptional<NTxShadow> shadowOptional = rendererContext.readStyleAsShadow(NTxPropName.SHADOW);
 
 
-        NTxBounds2D b = rendererContext.selfBounds();
-        double x = b.getX();
-        double y = b.getY();
-        double width = b.getWidth();
-        double height = b.getHeight();
+        NTxBounds2D b = rendererContext.selfBounds2D();
+        double x = b.minX();
+        double y = b.minY();
+        double width = b.widthX();
+        double height = b.widthY();
 
         double arcStroke = NTxValue.of(node.getPropertyValue(NTxPropName.STROKE)).asDouble().orElse(5.0);
         double ellipse_height = NTxValue.of(node.getPropertyValue(NTxPropName.ELLIPSE_H)).asDouble().orElse(50.0);

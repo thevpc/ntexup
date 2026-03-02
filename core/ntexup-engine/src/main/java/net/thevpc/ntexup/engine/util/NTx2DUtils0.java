@@ -151,7 +151,7 @@ public class NTx2DUtils0 {
     public static void drawShadowed(NTxGraphics graphics, Consumer<NTxGraphics> consumer, NTxBounds2D selfBounds, NTxShadow shadow) {
         NTxGraphics g2d = graphics.copy();
         // Render text to offscreen image (solid white for shadow)
-        BufferedImage textImage = new BufferedImage(selfBounds.getWidth().intValue(), selfBounds.getHeight().intValue(), BufferedImage.TYPE_INT_ARGB);
+        BufferedImage textImage = new BufferedImage(selfBounds.widthX().intValue(), selfBounds.widthY().intValue(), BufferedImage.TYPE_INT_ARGB);
         Graphics2D tg = textImage.createGraphics();
         consumer.accept(graphics.engine().createGraphics(tg));
         tg.dispose();

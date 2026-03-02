@@ -9,66 +9,70 @@ public class NTxBounds2D {
     private Double h;
 
     public static NTxBounds2D ofFull() {
-        return new NTxBounds2D(0.0, 0.0, 100.0, 100.0);
+        return ofWidth(0.0, 0.0, 100.0, 100.0);
     }
 
-    public NTxBounds2D(Number x, Number y, Number w, Number h) {
+    public static NTxBounds2D ofWidth(Number x, Number y, Number w, Number h) {
+        return new NTxBounds2D(x, y, w, h);
+    }
+
+    public static NTxBounds2D of(Number x1, Number x2, Number y1, Number y2) {
+        return new NTxBounds2D(x1, y1, NTxUtils.distanceDouble(x1,x2), NTxUtils.distanceDouble(y1,y2));
+    }
+    public static NTxBounds2D ofEmpty() {
+        return new NTxBounds2D(0.0, 0.0, 0.0, 0.0);
+    }
+
+    private NTxBounds2D(Number x, Number y, Number w, Number h) {
         this.x = x == null ? null : x.doubleValue();
         this.y = y == null ? null : y.doubleValue();
         this.w = w == null ? null : w.doubleValue();
         this.h = h == null ? null : h.doubleValue();
     }
 
-    public Double getX() {
-        return x;
-    }
 
     public NTxDouble2 size() {
-        return new NTxDouble2(getWidth(),getHeight());
+        return new NTxDouble2(widthX(), widthY());
     }
 
-    public Double getY() {
-        return y;
-    }
-
-    public Double getWidth() {
+    public Double widthX() {
         return w;
     }
 
-    public Double getHeight() {
+    public Double widthY() {
         return h;
     }
 
-    public Double getMinX() {
+    public Double minX() {
         return x;
     }
 
-    public Double getCenterX() {
+    public Double centerX() {
         if (x != null && w != null) {
             return x + w / 2;
         }
         return null;
     }
 
-    public Double getCenterY() {
+    public Double centerY() {
         if (y != null && h != null) {
             return y + h / 2;
         }
         return null;
     }
 
-    public Double getMinY() {
+    public Double minY() {
         return y;
     }
 
-    public Double getMaxX() {
+    public Double maxX() {
         if (x == null || w == null) {
             return null;
         }
         return x + w;
     }
 
-    public Double getMaxY() {
+    public Double maxY() {
         if (y == null || h == null) {
             return null;
         }
@@ -85,10 +89,10 @@ public class NTxBounds2D {
             return new NTxBounds2D(x, y, w, h);
         }
 
-        Double xx1 = NTxUtils.min(getMinX(), s.getMinX());
-        Double yy1 = NTxUtils.min(getMinY(), s.getMinY());
-        Double xx2 = NTxUtils.max(getMaxX(), s.getMaxX());
-        Double yy2 = NTxUtils.max(getMaxY(), s.getMaxY());
+        Double xx1 = NTxUtils.min(minX(), s.minX());
+        Double yy1 = NTxUtils.min(minY(), s.minY());
+        Double xx2 = NTxUtils.max(maxX(), s.maxX());
+        Double yy2 = NTxUtils.max(maxY(), s.maxY());
         return new NTxBounds2D(
                 xx1,
                 yy1,

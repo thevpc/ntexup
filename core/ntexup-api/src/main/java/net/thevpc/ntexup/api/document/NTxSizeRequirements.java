@@ -24,19 +24,19 @@ public class NTxSizeRequirements {
     }
 
     public NTxBounds2D toBounds2() {
-        return new NTxBounds2D(
-                minX, minY,
-                maxX, maxY
+        return NTxBounds2D.of(
+                minX, maxX,
+                minY, maxY
         );
     }
 
     public NTxSizeRequirements(NTxBounds2D b) {
-        this.minX = b.getMinX();
-        this.maxX = b.getMaxX();
-        this.minY = b.getMinY();
-        this.maxY = b.getMaxY();
-        this.preferredX = b.getMaxY();
-        this.preferredY = b.getMaxY();
+        this.minX = b.minX();
+        this.maxX = b.maxX();
+        this.minY = b.minY();
+        this.maxY = b.maxY();
+        this.preferredX = b.maxY();
+        this.preferredY = b.maxY();
     }
 
     @Override

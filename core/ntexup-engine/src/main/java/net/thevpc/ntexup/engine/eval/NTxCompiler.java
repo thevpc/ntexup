@@ -306,7 +306,6 @@ public class NTxCompiler {
         String nodeType = node.type();
         NTxNodeParser p = engine.nodeTypeParser(nodeType).orNull();
         if (p != null) {
-            context.log().log(NMsg.ofC("variable '%s' not found, rendering as plain text.  If you meant a component, use '%s()' syntax", nodeType, nodeType).asWarning(), NTxUtils.sourceOf(node));
             p.compileNode(node, context);
         } else {
             List<NTxNode> children = node.children();

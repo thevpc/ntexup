@@ -107,7 +107,7 @@ public class NTxPolylineBuilder implements NTxNodeBuilder {
 
         NTxNode node = rendererContext.node();
         rendererContext = rendererContext.withDefaultStyles(defaultStyles);
-        NTxBounds2D b = rendererContext.selfBounds();
+        NTxBounds2D b = rendererContext.selfBounds2D();
         NTxGraphics g = rendererContext.graphics();
         NTxPoint2D[] points = NTxValue.ofProp(node, NTxPropName.POINTS).asPoint2DArray().get();
         if (!rendererContext.isDry()) {

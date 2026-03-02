@@ -29,7 +29,7 @@ public class NTxFlowContainerBuilder implements NTxNodeBuilder {
         builderContext.id(NTxNodeType.FLOW)
                 .renderComponent(this::renderMain)
                 .sizeRequirements(this::sizeRequirements)
-                .selfBounds(this::selfBounds)
+                .selfBounds2D(this::selfBounds)
         ;
     }
 
@@ -57,11 +57,11 @@ public class NTxFlowContainerBuilder implements NTxNodeBuilder {
         double allWidth = 0;
         double allHeight = 0;
 
-        Double expectedWidth = expectedBounds.getWidth();
-        Double expectedHeight = expectedBounds.getHeight();
-        double xRef = expectedBounds.getX();
-        double yRef = expectedBounds.getY();
-        NTxRendererContext ctx2 = ctx.withParentBounds(new NTxBounds2D(0, 0, expectedWidth, expectedHeight));
+        Double expectedWidth = expectedBounds.widthX();
+        Double expectedHeight = expectedBounds.widthY();
+        double xRef = expectedBounds.minX();
+        double yRef = expectedBounds.minY();
+        NTxRendererContext ctx2 = ctx.withParentBounds(NTxBounds2D.ofWidth(0, 0, expectedWidth, expectedHeight));
         for (int i = 0; i < texts.size(); i++) {
             NTxNode text = texts.get(i);
             NTxSizeRequirements ee = ctx2.sizeRequirementsOf();
@@ -76,14 +76,14 @@ public class NTxFlowContainerBuilder implements NTxNodeBuilder {
             Elem zz = new Elem();
             e.elems[i] = zz;
             zz.node = text;
-            zz.bounds = new NTxBounds2D(xRef, yRef, w, h);
+            zz.bounds = NTxBounds2D.ofWidth(xRef, yRef, w, h);
             if (e.size == null) {
-                allWidth = zz.bounds.getWidth();
-                allHeight = zz.bounds.getHeight();
+                allWidth = zz.bounds.widthX();
+                allHeight = zz.bounds.widthY();
                 e.size = new NTxDouble2(allWidth, allHeight);
             } else {
-                allWidth += zz.bounds.getWidth();
-                allHeight = Math.max(zz.bounds.getHeight(), allHeight);
+                allWidth += zz.bounds.widthX();
+                allHeight = Math.max(zz.bounds.widthY(), allHeight);
                 e.size = new NTxDouble2(allWidth, allHeight);
             }
             xRef += w;
@@ -96,7 +96,7 @@ public class NTxFlowContainerBuilder implements NTxNodeBuilder {
 
     public NTxSizeRequirements sizeRequirements(NTxRendererContext rendererContext) {
         NTxNode node = rendererContext.node();
-        NTxBounds2D bg = rendererContext.selfBounds();
+        NTxBounds2D bg = rendererContext.selfBounds2D();
         Elems ee = compute(node, bg, rendererContext);
         return new NTxSizeRequirements(
                 ee.size.getX(),
@@ -122,10 +122,10 @@ public class NTxFlowContainerBuilder implements NTxNodeBuilder {
             NTxGraphics g = rendererContext.graphics();
             NTxNode node = rendererContext.node();
 
-            NTxBounds2D defaultSelfBounds = rendererContext.defaultSelfBounds();
+            NTxBounds2D defaultSelfBounds = rendererContext.defaultSelfBounds2D();
             NTxBounds2D selfBounds = defaultSelfBounds;
             Elems ee = compute(node, selfBounds, rendererContext);
-            NTxBounds2D newExpectedBounds = rendererContext.selfBounds(ee.size, null);
+            NTxBounds2D newExpectedBounds = rendererContext.selfBounds2D(ee.size, null);
 
 //        g.setColor(Color.BLUE);
 //        g.drawRect(newExpectedBounds);

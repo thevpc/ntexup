@@ -38,12 +38,21 @@ import java.util.List;
 
 
 public class DefaultNTxRendererContext extends NTxResolutionContextImpl implements NTxRendererContext {
-    private NTxBounds2D selfBounds;
+    private NTxBounds2D selfBounds2D;
+    private final NTxBounds2D globalBound2D;
+    private final NTxBounds2D parentBounds2D;
+    private final NTxBounds2D realBounds2D;
+    private final NTxBounds2D realGlobalBounds2D;
+
+    private NTxBounds3D selfBounds3D;
+    private final NTxBounds3D globalBounds3D;
+    private final NTxBounds3D parentBounds3D;
+    private final NTxBounds3D realBounds3D;
+    private final NTxBounds3D realGlobalBounds3D;
+
     private final NTxNodeBuilderContext buildContext;
     private final ImageObserver imageObserver;
     private final NTxGraphics g3;
-    private final NTxBounds2D globalBound;
-    private final NTxBounds2D parentBounds;
     private final Map<String, Object> capabilities;
     private final long pageStartTime;
     private final boolean someChange;
@@ -53,22 +62,31 @@ public class DefaultNTxRendererContext extends NTxResolutionContextImpl implemen
     private final boolean dry;
     private final NTxCompiledPage page;
 
-    public DefaultNTxRendererContext(NTxCompiledPage page, NTxNode[] path, NTxEngine engine, NTxGraphics g, NTxBounds2D selfBounds, NTxBounds2D parentBounds, NTxBounds2D globalBound, NTxCompiledPage compiledPage,
-                                     boolean someChange, long pageStartTime, Map<String, Object> capabilities, ImageObserver imageObserver, Runnable repainter,
-                                     NTxDocument document
+//    public DefaultNTxRendererContext(NTxCompiledPage page, NTxNode[] path, NTxEngine engine, NTxGraphics g,
+//                                     NTxBounds2D selfBounds2D, NTxBounds2D parentBounds2D, NTxBounds2D globalBound2D, NTxBounds2D realBounds2D,
+//                                     NTxBounds3D selfBounds3D, NTxBounds3D parentBounds3D, NTxBounds3D globalBounds3D, NTxBounds3D realBounds3D,
+//                                     NTxCompiledPage compiledPage,
+//                                     boolean someChange, long pageStartTime, Map<String, Object> capabilities, ImageObserver imageObserver, Runnable repainter,
+//                                     NTxDocument document
+//
+//    ) {
+//        this(page, path, engine, g,
+//                selfBounds2D, parentBounds2D, globalBound2D, realBounds2D,
+//                selfBounds3D, parentBounds3D, globalBounds3D, realBounds3D,
+//                compiledPage,
+//                someChange, pageStartTime, capabilities, imageObserver, repainter,
+//                null, false,
+//                null,
+//                null, null, document,
+//                null,
+//                null,
+//                null, null);
+//    }
 
-    ) {
-        this(page, path, engine, g, selfBounds, parentBounds, globalBound, compiledPage,
-                someChange, pageStartTime, capabilities, imageObserver, repainter,
-                null, false,
-                null,
-                null, null, document,
-                null,
-                null,
-                null, null);
-    }
-
-    public DefaultNTxRendererContext(NTxCompiledPage page, NTxNode[] path, NTxEngine engine, NTxGraphics g, NTxBounds2D selfBounds, NTxBounds2D parentBounds, NTxBounds2D globalBound, NTxCompiledPage compiledPage,
+    public DefaultNTxRendererContext(NTxCompiledPage page, NTxNode[] path, NTxEngine engine, NTxGraphics g,
+                                     NTxBounds2D selfBounds2D, NTxBounds2D parentBounds2D, NTxBounds2D globalBound2D, NTxBounds2D realBounds2D, NTxBounds2D realGlobalBounds2D,
+                                     NTxBounds3D selfBounds3D, NTxBounds3D parentBounds3D, NTxBounds3D globalBounds3D, NTxBounds3D realBounds3D, NTxBounds3D realGlobalBounds3D,
+                                     NTxCompiledPage compiledPage,
                                      boolean someChange, long pageStartTime, Map<String, Object> capabilities, ImageObserver imageObserver, Runnable repainter,
                                      NTxProperties defaultStyles, boolean dry,
                                      NTxNodeBuilderContext buildContext,
@@ -80,13 +98,23 @@ public class DefaultNTxRendererContext extends NTxResolutionContextImpl implemen
     ) {
         super(path, element, def, true, engine, document, vars, definitions, functions, parentContext);
         setVar("selfBounds", () -> {
-            NTxBounds2D nTxBounds2 = DefaultNTxRendererContext.this.selfBounds();
+            NTxBounds2D nTxBounds2 = DefaultNTxRendererContext.this.selfBounds2D();
             return NTxUtils.toElement(nTxBounds2);
         });
         this.page = page;
-        this.selfBounds = selfBounds;
-        this.parentBounds = parentBounds;
-        this.globalBound = globalBound;
+
+        this.selfBounds2D = selfBounds2D;
+        this.parentBounds2D = parentBounds2D;
+        this.globalBound2D = globalBound2D;
+        this.realBounds2D = realBounds2D;
+        this.realGlobalBounds2D = realGlobalBounds2D;
+
+        this.selfBounds3D = selfBounds3D;
+        this.parentBounds3D = parentBounds3D;
+        this.globalBounds3D = globalBounds3D;
+        this.realBounds3D = realBounds3D;
+        this.realGlobalBounds3D = realGlobalBounds3D;
+
         this.g3 = g;
         this.compiledPage = compiledPage;
         this.someChange = someChange;
@@ -97,6 +125,26 @@ public class DefaultNTxRendererContext extends NTxResolutionContextImpl implemen
         this.defaultStyles = defaultStyles;
         this.dry = dry;
         this.buildContext = buildContext;
+    }
+
+    @Override
+    public NTxBounds2D realGlobalBounds2D() {
+        return realGlobalBounds2D;
+    }
+
+    @Override
+    public NTxBounds3D realGlobalBounds3D() {
+        return realGlobalBounds3D;
+    }
+
+    @Override
+    public NTxBounds2D realBounds2D() {
+        return realBounds2D;
+    }
+
+    @Override
+    public NTxBounds3D realBounds3D() {
+        return realBounds3D;
     }
 
     @Override
@@ -137,33 +185,65 @@ public class DefaultNTxRendererContext extends NTxResolutionContextImpl implemen
 
 
     @Override
-    public NTxBounds2D selfBounds() {
-        if (selfBounds == null) {
-            selfBounds = engine().getRenderer(node().type()).get().selfBounds(this);
+    public NTxBounds2D selfBounds2D() {
+        if (selfBounds2D == null) {
+            selfBounds2D = engine().getRenderer(node().type()).get().selfBounds2D(this);
         }
-        return selfBounds;
+        return selfBounds2D;
     }
 
     @Override
-    public NTxBounds2D defaultSelfBounds() {
-        return NTxValueByName.defaultSelfBounds( this);
+    public NTxBounds3D selfBounds3D() {
+        if (selfBounds3D == null) {
+            selfBounds3D = engine().getRenderer(node().type()).get().selfBounds3D(this);
+        }
+        return selfBounds3D;
+    }
+
+    @Override
+    public NTxBounds3D globalBounds3D() {
+        return globalBounds3D;
+    }
+
+    @Override
+    public NTxBounds3D parentBounds3D() {
+        return parentBounds3D;
+    }
+
+    @Override
+    public NTxBounds3D defaultSelfBounds3D() {
+        return NTxValueByName.defaultSelfBounds3D(this);
+    }
+
+    @Override
+    public NTxBounds2D defaultSelfBounds2D() {
+        return NTxValueByName.defaultSelfBounds2D(this);
     }
 
     @Override
     public NTxRendererContext withDefaultStyles(NTxProperties defaultStyles) {
-        return copyAsRenderer(page, path, engine, g3, selfBounds, parentBounds, globalBound, compiledPage, someChange, pageStartTime, capabilities, imageObserver, repainter, defaultStyles, dry, buildContext, element, def, document, vars, definitions, functions, parentContext);
+        return copyAsRenderer(page, path, engine, g3,
+                selfBounds2D, parentBounds2D, globalBound2D, realBounds2D, realGlobalBounds2D,
+                selfBounds3D, parentBounds3D, globalBounds3D, realBounds3D, realGlobalBounds3D,
+                compiledPage, someChange, pageStartTime, capabilities, imageObserver, repainter, defaultStyles, dry, buildContext, element, def, document, vars, definitions, functions, parentContext);
     }
 
     @Override
     public NTxRendererContext withBuilderContext(NTxNodeBuilderContext builderContext) {
-        return copyAsRenderer(page, path, engine, g3, null, parentBounds == null ? selfBounds() : parentBounds, globalBound, compiledPage, someChange, pageStartTime, capabilities, imageObserver, repainter, defaultStyles, dry, builderContext, element, def, document, vars, definitions, functions, parentContext);
+        return copyAsRenderer(page, path, engine, g3,
+                null, parentBounds2D == null ? selfBounds2D() : parentBounds2D, globalBound2D, realBounds2D, realGlobalBounds2D,
+                selfBounds3D, parentBounds3D, globalBounds3D, realBounds3D, realGlobalBounds3D,
+                compiledPage, someChange, pageStartTime, capabilities, imageObserver, repainter, defaultStyles, dry, builderContext, element, def, document, vars, definitions, functions, parentContext);
     }
 
     @Override
     public NTxRendererContext resolveNode(NTxNode node, NTxBounds2D parentBounds) {
         List<NTxNode> all = new ArrayList<>(Arrays.asList(path));
         all.add(NAssert.requireNamedNonNull(node, "parent"));
-        return copyAsRenderer(page, all.toArray(new NTxNode[0]), engine, g3, null, parentBounds == null ? selfBounds() : parentBounds, globalBound, compiledPage, someChange, pageStartTime, capabilities, imageObserver, repainter, defaultStyles, dry, buildContext, element, def, document, vars, definitions, functions, parentContext);
+        return copyAsRenderer(page, all.toArray(new NTxNode[0]), engine, g3,
+                null, parentBounds == null ? selfBounds2D() : parentBounds, globalBound2D, realBounds2D, realGlobalBounds2D,
+                selfBounds3D, parentBounds3D, globalBounds3D, realBounds3D, realGlobalBounds3D,
+                compiledPage, someChange, pageStartTime, capabilities, imageObserver, repainter, defaultStyles, dry, buildContext, element, def, document, vars, definitions, functions, parentContext);
     }
 
 
@@ -185,7 +265,7 @@ public class DefaultNTxRendererContext extends NTxResolutionContextImpl implemen
     @Override
     public NTxRendererContext withNode(NTxNode node) {
         DefaultNTxRendererContext n = (DefaultNTxRendererContext) super.withNode(node);
-        n.selfBounds=null;//just result cache
+        n.selfBounds2D = null;//just result cache
         return n;
     }
 
@@ -201,15 +281,21 @@ public class DefaultNTxRendererContext extends NTxResolutionContextImpl implemen
 
     @Override
     public NTxRendererContext withParentBounds(NTxBounds2D parentBounds) {
-        if (parentBounds == null || Objects.equals(parentBounds, this.parentBounds)) {
+        if (parentBounds == null || Objects.equals(parentBounds, this.parentBounds2D)) {
             return this;
         }
-        return copyAsRenderer(page, path, engine, g3, selfBounds, parentBounds, globalBound, compiledPage, someChange, pageStartTime, capabilities, imageObserver, repainter, defaultStyles, dry, buildContext, element, def, document, vars, definitions, functions, parentContext);
+        return copyAsRenderer(page, path, engine, g3,
+                selfBounds2D, parentBounds, globalBound2D, realBounds2D, realGlobalBounds2D,
+                selfBounds3D, parentBounds3D, globalBounds3D, realBounds3D, realGlobalBounds3D,
+                compiledPage, someChange, pageStartTime, capabilities, imageObserver, repainter, defaultStyles, dry, buildContext, element, def, document, vars, definitions, functions, parentContext);
     }
 
     @Override
     protected NTxResolutionContext copyAs(NTxNode[] path, NElement element, NTxNodeDef def, boolean isInPage, NTxEngine engine, NTxDocument document, Map<String, NTxVar> vars, Map<String, NTxNodeDef> definitions, Map<String, NTxFunction> functions, NTxResolutionContext parentContext) {
-        return copyAsRenderer(page, path, engine, g3, selfBounds, parentBounds, globalBound, compiledPage, someChange, pageStartTime, capabilities, imageObserver, repainter, defaultStyles, dry, buildContext, element, def, document, vars, definitions, functions, parentContext);
+        return copyAsRenderer(page, path, engine, g3,
+                selfBounds2D, parentBounds2D, globalBound2D, realBounds2D, realGlobalBounds2D,
+                selfBounds3D, parentBounds3D, globalBounds3D, realBounds3D, realGlobalBounds3D,
+                compiledPage, someChange, pageStartTime, capabilities, imageObserver, repainter, defaultStyles, dry, buildContext, element, def, document, vars, definitions, functions, parentContext);
     }
 
     @Override
@@ -217,7 +303,10 @@ public class DefaultNTxRendererContext extends NTxResolutionContextImpl implemen
         if (dry) {
             return this;
         }
-        return copyAsRenderer(page, path, engine, g3, selfBounds, parentBounds, globalBound, compiledPage, someChange, pageStartTime, capabilities, imageObserver, repainter, defaultStyles, true, buildContext, element, def, document, vars, definitions, functions, parentContext);
+        return copyAsRenderer(page, path, engine, g3,
+                selfBounds2D, parentBounds2D, globalBound2D, realBounds2D, realGlobalBounds2D,
+                selfBounds3D, parentBounds3D, globalBounds3D, realBounds3D, realGlobalBounds3D,
+                compiledPage, someChange, pageStartTime, capabilities, imageObserver, repainter, defaultStyles, true, buildContext, element, def, document, vars, definitions, functions, parentContext);
     }
 
     @Override
@@ -225,16 +314,19 @@ public class DefaultNTxRendererContext extends NTxResolutionContextImpl implemen
         if (graphics == null || graphics == g3) {
             return this;
         }
-        return copyAsRenderer(page, path, engine, graphics, selfBounds, parentBounds, globalBound, compiledPage, someChange, pageStartTime, capabilities, imageObserver, repainter, defaultStyles, dry, buildContext, element, def, document, vars, definitions, functions, parentContext);
+        return copyAsRenderer(page, path, engine, graphics,
+                selfBounds2D, parentBounds2D, globalBound2D, realBounds2D, realGlobalBounds2D,
+                selfBounds3D, parentBounds3D, globalBounds3D, realBounds3D, realGlobalBounds3D,
+                compiledPage, someChange, pageStartTime, capabilities, imageObserver, repainter, defaultStyles, dry, buildContext, element, def, document, vars, definitions, functions, parentContext);
     }
 
     @Override
     public NTxSizeRef sizeRef() {
-        NTxBounds2D b = parentBounds();
-        NTxBounds2D gb = getGlobalBounds();
+        NTxBounds2D b = parentBounds2D();
+        NTxBounds2D gb = globalBounds2D();
         return new NTxSizeRef(
-                b.getWidth(), b.getHeight(),
-                gb.getWidth(), gb.getHeight()
+                b.widthX(), b.widthY(),
+                gb.widthX(), gb.widthY()
         );
     }
 
@@ -251,9 +343,9 @@ public class DefaultNTxRendererContext extends NTxResolutionContextImpl implemen
 
     @Override
     public void renderDetachedNode(NElement childNode, NTxBounds2D relativeBounds) {
-        DefaultNTxRendererContext context=this;
+        DefaultNTxRendererContext context = this;
         engine().parseNode(childNode,
-                this.withElement(childNode), n->{
+                this.withElement(childNode), n -> {
                     if (!n.isPresent()) {
                         this.log().log(NMsg.ofC("unable to compile detached node '%s'", childNode).asWarning(), NTxUtils.sourceOf(node));
                     } else {
@@ -298,16 +390,19 @@ public class DefaultNTxRendererContext extends NTxResolutionContextImpl implemen
         //childNode=buildNode(childNode);
         NOptional<NTxNodeRenderer> renderer = engine().getRenderer(childNode.type());
         if (renderer.isPresent()) {
-            NTxBounds2D pb = selfBounds();
-            NTxBounds2D sb = new NTxBounds2D(
-                    relativeBounds.getX() / 100 * pb.getWidth() + pb.getX(),
-                    relativeBounds.getY() / 100 * pb.getHeight() + pb.getY(),
-                    relativeBounds.getWidth() / 100 * pb.getWidth(),
-                    relativeBounds.getHeight() / 100 * pb.getHeight()
+            NTxBounds2D pb = selfBounds2D();
+            NTxBounds2D sb = NTxBounds2D.ofWidth(
+                    relativeBounds.minX() / 100 * pb.widthX() + pb.minX(),
+                    relativeBounds.minY() / 100 * pb.widthY() + pb.minY(),
+                    relativeBounds.widthX() / 100 * pb.widthX(),
+                    relativeBounds.widthY() / 100 * pb.widthY()
             );
             List<NTxNode> all = new ArrayList<>(Arrays.asList(path));
             all.add(NAssert.requireNamedNonNull(childNode, "parent"));
-            NTxRendererContext d2 = copyAsRenderer(page, all.toArray(new NTxNode[0]), engine(), graphics(), sb, pb, getGlobalBounds(), compiledPage(),
+            NTxRendererContext d2 = copyAsRenderer(page, all.toArray(new NTxNode[0]), engine(), graphics(),
+                    sb, pb, globalBounds2D(), realBounds2D, realGlobalBounds2D,
+                    selfBounds3D, parentBounds3D, globalBounds3D, realBounds3D, realGlobalBounds3D,
+                    compiledPage(),
                     isSomeChange(), pageStartTime(), capabilities, imageObserver, repainter, null, false, buildContext, element, def, document, vars, definitions, functions, parentContext);
             renderer.get().render(d2);
         } else {
@@ -337,8 +432,8 @@ public class DefaultNTxRendererContext extends NTxResolutionContextImpl implemen
     }
 
     @Override
-    public NTxBounds2D selfBounds(NTxDouble2 selfSize, NTxDouble2 minSize) {
-        return NTxValueByName.selfBounds(selfSize, minSize, this);
+    public NTxBounds2D selfBounds2D(NTxDouble2 selfSize, NTxDouble2 minSize) {
+        return NTxValueByName.selfBounds2D(selfSize, minSize, this);
     }
 
     @Override
@@ -550,7 +645,7 @@ public class DefaultNTxRendererContext extends NTxResolutionContextImpl implemen
     @Override
     public void drawContour() {
         if (NTxValueByName.isDrawContour(this)) {
-            NTxNodeRendererUtils.drawBorderLine(this, graphics(), selfBounds());
+            NTxNodeRendererUtils.drawBorderLine(this, graphics(), selfBounds2D());
         }
     }
 
@@ -634,12 +729,12 @@ public class DefaultNTxRendererContext extends NTxResolutionContextImpl implemen
         return g3;
     }
 
-    public NTxBounds2D getGlobalBounds() {
-        return globalBound;
+    public NTxBounds2D globalBounds2D() {
+        return globalBound2D;
     }
 
-    public NTxBounds2D parentBounds() {
-        return parentBounds;
+    public NTxBounds2D parentBounds2D() {
+        return parentBounds2D;
     }
 
     @Override
@@ -699,7 +794,10 @@ public class DefaultNTxRendererContext extends NTxResolutionContextImpl implemen
         return NOptional.ofNamedEmpty("value for prop " + String.join(",", all));
     }
 
-    protected NTxRendererContext copyAsRenderer(NTxCompiledPage page, NTxNode[] path, NTxEngine engine, NTxGraphics g, NTxBounds2D selfBounds, NTxBounds2D parentBounds, NTxBounds2D globalBound, NTxCompiledPage compiledPage,
+    protected NTxRendererContext copyAsRenderer(NTxCompiledPage page, NTxNode[] path, NTxEngine engine, NTxGraphics g,
+                                                NTxBounds2D selfBounds2D, NTxBounds2D parentBounds2D, NTxBounds2D globalBound2D, NTxBounds2D realBounds2D, NTxBounds2D realGlobalBounds2D,
+                                                NTxBounds3D selfBounds3D, NTxBounds3D parentBounds3D, NTxBounds3D globalBounds3D, NTxBounds3D realBounds3D, NTxBounds3D realGlobalBounds3D,
+                                                NTxCompiledPage compiledPage,
                                                 boolean someChange, long pageStartTime, Map<String, Object> capabilities, ImageObserver imageObserver, Runnable repainter,
                                                 NTxProperties defaultStyles, boolean dry,
                                                 NTxNodeBuilderContext buildContext,
@@ -710,7 +808,10 @@ public class DefaultNTxRendererContext extends NTxResolutionContextImpl implemen
             , NTxResolutionContext parentContext
     ) {
         return new DefaultNTxRendererContext(
-                page, path, engine, g, selfBounds, parentBounds, globalBound, compiledPage,
+                page, path, engine, g,
+                selfBounds2D, parentBounds2D, globalBound2D, realBounds2D, realGlobalBounds2D,
+                selfBounds3D, parentBounds3D, globalBounds3D, realBounds3D, realGlobalBounds3D,
+                compiledPage,
                 someChange, pageStartTime, capabilities, imageObserver, repainter,
                 defaultStyles, dry,
                 buildContext,

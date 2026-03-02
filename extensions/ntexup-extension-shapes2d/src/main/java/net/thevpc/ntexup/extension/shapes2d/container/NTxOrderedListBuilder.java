@@ -24,7 +24,7 @@ public class NTxOrderedListBuilder implements NTxNodeBuilder {
     public void build(NTxNodeBuilderContext builderContext) {
         builderContext.id(NTxNodeType.ORDERED_LIST)
                 .alias("ol")
-                .selfBounds(this::selfBounds)
+                .selfBounds2D(this::selfBounds)
                 .renderComponent(this::renderMain)
                 ;
     }
@@ -33,7 +33,7 @@ public class NTxOrderedListBuilder implements NTxNodeBuilder {
         rendererContext = rendererContext.withDefaultStyles(defaultStyles);
         NTxNode node = rendererContext.node();
         List<NTxListHelper.NodeWithIndent> all = NTxListHelper.build(node, true,rendererContext);
-        NTxBounds2D expectedBounds = rendererContext.defaultSelfBounds();
+        NTxBounds2D expectedBounds = rendererContext.defaultSelfBounds2D();
         for (NTxListHelper.NodeWithIndent a : all) {
             expectedBounds.expand(a.rowBounds);
         }

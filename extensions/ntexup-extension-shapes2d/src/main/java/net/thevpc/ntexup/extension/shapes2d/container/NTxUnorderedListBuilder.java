@@ -25,7 +25,7 @@ public class NTxUnorderedListBuilder implements NTxNodeBuilder {
     public void build(NTxNodeBuilderContext builderContext) {
         builderContext.id(NTxNodeType.UNORDERED_LIST)
                 .alias("ul")
-                .selfBounds(this::selfBounds)
+                .selfBounds2D(this::selfBounds)
                 .renderComponent(this::renderMain)
         ;
     }
@@ -34,7 +34,7 @@ public class NTxUnorderedListBuilder implements NTxNodeBuilder {
         NTxNode node = rendererContext.node();
         rendererContext = rendererContext.withDefaultStyles(defaultStyles);
         List<NTxListHelper.NodeWithIndent> all = NTxListHelper.build(node, false,rendererContext);
-        NTxBounds2D expectedBounds = rendererContext.defaultSelfBounds();
+        NTxBounds2D expectedBounds = rendererContext.defaultSelfBounds2D();
         for (NTxListHelper.NodeWithIndent a : all) {
             expectedBounds.expand(a.rowBounds);
         }

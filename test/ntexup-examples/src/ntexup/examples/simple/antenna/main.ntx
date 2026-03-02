@@ -9,7 +9,7 @@ import(
     "presenters"
     "latex"
 )
-include ("subfolder")
+//include ("subfolder")
 
 s=5_mm   // source width long x
 a=100_mm // box width long x
@@ -23,11 +23,11 @@ page{
     styles:{
         text:{ color:darkBlue }
         line:{ color:black }
-        .substrate:{ background:"#00468B" }
-        .substrate:{ background:"#00468B" }
-        .copper:{ background:"#cb6d51" }
-        .source:{ background:yellow }
-        .dim-arrow:{
+        ".substrate":{ background:"#00468B" }
+        ".substrate":{ background:"#00468B" }
+        ".copper":{ background:"#cb6d51" }
+        ".source":{ background:yellow }
+        ".dim-arrow":{
             start-arrow: simple()
             end-arrow: simple()
             stroke: basic(dashed)
@@ -35,7 +35,7 @@ page{
     }
         rectangle(background:white)
         scene3d(
-            id: antenna-a
+            name: "antenna-a"
             draw-contour,
             transform:{
 //                    rotate(from:(0,0,0),to:(100,0,0),angle:-30)
@@ -43,7 +43,7 @@ page{
                 scale:0.9
             },
             real-size:(200_mm,200_mm,200_cmm)
-            real-origin:(0_mm,-100_mm,-100_cmm)
+            real-position:(0_mm,-100_mm,-100_cmm)
             size:(100,100) // 100% of the allocated 2D area from parent, aka all of it
         ){
             box(size:(100,100,100)) // enclosing box, 100% of the allocated 3D area
@@ -62,7 +62,7 @@ page{
 
 page{
     hresult=hadruwaves-mom-solver(
-        geometry:antenna-a
+        geometry:"antenna-a"
         box-walls: EEEE // all Electric walls
         mode-functions-count: 1000 // all Electric walls
         test-functions: {
@@ -94,6 +94,6 @@ page{
         xdomain: result["S11_frequencies"]
     )
 }
-include ("antenna-b.ntx")
+//include ("antenna-b.ntx")
 
 

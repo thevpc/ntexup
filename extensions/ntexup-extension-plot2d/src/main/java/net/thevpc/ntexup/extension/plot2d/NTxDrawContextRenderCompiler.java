@@ -28,7 +28,7 @@ class NTxDrawContextRenderCompiler {
 
         Paint color = rendererContext.getForegroundColor(true);
 
-        NTxBounds2D bounds = rendererContext.parentBounds();
+        NTxBounds2D bounds = rendererContext.parentBounds2D();
         NTxDrawContext drawContext = new NTxDrawContext(bounds, xValues, minY, maxY, zoom, minMaxY);
         java.util.List<NTxFunctionPlotInfo> plotDefinitions = (List<NTxFunctionPlotInfo>) rendererContext.node().getUserObject("def").orNull();
 

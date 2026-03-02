@@ -1,36 +1,75 @@
 package net.thevpc.ntexup.api.renderer;
 
+import net.thevpc.ntexup.api.document.elem2d.NTxBounds2D;
+import net.thevpc.ntexup.api.document.elem2d.NTxBounds3D;
 import net.thevpc.nuts.util.NAssert;
 
 import java.util.HashMap;
 import java.util.Map;
 
 public class NTxNodeRendererConfig {
-    private int width;
-    private int height;
+    private double width;
+    private double height;
+    private long startTime;
+    private boolean useCache;
+    private NTxBounds2D realBounds2D;
+    private NTxBounds3D realBounds3D;
     private Map<String, Object> capabilities;
 
     public NTxNodeRendererConfig() {
     }
-    public NTxNodeRendererConfig(int width, int height) {
+
+    public NTxNodeRendererConfig(double width, double height) {
         this.width = width;
         this.height = height;
     }
 
-    public int getWidth() {
+    public NTxBounds2D getRealBounds2D() {
+        return realBounds2D;
+    }
+
+    public void setRealBounds2D(NTxBounds2D realBounds2D) {
+        this.realBounds2D = realBounds2D;
+    }
+
+    public NTxBounds3D getRealBounds3D() {
+        return realBounds3D;
+    }
+
+    public void setRealBounds3D(NTxBounds3D realBounds3D) {
+        this.realBounds3D = realBounds3D;
+    }
+
+    public boolean isUseCache() {
+        return useCache;
+    }
+
+    public void setUseCache(boolean useCache) {
+        this.useCache = useCache;
+    }
+
+    public long getStartTime() {
+        return startTime;
+    }
+
+    public void setStartTime(long startTime) {
+        this.startTime = startTime;
+    }
+
+    public double getWidth() {
         return width;
     }
 
-    public NTxNodeRendererConfig setWidth(int width) {
+    public NTxNodeRendererConfig setWidth(double width) {
         this.width = width;
         return this;
     }
 
-    public int getHeight() {
+    public double getHeight() {
         return height;
     }
 
-    public NTxNodeRendererConfig setHeight(int height) {
+    public NTxNodeRendererConfig setHeight(double height) {
         this.height = height;
         return this;
     }

@@ -6,7 +6,6 @@ import net.thevpc.ntexup.api.document.node.NTxNode;
 import net.thevpc.ntexup.api.document.node.NTxNodeType;
 import net.thevpc.ntexup.api.document.style.DefaultNTxStyleRule;
 import net.thevpc.ntexup.api.document.style.NTxProp;
-import net.thevpc.ntexup.api.document.style.NTxPropName;
 import net.thevpc.ntexup.api.renderer.NTxRendererContext;
 import net.thevpc.ntexup.api.util.NTxSizeRef;
 import net.thevpc.ntexup.api.util.NTxUtils;
@@ -54,26 +53,26 @@ public class NTxListHelper {
         double bulletWidthFactor = ordered ? orderedWidthRatio : unorderedWidthRatio;
         double marginWidth = marginRatio * rw;
         int childrenCount = all.size();
-        NTxBounds2D sb = ctx.defaultSelfBounds();
-        double h = sb.getHeight() / childrenCount;
-        double y0 = sb.getY();
+        NTxBounds2D sb = ctx.defaultSelfBounds2D();
+        double h = sb.widthY() / childrenCount;
+        double y0 = sb.minY();
         for (NodeWithIndent child : all) {
             double indentWidth = indentFactor * child.indent;
             double bulletWidth = (rw) * bulletWidthFactor/* - indentWidth*/;
-            child.bulletSelfBounds = ctx.resolveNode(child.bullet, new NTxBounds2D(sb.getX() + indentWidth, y0, bulletWidth, h)).selfBounds();
-            child.childSelfBounds = ctx.resolveNode(child.child, new NTxBounds2D(sb.getX() + indentWidth + bulletWidth + marginWidth, y0,
-                    sb.getMaxX() - (sb.getX() + bulletWidth + marginWidth)
-                    , h)).selfBounds();
-            child.height = Math.max(Math.max(Math.max(child.childSelfBounds.getMaxY() - y0, 0), childHeight), child.bulletSelfBounds.getHeight());
+            child.bulletSelfBounds = ctx.resolveNode(child.bullet, NTxBounds2D.ofWidth(sb.minX() + indentWidth, y0, bulletWidth, h)).selfBounds2D();
+            child.childSelfBounds = ctx.resolveNode(child.child, NTxBounds2D.ofWidth(sb.minX() + indentWidth + bulletWidth + marginWidth, y0,
+                    sb.maxX() - (sb.minX() + bulletWidth + marginWidth)
+                    , h)).selfBounds2D();
+            child.height = Math.max(Math.max(Math.max(child.childSelfBounds.maxY() - y0, 0), childHeight), child.bulletSelfBounds.widthY());
             y0 += child.height;
         }
-        y0 = sb.getY();
+        y0 = sb.minY();
         for (NodeWithIndent child : all) {
             double indentWidth = indentFactor * child.indent;
             double bulletWidth = (rw) * bulletWidthFactor/* - indentWidth*/;
             double childWidth = rw - indentWidth - bulletWidth;
-            child.bulletBounds = new NTxBounds2D(sb.getX() + indentWidth, y0, bulletWidth, childHeight);
-            child.childBounds = new NTxBounds2D(child.bulletBounds.getMaxX(), y0, childWidth, child.height);
+            child.bulletBounds = NTxBounds2D.ofWidth(sb.minX() + indentWidth, y0, bulletWidth, childHeight);
+            child.childBounds = NTxBounds2D.ofWidth(child.bulletBounds.maxX(), y0, childWidth, child.height);
             child.rowBounds = child.bulletBounds.expand(child.childBounds);
             y0 += child.height;
         }

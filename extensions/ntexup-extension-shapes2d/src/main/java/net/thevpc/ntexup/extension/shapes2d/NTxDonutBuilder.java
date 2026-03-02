@@ -48,11 +48,11 @@ public class NTxDonutBuilder implements NTxNodeBuilder {
         NTxNode node=rendererContext.node();
         rendererContext = rendererContext.withDefaultStyles(defaultStyles);
 
-        NTxBounds2D b = rendererContext.selfBounds();
-        double x = b.getX();
-        double y = b.getY();
-        double width = b.getWidth();
-        double height = b.getHeight();
+        NTxBounds2D b = rendererContext.selfBounds2D();
+        double x = b.minX();
+        double y = b.minY();
+        double width = b.widthX();
+        double height = b.widthY();
 
         double outerRadius = Math.min(width, height) / 2;
         double innerRadius=0;

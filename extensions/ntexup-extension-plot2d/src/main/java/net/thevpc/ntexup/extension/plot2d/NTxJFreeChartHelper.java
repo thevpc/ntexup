@@ -19,7 +19,7 @@ import java.awt.geom.Rectangle2D;
 
 public class NTxJFreeChartHelper {
     static void drawCurves(NTxNode p, NTxRendererContext rendererContext, NTxDrawContext drawContext){
-        NTxBounds2D bounds = rendererContext.parentBounds();
+        NTxBounds2D bounds = rendererContext.parentBounds2D();
         XYSeriesCollection dataset = new XYSeriesCollection();
         for (int j = 0; j < drawContext.allData.size(); j++) {
             NTxPlot2DData pd = drawContext.allData.get(j);
@@ -109,7 +109,7 @@ public class NTxJFreeChartHelper {
 //        );
         chart.setBackgroundPaint(null);      // chart area
 
-        chart.draw(rendererContext.graphics().graphics2D(), new Rectangle2D.Double(bounds.getX(),bounds.getY(),bounds.getWidth(),bounds.getHeight()));
+        chart.draw(rendererContext.graphics().graphics2D(), new Rectangle2D.Double(bounds.minX(),bounds.minY(),bounds.widthX(),bounds.widthY()));
     }
 
 }

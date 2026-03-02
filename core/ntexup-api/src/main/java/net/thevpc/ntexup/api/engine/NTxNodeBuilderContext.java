@@ -1,6 +1,7 @@
 package net.thevpc.ntexup.api.engine;
 
 import net.thevpc.ntexup.api.document.elem2d.NTxBounds2D;
+import net.thevpc.ntexup.api.document.elem2d.NTxBounds3D;
 import net.thevpc.ntexup.api.document.node.NTxItem;
 import net.thevpc.ntexup.api.document.node.NTxNode;
 import net.thevpc.ntexup.api.document.style.NTxProp;
@@ -36,7 +37,8 @@ public interface NTxNodeBuilderContext {
 
     NTxNodeBuilderContext sizeRequirements(SizeRequirementsAction e);
 
-    NTxNodeBuilderContext selfBounds(SelfBoundsAction e);
+    NTxNodeBuilderContext selfBounds2D(SelfBounds2DAction e);
+    NTxNodeBuilderContext selfBounds3D(SelfBounds3DAction e);
 
     NTxNodeBuilderContext withToElem(ToElemAction e);
 
@@ -163,8 +165,12 @@ public interface NTxNodeBuilderContext {
         NTxSizeRequirements sizeRequirements(NTxRendererContext rendererContext);
     }
 
-    interface SelfBoundsAction {
-        NTxBounds2D selfBounds(NTxRendererContext rendererContext);
+    interface SelfBounds2DAction {
+        NTxBounds2D selfBounds2D(NTxRendererContext rendererContext);
+    }
+
+    interface SelfBounds3DAction {
+        NTxBounds3D selfBounds3D(NTxRendererContext rendererContext);
     }
 
     interface ProcessParamAction {

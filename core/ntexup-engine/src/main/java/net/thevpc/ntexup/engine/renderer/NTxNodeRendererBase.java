@@ -23,14 +23,14 @@ public abstract class NTxNodeRendererBase implements NTxNodeRenderer {
 
     @Override
     public NTxSizeRequirements sizeRequirements(NTxRendererContext ctx) {
-        NTxBounds2D bounds = ctx.selfBounds();
+        NTxBounds2D bounds = ctx.selfBounds2D();
         return new NTxSizeRequirements(
                 0,
-                bounds.getWidth(),
-                bounds.getWidth(),
+                bounds.widthX(),
+                bounds.widthX(),
                 0,
-                bounds.getHeight(),
-                bounds.getHeight()
+                bounds.widthY(),
+                bounds.widthY()
         );
     }
 
@@ -46,7 +46,7 @@ public abstract class NTxNodeRendererBase implements NTxNodeRenderer {
             return;
         }
 
-        NTxBounds2D selfBounds = rendererContext.selfBounds();
+        NTxBounds2D selfBounds = rendererContext.selfBounds2D();
         NTxGraphics nv = null;
         try {
             if (!rendererContext.isDry()) {
@@ -59,8 +59,8 @@ public abstract class NTxNodeRendererBase implements NTxNodeRenderer {
                             NTxGraphics g = rendererContext.graphics();
                             nv = g.copy();
                             ///HSizeRef sr=new HSizeRef();
-                            double rotX = NTxValue.of(rotation.getX()).asDouble().get() / 100.0 * selfBounds.getWidth() + selfBounds.getX();
-                            double rotY = NTxValue.of(rotation.getY()).asDouble().get() / 100.0 * selfBounds.getHeight() + selfBounds.getY();
+                            double rotX = NTxValue.of(rotation.getX()).asDouble().get() / 100.0 * selfBounds.widthX() + selfBounds.minX();
+                            double rotY = NTxValue.of(rotation.getY()).asDouble().get() / 100.0 * selfBounds.widthY() + selfBounds.minY();
                             if (rendererContext.isDebug()) {
                                 g.setColor(NTxValueByName.getDebugColor(rendererContext));
                                 g.drawRect(selfBounds);
@@ -83,11 +83,11 @@ public abstract class NTxNodeRendererBase implements NTxNodeRenderer {
                     NTxRendererContext finalRendererContext = rendererContext;
                     NTx2DUtils0.drawShadowed(rendererContext.graphics(), gg -> {
                         renderMain(finalRendererContext.withGraphics(gg));
-                    }, finalRendererContext.getGlobalBounds(), shadow);
+                    }, finalRendererContext.globalBounds2D(), shadow);
                 } else {
                     renderMain(rendererContext);
                 }
-                NTxNodeRendererUtils.drawDebugBox(rendererContext, rendererContext.graphics(), rendererContext.selfBounds());
+                NTxNodeRendererUtils.drawDebugBox(rendererContext, rendererContext.graphics(), rendererContext.selfBounds2D());
 
             }
         } finally {
@@ -100,16 +100,25 @@ public abstract class NTxNodeRendererBase implements NTxNodeRenderer {
     public abstract void renderMain(NTxRendererContext ctx);
 
     public NTxBounds2D bgBounds(NTxNode p, NTxRendererContext ctx) {
-        return selfBounds(ctx);
+        return selfBounds2D(ctx);
     }
 
-    public NTxBounds2D selfBounds(NTxRendererContext ctx) {
+    public NTxBounds2D selfBounds2D(NTxRendererContext ctx) {
         NTxDouble2 size = defaultSelfBounds(ctx).size();
-        return NTxValueByName.selfBounds(size, null, ctx);
+        return NTxValueByName.selfBounds2D(size, null, ctx);
+    }
+
+    public NTxBounds3D selfBounds3D(NTxRendererContext ctx) {
+        NTxDouble3 size = defaultSelfBounds3D(ctx).size();
+        return NTxValueByName.selfBounds3D(size, null, ctx);
     }
 
     public NTxBounds2D defaultSelfBounds(NTxRendererContext ctx) {
-        return NTxValueByName.defaultSelfBounds(ctx);
+        return NTxValueByName.defaultSelfBounds2D(ctx);
+    }
+
+    public NTxBounds3D defaultSelfBounds3D(NTxRendererContext ctx) {
+        return NTxValueByName.defaultSelfBounds3D(ctx);
     }
 
 }

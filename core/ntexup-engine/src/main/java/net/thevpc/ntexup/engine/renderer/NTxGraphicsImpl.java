@@ -364,16 +364,16 @@ public class NTxGraphicsImpl implements NTxGraphics {
     @Override
     public void fillRect(NTxBounds2D a) {
         fillRect(
-                NTxUtils.doubleOf(a.getMinX()), NTxUtils.intOf(a.getMinY()),
-                NTxUtils.intOf(a.getWidth()), NTxUtils.intOf(a.getHeight())
+                NTxUtils.doubleOf(a.minX()), NTxUtils.intOf(a.minY()),
+                NTxUtils.intOf(a.widthX()), NTxUtils.intOf(a.widthY())
         );
     }
 
     @Override
     public void drawRect(NTxBounds2D a) {
         drawRect(
-                NTxUtils.doubleOf(a.getMinX()), NTxUtils.doubleOf(a.getMinY()),
-                NTxUtils.doubleOf(a.getWidth()), NTxUtils.doubleOf(a.getHeight())
+                NTxUtils.doubleOf(a.minX()), NTxUtils.doubleOf(a.minY()),
+                NTxUtils.doubleOf(a.widthX()), NTxUtils.doubleOf(a.widthY())
         );
     }
 

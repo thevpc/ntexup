@@ -29,11 +29,11 @@ public class NTxMyShapeBuilder implements NTxNodeBuilder {
 
     public void render(NTxRendererContext rendererContext) {
         NTxNode node=rendererContext.node();
-        NTxBounds2D b = rendererContext.selfBounds();
-        double x = b.getX();
-        double y = b.getY();
-        double width = b.getWidth();
-        double height = b.getHeight();
+        NTxBounds2D b = rendererContext.selfBounds2D();
+        double x = b.minX();
+        double y = b.minY();
+        double width = b.widthX();
+        double height = b.widthY();
 
         Paint color = rendererContext.getForegroundColor(true);
         NTxPoint2D base = NTxValue.of(node.getPropertyValue("base")).asPoint2DOrDouble().orNull();

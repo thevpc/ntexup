@@ -9,7 +9,6 @@ import net.thevpc.ntexup.api.engine.NTxNodeBuilderContext;
 import net.thevpc.ntexup.api.eval.NTxValueByName;
 import net.thevpc.ntexup.api.eval.NTxValueSizeCache;
 import net.thevpc.ntexup.api.extension.NTxNodeBuilder;
-import net.thevpc.ntexup.api.parser.NTxAllArgumentReader;
 import net.thevpc.ntexup.api.renderer.NTxGraphics;
 import net.thevpc.ntexup.api.renderer.NTxRendererContext;
 import net.thevpc.ntexup.api.util.NTxUtils;
@@ -35,14 +34,14 @@ public class NTxCircleBuilder implements NTxNodeBuilder {
     public void renderMain(NTxRendererContext nodeRendererContext) {
         nodeRendererContext = nodeRendererContext.withDefaultStyles(defaultStyles);
         NTxValueSizeCache z = NTxValueByName.getNodeSizeCache(nodeRendererContext);
-        NTxBounds2D b = nodeRendererContext.selfBounds();
-        double x = b.getX();
-        double y = b.getY();
+        NTxBounds2D b = nodeRendererContext.selfBounds2D();
+        double x = b.minX();
+        double y = b.minY();
         NTxGraphics g = nodeRendererContext.graphics();
         boolean someBG = false;
         if (!nodeRendererContext.isDry()) {
-            int ww = NTxUtils.intOf(b.getWidth());
-            int hh = NTxUtils.intOf(b.getHeight());
+            int ww = NTxUtils.intOf(b.widthX());
+            int hh = NTxUtils.intOf(b.widthY());
             ww = Math.min(ww, hh);
             hh = ww;
             if (someBG = nodeRendererContext.applyBackgroundColor()) {

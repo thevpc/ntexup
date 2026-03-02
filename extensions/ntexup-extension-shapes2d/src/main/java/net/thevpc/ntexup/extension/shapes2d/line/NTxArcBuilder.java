@@ -28,9 +28,9 @@ public class NTxArcBuilder implements NTxNodeBuilder {
     public void renderMain(NTxRendererContext rendererContext) {
         NTxNode node = rendererContext.node();
         rendererContext = rendererContext.withDefaultStyles(defaultStyles);
-        NTxBounds2D b = rendererContext.selfBounds();
-        double x = b.getX();
-        double y = b.getY();
+        NTxBounds2D b = rendererContext.selfBounds2D();
+        double x = b.minX();
+        double y = b.minY();
         double startAngle = NTxValueByType.getDouble(rendererContext, NTxPropName.FROM).orElse(0.0);
         double endAngle = NTxValueByType.getDouble(rendererContext, NTxPropName.TO).orElse(0.0);
         NTxGraphics g = rendererContext.graphics();
@@ -41,7 +41,7 @@ public class NTxArcBuilder implements NTxNodeBuilder {
             if(stroke!=null){
                 g.setStroke(stroke);
             }
-            g.drawArc((int) x, (int) y, NTxUtils.intOf(b.getWidth()), NTxUtils.intOf(b.getHeight()),
+            g.drawArc((int) x, (int) y, NTxUtils.intOf(b.widthX()), NTxUtils.intOf(b.widthY()),
                     (int) startAngle,
                     (int) endAngle
             );

@@ -247,6 +247,43 @@ public class NTxUtils {
         return a;
     }
 
+    public static Double distance(Double a, Double b) {
+        if (a == null || b == null) {
+            return 0.0;
+        }
+        return Math.abs(b - a);
+    }
+
+    public static Double distanceDouble(Number a, Number b) {
+        if (a == null || b == null) {
+            return 0.0;
+        }
+        return Math.abs(b.doubleValue() - a.doubleValue());
+    }
+
+    public static Double center(Double a, Double b) {
+        if (a == null) {
+            return b;
+        }
+        if (b == null) {
+            return a;
+        }
+        return (a + b) / 2;
+    }
+
+    public static Double addDouble(Number a, Number b) {
+        if (a == null && b==null) {
+            return null;
+        }
+        if (a == null) {
+            return b.doubleValue();
+        }
+        if (b == null) {
+            return a.doubleValue();
+        }
+        return (a.doubleValue() + b.doubleValue());
+    }
+
     public static double doubleOf(Number n) {
         if (n == null) {
             return 0;
@@ -291,10 +328,10 @@ public class NTxUtils {
         if (o instanceof NTxBounds2D) {
             NTxBounds2D oo = (NTxBounds2D) o;
             return NElement.ofUplet(
-                    NElement.ofDouble(oo.getX()),
-                    NElement.ofDouble(oo.getY()),
-                    NElement.ofDouble(oo.getWidth()),
-                    NElement.ofDouble(oo.getHeight())
+                    NElement.ofDouble(oo.minX()),
+                    NElement.ofDouble(oo.minY()),
+                    NElement.ofDouble(oo.widthX()),
+                    NElement.ofDouble(oo.widthY())
             );
         }
         if (o instanceof NToElement) {

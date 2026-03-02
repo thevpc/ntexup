@@ -27,18 +27,18 @@ public class NTxSphereBuilder implements NTxNodeBuilder {
     public void renderMain(NTxRendererContext rendererContext) {
         NTxNode node = rendererContext.node();
         rendererContext = rendererContext.withDefaultStyles(defaultStyles);
-        NTxBounds2D b = rendererContext.selfBounds();
-        double x = b.getX();
-        double y = b.getY();
+        NTxBounds2D b = rendererContext.selfBounds2D();
+        double x = b.minX();
+        double y = b.minY();
         NTxGraphics g = rendererContext.graphics();
         boolean someBG = false;
         if (!rendererContext.isDry()) {
             if (someBG = rendererContext.applyBackgroundColor()) {
-                g.fillSphere((int) x, (int) y, NTxUtils.intOf(b.getWidth()), NTxUtils.intOf(b.getHeight()), 45, 50f);
+                g.fillSphere((int) x, (int) y, NTxUtils.intOf(b.widthX()), NTxUtils.intOf(b.widthY()), 45, 50f);
             }
             if (rendererContext.applyForeground(!someBG)) {
                 rendererContext.withStroke(()->{
-                    g.drawOval((int) x, (int) y, NTxUtils.intOf(b.getWidth()), NTxUtils.intOf(b.getHeight()));
+                    g.drawOval((int) x, (int) y, NTxUtils.intOf(b.widthX()), NTxUtils.intOf(b.widthY()));
                 });
             }
         }

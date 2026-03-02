@@ -24,12 +24,12 @@ public class NTxFillerBuilder implements NTxNodeBuilder {
 
     public void renderMain(NTxRendererContext rendererContext) {
         NTxNode node = rendererContext.node();
-        NTxBounds2D bounds = rendererContext.parentBounds();
-        NTxBounds2D b = new NTxBounds2D(
-                bounds.getMinX(),
-                bounds.getMinY(),
-                bounds.getWidth(),
-                bounds.getHeight());
+        NTxBounds2D bounds = rendererContext.parentBounds2D();
+        NTxBounds2D b = NTxBounds2D.ofWidth(
+                bounds.minX(),
+                bounds.minY(),
+                bounds.widthX(),
+                bounds.widthY());
         if (!rendererContext.isDry()) {
             rendererContext.paintBackground(bounds);
         }

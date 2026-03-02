@@ -6,6 +6,7 @@ package net.thevpc.ntexup.api.engine;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.awt.image.ImageObserver;
 import java.io.InputStream;
 import java.util.List;
 import java.util.Set;
@@ -132,6 +133,10 @@ public interface NTxEngine {
     List<NTxTextRendererFlavor> textRendererFlavors();
 
     BufferedImage renderImage(NTxCompiledPage page, NTxNodeRendererConfig config);
+    void renderPage(NTxCompiledPage page, NTxNodeRendererConfig config,
+                    Graphics2D g,
+                    ImageObserver imageObserver, Runnable repainter
+    );
 
     byte[] renderImageBytes(NTxCompiledPage page, NTxNodeRendererConfig config);
 

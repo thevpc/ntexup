@@ -12,6 +12,6 @@ public class NTxEmptyRegion2DImpl extends NTxRegion2DBase implements NTxEmptyReg
 
     @Override
     public NTxBounds2D getBounds() {
-        return new NTxBounds2D(0.0, 0.0, 0.0, 0.0);
+        return NTxBounds2D.ofEmpty();
     }
 }

@@ -35,7 +35,7 @@ public final class NTxPolygonHelper {
         renderPoints(points, ctx);
     }
     public static void renderPoints(NTxPoint2D[] points, NTxRendererContext rendererContext) {
-        NTxBounds2D b = rendererContext.selfBounds();
+        NTxBounds2D b = rendererContext.selfBounds2D();
         NTxGraphics g = rendererContext.graphics();
         NTxNode node = rendererContext.node();
         if (!rendererContext.isDry()) {
@@ -43,8 +43,8 @@ public final class NTxPolygonHelper {
             Paint fc = rendererContext.getForegroundColor(bc == null);
             NTxPoint2D[] points2 = Arrays.stream(points)
                     .map(p -> new NTxPoint2D(
-                            p.x / 100 * b.getWidth() + b.getMinX(),
-                            p.y / 100 * b.getHeight() + b.getMinY()
+                            p.x / 100 * b.widthX() + b.minX(),
+                            p.y / 100 * b.widthY() + b.minY()
                     ))
                     .toArray(NTxPoint2D[]::new);
             g.draw2D(NTxElement2DFactory.polygon(points2)

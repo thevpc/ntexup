@@ -440,7 +440,7 @@ public class NTxValue {
         if(d.isPresent()) {
             double[] arr = d.get();
             if(arr.length==4){
-                return NOptional.of(new NTxBounds2D(arr[0], arr[1], arr[2], arr[3]));
+                return NOptional.of(NTxBounds2D.ofWidth(arr[0], arr[1], arr[2], arr[3]));
             }
         }
         return NOptional.ofNamedEmpty("Bounds2 from " + element);

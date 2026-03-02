@@ -40,14 +40,14 @@ public class NTxYLen {
     public double value(NTxBounds2D parentBounds, NTxBounds2D screenBounds) {
         if (this.root) {
             if (value >= 100) {
-                return screenBounds.getHeight();
+                return screenBounds.widthY();
             }
-            return value / 100 * screenBounds.getHeight();
+            return value / 100 * screenBounds.widthY();
         } else {
             if (value >= 100) {
-                return parentBounds.getHeight();
+                return parentBounds.widthY();
             }
-            return value / 100 * parentBounds.getHeight();
+            return value / 100 * parentBounds.widthY();
         }
     }
 

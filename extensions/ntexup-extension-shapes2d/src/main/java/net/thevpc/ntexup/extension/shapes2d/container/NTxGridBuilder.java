@@ -67,7 +67,7 @@ public class NTxGridBuilder implements NTxNodeBuilder {
                         }
                     }
                 })
-                .selfBounds(this::selfBounds)
+                .selfBounds2D(this::selfBounds)
                 .renderComponent(this::renderMain)
         ;
     }
@@ -76,7 +76,7 @@ public class NTxGridBuilder implements NTxNodeBuilder {
     public NTxBounds2D selfBounds(NTxRendererContext rendererContext) {
         NTxNode node = rendererContext.node();
         rendererContext = rendererContext.withDefaultStyles(defaultStyles);
-        NTxBounds2D expectedBounds = rendererContext.defaultSelfBounds();
+        NTxBounds2D expectedBounds = rendererContext.defaultSelfBounds2D();
 //        HGraphics g = ctx.graphics();
 //        g.setColor(Color.RED);
 //        g.drawRect(expectedBounds);
@@ -86,7 +86,7 @@ public class NTxGridBuilder implements NTxNodeBuilder {
 
     public void renderMain(NTxRendererContext ctx) {
         ctx = ctx.withDefaultStyles(defaultStyles);
-        NTxBounds2D expectedBounds = ctx.selfBounds();
+        NTxBounds2D expectedBounds = ctx.selfBounds2D();
         NTxGridRendererHelper h = new NTxGridRendererHelper(ctx.node().children());
         h.render(ctx, expectedBounds);
     }

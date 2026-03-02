@@ -23,6 +23,6 @@ public class NTxEditableBounds2 {
         return "(" + x + ", " + y + ", " + width + ", " + height + ')';
     }
     public NTxBounds2D toBounds2() {
-        return new NTxBounds2D(x, y, width, height);
+        return NTxBounds2D.ofWidth(x, y, width, height);
     }
 }

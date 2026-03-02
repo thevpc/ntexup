@@ -62,9 +62,9 @@ public abstract class PlantUmlBuilderBase implements NTxNodeBuilder {
         }
         String mode = NTxUtils.uid(this.mode);
         NTxGraphics g = rendererContext.graphics();
-        NTxBounds2D b = rendererContext.selfBounds();
-        double x = b.getX();
-        double y = b.getY();
+        NTxBounds2D b = rendererContext.selfBounds2D();
+        double x = b.minX();
+        double y = b.minY();
         BufferedImage image = null;
         String plantUMLText = null;
         if(mode.startsWith("plantuml-")){
@@ -121,14 +121,14 @@ public abstract class PlantUmlBuilderBase implements NTxNodeBuilder {
 
             if (!rendererContext.isDry()) {
                 if (rendererContext.applyBackgroundColor()) {
-                    g.fillRect((int) x, (int) y, NTxUtils.intOf(b.getWidth()), NTxUtils.intOf(b.getHeight()));
+                    g.fillRect((int) x, (int) y, NTxUtils.intOf(b.widthX()), NTxUtils.intOf(b.widthY()));
                 }
 
                 rendererContext.applyForeground(false);
                 if (image != null) {
                     // would resize?
-                    int w = NTxUtils.intOf(b.getWidth());
-                    int h = NTxUtils.intOf(b.getHeight());
+                    int w = NTxUtils.intOf(b.widthX());
+                    int h = NTxUtils.intOf(b.widthY());
                     if (w > 0 && h > 0) {
                         BufferedImage resized = rendererContext.engine().tools().resizeBufferedImage(image, w, h);
                         g.drawImage(resized, (int) x, (int) y, null);
@@ -141,7 +141,7 @@ public abstract class PlantUmlBuilderBase implements NTxNodeBuilder {
 
     private String prepare(String type, String txt, NTxBounds2D b) {
         return "@start" + type + "\n"
-                + "scale " + (b.getWidth().intValue()) + "*" + (b.getHeight().intValue()) + "\n"
+                + "scale " + (b.widthX().intValue()) + "*" + (b.widthY().intValue()) + "\n"
                 + "skinparam backgroundcolor transparent\n"
 //                        + "skinparam dpi 300\n"
                 + txt

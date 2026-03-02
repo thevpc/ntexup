@@ -24,18 +24,18 @@ public class NTxEllipseBuilder implements NTxNodeBuilder {
     public void renderMain(NTxRendererContext rendererContext) {
         rendererContext = rendererContext.withDefaultStyles(defaultStyles);
         NTxNode node = rendererContext.node();
-        NTxBounds2D b = rendererContext.selfBounds();
-        double x = b.getX();
-        double y = b.getY();
+        NTxBounds2D b = rendererContext.selfBounds2D();
+        double x = b.minX();
+        double y = b.minY();
         NTxGraphics g = rendererContext.graphics();
         boolean someBG = false;
         if (!rendererContext.isDry()) {
             if (someBG = rendererContext.applyBackgroundColor()) {
-                g.fillOval((int) x, (int) y, NTxUtils.intOf(b.getWidth()), NTxUtils.intOf(b.getHeight()));
+                g.fillOval((int) x, (int) y, NTxUtils.intOf(b.widthX()), NTxUtils.intOf(b.widthY()));
             }
             if (rendererContext.applyForeground(!someBG)) {
                 rendererContext.withStroke(()->{
-                    g.drawOval((int) x, (int) y, NTxUtils.intOf(b.getWidth()), NTxUtils.intOf(b.getHeight()));
+                    g.drawOval((int) x, (int) y, NTxUtils.intOf(b.widthX()), NTxUtils.intOf(b.widthY()));
                 });
             }
         }

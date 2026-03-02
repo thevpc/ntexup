@@ -40,7 +40,7 @@ public class NTxRowBuilder implements NTxNodeBuilder {
                 .afterParsingAllParams((NTxAllArgumentReader info, NTxNodeBuilderContext buildContext)->{
                     info.node().setProperty(NTxProp.of(NTxPropName.ROWS,NElement.ofInt(1)));
                 })
-                .selfBounds(this::selfBounds)
+                .selfBounds2D(this::selfBounds)
                 .renderComponent(this::renderMain)
                 ;
     }
@@ -49,7 +49,7 @@ public class NTxRowBuilder implements NTxNodeBuilder {
     public NTxBounds2D selfBounds(NTxRendererContext rendererContext) {
         NTxNode node = rendererContext.node();
         rendererContext = rendererContext.withDefaultStyles(defaultStyles);
-        NTxBounds2D expectedBounds = rendererContext.defaultSelfBounds();
+        NTxBounds2D expectedBounds = rendererContext.defaultSelfBounds2D();
 //        HGraphics g = rendererContext.graphics();
 //        g.setColor(Color.RED);
 //        g.drawRect(expectedBounds);
@@ -59,7 +59,7 @@ public class NTxRowBuilder implements NTxNodeBuilder {
 
     public void renderMain(NTxRendererContext rendererContext) {
         rendererContext = rendererContext.withDefaultStyles(defaultStyles);
-        NTxBounds2D expectedBounds = rendererContext.selfBounds();
+        NTxBounds2D expectedBounds = rendererContext.selfBounds2D();
         NTxGridRendererHelper h = new NTxGridRendererHelper(rendererContext.node().children());
         h.render(rendererContext, expectedBounds);
     }

@@ -22,7 +22,6 @@ import net.thevpc.ntexup.api.util.NTxColors;
 import net.thevpc.ntexup.api.util.NTxUtils;
 import net.thevpc.nuts.elem.NElement;
 import net.thevpc.nuts.text.NMsg;
-import net.thevpc.nuts.util.NOptional;
 import net.thevpc.nuts.util.NStringUtils;
 import org.scilab.forge.jlatexmath.TeXConstants;
 import org.scilab.forge.jlatexmath.TeXFormula;
@@ -52,20 +51,20 @@ public class NTxEquationBuilder implements NTxNodeBuilder {
                 .startSeparators("\\(")
                 .end()
                 .sizeRequirements(this::sizeRequirements)
-                .selfBounds(this::selfBounds);
+                .selfBounds2D(this::selfBounds);
     }
 
 
     public NTxSizeRequirements sizeRequirements(NTxRendererContext rendererContext) {
-        NTxBounds2D s = rendererContext.selfBounds();
-        NTxBounds2D bb = rendererContext.parentBounds();
+        NTxBounds2D s = rendererContext.selfBounds2D();
+        NTxBounds2D bb = rendererContext.parentBounds2D();
         return new NTxSizeRequirements(
-                s.getWidth(),
-                Math.max(bb.getWidth(), s.getWidth()),
-                s.getWidth(),
-                s.getHeight(),
-                Math.max(bb.getHeight(), s.getHeight()),
-                s.getHeight()
+                s.widthX(),
+                Math.max(bb.widthX(), s.widthX()),
+                s.widthX(),
+                s.widthY(),
+                Math.max(bb.widthY(), s.widthY()),
+                s.widthY()
         );
     }
 
@@ -88,7 +87,7 @@ public class NTxEquationBuilder implements NTxNodeBuilder {
 
             String tex = NStringUtils.trim(rendererContext.engine().tools().trimBloc(text));
             if (tex.isEmpty()) {
-                u.selfBounds = rendererContext.defaultSelfBounds();
+                u.selfBounds = rendererContext.defaultSelfBounds2D();
             } else {
                 TeXFormula formula;
                 boolean error = false;
@@ -109,7 +108,7 @@ public class NTxEquationBuilder implements NTxNodeBuilder {
                 // insert a border
                 icon.setInsets(new Insets(0, 0, 0, 0));
 
-                u.selfBounds = rendererContext.selfBounds(
+                u.selfBounds = rendererContext.selfBounds2D(
                         new NTxDouble2(icon.getIconWidth(), icon.getIconHeight())
                         , null
                 );
@@ -130,12 +129,12 @@ public class NTxEquationBuilder implements NTxNodeBuilder {
 
         String tex = NStringUtils.trim(rendererContext.engine().tools().trimBloc(text));
         if (tex.isEmpty()) {
-            NTxBounds2D selfBounds = rendererContext.selfBounds();
-            double x = selfBounds.getX();
-            double y = selfBounds.getY();
+            NTxBounds2D selfBounds = rendererContext.selfBounds2D();
+            double x = selfBounds.minX();
+            double y = selfBounds.minY();
             if (!rendererContext.isDry()) {
                 if (rendererContext.applyBackgroundColor()) {
-                    g.fillRect((int) x, (int) y, NTxUtils.intOf(selfBounds.getWidth()), NTxUtils.intOf(selfBounds.getHeight()));
+                    g.fillRect((int) x, (int) y, NTxUtils.intOf(selfBounds.widthX()), NTxUtils.intOf(selfBounds.widthY()));
                 }
             }
         } else {
@@ -160,12 +159,12 @@ public class NTxEquationBuilder implements NTxNodeBuilder {
             // insert a border
             icon.setInsets(new Insets(0, 0, 0, 0));
 
-            NTxBounds2D selfBounds = rendererContext.selfBounds(
+            NTxBounds2D selfBounds = rendererContext.selfBounds2D(
                     new NTxDouble2(icon.getIconWidth(), icon.getIconHeight())
                     , null
             );
-            double x = selfBounds.getX();
-            double y = selfBounds.getY();
+            double x = selfBounds.minX();
+            double y = selfBounds.minY();
 
             if (!rendererContext.isDry()) {
                 rendererContext.paintBackground(selfBounds);

@@ -41,7 +41,7 @@ public class NTxColumnBuilder implements NTxNodeBuilder {
                 .afterParsingAllParams((NTxAllArgumentReader info, NTxNodeBuilderContext buildContext)->{
                     info.node().setProperty(NTxProp.of(NTxPropName.COLUMNS,NElement.ofInt(1)));
                 })
-                .selfBounds((rendererContext) -> selfBounds(rendererContext))
+                .selfBounds2D((rendererContext) -> selfBounds(rendererContext))
                 .renderComponent((ctx) -> renderMain(ctx))
                 ;
     }
@@ -50,14 +50,14 @@ public class NTxColumnBuilder implements NTxNodeBuilder {
     public NTxBounds2D selfBounds(NTxRendererContext rendererContext) {
         rendererContext = rendererContext.withDefaultStyles(defaultStyles);
         NTxNode node = rendererContext.node();
-        NTxBounds2D expectedBounds = rendererContext.defaultSelfBounds();
+        NTxBounds2D expectedBounds = rendererContext.defaultSelfBounds2D();
         NTxGridRendererHelper h = new NTxGridRendererHelper(node.children());
         return h.computeBound(node, rendererContext, expectedBounds);
     }
 
     public void renderMain(NTxRendererContext ctx) {
         ctx = ctx.withDefaultStyles(defaultStyles);
-        NTxBounds2D expectedBounds = ctx.selfBounds();
+        NTxBounds2D expectedBounds = ctx.selfBounds2D();
         NTxGridRendererHelper h = new NTxGridRendererHelper(ctx.node().children());
         h.render(ctx, expectedBounds);
     }

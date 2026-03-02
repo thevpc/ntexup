@@ -31,13 +31,13 @@ public class NTxGroupBuilder implements NTxNodeBuilder {
     public void render(NTxRendererContext ctx) {
         NTxNode node = ctx.node();
         ctx = ctx.withDefaultStyles(defaultStyles);
-        NTxBounds2D selfBounds = ctx.selfBounds();
+        NTxBounds2D selfBounds = ctx.selfBounds2D();
         if (!ctx.isDry()) {
             ctx.paintBackground(selfBounds);
         }
         NTxRendererContext finalCtx = ctx;
         List<NTxNode> texts = node.children()
-                .stream().filter(x -> finalCtx.resolveNode(x,finalCtx.parentBounds()).isVisible()).collect(Collectors.toList());
+                .stream().filter(x -> finalCtx.resolveNode(x,finalCtx.parentBounds2D()).isVisible()).collect(Collectors.toList());
         for (NTxNode text : texts) {
             NTxRendererContext ctx3 = ctx.resolveNode(text,selfBounds);
             ctx3.render();

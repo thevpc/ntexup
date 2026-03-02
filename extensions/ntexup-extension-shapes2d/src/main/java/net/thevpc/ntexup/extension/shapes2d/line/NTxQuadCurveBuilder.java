@@ -35,13 +35,13 @@ public class NTxQuadCurveBuilder implements NTxNodeBuilder {
     public void renderMain(NTxRendererContext rendererContext) {
         NTxNode node = rendererContext.node();
         rendererContext = rendererContext.withDefaultStyles(defaultStyles);
-        NTxBounds2D b = rendererContext.selfBounds();
-        NTxPoint2D translation = new NTxPoint2D(b.getX(), b.getY());
-        NTxPoint2D from = NTxPoint.ofParent(NTxValue.ofProp(node, NTxPropName.FROM).asPoint2D().get()).valueHPoint2D(b, rendererContext.getGlobalBounds())
+        NTxBounds2D b = rendererContext.selfBounds2D();
+        NTxPoint2D translation = new NTxPoint2D(b.minX(), b.minY());
+        NTxPoint2D from = NTxPoint.ofParent(NTxValue.ofProp(node, NTxPropName.FROM).asPoint2D().get()).valueHPoint2D(b, rendererContext.globalBounds2D())
                 .plus(translation);
-        NTxPoint2D to = NTxPoint.ofParent(NTxValue.ofProp(node, NTxPropName.TO).asPoint2D().get()).valueHPoint2D(b, rendererContext.getGlobalBounds())
+        NTxPoint2D to = NTxPoint.ofParent(NTxValue.ofProp(node, NTxPropName.TO).asPoint2D().get()).valueHPoint2D(b, rendererContext.globalBounds2D())
                 .plus(translation);
-        NTxPoint2D ctrl = NTxPoint.ofParent(NTxValue.ofProp(node, NTxPropName.CTRL).asPoint2D().get()).valueHPoint2D(b, rendererContext.getGlobalBounds())
+        NTxPoint2D ctrl = NTxPoint.ofParent(NTxValue.ofProp(node, NTxPropName.CTRL).asPoint2D().get()).valueHPoint2D(b, rendererContext.globalBounds2D())
                 .plus(translation);
         NTxGraphics g = rendererContext.graphics();
         if (!rendererContext.isDry()) {
@@ -67,7 +67,7 @@ public class NTxQuadCurveBuilder implements NTxNodeBuilder {
         double miny = Math.min(from.getY(), to.getY());
         double maxX = Math.max(from.getX(), to.getX());
         double maxY = Math.max(from.getY(), to.getY());
-        NTxBounds2D b2 = new NTxBounds2D(minx, miny, maxX, maxY);
+        NTxBounds2D b2 = NTxBounds2D.of(minx, maxX, miny, maxY);
         rendererContext.drawContour();
     }
 

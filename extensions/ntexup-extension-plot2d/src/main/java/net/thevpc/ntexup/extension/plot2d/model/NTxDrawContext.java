@@ -36,10 +36,10 @@ public class NTxDrawContext {
     public double userMaxY;
 
     public NTxDrawContext(NTxBounds2D bounds, double[] gridXvalues, double minY, double maxY, boolean zoomY, NTxMinMax minMaxY) {
-        this.componentWidth = bounds.getWidth();
-        this.componentHeight = bounds.getHeight();
-        this.componentMinX = bounds.getX();
-        this.componentMinY = bounds.getY();
+        this.componentWidth = bounds.widthX();
+        this.componentHeight = bounds.widthY();
+        this.componentMinX = bounds.minX();
+        this.componentMinY = bounds.minY();
         this.gridXvalues = gridXvalues;
         this.minMaxY=minMaxY;
         this.zoomY=zoomY;

@@ -74,10 +74,10 @@ public class NTx3DUtils {
     }
 
     public static NTxPoint3D convertPoint(NTxPoint3D p, NTxBounds2D b) {
-        double h = Math.max(b.getWidth(), b.getHeight());
+        double h = Math.max(b.widthX(), b.widthY());
         return new NTxPoint3D(
-                p.x / 100 * b.getWidth()/* + b.getMinX()*/,
-                p.y / 100 * b.getHeight()/* + b.getMinY()*/,
+                p.x / 100 * b.widthX()/* + b.getMinX()*/,
+                p.y / 100 * b.widthY()/* + b.getMinY()*/,
                 p.z / 100 * h
         );
     }

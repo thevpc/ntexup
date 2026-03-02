@@ -51,9 +51,9 @@ public class NTxImageBuilder implements NTxNodeBuilder {
     public void renderMain(NTxRendererContext rendererContext) {
         NTxNode node = rendererContext.node();
         rendererContext = rendererContext.withDefaultStyles(defaultStyles);
-        NTxBounds2D b = rendererContext.selfBounds();
-        int w = NTxUtils.intOf(b.getWidth());
-        int h = NTxUtils.intOf(b.getHeight());
+        NTxBounds2D b = rendererContext.selfBounds2D();
+        int w = NTxUtils.intOf(b.widthX());
+        int h = NTxUtils.intOf(b.widthY());
         if (w <= 0 || h <= 0) {
             return;
         }
@@ -67,7 +67,7 @@ public class NTxImageBuilder implements NTxNodeBuilder {
             cc.options.setDisableAnimation(!finalCtx.isAnimate());
             cc.options.setAsyncLoad(() -> finalCtx.repaint());
             cc.options.setImageObserver(finalCtx.imageObserver());
-            cc.options.setSize(new Dimension(b.getWidth().intValue(), b.getHeight().intValue()));
+            cc.options.setSize(new Dimension(b.widthX().intValue(), b.widthY().intValue()));
             NElement eimg = node.getPropertyValue(NTxPropName.VALUE).orNull();
             if(eimg!=null){
                 NElement eimg2 = finalCtx.evalExpression(eimg).orNull();
@@ -81,12 +81,12 @@ public class NTxImageBuilder implements NTxNodeBuilder {
 
         NTxGraphics g = rendererContext.graphics();
 
-        double x = b.getX();
-        double y = b.getY();
+        double x = b.minX();
+        double y = b.minY();
 
         if (!rendererContext.isDry()) {
             if (rendererContext.applyBackgroundColor()) {
-                g.fillRect((int) x, (int) y, NTxUtils.intOf(b.getWidth()), NTxUtils.intOf(b.getHeight()));
+                g.fillRect((int) x, (int) y, NTxUtils.intOf(b.widthX()), NTxUtils.intOf(b.widthY()));
             }
 
             rendererContext.applyForeground(false);

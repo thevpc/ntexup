@@ -178,7 +178,7 @@ public class NTxTextRendererBuilderImpl implements NTxTextRendererBuilder {
             Rectangle2D.Double.union(bounds, row.textBounds, bounds);
             maxxY = row.yOffset + row.textBounds.getHeight();
         }
-        return new NTxBounds2D(bounds.getMinX(), bounds.getMinY(), bounds.getWidth(), maxxY);
+        return NTxBounds2D.ofWidth(bounds.getMinX(), bounds.getMinY(), bounds.getWidth(), maxxY);
     }
 
     public void setLang(String lang) {
@@ -200,8 +200,8 @@ public class NTxTextRendererBuilderImpl implements NTxTextRendererBuilder {
 
     public void render(NTxNode p, NTxRendererContext rendererContext, NTxBounds2D bgBounds, NTxBounds2D selfBounds) {
         boolean debug = rendererContext.isDebug();
-        double x = selfBounds.getX();
-        double y = selfBounds.getY();
+        double x = selfBounds.minX();
+        double y = selfBounds.minY();
         NTxGraphics g0 = rendererContext.graphics();
         NtxFontInfo fontInfo = NTxValueByName.getFontInfo(rendererContext);
         if (fontInfo == null) {

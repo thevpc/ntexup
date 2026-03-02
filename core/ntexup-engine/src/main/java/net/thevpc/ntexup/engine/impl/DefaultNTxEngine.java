@@ -2,6 +2,7 @@ package net.thevpc.ntexup.engine.impl;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.awt.image.ImageObserver;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -15,6 +16,7 @@ import java.util.stream.Stream;
 
 import net.thevpc.ntexup.api.document.NTxDocumentFactory;
 import net.thevpc.ntexup.api.document.elem2d.NTxBounds2D;
+import net.thevpc.ntexup.api.document.elem2d.NTxBounds3D;
 import net.thevpc.ntexup.api.document.node.*;
 import net.thevpc.ntexup.api.document.style.DefaultNTxNodeSelector;
 import net.thevpc.ntexup.api.document.style.NTxProp;
@@ -80,7 +82,7 @@ public class DefaultNTxEngine implements NTxEngine {
     private NTxEngineTools tools;
     //    private List<NTxNodeBuilderContextImpl> customBuilderContexts;
     private NTxDocumentFactory factory;
-    private NTxPropCalculator propCalculator ;
+    private NTxPropCalculator propCalculator;
     private NTxFunctionList functions;
     private NTxMessageList log = new NTxMessageList();
     NtxTextFlavorList textFlavors;
@@ -1016,13 +1018,23 @@ public class DefaultNTxEngine implements NTxEngine {
 
     @Override
     public BufferedImage renderImage(NTxCompiledPage page, NTxNodeRendererConfig config) {
-        NTxNode node = page.compiledPage();
-        int sizeWidth = config.getWidth();
-        int sizeHeight = config.getHeight();
-        Dimension dimension = new Dimension(sizeWidth, sizeHeight);
-        Map<String, Object> capabilities = config.getCapabilities();
-        BufferedImage newImage = new BufferedImage(sizeWidth, sizeHeight, BufferedImage.TYPE_INT_ARGB);
+        BufferedImage newImage = new BufferedImage((int) config.getWidth(), (int) config.getHeight(), BufferedImage.TYPE_INT_ARGB);
         Graphics2D g = newImage.createGraphics();
+        renderPage(page, config, g,  null, null);
+        g.dispose();
+        return newImage;
+    }
+
+    @Override
+    public void renderPage(NTxCompiledPage page, NTxNodeRendererConfig config,
+                           Graphics2D g,
+                           ImageObserver imageObserver, Runnable repainter
+    ) {
+        NTxNode node = page.compiledPage();
+        long startTime = config.getStartTime();
+        double sizeWidth = config.getWidth();
+        double sizeHeight = config.getHeight();
+        Map<String, Object> capabilities = config.getCapabilities();
 
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
@@ -1034,15 +1046,53 @@ public class DefaultNTxEngine implements NTxEngine {
 
         NTxGraphics hg = this.createGraphics(g);
         NTxNodeRenderer renderer = getRenderer(node.type()).get();
+        NTxBounds2D bounds2D = NTxBounds2D.ofWidth(0, 0, sizeWidth, sizeHeight);
+        NTxBounds3D bounds3D = NTxBounds3D.ofFull();
+
+        NTxBounds2D realBounds2D = config.getRealBounds2D();
+        NTxBounds3D realBounds3D = config.getRealBounds3D();
+
+        // by default A4
+        if (realBounds2D == null) {
+            realBounds2D = NTxBounds2D.ofWidth(0, 0, 297E-3, 210E-3);
+        }
+
+        // by default 1m cube
+        if (realBounds3D == null) {
+            realBounds3D = NTxBounds3D.ofUnit();
+        }
+
+        if (startTime == 0) {
+            startTime = System.currentTimeMillis();
+        }
+        boolean someChange = !config.isUseCache();
         DefaultNTxRendererContext context = new DefaultNTxRendererContext(
                 page,
-                new NTxNode[]{node}, this, hg, null,
-                new NTxBounds2D(0, 0, dimension.getWidth(), dimension.getHeight()),
-                new NTxBounds2D(0, 0, dimension.getWidth(), dimension.getHeight()),
-                page, true, System.currentTimeMillis(), capabilities, null, null, page.document().compiledDocument());
+                new NTxNode[]{node}, this, hg,
+                null,
+                bounds2D,
+                bounds2D,
+                realBounds2D,
+                realBounds2D,
+                null,
+                bounds3D, // 1
+                bounds3D,
+                realBounds3D,
+                realBounds3D,
+                page, someChange,
+                startTime,
+                capabilities, imageObserver,
+                repainter, null, false, null, null, null,
+                page.document().compiledDocument(),
+                null,
+                null,
+                null,
+                page.pageContext()
+        );
+        if (someChange) {
+            node.invalidateRenderCache();
+        }
         renderer.render(context);
-        g.dispose();
-        return newImage;
     }
 
     @Override

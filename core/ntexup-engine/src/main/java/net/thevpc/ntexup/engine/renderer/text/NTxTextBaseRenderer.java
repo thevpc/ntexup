@@ -9,7 +9,6 @@ import net.thevpc.ntexup.api.eval.NTxValueByName;
 import net.thevpc.ntexup.api.renderer.NTxGraphics;
 import net.thevpc.ntexup.api.renderer.text.NTxTextRendererBuilder;
 import net.thevpc.ntexup.api.renderer.NTxRendererContext;
-import net.thevpc.ntexup.api.util.NTxSizeRef;
 import net.thevpc.ntexup.engine.util.NTxNodeRendererUtils;
 import net.thevpc.ntexup.engine.renderer.NTxNodeRendererBase;
 import net.thevpc.nuts.elem.NElement;
@@ -28,25 +27,25 @@ public abstract class NTxTextBaseRenderer extends NTxNodeRendererBase {
 
     @Override
     public NTxSizeRequirements sizeRequirements(NTxRendererContext ctx) {
-        NTxBounds2D s = ctx.selfBounds();
-        NTxBounds2D bb = ctx.parentBounds();
+        NTxBounds2D s = ctx.selfBounds2D();
+        NTxBounds2D bb = ctx.parentBounds2D();
         return new NTxSizeRequirements(
-                s.getWidth(),
-                Math.max(bb.getWidth(), s.getWidth()),
-                s.getWidth(),
-                s.getHeight(),
-                Math.max(bb.getHeight(), s.getHeight()),
-                s.getHeight()
+                s.widthX(),
+                Math.max(bb.widthX(), s.widthX()),
+                s.widthX(),
+                s.widthY(),
+                Math.max(bb.widthY(), s.widthY()),
+                s.widthY()
         );
     }
 
     public NTxBounds2D bgBounds(NTxNode p, NTxRendererContext ctx) {
-        return ctx.selfBounds();
+        return ctx.selfBounds2D();
     }
 
-    public NTxBounds2D selfBounds(NTxRendererContext ctx) {
+    public NTxBounds2D selfBounds2D(NTxRendererContext ctx) {
         Cache0 renderInfo = renderInfo0(ctx);
-        return NTxValueByName.selfBounds(new NTxDouble2(renderInfo.computedBound.getWidth(), renderInfo.computedBound.getHeight()), null, ctx);
+        return NTxValueByName.selfBounds2D(new NTxDouble2(renderInfo.computedBound.widthX(), renderInfo.computedBound.widthY()), null, ctx);
     }
 
     protected abstract NTxTextRendererBuilder createRichTextHelper(NTxRendererContext ctx);
@@ -87,7 +86,7 @@ public abstract class NTxTextBaseRenderer extends NTxNodeRendererBase {
 
         NTxRendererContext finalCtx = ctx;
         Cache0 renderInfo0 = renderInfo0(ctx);
-        Cache renderInfo = renderInfo(node,ctx,ctx.selfBounds());
+        Cache renderInfo = renderInfo(node,ctx,ctx.selfBounds2D());
         if (NTxValueByName.getDebugLevel(ctx) >= 10) {
             g.debugString(
                     "Plain:\n"

@@ -34,13 +34,13 @@ class NTxNodeRendererAsText extends NTxTextRendererBase {
     }
 
     @Override
-    public NTxBounds2D selfBounds(NTxRendererContext ctx) {
-        if (this.ctx.selfBoundsAction != null) {
-            NTxBounds2D u = this.ctx.selfBoundsAction.selfBounds(ctx);
+    public NTxBounds2D selfBounds2D(NTxRendererContext ctx) {
+        if (this.ctx.selfBounds2DAction != null) {
+            NTxBounds2D u = this.ctx.selfBounds2DAction.selfBounds2D(ctx);
             if (u != null) {
                 return u;
             }
         }
-        return super.selfBounds(ctx);
+        return super.selfBounds2D(ctx);
     }
 }

@@ -27,7 +27,8 @@ public class NTxNodeBuilderContextImpl implements NTxNodeBuilderContext {
     NTxNodeBuilder builder;
     RenderAction renderMainAction;
     SizeRequirementsAction sizeRequirementsAction;
-    SelfBoundsAction selfBoundsAction;
+    SelfBounds2DAction selfBounds2DAction;
+    SelfBounds3DAction selfBounds3DAction;
     String id;
     String[] aliases;
     ToElemAction toElem;
@@ -84,8 +85,14 @@ public class NTxNodeBuilderContextImpl implements NTxNodeBuilderContext {
     }
 
     @Override
-    public NTxNodeBuilderContext selfBounds(SelfBoundsAction e) {
-        this.selfBoundsAction = e;
+    public NTxNodeBuilderContext selfBounds2D(SelfBounds2DAction e) {
+        this.selfBounds2DAction = e;
+        return this;
+    }
+
+    @Override
+    public NTxNodeBuilderContext selfBounds3D(SelfBounds3DAction e) {
+        this.selfBounds3DAction = e;
         return this;
     }
 
