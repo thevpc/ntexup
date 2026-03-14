@@ -68,7 +68,7 @@ public class NTxEvalUtils {
         NElement aa = simplify(a);
         if (aa.isNumber()) {
             Number na = aa.asNumberValue().get();
-            return NElement.ofNumber(NNumberUtils.negateNumber(na));
+            return NElement.ofNumber(NNumberUtils.negateNumber(na),aa.asNumber().get().numberSuffix());
         }
         return NElement.ofUplet(NElement.ofUnaryPrefixOperator(NOperatorSymbol.MINUS, aa));
     }
