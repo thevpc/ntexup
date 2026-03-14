@@ -10,6 +10,7 @@ import net.thevpc.ntexup.api.eval.*;
 import net.thevpc.ntexup.api.engine.NTxEngine;
 import net.thevpc.ntexup.api.document.*;
 import net.thevpc.ntexup.api.parser.NTxNodeParser;
+import net.thevpc.ntexup.api.parser.NTxNodeParserFactory;
 import net.thevpc.ntexup.api.source.NTxSource;
 import net.thevpc.ntexup.api.util.NTxUtils;
 import net.thevpc.ntexup.engine.impl.NTxEngineUtils;
@@ -49,7 +50,7 @@ public class NTxCompiler {
             NTxNode root = documentCopy.root();
             List<NTxNode> rootChildren = root.children();
             root.clearChildren();
-            NTxResolutionContextImpl context = new NTxResolutionContextImpl(new NTxNode[]{root}, NElement.ofNull(), null, false, engine, documentCopy, null, null, null, null);
+            NTxResolutionContextImpl context = new NTxResolutionContextImpl(new NTxNode[]{root}, NElement.ofNull(), null, false, engine, documentCopy, null, null, null, null, engine.itemParser());
             DispatchCompileNodeVisitor dv = new DispatchCompileNodeVisitor(new CompileNodeVisitor() {
                 @Override
                 public void visitNode(NTxNode node, NTxResolutionContext context) {
@@ -304,7 +305,7 @@ public class NTxCompiler {
     private void compileNodeTree_default(NTxResolutionContext context, CompileNodeVisitor visitor) {
         NTxNode node = context.node();
         String nodeType = node.type();
-        NTxNodeParser p = engine.nodeTypeParser(nodeType).orNull();
+        NTxNodeParser p = context.itemParser().nodeTypeParser(nodeType).orNull();
         if (p != null) {
             p.compileNode(node, context);
         } else {
@@ -409,7 +410,7 @@ public class NTxCompiler {
             //new DispatchCompileNodeVisitor(visitor).visitItem(node,context);
             visitor.visitNode(node, context);
         } else {
-            NTxNodeParser p = engine.nodeTypeParser(name).orNull();
+            NTxNodeParser p = context.itemParser().nodeTypeParser(name).orNull();
             if (p != null) {
                 context.log().log(NMsg.ofC("variable '%s' not found, rendering as plain text.  If you meant a component, use '%s()' syntax", name, name).asWarning(), NTxUtils.sourceOf(node));
             } else {
@@ -496,7 +497,7 @@ public class NTxCompiler {
             }
             return;
         }
-        NTxNodeParser p = engine.nodeTypeParser(uid).orNull();
+        NTxNodeParser p = context.itemParser().nodeTypeParser(uid).orNull();
         if (p != null) {
             NScoredCallable<NTxItem> n = p.parseNode(
                     context.withElement(NElement.ofObjectBuilder()
