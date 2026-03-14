@@ -19,28 +19,30 @@ import net.thevpc.ntexup.lib.geometry3d.impl.composite.NtxElement3DPrism;
 import net.thevpc.ntexup.lib.geometry3d.impl.primitives.NtxElement3DTriangle;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
-public class Element3DTriangleBuilder implements  NtxElement3DNodeParser {
+public class Element3DTriangleBuilder implements NtxElement3DNodeParser {
     @Override
     public List<String> getId3d() {
-        return Arrays.asList(NTxNodeType.LINE);
+        return Collections.singletonList(NTxNodeType.LINE);
     }
 
     @Override
-    public NtxElement3D createElement3D(NTxNode node, NTxRendererContext rendererContext, NTxBounds2D b, RealToRelativeMapper mapper, NtxElement3DNodeParserFactory parserFactory) {
-        NTxPoint3D position = NTx3DUtils.asPoint3D(NTxValue.of(node.getPropertyValue(NTxPropName.POSITION))).orNull();
+    public NtxElement3D createElement3D(NTxRendererContext rendererContext, NTxBounds2D b, RealToRelativeMapper mapper, NtxElement3DNodeParserFactory parserFactory) {
+        NTxNode node = rendererContext.node();
+        NTxPoint3D position = NtxShapes3dUtils.resolvePosition3D(node, NTxPropName.POSITION, rendererContext, b).orElse(NTxPoint3D.ofZero());
         Double thickness = NTxValue.of(node.getPropertyValue("thickness")).asDouble().orNull();
         NTxPoint2D[] points2d = NTx2DUtils.asPoint2DArray(node.getPropertyValue(NTxPropName.POINTS).orNull()).orNull();
-        if(points2d!=null  && points2d.length>=3){
+        if (points2d != null && points2d.length >= 3) {
             return new NtxElement3DPrism(
                     position,
-                    new NTxTriangle2DImpl(points2d[0],points2d[1],points2d[2]),
-                    thickness==null?0:thickness
+                    new NTxTriangle2DImpl(points2d[0], points2d[1], points2d[2]),
+                    thickness == null ? 0 : thickness
             );
         }
 
-        NTxPoint3D[] points = NtxShapes3dUtils.resolvePoints(node, NTxPropName.POINTS, "real-points", () -> new NTxPoint3D[0], b, mapper);
+        NTxPoint3D[] points = NtxShapes3dUtils.resolvePositions3D(node, NTxPropName.POINTS, rendererContext, b).get();
         if (points.length < 3) {
             points = Arrays.copyOf(points, 3);
             for (int i = 0; i < 3; i++) {
@@ -52,7 +54,7 @@ public class Element3DTriangleBuilder implements  NtxElement3DNodeParser {
         boolean fill = NTxValue.ofProp(node, NTxPropName.FILL_BACKGROUND).asBoolean().orElse(true);
         boolean contour = NTxValue.ofProp(node, NTxPropName.DRAW_CONTOUR).asBoolean().orElse(true);
         NtxElement3DTriangle r = new NtxElement3DTriangle(points[0], points[1], points[2], fill, contour);
-        NtxShapes3dUtils.apply3dProps(node, r, rendererContext, b);
+        NtxShapes3dUtils.apply3dProps(node, r, rendererContext, b, fill);
         return r;
     }
 
