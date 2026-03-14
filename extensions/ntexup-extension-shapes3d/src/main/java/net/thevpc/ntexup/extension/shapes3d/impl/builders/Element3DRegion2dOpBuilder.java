@@ -24,10 +24,11 @@ public class Element3DRegion2dOpBuilder implements NtxElement3DNodeParser {
     }
 
     @Override
-    public NtxElement3D createElement3D(NTxNode node, NTxRendererContext rendererContext, NTxBounds2D b, RealToRelativeMapper mapper, NtxElement3DNodeParserFactory parserFactory) {
+    public NtxElement3D createElement3D(NTxRendererContext rendererContext, NTxBounds2D b, RealToRelativeMapper mapper, NtxElement3DNodeParserFactory parserFactory) {
+        NTxNode node=rendererContext.node();
         NTxRegion2D r = NTxElement2DFactory.region(NtxShapes3dUtils.nodeToElement(node)).orNull();
         if (r != null) {
-            NTxPoint3D position = NtxShapes3dUtils.resolvePoint(node, NTxPropName.POSITION, "real-position", NTxPoint3D::ofZero, b, mapper);
+            NTxPoint3D position = NtxShapes3dUtils.resolvePosition3D(node, NTxPropName.POSITION, rendererContext, b).orElse(NTxPoint3D.ofZero());
             double thickness = NTxValue.ofProp(node, "thickness").asDouble().orElse(0.0);
             return new NtxElement3DPrism(
                     position,
