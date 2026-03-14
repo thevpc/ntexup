@@ -23,13 +23,14 @@ public class Element3DArcBuilder implements  NtxElement3DNodeParser {
     }
 
     @Override
-    public NtxElement3D createElement3D(NTxNode node, NTxRendererContext rendererContext, NTxBounds2D b, RealToRelativeMapper mapper, NtxElement3DNodeParserFactory parserFactory) {
-        NTxPoint3D from = NtxShapes3dUtils.resolvePoint(node, NTxPropName.FROM, "from-real", NTxPoint3D::ofZero, b, mapper);
-        NTxPoint3D to = NtxShapes3dUtils.resolvePoint(node, NTxPropName.TO, "to-real", NTxPoint3D::ofZero, b, mapper);
+    public NtxElement3D createElement3D(NTxRendererContext rendererContext, NTxBounds2D b, RealToRelativeMapper mapper, NtxElement3DNodeParserFactory parserFactory) {
+        NTxNode node=rendererContext.node();
+        NTxPoint3D from = NtxShapes3dUtils.resolvePosition3D(node, NTxPropName.FROM, rendererContext, b).orElse(NTxPoint3D.ofZero());
+        NTxPoint3D to = NtxShapes3dUtils.resolvePosition3D(node, NTxPropName.TO, rendererContext, b).orElse(NTxPoint3D.ofZero());
         double startAngle = NTxValue.ofProp(node, NTxPropName.START_ANGLE).asDouble().orElse(0.0);
         double endAngle = NTxValue.ofProp(node, NTxPropName.END_ANGLE).asDouble().orElse(0.0);
         NtxElement3DArc r = new NtxElement3DArc(from, to, startAngle, endAngle);
-        NtxShapes3dUtils.apply3dProps(node, r, rendererContext, b);
+        NtxShapes3dUtils.apply3dProps(node, r, rendererContext, b,false);
         return r;
     }
 
