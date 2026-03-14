@@ -55,7 +55,7 @@ class CustomNTxNodeParserFromBuilder extends NTxNodeParserBase {
 
     protected void processChildren(NTxAllArgumentReader info) {
         if (ctx.processChildren != null) {
-            ctx.processChildren.processNode(info, ctx);
+            ctx.processChildren.processChildren(info, ctx);
             return;
         }
         super.processChildren(info);
@@ -168,4 +168,5 @@ class CustomNTxNodeParserFromBuilder extends NTxNodeParserBase {
             initializeNode(node);
         }
     }
+
 }
