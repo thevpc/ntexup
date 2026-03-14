@@ -1,20 +1,22 @@
 package net.thevpc.ntexup.extension.shapes3d.impl;
 
 import net.thevpc.ntexup.api.document.elem2d.NTxBounds2D;
+import net.thevpc.ntexup.api.document.elem2d.NTxBounds3D;
+import net.thevpc.ntexup.api.document.elem2d.NTxPoint2D;
 import net.thevpc.ntexup.api.document.node.NTxNode;
 import net.thevpc.ntexup.api.document.style.NTxProp;
 import net.thevpc.ntexup.api.document.style.NTxPropName;
 import net.thevpc.ntexup.api.eval.NTxValue;
 import net.thevpc.ntexup.api.eval.NTxValueByType;
 import net.thevpc.ntexup.api.renderer.NTxRendererContext;
+import net.thevpc.ntexup.api.util.NTxNumberUtils;
 import net.thevpc.ntexup.api.util.NTxUtils;
-import net.thevpc.ntexup.lib.geometry3d.NTxMatrix3D;
-import net.thevpc.ntexup.lib.geometry3d.NTxPoint3D;
-import net.thevpc.ntexup.lib.geometry3d.NtxElement3D;
-import net.thevpc.ntexup.lib.geometry3d.NtxFace;
+import net.thevpc.ntexup.lib.geometry3d.*;
 import net.thevpc.ntexup.lib.geometry3d.impl.NTx3DUtils;
 import net.thevpc.ntexup.lib.geometry3d.impl.composite.NtxFaceImpl;
 import net.thevpc.nuts.elem.*;
+import net.thevpc.nuts.util.NOptional;
+import net.thevpc.nuts.util.NStringUtils;
 import net.thevpc.nuts.util.NUtils;
 
 import java.awt.*;
@@ -24,6 +26,74 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 public class NtxShapes3dUtils {
+
+    public static NTxPoint2D convertPosition2D(NTxNumberElement2 n, NTxBounds2D bounds2D, NTxBounds2D page, NTxBounds3D real3D) {
+        NTxNumberElement3 t = new NTxNumberElement3(n.x, n.y, (NNumberElement) NElement.ofDouble(0.0));
+        NTxPoint3D v = convertPosition3D(t, bounds2D, page, real3D);
+        return new NTxPoint2D(v.x, v.y);
+    }
+
+    public static NTxPoint3D convertPosition3D(NTxNumberElement3 pos, NTxBounds2D bounds, NTxBounds2D page, NTxBounds3D real3D) {
+        if (pos == null) return new NTxPoint3D(0, 0, 0);
+
+        double nx = normalizePos(pos.x, real3D.minX(), real3D.widthX(), bounds.widthX(), page.widthX());
+        double ny = normalizePos(pos.y, real3D.minY(), real3D.widthY(), bounds.widthY(), page.widthY());
+
+        double localH = Math.max(bounds.widthX(), bounds.widthY());
+        double pageH = Math.max(page.widthX(), page.widthY());
+        double nz = normalizePos(pos.z, real3D.minZ(), real3D.widthZ(), localH, pageH);
+
+        return new NTxPoint3D(nx, ny, nz);
+    }
+
+    public static NTxPoint3D convertDistance3D(NTxNumberElement3 dist, NTxBounds2D bounds, NTxBounds2D page, NTxBounds3D real3D) {
+        if (dist == null) return new NTxPoint3D(0, 0, 0);
+
+        double nx = normalizeDist(dist.x, real3D.widthX(), bounds.widthX(), page.widthX());
+        double ny = normalizeDist(dist.y, real3D.widthY(), bounds.widthY(), page.widthY());
+
+        double localH = Math.max(bounds.widthX(), bounds.widthY());
+        double pageH = Math.max(page.widthX(), page.widthY());
+        double nz = normalizeDist(dist.z, real3D.widthZ(), localH, pageH);
+
+        return new NTxPoint3D(nx, ny, nz);
+    }
+
+    /**
+     * POSITION Logic: (Input - Origin) / Span
+     */
+    private static double normalizePos(NNumberElement el, Double minPhy, Double spanPhy, Double local2D, Double page2D) {
+        String s = NStringUtils.trim(el.numberSuffix()).toLowerCase();
+        double val = el.asDoubleValue().get();
+
+        if (s.equals("%p")) return (val / 100.0) * page2D;
+        if (s.isEmpty() || s.equals("%")) return (val / 100.0) * local2D;
+
+        // Physical Unit Position: Must subtract the 3D origin
+        double meters = NTxNumberUtils.toMeter(el).get();
+        double span = (spanPhy == null || spanPhy == 0) ? 1.0 : spanPhy;
+        double min = (minPhy == null) ? 0.0 : minPhy;
+
+        return ((meters - min) / span) * local2D;
+    }
+
+    /**
+     * DISTANCE Logic: Input / Span (Ignoring Origin)
+     */
+    private static double normalizeDist(NNumberElement el, Double spanPhy, Double local2D, Double page2D) {
+        String s = NStringUtils.trim(el.numberSuffix()).toLowerCase();
+        double val = el.asDoubleValue().get();
+
+        if (s.equals("%p")) return (val / 100.0) * page2D;
+        if (s.isEmpty() || s.equals("%")) return (val / 100.0) * local2D;
+
+        // Physical Unit Distance: Pure magnitude ratio
+        double meters = NTxNumberUtils.toMeter(el).get();
+        double span = (spanPhy == null || spanPhy == 0) ? 1.0 : spanPhy;
+
+        return (meters / span) * local2D;
+    }
+
 
     public static NElement nodeToElement(NTxNode node) {
         NObjectElementBuilder b = NElement.ofObjectBuilder()
@@ -45,6 +115,7 @@ public class NtxShapes3dUtils {
         boolean fillBackground = true;
         boolean drawContour = true;
         Paint background = null;
+        Paint lineColor = null;
         Stroke stroke = null;
         boolean any = false;
         if (element.isAnyObject()) {
@@ -81,6 +152,11 @@ public class NtxShapes3dUtils {
                             any = true;
                             break;
                         }
+                        case NTxPropName.LINE_COLOR: {
+                            lineColor = NTxValue.of(v).asPaint().orNull();
+                            any = true;
+                            break;
+                        }
                         case "stroke": {
                             stroke = rendererContext.graphics().createStroke(v);
                             any = true;
@@ -97,17 +173,18 @@ public class NtxShapes3dUtils {
             f.setDrawContour(drawContour);
             f.setStroke(stroke);
             f.setFillBackground(fillBackground);
+            f.setLineColor(lineColor);
             return f;
         }
         return null;
     }
 
-    public static NTxPoint3D resolvePoint(NTxNode node, String relativeName, String realName, Supplier<NTxPoint3D> def, NTxBounds2D b, RealToRelativeMapper mapper) {
-        if (node.getPropertyValue(realName).isPresent()) {
-            return NTx3DUtils.convertPoint(NTx3DUtils.asPoint3D(node, realName).orElseGet(def), b);
-        }
-        return NTx3DUtils.convertPoint(NTx3DUtils.asPoint3D(node, relativeName).orElseGet(def), b);
-    }
+//    public static NTxPoint3D resolvePoint(NTxNode node, String relativeName, String realName, Supplier<NTxPoint3D> def, NTxBounds2D b, RealToRelativeMapper mapper) {
+//        if (node.getPropertyValue(realName).isPresent()) {
+//            return NTx3DUtils.convertPoint(NTx3DUtils.asPoint3D(node, realName).orElseGet(def), b);
+//        }
+//        return NTx3DUtils.convertPoint(NTx3DUtils.asPoint3D(node, relativeName).orElseGet(def), b);
+//    }
 
     public static NTxPoint3D[][] resolvePointMatrix(NTxNode node, String relativeName, String realName, NTxBounds2D b, RealToRelativeMapper mapper) {
         if (node.getPropertyValue(realName).isPresent()) {
@@ -137,6 +214,116 @@ public class NtxShapes3dUtils {
         return new NTxPoint3D[0][];
     }
 
+
+    public static NOptional<Double> resolveZDistance(NTxNode node, String name, NTxRendererContext rendererContext, NTxBounds2D bounds2D) {
+        NTxValue p = NTxValue.ofProp(node, name);
+        NNumberElement n = NTx3DUtils.asNumberElement(p,rendererContext).orNull();
+        if (n == null) {
+            return NOptional.ofNamedEmpty("height");
+        }
+        NTxNumberElement3 e = new NTxNumberElement3((NNumberElement) NElement.ofDouble(0.0), (NNumberElement) NElement.ofDouble(0.0), n);
+        return NOptional.of(convertDistance3D(e, bounds2D, rendererContext.globalBounds2D(), rendererContext.realGlobalBounds3D()))
+                .map(x -> x.z);
+    }
+
+    public static NOptional<NTxPoint3D> resolvePosition3DAny(Object any, NTxRendererContext rendererContext, NTxBounds2D bounds2D) {
+        NTxNumberElement3 n = NTx3DUtils.asNumberElement3(NTxValue.of(any),rendererContext).orNull();
+        if (n != null) {
+            return NOptional.of(NtxShapes3dUtils.convertPosition3D(n, bounds2D, rendererContext.globalBounds2D(), rendererContext.realGlobalBounds3D()));
+        }
+        return NOptional.ofNamedEmpty("position");
+    }
+
+    public static NOptional<NTxPoint3D> resolveDistance3DAny(Object any, NTxRendererContext rendererContext, NTxBounds2D bounds2D) {
+        NTxNumberElement3 n = NTx3DUtils.asNumberElement3(NTxValue.of(any),rendererContext).orNull();
+        if (n != null) {
+            return NOptional.of(NtxShapes3dUtils.convertDistance3D(n, bounds2D, rendererContext.globalBounds2D(), rendererContext.realGlobalBounds3D()));
+        }
+        return NOptional.ofNamedEmpty("distance");
+    }
+
+    public static NOptional<Double> resolveDistanceZAny(Object any, NTxRendererContext rendererContext, NTxBounds2D bounds2D) {
+        NNumberElement n = NTx3DUtils.asNumberElement(NTxValue.of(any),rendererContext).orNull();
+        if (n != null) {
+            NTxNumberElement3 e=new NTxNumberElement3((NNumberElement) NElement.ofDouble(0),(NNumberElement) NElement.ofDouble(0),n);
+            NTxPoint3D r = NtxShapes3dUtils.convertDistance3D(e, bounds2D, rendererContext.globalBounds2D(), rendererContext.realGlobalBounds3D());
+            return NOptional.of(r.z);
+        }
+        return NOptional.ofNamedEmpty("distance");
+    }
+
+    public static NOptional<NTxPoint3D> resolvePosition3D(NTxNode node, String name, NTxRendererContext rendererContext, NTxBounds2D bounds2D) {
+        NTxValue p = NTxValue.ofProp(node, name);
+        NTxNumberElement3 n = NTx3DUtils.asNumberElement3(p,rendererContext).orNull();
+        if (n == null) {
+            return NOptional.ofNamedEmpty("position");
+        }
+        return NOptional.of(convertPosition3D(n, bounds2D, rendererContext.globalBounds2D(), rendererContext.realGlobalBounds3D()));
+    }
+
+    public static NOptional<NTxPoint3D> resolveDistance(NTxNode node, String name, NTxRendererContext rendererContext, NTxBounds2D bounds2D) {
+        NTxValue p = NTxValue.ofProp(node, name);
+        NTxNumberElement3 n = NTx3DUtils.asNumberElement3(p,rendererContext).orNull();
+        if (n == null) {
+            return NOptional.ofNamedEmpty("distance");
+        }
+        return NOptional.of(convertDistance3D(n, bounds2D, rendererContext.globalBounds2D(), rendererContext.realGlobalBounds3D()));
+    }
+
+    public static NOptional<NTxPoint3D[]> resolvePositions3D(NTxNode node, String name, NTxRendererContext rendererContext, NTxBounds2D bounds2D) {
+        NTxValue p = NTxValue.ofProp(node, name);
+        NTxNumberElement3[] n = NTx3DUtils.asElementNumber3Array(p,rendererContext).orNull();
+        if (n == null) {
+            return NOptional.ofNamedEmpty("positions");
+        }
+        NTxPoint3D[] r = new NTxPoint3D[n.length];
+        for (int i = 0; i < n.length; i++) {
+            r[i] = convertPosition3D(n[i], bounds2D, rendererContext.globalBounds2D(), rendererContext.realGlobalBounds3D());
+        }
+        return NOptional.of(r);
+    }
+
+    public static NOptional<NTxPoint2D[]> resolvePositions2D(NTxNode node, String name, NTxRendererContext rendererContext, NTxBounds2D bounds2D) {
+        NTxValue p = NTxValue.ofProp(node, name);
+        NTxNumberElement2[] n = NTx3DUtils.asElementNumber2Array(p,rendererContext).orNull();
+        if (n == null) {
+            return NOptional.ofNamedEmpty("positions");
+        }
+        NTxPoint2D[] r = new NTxPoint2D[n.length];
+        for (int i = 0; i < n.length; i++) {
+            r[i] = convertPosition2D(n[i], bounds2D, rendererContext.globalBounds2D(), rendererContext.realGlobalBounds3D());
+        }
+        return NOptional.of(r);
+    }
+
+    public static NOptional<NTxPoint2D[][]> resolvePositionsArray2D(NTxNode node, String name, NTxRendererContext rendererContext, NTxBounds2D bounds2D) {
+        NTxValue p = NTxValue.ofProp(node, name);
+        NTxNumberElement2[][] n = NTx3DUtils.asElementNumber2Array2(p).orNull();
+        if (n == null) {
+            return NOptional.ofNamedEmpty("positions");
+        }
+        NTxPoint2D[][] r = new NTxPoint2D[n.length][];
+        for (int i = 0; i < n.length; i++) {
+            NTxPoint2D[] r2 = new NTxPoint2D[n[i].length];
+            for (int j = 0; j < n.length; j++) {
+                r2[j]=convertPosition2D(n[i][j], bounds2D, rendererContext.globalBounds2D(), rendererContext.realGlobalBounds3D());
+            }
+            r[i] = r2;
+        }
+        return NOptional.of(r);
+    }
+
+    public static NOptional<NTxPoint3D[]> resolvePositions3D(NTxNumberElement3[] n, NTxRendererContext rendererContext, NTxBounds2D bounds2D) {
+        if (n == null) {
+            return NOptional.ofNamedEmpty("positions");
+        }
+        NTxPoint3D[] r = new NTxPoint3D[n.length];
+        for (int i = 0; i < n.length; i++) {
+            r[i] = convertPosition3D(n[i], bounds2D, rendererContext.globalBounds2D(), rendererContext.realGlobalBounds3D());
+        }
+        return NOptional.of(r);
+    }
+
     public static NTxPoint3D[] resolvePoints(NTxNode node, String relativeName, String realName, Supplier<NTxPoint3D[]> def, NTxBounds2D b, RealToRelativeMapper mapper) {
         if (node.getPropertyValue(realName).isPresent()) {
             return Arrays.stream(NTx3DUtils.asPoint3DArray(node, realName).orElseGet(def)).map(mapper::mapPoint).map(x -> NTx3DUtils.convertPoint(x, b)).toArray(NTxPoint3D[]::new);
@@ -144,7 +331,7 @@ public class NtxShapes3dUtils {
         return Arrays.stream(NTx3DUtils.asPoint3DArray(node, relativeName).orElseGet(def)).map(x -> NTx3DUtils.convertPoint(x, b)).toArray(NTxPoint3D[]::new);
     }
 
-    public static void apply3dProps(NTxNode node, NtxElement3D g, NTxRendererContext rendererContext, NTxBounds2D b) {
+    public static void apply3dProps(NTxNode node, NtxElement3D g, NTxRendererContext rendererContext, NTxBounds2D b, boolean hasSurface) {
         g.setLineStroke(rendererContext.graphics().createStroke(
                 NUtils.firstNonNullLazy(
                         NTxValueByType.getElement(rendererContext, "line-stroke").orNull(),
@@ -158,16 +345,16 @@ public class NtxShapes3dUtils {
                 )
         ));
         g.setForegroundPaint(NTxValueByType.getPaint(rendererContext, NTxPropName.FOREGROUND_COLOR, "foreground", "color", "fg").orElse(null));
-        g.setBackgroundPaint(NTxValueByType.getPaint(rendererContext, NTxPropName.BACKGROUND_COLOR, "background", "bg").orNull());
-        g.setContourPaint(NTxValueByType.getPaint(rendererContext, "contour-color").orElse(null));
-        g.setLinePaint(NTxValueByType.getPaint(rendererContext, "line-color").orElse(null));
+        g.setBackgroundPaint(NTxValueByType.getPaint(rendererContext, NTxPropName.BACKGROUND_COLOR, "background", "bg", "color").orNull());
+        g.setContourPaint(NTxValueByType.getPaint(rendererContext, "contour-color", "color").orElse(null));
+        g.setLinePaint(NTxValueByType.getPaint(rendererContext, "line-color", "color").orElse(null));
 
         Double _maxEdge = NTxValue.ofProp(node, "mesh-precision").asDouble().orNull();
         Boolean _showMesh = NTxValue.ofProp(node, "mesh-visible").asBoolean().orNull();
 
         g.setMeshVisible(_showMesh);
         g.setMeshPrecision(_maxEdge);
-        g.setMeshPaint(NTxValueByType.getPaint(rendererContext, "mesh-color").orElse(null));
+        g.setMeshPaint(NTxValueByType.getPaint(rendererContext, "mesh-color", "color").orElse(null));
         g.setMeshStroke(rendererContext.graphics().createStroke(NTxValueByType.getElement(rendererContext, "mesh-stroke").orNull()));
 //        g.setComposite(NTxValueByType.getComposite(node, rendererContext, "composite").orElse(null));
         g.setTransform(resolveTransform(node, b));
