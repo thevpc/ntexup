@@ -46,7 +46,7 @@ public class NTxNodeBuilderContextImpl implements NTxNodeBuilderContext {
     CustomNamedParamAction customNamedParamAction;
     MyRenderTextAction renderTextAction;
     RenderConvertAction renderConvertAction;
-    ProcessNodeAction processChildren;
+    ProcessChildrenAction processChildren;
     CompileNodeAction compileNodeAction;
     InitializeNodeAction initializeNodeAction;
 
@@ -265,7 +265,7 @@ public class NTxNodeBuilderContextImpl implements NTxNodeBuilderContext {
     }
 
     @Override
-    public NTxNodeBuilderContext processChildren(ProcessNodeAction processChildren) {
+    public NTxNodeBuilderContext processChildren(ProcessChildrenAction processChildren) {
         this.processChildren = processChildren;
         return this;
     }
