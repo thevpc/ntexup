@@ -45,11 +45,12 @@ public class Element3DBoxPrimitiveBuilder implements NTxElement3DRenderer, NTxNo
     }
 
     @Override
-    public NtxElement3D createElement3D(NTxNode node, NTxRendererContext rendererContext, NTxBounds2D b, RealToRelativeMapper mapper, NtxElement3DNodeParserFactory parserFactory) {
-        NTxPoint3D position = NtxShapes3dUtils.resolvePoint(node, NTxPropName.POSITION, "real-position", NTxPoint3D::ofZero, b, mapper);
-        NTxPoint3D size = NtxShapes3dUtils.resolvePoint(node, NTxPropName.SIZE, "real-size", NTxPoint3D::ofHundred, b, mapper);
+    public NtxElement3D createElement3D(NTxRendererContext rendererContext, NTxBounds2D b, RealToRelativeMapper mapper, NtxElement3DNodeParserFactory parserFactory) {
+        NTxNode node = rendererContext.node();
+        NTxPoint3D position = NtxShapes3dUtils.resolvePosition3D(node, NTxPropName.POSITION, rendererContext, b).orElse(NTxPoint3D.ofZero());
+        NTxPoint3D size = NtxShapes3dUtils.resolveDistance(node, NTxPropName.SIZE, rendererContext, b).orElse(NTxPoint3D.ofHundred());
         NtxElement3DBox r = (NtxElement3DBox) NTxElement3DFactory.box(position, size.x, size.y, size.z);
-        NtxShapes3dUtils.apply3dProps(node, r, rendererContext, b);
+        NtxShapes3dUtils.apply3dProps(node, r, rendererContext, b, true);
         NElement faces = rendererContext.computePropertyValue("faces").orNull();
         if (faces == null) {
             r.setTop(NtxShapes3dUtils.resolveFace(rendererContext.computePropertyValue("top").orNull(), rendererContext));
