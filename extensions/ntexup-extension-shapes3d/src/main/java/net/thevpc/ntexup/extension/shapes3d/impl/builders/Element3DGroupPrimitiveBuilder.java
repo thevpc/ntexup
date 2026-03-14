@@ -36,13 +36,16 @@ public class Element3DGroupPrimitiveBuilder implements NTxElement3DRenderer, NTx
     }
 
     @Override
-    public NtxElement3D createElement3D(NTxNode node, NTxRendererContext rendererContext, NTxBounds2D b, RealToRelativeMapper mapper, NtxElement3DNodeParserFactory parserFactory) {
+    public NtxElement3D createElement3D(NTxRendererContext rendererContext, NTxBounds2D b, RealToRelativeMapper mapper, NtxElement3DNodeParserFactory parserFactory) {
+        NTxNode node=rendererContext.node();
         NtxElement3DGroup r = new NtxElement3DGroup();
         for (NTxNode child : node.children()) {
-            NtxElement3D cc = createElement3D(child, rendererContext, b, mapper,parserFactory);
-            r.add(cc);
+            rendererContext.doWithChild(child,rc->{
+                NtxElement3D cc = createElement3D((NTxRendererContext) rc, b, mapper,parserFactory);
+                r.add(cc);
+            });
         }
-        NtxShapes3dUtils.apply3dProps(node, r, rendererContext, b);
+        NtxShapes3dUtils.apply3dProps(node, r, rendererContext, b,false);
         return r;
     }
 
