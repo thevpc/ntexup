@@ -81,6 +81,9 @@ public class DefaultNTxDocumentItemParserFactory
             case ORDERED_LIST: {
                 return parseNodeAsListCallable(c, context);
             }
+            case EMPTY:{
+                return NScoredCallable.ofValid(new NTxItemList());
+            }
         }
         switch (c.type().group()) {
             case NUMBER:
@@ -96,7 +99,7 @@ public class DefaultNTxDocumentItemParserFactory
 
     private NScoredCallable<NTxItem> parseNodeAsOpSpecial(NElement c, NTxResolutionContext context) {
         NBinaryOperatorElement bo = c.asBinaryOperator().get();
-        NOptional<NTxNodeParser> ff = context.engine().nodeTypeParser(bo.operatorSymbol().lexeme());
+        NOptional<NTxNodeParser> ff = context.itemParser().nodeTypeParser(bo.operatorSymbol().lexeme());
         if (ff.isPresent()) {
             NScoredCallable<NTxItem> uu = ff.get().parseNode(context);
             if (NScorable.isValidScore(uu, NScorableContext.of())) {
@@ -111,7 +114,7 @@ public class DefaultNTxDocumentItemParserFactory
             NElement finalC = c;
             return NScoredCallable.ofValid(() -> new CtrlNTxNodeName(context.source(), finalC));
         }
-        NTxNodeParser p = context.engine().nodeTypeParser(NTxNodeType.TEXT).orNull();
+        NTxNodeParser p = context.itemParser().nodeTypeParser(NTxNodeType.TEXT).orNull();
         if (p != null) {
             return p.parseNode(context);
         }
@@ -122,7 +125,7 @@ public class DefaultNTxDocumentItemParserFactory
         if (c.isNamedPair()) {
             NPairElement p = c.asPair().get();
             String name = p.key().asStringValue().get();
-            NOptional<NTxNodeParser> ff = context.engine().nodeTypeParser(name);
+            NOptional<NTxNodeParser> ff = context.itemParser().nodeTypeParser(name);
             if (ff.isPresent()) {
                 NScoredCallable<NTxItem> uu = ff.get().parseNode(context);
                 if (NScorable.isValidScore(uu, NScorableContext.of())) {
@@ -147,7 +150,7 @@ public class DefaultNTxDocumentItemParserFactory
             case NTxNodeType.CTRL_IMPORT:
             case "styles":
             {
-                NTxNodeParser p = context.engine().nodeTypeParser(name).orNull();
+                NTxNodeParser p = context.itemParser().nodeTypeParser(name).orNull();
                 return p.parseNode(context);
             }
         }
@@ -155,7 +158,7 @@ public class DefaultNTxDocumentItemParserFactory
         NTxValue ee = NTxValue.of(c);
         String uid = NTxUtils.uid(ee.name());
         if(context.inPage()){
-            NTxNodeParser p = context.engine().nodeTypeParser(uid).orNull();
+            NTxNodeParser p = context.itemParser().nodeTypeParser(uid).orNull();
             if (p != null) {
                 return p.parseNode(context);
             }
@@ -174,7 +177,7 @@ public class DefaultNTxDocumentItemParserFactory
     }
 
     private NScoredCallable<NTxItem> parseNodeAsUplet(NTxResolutionContext context) {
-        NTxNodeParser p = context.engine().nodeTypeParser(NTxNodeType.TEXT).orNull();
+        NTxNodeParser p = context.itemParser().nodeTypeParser(NTxNodeType.TEXT).orNull();
         return p.parseNode(context);
     }
 
