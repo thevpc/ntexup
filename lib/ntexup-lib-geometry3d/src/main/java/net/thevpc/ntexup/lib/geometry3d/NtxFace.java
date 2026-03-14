@@ -8,6 +8,7 @@ public interface NtxFace {
     boolean isVisible();
 
     Paint getBackground();
+    Paint getLineColor();
 
     Stroke getStroke();
 
