@@ -9,6 +9,7 @@ import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -84,15 +85,29 @@ public class DefaultNTxEngine implements NTxEngine {
     private NTxDocumentFactory factory;
     private NTxPropCalculator propCalculator;
     private NTxFunctionList functions;
-    private NTxMessageList log = new NTxMessageList();
+    private final NTxMessageList log = new NTxMessageList();
     NtxTextFlavorList textFlavors;
     private NMutableClassLoader classLoader;
-    private List<NTxDependencyLoadedListener> dependencyLoadedListeners = new ArrayList<>();
+    private final List<NTxDependencyLoadedListener> dependencyLoadedListeners = new ArrayList<>();
     NTxNodeRendererList renderers;
     private NTxImageTypeRendererFactoryList imageTypeRendererFactoryList;
-    private Map<String, Object> env = new HashMap<>();
-    private Set<String> dependenciesLoadingPerformed = new HashSet<>();
+    private final Map<String, Object> env = new HashMap<>();
+    private final Set<String> dependenciesLoadingPerformed = new HashSet<>();
     private volatile List<NTxStyleRule> defaultStyles;
+    private final AtomicBoolean componentsInitialized = new AtomicBoolean(false);
+    private final NTxItemParser itemParser = new NTxItemParser() {
+        public NOptional<NTxNodeParser> nodeTypeParser(String id) {
+            id = NStringUtils.trim(id);
+            if (!id.isEmpty()) {
+                initializeComponents();
+                NOptional<NTxNodeParser> a = nodeTypeFactories.get(id);
+                if (a.isPresent()) {
+                    return a;
+                }
+            }
+            return NOptional.ofNamedEmpty("node type parser for NodeType " + id);
+        }
+    };
 
     public DefaultNTxEngine() {
         init();
@@ -103,6 +118,20 @@ public class DefaultNTxEngine implements NTxEngine {
             this.classLoader = classLoader;
         }
         init();
+    }
+
+
+    private NOptional<NTxItem> parseItem0(NTxResolutionContext context) {
+        NElement element = context.element();
+        return NScorable.<NScoredCallable<NTxItem>>query()
+                .withName(() -> NMsg.ofC("support for node from type '%s' value '%s'", element.type().id(), NTxUtils.snippet(element)))
+                .fromStream(
+                        nodeParserFactories.list().stream()
+                                .map(x -> x.parseNode(context))
+                )
+                .getBest().map(x -> x.call())
+                .withMessage(() -> NMsg.ofC("support for node from type '%s' value '%s'", element.type().id(), NTxUtils.snippet(element)))
+                ;
     }
 
     public DefaultNTxEngine(ClassLoader classLoader) {
@@ -129,17 +158,23 @@ public class DefaultNTxEngine implements NTxEngine {
         renderers = new NTxNodeRendererList(this);
         imageTypeRendererFactoryList = new NTxImageTypeRendererFactoryList(this);
 
-        log().log(NMsg.ofC("bootstrap base components...").asFineAlert());
-        textFlavors.build(new NId[0], false);
-        functions.build(new NId[0], false);
-        documentRendererFactories.build(new NId[0], false);
-        builderContexts.build(new NId[0], false);
-        nodeTypeFactories.build(new NId[0], false);
-        nodeParserFactories.addBase(new DefaultNTxDocumentItemParserFactory());
-        nodeParserFactories.build(new NId[0], false);
-        renderers.build(new NId[0], false);
-        imageTypeRendererFactoryList.build(new NId[0], false);
-        log().log(NMsg.ofC("%s engine ready!", NMsg.ofStyledPrimary1("NTexUp")).asFineAlert());
+
+    }
+
+    private void initializeComponents() {
+        if (componentsInitialized.compareAndSet(false, true)) {
+            log().log(NMsg.ofC("bootstrap base components...").asFineAlert());
+            textFlavors.build(new NId[0], false);
+            functions.build(new NId[0], false);
+            documentRendererFactories.build(new NId[0], false);
+            builderContexts.build(new NId[0], false);
+            nodeTypeFactories.build(new NId[0], false);
+            nodeParserFactories.addBase(new DefaultNTxDocumentItemParserFactory());
+            nodeParserFactories.build(new NId[0], false);
+            renderers.build(new NId[0], false);
+            imageTypeRendererFactoryList.build(new NId[0], false);
+            log().log(NMsg.ofC("%s engine ready!", NMsg.ofStyledPrimary1("NTexUp")).asFineAlert());
+        }
     }
 
     public <T> NOptional<T> getEnv(String name) {
@@ -180,7 +215,7 @@ public class DefaultNTxEngine implements NTxEngine {
                 if (defaultStyles == null) {
                     NElement stylesNode = NElementReader.ofTson().read(NPath.of("classpath:/net/thevpc/ntexup/default-style.ntx", Thread.currentThread().getContextClassLoader()).readString());
                     DefaultNTxNode root = new DefaultNTxNode(NTxNodeType.PAGE_GROUP);
-                    NTxResolutionContextImpl context = new NTxResolutionContextImpl(new NTxNode[]{root}, NElement.ofNull(), null, false, this, new DefaultNTxDocument(null), null, null, null, null);
+                    NTxResolutionContextImpl context = new NTxResolutionContextImpl(new NTxNode[]{root}, NElement.ofNull(), null, false, this, new DefaultNTxDocument(null), null, null, null, null,itemParser());
                     List<NTxStyleRule> styles = new ArrayList<>();
                     context.doWithElement(stylesNode, cc -> {
                         NTxItem sc = new StylesSpecialParser().parseNode(cc).call();
@@ -217,6 +252,7 @@ public class DefaultNTxEngine implements NTxEngine {
     @Override
     public void dump(Consumer<NMsg> out) {
         out.accept(NMsg.ofC("NTexup Engine"));
+        initializeComponents();
         dump_classloader(out);
         textFlavors.dump(out);
         functions.dump(out);
@@ -281,7 +317,7 @@ public class DefaultNTxEngine implements NTxEngine {
                 .toArray(NDependency[]::new);
 
         if (okDeps.length > 0) {
-            dependenciesLoadingPerformed.addAll(Arrays.stream(deps).map(x -> x.toString()).collect(Collectors.toList()));
+            dependenciesLoadingPerformed.addAll(Arrays.stream(deps).map(x -> x).collect(Collectors.toList()));
             log().log(NMsg.ofC("importing dependencies %s",
                     NTextBuilder.of()
                             .appendJoined(",", Arrays.asList(okDeps))
@@ -323,10 +359,12 @@ public class DefaultNTxEngine implements NTxEngine {
     }
 
     public NOptional<NTxTextRendererFlavor> textRendererFlavor(String id) {
+        initializeComponents();
         return textFlavors.get(id);
     }
 
     public List<NTxTextRendererFlavor> textRendererFlavors() {
+        initializeComponents();
         return textFlavors.list();
     }
 
@@ -349,6 +387,7 @@ public class DefaultNTxEngine implements NTxEngine {
 
     @Override
     public NOptional<NTxFunction> findFunction(String name) {
+        initializeComponents();
         return functions.get(name);
     }
 
@@ -362,6 +401,7 @@ public class DefaultNTxEngine implements NTxEngine {
 
     @Override
     public NTxEngine parseNode(NElement element, NTxResolutionContext ctx, Consumer<NOptional<NTxItem>> consumer) {
+        initializeComponents();
         NAssert.requireNamedNonNull(ctx, "context");
         NAssert.requireNamedNonNull(element, "element");
         if (ctx.source() == null) {
@@ -374,14 +414,9 @@ public class DefaultNTxEngine implements NTxEngine {
             return this;
         }
         NTxResolutionContext finalCtx = ctx.withElement(element);
-        NOptional<NTxItem> optional = NScorable.<NScoredCallable<NTxItem>>query()
-                .withName(() -> NMsg.ofC("support for node from type '%s' value '%s'", element.type().id(), NTxUtils.snippet(element)))
-                .fromStream(
-                        nodeParserFactories.list().stream()
-                                .map(x -> x.parseNode(finalCtx))
-                )
-                .getBest().map(x -> x.call());
-        consumer.accept(optional.withMessage(() -> NMsg.ofC("support for node from type '%s' value '%s'", element.type().id(), NTxUtils.snippet(element))));
+
+        NOptional<NTxItem> optional = parseItem0(finalCtx);
+        consumer.accept(optional);
         return this;
     }
 
@@ -409,6 +444,7 @@ public class DefaultNTxEngine implements NTxEngine {
 
     @Override
     public NOptional<NTxDocumentStreamRenderer> newStreamRenderer(String type) {
+        initializeComponents();
         NOptional<NTxDocumentRenderer> u = newRenderer(type);
         if (u.isPresent()) {
             if (u.get() instanceof NTxDocumentStreamRenderer) {
@@ -422,18 +458,25 @@ public class DefaultNTxEngine implements NTxEngine {
 
     @Override
     public NOptional<NTxDocumentRenderer> newRenderer(String type) {
+        initializeComponents();
         NTxDocumentRendererFactoryContext ctx = new NTxDocumentRendererFactoryContextImpl(this, type);
         return NScorable.<NScoredCallable<NTxDocumentRenderer>>query()
                 .withName(NMsg.ofC("StreamRenderer %s", type))
                 .fromStream(
                         documentRendererFactories().stream()
-                                .map(x -> x.<NTxDocumentStreamRenderer>createDocumentRenderer(ctx))
+                                .map(x -> x.createDocumentRenderer(ctx))
                 )
                 .getBest().map(x -> x.call());
     }
 
     private List<NTxDocumentRendererFactory> documentRendererFactories() {
+        initializeComponents();
         return documentRendererFactories.list();
+    }
+
+    @Override
+    public NTxItemParser itemParser() {
+        return itemParser;
     }
 
     @Override
@@ -442,10 +485,12 @@ public class DefaultNTxEngine implements NTxEngine {
     }
 
     public List<NTxNodeBuilderContextImpl> builderContexts() {
+        initializeComponents();
         return builderContexts.builderContexts();
     }
 
     private Map<String, NTxNodeParser> nodeTypeFactories0() {
+        initializeComponents();
         return nodeTypeFactories.map();
     }
 
@@ -454,26 +499,22 @@ public class DefaultNTxEngine implements NTxEngine {
     }
 
     public NOptional<NTxNodeParser> nodeTypeParser(String id) {
-        id = NStringUtils.trim(id);
-        if (!id.isEmpty()) {
-            NOptional<NTxNodeParser> a = nodeTypeFactories.get(id);
-            if (a.isPresent()) {
-                return a;
-            }
-        }
-        return NOptional.ofNamedEmpty("node type parser for NodeType " + id);
+        return itemParser().nodeTypeParser(id);
     }
 
     public NTxDocumentLoadingResult compileDocument(NTxDocument document) {
+        initializeComponents();
         return new NTxCompiler(this).compileDocument(document);
     }
 
     @Override
     public void compileNode(NTxResolutionContext ctx, CompileNodeVisitor visitor) {
+        initializeComponents();
         new NTxCompiler(this).compileNode(ctx, visitor);
     }
 
     public void compileNode(NTxNode node, NTxDocument document, NTxResolutionContext context, CompileNodeVisitor visitor) {
+        initializeComponents();
         node = node.copy();
         if (context == null) {
             context = newContext(node, document, null);
@@ -490,7 +531,9 @@ public class DefaultNTxEngine implements NTxEngine {
             }
         }
         p.add(node);
-        return new NTxResolutionContextImpl(p.toArray(new NTxNode[0]), NElement.ofNull(), null, parentContext != null && parentContext.inPage(), this, document, null, null, null, parentContext);
+        return new NTxResolutionContextImpl(p.toArray(new NTxNode[0]), NElement.ofNull(), null, parentContext != null && parentContext.inPage(), this, document, null, null, null, parentContext,
+                parentContext != null ? parentContext.itemParser() : itemParser()
+        );
     }
 
     public boolean validateNode(NTxNode node) {
@@ -510,6 +553,7 @@ public class DefaultNTxEngine implements NTxEngine {
 
     @Override
     public NTxDocumentLoadingResult loadDocument(NPath path) {
+        initializeComponents();
         NAssert.requireNamedNonNull(path, "path");
         synchronized (this) {
             if (NTxGitHelper.isGithubFolder(path.toString())) {
@@ -613,6 +657,7 @@ public class DefaultNTxEngine implements NTxEngine {
 
     @Override
     public NOptional<NTxItem> loadNode(NTxNode into, NPath path, NTxDocument document) {
+        initializeComponents();
         if (path.exists()) {
             if (path.isRegularFile()) {
                 NTxSource source = NTxSourceFactory.of(path);
@@ -654,6 +699,7 @@ public class DefaultNTxEngine implements NTxEngine {
     }
 
     public NTxDocumentLoadingResult loadDocument(InputStream is) {
+        initializeComponents();
         NTxSource source = NTxSourceFactory.of(is);
 
         SilentNTxLogger slog = new SilentNTxLogger();
@@ -682,6 +728,7 @@ public class DefaultNTxEngine implements NTxEngine {
             log().log(NMsg.ofPlain("missing document").asError());
             return NOptional.ofNamedEmpty("document");
         }
+        initializeComponents();
         NTxDocument docd = documentFactory().ofDocument(source);
         docd.sourceMonitor().add(source);
         docd.root().setSource(source);
@@ -690,6 +737,7 @@ public class DefaultNTxEngine implements NTxEngine {
     }
 
     private NOptional<NTxItem> loadNode0(NTxNode into, NPath path, NTxDocument document) {
+        initializeComponents();
         NTxSource source = NTxSourceFactory.of(path);
         document.sourceMonitor().add(source);
         NOptional<NElement> u = new NTxDocStreamParser(this).parsePath(path, source);
@@ -892,8 +940,8 @@ public class DefaultNTxEngine implements NTxEngine {
         List<NTxTemplateInfo> allTemplates = new ArrayList<>();
         class Repo {
 
-            String name;
-            NPath path;
+            final String name;
+            final NPath path;
 
             public Repo(String name, NPath path) {
                 this.name = name;
@@ -1020,7 +1068,7 @@ public class DefaultNTxEngine implements NTxEngine {
     public BufferedImage renderImage(NTxCompiledPage page, NTxNodeRendererConfig config) {
         BufferedImage newImage = new BufferedImage((int) config.getWidth(), (int) config.getHeight(), BufferedImage.TYPE_INT_ARGB);
         Graphics2D g = newImage.createGraphics();
-        renderPage(page, config, g,  null, null);
+        renderPage(page, config, g, null, null);
         g.dispose();
         return newImage;
     }
@@ -1030,6 +1078,7 @@ public class DefaultNTxEngine implements NTxEngine {
                            Graphics2D g,
                            ImageObserver imageObserver, Runnable repainter
     ) {
+        initializeComponents();
         NTxNode node = page.compiledPage();
         long startTime = config.getStartTime();
         double sizeWidth = config.getWidth();
@@ -1087,7 +1136,8 @@ public class DefaultNTxEngine implements NTxEngine {
                 null,
                 null,
                 null,
-                page.pageContext()
+                page.pageContext(),
+                itemParser()
         );
         if (someChange) {
             node.invalidateRenderCache();
@@ -1097,6 +1147,7 @@ public class DefaultNTxEngine implements NTxEngine {
 
     @Override
     public byte[] renderImageBytes(NTxCompiledPage page, NTxNodeRendererConfig config) {
+        initializeComponents();
         BufferedImage newImage = renderImage(page, config);
         String imageTypeOk = "png";
         if (config.getCapabilities() != null) {
