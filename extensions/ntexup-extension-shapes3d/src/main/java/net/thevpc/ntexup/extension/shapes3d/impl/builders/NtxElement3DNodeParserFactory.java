@@ -1,9 +1,18 @@
 package net.thevpc.ntexup.extension.shapes3d.impl.builders;
 
+import net.thevpc.ntexup.api.document.node.NTxItem;
+import net.thevpc.ntexup.api.document.node.NTxNodeType;
 import net.thevpc.ntexup.api.engine.NTxEngine;
+import net.thevpc.ntexup.api.eval.NTxResolutionContext;
+import net.thevpc.ntexup.api.parser.NTxItemParser;
 import net.thevpc.ntexup.api.util.NTxUtils;
 import net.thevpc.ntexup.extension.shapes3d.impl.NtxElement3DNodeParser;
+import net.thevpc.nuts.concurrent.NScoredCallable;
+import net.thevpc.nuts.elem.NBinaryOperatorElement;
+import net.thevpc.nuts.elem.NElement;
+import net.thevpc.nuts.elem.NElementType;
 import net.thevpc.nuts.io.NServiceLoader;
+import net.thevpc.nuts.text.NMsg;
 import net.thevpc.nuts.util.NOptional;
 
 import java.util.HashMap;
