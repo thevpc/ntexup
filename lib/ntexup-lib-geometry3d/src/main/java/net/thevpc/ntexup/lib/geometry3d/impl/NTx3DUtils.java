@@ -6,13 +6,12 @@ import net.thevpc.ntexup.api.document.node.NTxNode;
 import net.thevpc.ntexup.api.document.style.NTxProp;
 import net.thevpc.ntexup.api.document.style.NTxPropName;
 import net.thevpc.ntexup.api.eval.NTxValue;
+import net.thevpc.ntexup.api.renderer.NTxRendererContext;
 import net.thevpc.ntexup.api.util.NTxElementUtils;
 import net.thevpc.ntexup.api.util.NTxMinMax;
-import net.thevpc.ntexup.lib.geometry3d.NTxPoint3D;
-import net.thevpc.ntexup.lib.geometry3d.NTxVector3D;
-import net.thevpc.ntexup.lib.geometry3d.NtxElement3D;
-import net.thevpc.ntexup.lib.geometry3d.NtxFace;
-import net.thevpc.nuts.elem.NElement;
+import net.thevpc.ntexup.lib.geometry3d.*;
+import net.thevpc.nuts.elem.*;
+import net.thevpc.nuts.util.NLiteral;
 import net.thevpc.nuts.util.NOptional;
 
 import java.util.ArrayList;
@@ -44,12 +43,16 @@ public class NTx3DUtils {
         return new NTxPoint3D(x / n, y / n, z / n);
     }
 
-    public static void copyNonNullProps(NtxFace face,NtxElement3D to) {
-        if(face!=null){
-            if(face.getBackground()!=null){
+    public static void copyNonNullProps(NtxFace face, NtxElement3D to) {
+        if (face != null) {
+            if (face.getBackground() != null) {
                 to.setBackgroundPaint(face.getBackground());
             }
-            if(face.getStroke()!=null){
+            if (face.getLineColor() != null) {
+                to.setLinePaint(face.getLineColor());
+                to.setContourPaint(face.getLineColor());
+            }
+            if (face.getStroke() != null) {
                 to.setContourStroke(face.getStroke());
             }
 //            if(face.isDrawContour()){
@@ -58,6 +61,7 @@ public class NTx3DUtils {
 //            to.setComposite(face.getComposite());
         }
     }
+
     public static void copyProps(NtxElement3D from, NtxElement3D to, String name) {
         to.setTransform(from.getTransform());
 
@@ -108,16 +112,16 @@ public class NTx3DUtils {
         if (to.getComposite() == null) {
             to.setComposite(from.getComposite());
         }
-        if (to.getMeshPrecision()==null) {
+        if (to.getMeshPrecision() == null) {
             to.setMeshPrecision(from.getMeshPrecision());
         }
-        if (to.getMeshVisible()==null) {
+        if (to.getMeshVisible() == null) {
             to.setMeshVisible(from.getMeshVisible());
         }
-        if (to.getMeshPaint()==null) {
+        if (to.getMeshPaint() == null) {
             to.setMeshPaint(from.getMeshPaint());
         }
-        if (to.getMeshStroke()==null) {
+        if (to.getMeshStroke() == null) {
             to.setMeshStroke(from.getMeshStroke());
         }
     }
@@ -178,9 +182,9 @@ public class NTx3DUtils {
         return asPoint3D(NTxValue.ofProp(node, name));
     }
 
-    public NOptional<NTxPoint3D> asHPoint3D(NTxNode node, String name) {
-        return asHPoint3D(NTxValue.ofProp(node, name));
-    }
+//    public NOptional<NTxPoint3D> asHPoint3D(NTxNode node, String name) {
+//        return asHPoint3D(NTxValue.ofProp(node, name));
+//    }
 
     public static NOptional<NTxPoint3D[]> asPoint3DArray(NTxNode node, String name) {
         return asPoint3DArray(NTxValue.ofProp(node, name));
@@ -199,6 +203,176 @@ public class NTx3DUtils {
             }
         }
         return NOptional.ofNamedEmpty("Point3D from " + element);
+    }
+
+    public static NOptional<NTxNumberElement3[]> asElementNumber3Array(NTxValue value,NTxRendererContext rendererContext) {
+        Object element = value.raw();
+        if (element instanceof NTxNumberElement3[]) {
+            return NOptional.of((NTxNumberElement3[]) element);
+        }
+        List<NTxNumberElement3> all=new ArrayList<>();
+        if(element instanceof NElement){
+            NOptional<NElement> t = rendererContext.evalExpression((NElement) element);
+            if(!t.isPresent()) {
+                return NOptional.ofNamedEmpty("NTxElementNumber3[] from " + element);
+            }
+            element= t.get();
+        }
+        if(element instanceof NListContainerElement){
+            for (NElement child : ((NListContainerElement) element).children()) {
+                NOptional<NTxNumberElement3> r = asNumberElement3(NTxValue.of(child),rendererContext);
+                if(!r.isPresent()) {
+                    return NOptional.ofNamedEmpty("NTxElementNumber3[] from " + element);
+                }
+                all.add(r.get());
+            }
+            return NOptional.of(all.toArray(new NTxNumberElement3[0]));
+        }
+        return NOptional.ofNamedEmpty("NTxElementNumber3[] from " + element);
+    }
+
+    public static NOptional<NTxNumberElement2[]> asElementNumber2Array(NTxValue value,NTxRendererContext rendererContext) {
+        Object element = value.raw();
+        if (element instanceof NTxNumberElement2[]) {
+            return NOptional.of((NTxNumberElement2[]) element);
+        }
+        List<NTxNumberElement2> all=new ArrayList<>();
+        if(element instanceof NListContainerElement){
+            for (NElement child : ((NListContainerElement) element).children()) {
+                NOptional<NTxNumberElement2> r = asNumberElement2(NTxValue.of(child));
+                if(!r.isPresent()) {
+                    return NOptional.ofNamedEmpty("NTxNumberElement2[] from " + element);
+                }
+                all.add(r.get());
+            }
+            return NOptional.of(all.toArray(new NTxNumberElement2[0]));
+        }
+        return NOptional.ofNamedEmpty("NTxNumberElement2[] from " + element);
+    }
+
+    public static NOptional<NTxNumberElement2[][]> asElementNumber2Array2(NTxValue value) {
+        Object element = value.raw();
+        if (element instanceof NTxNumberElement2[][]) {
+            return NOptional.of((NTxNumberElement2[][]) element);
+        }
+        List<NTxNumberElement2[]> all0=new ArrayList<>();
+        if(element instanceof NListContainerElement){
+            for (NElement child0 : ((NListContainerElement) element).children()) {
+                if(child0 instanceof NListContainerElement) {
+                    List<NTxNumberElement2> all1=new ArrayList<>();
+                    for (NElement child : ((NListContainerElement) child0).children()) {
+                        NOptional<NTxNumberElement2> r = asNumberElement2(NTxValue.of(child));
+                        if (r.isPresent()) {
+                            all1.add(r.get());
+                        }else {
+                            return NOptional.ofNamedEmpty("NTxNumberElement2[][] from " + element);
+                        }
+                    }
+                    all0.add(all1.toArray(new NTxNumberElement2[0]));
+                }else{
+                    return NOptional.ofNamedEmpty("NTxNumberElement2[][] from " + element);
+                }
+            }
+            return NOptional.of(all0.toArray(new NTxNumberElement2[0][]));
+        }else {
+            return NOptional.ofNamedEmpty("NTxNumberElement2[][] from " + element);
+        }
+    }
+
+    public static NOptional<NNumberElement> asNumberElement(NTxValue value, NTxRendererContext rendererContext) {
+        Object element = value.raw();
+        if (element instanceof NElement) {
+            NOptional<NElement> t = rendererContext.evalExpression((NElement) element);
+            if(!t.isPresent()) {
+                return NOptional.ofNamedEmpty("NTxNumberElement3 from " + element);
+            }
+            element= t.get();
+        }
+        if (element instanceof NNumberElement) {
+            return NOptional.of((NNumberElement) element);
+        }
+        if (element instanceof Number) {
+            return NOptional.of((NNumberElement) NElement.ofNumber((Number) element));
+        }
+        if (element instanceof String) {
+            NOptional<Number> n = NLiteral.of(element).asNumber();
+            if(n.isPresent()) {
+                return NOptional.of((NNumberElement) NElement.ofNumber(n.get()));
+            }
+        }
+        return NOptional.ofNamedEmpty("NNumberElement from " + element);
+    }
+
+    public static NOptional<NTxNumberElement3> asNumberElement3(NTxValue value, NTxRendererContext rendererContext) {
+        Object element = value.raw();
+        if (element instanceof NTxNumberElement3) {
+            return NOptional.of((NTxNumberElement3) element);
+        }
+        if(element instanceof NElement) {
+            NOptional<NElement> t = rendererContext.evalExpression((NElement) element);
+            if(!t.isPresent()) {
+                return NOptional.ofNamedEmpty("NTxNumberElement3 from " + element);
+            }
+            element= t.get();
+        }
+        if (element instanceof NUpletElement) {
+            NUpletElement u = (NUpletElement) element;
+            if (u.children().size() == 3) {
+                List<NNumberElement> nn = new ArrayList<>();
+                for (int i = 0; i < 3; i++) {
+                    NElement t = u.children().get(i);
+                    NOptional<NElement> e=rendererContext.evalExpression((NElement) t);
+                    if(e.isPresent()) {
+                        if (t.isNull()) {
+                            nn.add(null);
+                        } else if (t.isNumber()) {
+                            nn.add(t.asNumber().get());
+                        } else {
+                            return NOptional.ofNamedEmpty("NTxNumberElement3 from " + element);
+                        }
+                    }else{
+                        return NOptional.ofNamedEmpty("NTxNumberElement3 from " + element);
+                    }
+                }
+                return NOptional.of(
+                        new NTxNumberElement3(
+                                nn.get(0),
+                                nn.get(1),
+                                nn.get(2)
+                        )
+                );
+            }
+        }
+        return NOptional.ofNamedEmpty("NTxNumberElement3 from " + element);
+    }
+    public static NOptional<NTxNumberElement2> asNumberElement2(NTxValue value) {
+        Object element = value.raw();
+        if (element instanceof NTxNumberElement2) {
+            return NOptional.of((NTxNumberElement2) element);
+        }
+        if (element instanceof NUpletElement) {
+            NUpletElement u = (NUpletElement) element;
+            if (u.children().size() == 2) {
+                List<NNumberElement> nn = new ArrayList<>();
+                for (int i = 0; i < 2; i++) {
+                    NElement t = u.children().get(i);
+                    if (t.isNull()) {
+                        nn.add(null);
+                    } else if (t.isNumber()) {
+                        nn.add(t.asNumber().get());
+                    } else {
+                        return NOptional.ofNamedEmpty("NTxNumberElement2 from " + element);
+                    }
+                }
+                return NOptional.of(
+                        new NTxNumberElement2(
+                                nn.get(0),
+                                nn.get(1)
+                        )
+                );
+            }
+        }
+        return NOptional.ofNamedEmpty("NTxNumberElement2 from " + element);
     }
 
     public NOptional<NTxPoint3D> asHPoint3D(NTxValue value) {
