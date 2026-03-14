@@ -9,7 +9,17 @@ public class NtxFaceImpl implements NtxFace {
     private boolean drawContour=true;
     private boolean fillBackground=true;
     private Paint background;
+    private Paint lineColor;
     private Stroke stroke;
+
+    public Paint getLineColor() {
+        return lineColor;
+    }
+
+    public NtxFaceImpl setLineColor(Paint lineColor) {
+        this.lineColor = lineColor;
+        return this;
+    }
 
     @Override
     public boolean isDrawContour() {
