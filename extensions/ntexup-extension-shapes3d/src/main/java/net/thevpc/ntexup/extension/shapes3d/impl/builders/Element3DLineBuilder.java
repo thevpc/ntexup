@@ -28,9 +28,11 @@ public class Element3DLineBuilder implements NtxElement3DNodeParser {
     }
 
     @Override
-    public NtxElement3D createElement3D(NTxNode node, NTxRendererContext rendererContext, NTxBounds2D b, RealToRelativeMapper mapper, NtxElement3DNodeParserFactory parserFactory) {
-        NTxPoint3D from = NtxShapes3dUtils.resolvePoint(node, NTxPropName.FROM, "from-real", NTxPoint3D::ofZero, b, mapper);
-        NTxPoint3D to = NtxShapes3dUtils.resolvePoint(node, NTxPropName.TO, "to-real", NTxPoint3D::ofZero, b, mapper);
+    public NtxElement3D createElement3D(NTxRendererContext rendererContext, NTxBounds2D b, RealToRelativeMapper mapper, NtxElement3DNodeParserFactory parserFactory) {
+        NTxNode node=rendererContext.node();
+        NTxPoint3D from = NtxShapes3dUtils.resolvePosition3D(node, NTxPropName.FROM, rendererContext, b).orElse(NTxPoint3D.ofZero());
+        NTxPoint3D to = NtxShapes3dUtils.resolvePosition3D(node, NTxPropName.TO, rendererContext, b).orElse(NTxPoint3D.ofZero());
+
         NtxElement3DLine r = NTxElement3DFactory.line(from, to);
         r.setStartArrow(NTxValueByType.getArrow(rendererContext, NTxPropName.START_ARROW).orNull());
         r.setEndArrow(NTxValueByType.getArrow(rendererContext, NTxPropName.END_ARROW).orNull());
@@ -43,7 +45,7 @@ public class Element3DLineBuilder implements NtxElement3DNodeParser {
                 r.setEndArrow(darrow);
             }
         }
-        NtxShapes3dUtils.apply3dProps(node, r, rendererContext, b);
+        NtxShapes3dUtils.apply3dProps(node, r, rendererContext, b,false);
         NElement labelElem = node.getPropertyValue("label").orNull();
         boolean positionSet=false;
         boolean orientationSet=false;
