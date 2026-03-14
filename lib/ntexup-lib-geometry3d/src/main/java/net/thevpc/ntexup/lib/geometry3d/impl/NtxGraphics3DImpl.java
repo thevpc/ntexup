@@ -16,13 +16,13 @@ import java.util.Arrays;
 import java.util.Comparator;
 
 public class NtxGraphics3DImpl implements NtxGraphics3D {
-    private NTxGraphics graphics;
-    private NTxRendererContext rendererContext;
+    private final NTxGraphics graphics;
+    private final NTxRendererContext rendererContext;
     private NTxMatrix3D transform3D = NTxMatrix3D.identity();
-    private NTxLight3DImpl light3D = new NTxLight3DImpl();
+    private final NTxLight3DImpl light3D = new NTxLight3DImpl();
     private NTxCamera3D camera = NTxCamera3DImpl.defaultCamera();
     private NTx3DMesh mesh = new DefaultNTx3DMesh();
-    private NTxRenderState3D state = new NTxRenderState3D() {
+    private final NTxRenderState3D state = new NTxRenderState3D() {
         @Override
         public NTxVector3D lightOrientation() {
             return light3D.orientation();
@@ -88,6 +88,7 @@ public class NtxGraphics3DImpl implements NtxGraphics3D {
     private NtxElement3DPrimitive[] toPrimitives(NtxElement3D element3D) {
         NTx3DMesh m = mesh.configureElement(element3D);
         java.util.List<NtxElement3DPrimitive> result = new ArrayList<>();
+        boolean doMesh=false;
         for (NtxElement3DPrimitive p : getElement3DUIFactory().toPrimitives(element3D, state)) {
             switch (p.type()) {
                 case ARC:
@@ -97,11 +98,53 @@ public class NtxGraphics3DImpl implements NtxGraphics3D {
                     break;
                 }
                 case POLYGON: {
-                    m.triangulatePolygon((NtxElement3DPolygon) p, result);
+                    NtxElement3DPolygon pp = (NtxElement3DPolygon) p;
+                    if (pp.isFill()) {
+                        NtxElement3DPolygon pp3 = new NtxElement3DPolygon(pp.getNodes(), true, false);
+                        pp3.copyStyle(pp);
+                        pp3.setLinePaint(null);
+                        pp3.setContourPaint(null);
+                        if(doMesh) {
+                            m.triangulatePolygon(pp3, result);
+                        }else{
+                            result.add(pp3);
+                        }
+                        if (pp.isContour()) {
+                            NtxElement3DPolyline p4 = new NtxElement3DPolyline(pp.getNodes());
+                            p4.copyStyle(pp);
+                            result.add(p4);
+                        }
+                    } else {
+                        NtxElement3DPolyline p4 = new NtxElement3DPolyline(pp.getNodes());
+                        p4.copyStyle(pp);
+                        result.add(p4);
+                    }
                     break;
                 }
                 case TRIANGLE: {
-                    m.refineTriangle((NtxElement3DTriangle) p, result);
+                    NtxElement3DTriangle pp = (NtxElement3DTriangle) p;
+                    if (pp.isFill()) {
+                        NtxElement3DTriangle pp3 = new NtxElement3DTriangle(pp.getP1(), pp.getP2(), pp.getP3(), true, false);
+                        pp3.copyStyle(pp);
+                        if(doMesh) {
+                            m.refineTriangle(pp3, result);
+                        }else{
+                            result.add(pp3);
+                        }
+                        if (pp.isContour()) {
+                            NtxElement3DTriangle p4 = new NtxElement3DTriangle(pp.getP1(), pp.getP2(), pp.getP3(), false, true);
+                            pp3.copyStyle(pp);
+                            result.add(p4);
+                        }
+                    } else {
+                        if (pp.isContour()) {
+                            result.add(pp);
+                        } else {
+                            NtxElement3DTriangle p4 = new NtxElement3DTriangle(pp.getP1(), pp.getP2(), pp.getP3(), false, true);
+                            p4.copyStyle(pp);
+                            result.add(p4);
+                        }
+                    }
                     break;
                 }
                 default: {
@@ -185,7 +228,7 @@ public class NtxGraphics3DImpl implements NtxGraphics3D {
                         .setEndArrow(pr.getEndArrow())
                         .setComposite(pr.getComposite())
                         .setBackgroundPaint(pr.getBackgroundPaint())
-                        .setLinePaint(NUtils.firstNonNull(pr.getLinePaint(),pr.getForegroundPaint()))
+                        .setLinePaint(NUtils.firstNonNull(pr.getLinePaint(), pr.getForegroundPaint()))
                         .setLineStroke(pr.getLineStroke())
 
         );
@@ -281,7 +324,7 @@ public class NtxGraphics3DImpl implements NtxGraphics3D {
             graphics.setPaint(oldPaint);
             graphics.setStroke(oldStroke);
         }
-        mesh=oldMesh;
+        mesh = oldMesh;
     }
 
     private void draw3DElement3DPolyline(NtxElement3DPolyline pr, NTxPoint2D origin, DrawCommand cmd) {
@@ -392,7 +435,7 @@ public class NtxGraphics3DImpl implements NtxGraphics3D {
             graphics.setPaint(oldPaint);
             graphics.setStroke(oldStroke);
         }
-        mesh=oldMesh;
+        mesh = oldMesh;
     }
 
     private Element3DUIFactory getElement3DUIFactory() {
