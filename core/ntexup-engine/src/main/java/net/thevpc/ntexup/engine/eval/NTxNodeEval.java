@@ -93,205 +93,192 @@ public class NTxNodeEval implements NTxObjectEvalContext {
         if (elementExpr == null) {
             return NElement.ofNull();
         }
-        if (elementExpr instanceof NElement) {
-            NElement ee = ((NElement) elementExpr);
-            switch (ee.type()) {
-                case BACKTICK_STRING:
-                case SINGLE_QUOTED_STRING:
-                case DOUBLE_QUOTED_STRING:
-                case TRIPLE_BACKTICK_STRING:
-                case TRIPLE_SINGLE_QUOTED_STRING:
-                case TRIPLE_DOUBLE_QUOTED_STRING:
-                case LINE_STRING:
-                case BLOCK_STRING:
-                {
-                    String u = ee.asStringValue().get();
-                    if (u.indexOf("$") >= 0) {
-                        NPrimitiveElementBuilder b = ee.asPrimitive().get().builder();
-                        b.setString(NMsg.ofV(u, new Function<String, Object>() {
-                            @Override
-                            public Object apply(String s) {
-                                NElement ss = evalVar(s);
-                                if (ss != null) {
-                                    ss = NTxUtils.removeCompilerDeclarationPathAnnotations(ss);
-                                }
-                                if (ss != null && ss.isAnyString()) {
-                                    return ss.asStringValue().get();
-                                }
-                                return ss;
+        switch (elementExpr.type()) {
+            case BACKTICK_STRING:
+            case SINGLE_QUOTED_STRING:
+            case DOUBLE_QUOTED_STRING:
+            case TRIPLE_BACKTICK_STRING:
+            case TRIPLE_SINGLE_QUOTED_STRING:
+            case TRIPLE_DOUBLE_QUOTED_STRING:
+            case LINE_STRING:
+            case BLOCK_STRING: {
+                String u = elementExpr.asStringValue().get();
+                if (u.indexOf("$") >= 0) {
+                    NPrimitiveElementBuilder b = elementExpr.asPrimitive().get().builder();
+                    b.setString(NMsg.ofV(u, new Function<String, Object>() {
+                        @Override
+                        public Object apply(String s) {
+                            NElement ss = evalVar(s);
+                            if (ss != null) {
+                                ss = NTxUtils.removeCompilerDeclarationPathAnnotations(ss);
                             }
-                        }).toString());
-                        return b.build();
-                    }
-                    return ee;
+                            if (ss != null && ss.isAnyString()) {
+                                return ss.asStringValue().get();
+                            }
+                            return ss;
+                        }
+                    }).toString());
+                    return b.build();
+                }
+                return elementExpr;
 
+            }
+            case NAME: {
+                String u = elementExpr.asStringValue().get();
+                NOptional<NTxVar> vv = context.getVar(u);
+                if (vv.isPresent()) {
+                    return vv.get().get();
                 }
-                case NAME: {
-                    String u = ee.asStringValue().get();
-                    NOptional<NTxVar> vv = context.getVar(u);
-                    if (vv.isPresent()) {
-                        return vv.get().get();
+                // not a variable, perhaps some enum value like red, south; etc...?
+                return elementExpr;
+            }
+            case NAMED_UPLET: {
+                NUpletElement ff = ((NUpletElement) elementExpr);
+                String functionName = ff.name().get();
+                NTxFunctionArgsImpl args = new NTxFunctionArgsImpl(functionName, ff.params().toArray(new NElement[0]), context);
+                NOptional<NTxFunction> f = context.getFunction(functionName/*, args.args()*/);
+                if (f.isPresent()) {
+                    return eval(f.get().invoke(args, context));
+                }
+                List<NElement> r = ff.params()
+                        .stream().map(x -> eval(x)).collect(Collectors.toList());
+                return ff.builder().setParams(r).build();
+            }
+            case EMPTY: {
+                return elementExpr;
+            }
+            case FLAT_EXPR: {
+                NFlatExprElement ff1 = ((NFlatExprElement) elementExpr);
+                NElement reshaped = ff1.reshape();
+                return eval(reshaped);
+            }
+            case BINARY_OPERATOR: {
+                NBinaryOperatorElement ff1 = ((NBinaryOperatorElement) elementExpr);
+                return _evalBinaryOperator(ff1);
+            }
+            case UNARY_OPERATOR: {
+                NUnaryOperatorElement ff1 = ((NUnaryOperatorElement) elementExpr);
+                return _evalUnaryOperator(ff1);
+            }
+            case UPLET: {
+                NUpletElement ff = ((NUpletElement) elementExpr);
+                if(ff.params().size()==1){
+                    //this is a plain par
+                    return eval(ff.params().get(0));
+                }
+                List<NElement> r = ff.params()
+                        .stream().map(x -> eval(x)).collect(Collectors.toList());
+                return ff.builder().setParams(r).build();
+            }
+            case PAIR: {
+                NPairElement ff = ((NPairElement) elementExpr);
+                return ff.builder()
+                        .key(eval(ff.key()))
+                        .value(eval(ff.value()))
+                        .build();
+            }
+            case ARRAY:
+            case FULL_ARRAY:
+            case PARAM_ARRAY:
+            case NAMED_ARRAY: {
+                NArrayElement r = elementExpr.asArray().get();
+                String u = r.name().orNull();
+                if (u != null) {
+                    NOptional<NTxVar> v = context.getVar(u);
+                    if (v.isPresent()) {
+                        NElement arrVal = v.get().get();
+                        return evalArray(arrVal, r.children().toArray(new NElement[0]));
                     }
-                    // not a variable, perhaps some enum value like red, south; etc...?
-                    return ee;
-                }
-                case NAMED_UPLET: {
-                    NUpletElement ff = ((NUpletElement) elementExpr);
-                    String functionName = ff.name().get();
-                    NTxFunctionArgsImpl args = new NTxFunctionArgsImpl(functionName, ff.params().toArray(new NElement[0]), context);
-                    NOptional<NTxFunction> f = context.getFunction(functionName/*, args.args()*/);
-                    if (f.isPresent()) {
-                        return eval(f.get().invoke(args, context));
-                    }
-                    List<NElement> r = ff.params()
-                            .stream().map(x -> eval(x)).collect(Collectors.toList());
-                    return ff.builder().setParams(r).build();
-                }
-                case EMPTY: {
-                    return elementExpr;
-                }
-                case FLAT_EXPR: {
-                    NFlatExprElement ff1 = ((NFlatExprElement) elementExpr);
-                    NElement reshaped = ff1.reshape();
-                    return eval(reshaped);
-                }
-                case BINARY_OPERATOR: {
-                    NBinaryOperatorElement ff1 = ((NBinaryOperatorElement) elementExpr);
-                    switch (ff1.operatorSymbol()) {
-                        case MINUS: {
-                            NBinaryOperatorElement ff = ((NBinaryOperatorElement) elementExpr);
-                            if (ff.isBinaryOperator()) {
-                                NElement a = eval(ff.firstOperand());
-                                NElement b = eval(ff.secondOperand());
-                                return NTxEvalUtils.substruct(a, b);
-                            } else if (ff.isUnaryOperator()) {
-                                NElement a = ff.firstOperand();
-                                return NTxEvalUtils.negate(a);
-                            } else {
-                                return ff;
-                            }
-                        }
-                        case EQ2: {
-                            NBinaryOperatorElement ff = ((NBinaryOperatorElement) elementExpr);
-                            if (ff.isBinaryOperator()) {
-                                NElement a = eval(ff.firstOperand());
-                                NElement b = eval(ff.secondOperand());
-                                return NTxEvalUtils.eq(a, b);
-                            } else {
-                                return ff;
-                            }
-                        }
-                        case REM: {
-                            NBinaryOperatorElement ff = ((NBinaryOperatorElement) elementExpr);
-                            if (ff.isBinaryOperator()) {
-                                NElement a = eval(ff.firstOperand());
-                                NElement b = eval(ff.secondOperand());
-                                return NTxEvalUtils.remainder2(a, b);
-                            } else {
-                                return ff;
-                            }
-                        }
-                        case PLUS: {
-                            NBinaryOperatorElement ff = ((NBinaryOperatorElement) elementExpr);
-                            if (ff.isBinaryOperator()) {
-                                NElement a = eval(ff.firstOperand());
-                                NElement b = eval(ff.secondOperand());
-                                return NTxEvalUtils.add(a, b);
-                            } else if (ff.isUnaryOperator()) {
-                                NElement a = eval(ff.firstOperand());
-                                return a;
-                            } else {
-                                return ff;
-                            }
-                        }
-                        case MUL: {
-                            NBinaryOperatorElement ff = ((NBinaryOperatorElement) elementExpr);
-                            if (ff.isBinaryOperator()) {
-                                NElement a = eval(ff.firstOperand());
-                                NElement b = eval(ff.secondOperand());
-                                return NTxEvalUtils.mul(a, b, MathContext.DECIMAL128);
-                            } else {
-                                return ff;
-                            }
-                        }
-                        case DIV: {
-                            NBinaryOperatorElement ff = ((NBinaryOperatorElement) elementExpr);
-                            if (ff.isBinaryOperator()) {
-                                NElement a = eval(ff.firstOperand());
-                                NElement b = eval(ff.secondOperand());
-                                return NTxEvalUtils.div(a, b, MathContext.DECIMAL128);
-                            } else {
-                                return ff;
-                            }
-                        }
-                    }
-                    context.engine().log().log(NMsg.ofC("unsupported operator %s in %s", ee.asOperator().get().position(), NTxUtils.snippet(ee)).asWarning(), NTxUtils.sourceOf(context.node()));
-                    return NElement.ofNull();
-                }
-                case UPLET: {
-                    NUpletElement ff = ((NUpletElement) elementExpr);
-                    List<NElement> r = ff.params()
-                            .stream().map(x -> eval(x)).collect(Collectors.toList());
-                    return ff.builder().setParams(r).build();
-                }
-                case PAIR: {
-                    NPairElement ff = ((NPairElement) elementExpr);
-                    return ff.builder()
-                            .key(eval(ff.key()))
-                            .value(eval(ff.value()))
-                            .build();
-                }
-                case ARRAY:
-                case FULL_ARRAY:
-                case PARAM_ARRAY:
-                case NAMED_ARRAY: {
-                    NArrayElement r = ee.asArray().get();
-                    String u = r.name().orNull();
-                    if (u != null) {
-                        NOptional<NTxVar> v = context.getVar(u);
-                        if (v.isPresent()) {
-                            NElement arrVal = v.get().get();
-                            return evalArray(arrVal, r.children().toArray(new NElement[0]));
-                        }
-                    } else if (u == null) {
-                        // this is an implicit array
-                        List<NElement> children = r.children();
-                        if (children.isEmpty()) {
-                            return NElement.ofArray();
-                        } else {
-                            List<NElement> newChildren = new ArrayList<>();
-                            for (NElement c : children) {
-                                NElement[] zz = interpretAsArrayItems_interval(c);
-                                if (zz != null) {
-                                    newChildren.addAll(Arrays.asList(zz));
-                                } else {
-                                    newChildren.add(eval(c));
-                                }
-                            }
-                            return NElement.ofArray(newChildren.toArray(new NElement[0]));
-                        }
-                    }
-                    break;
-                }
-                case PARAM_OBJECT:
-                case OBJECT:
-                case NAMED_OBJECT: {
-                    // this is a complex object
-                    break;
-                }
-                default: {
-                    NElementTypeGroup nElementTypeGroup = ee.type().group();
-                    if (nElementTypeGroup == NElementTypeGroup.NUMBER || nElementTypeGroup == NElementTypeGroup.NULL || nElementTypeGroup == NElementTypeGroup.STRING || nElementTypeGroup == NElementTypeGroup.BOOLEAN || nElementTypeGroup == NElementTypeGroup.CUSTOM) {
-
-                    } else if (nElementTypeGroup == NElementTypeGroup.OPERATOR) {
-                        context.engine().log().log(NMsg.ofC("unsupported operator %s in %s", ee.asOperator().get().position(), NTxUtils.snippet(ee)).asWarning(), context.source());
+                } else if (u == null) {
+                    // this is an implicit array
+                    List<NElement> children = r.children();
+                    if (children.isEmpty()) {
+                        return NElement.ofArray();
                     } else {
-                        context.engine().log().log(NMsg.ofC("unsupported expression %s", NTxUtils.snippet(ee)).asWarning(), context.source());
+                        List<NElement> newChildren = new ArrayList<>();
+                        for (NElement c : children) {
+                            NElement[] zz = interpretAsArrayItems_interval(c);
+                            if (zz != null) {
+                                newChildren.addAll(Arrays.asList(zz));
+                            } else {
+                                newChildren.add(eval(c));
+                            }
+                        }
+                        return NElement.ofArray(newChildren.toArray(new NElement[0]));
                     }
+                }
+                break;
+            }
+            case PARAM_OBJECT:
+            case OBJECT:
+            case NAMED_OBJECT: {
+                // this is a complex object
+                break;
+            }
+            default: {
+                NElementTypeGroup nElementTypeGroup = elementExpr.type().group();
+                if (nElementTypeGroup == NElementTypeGroup.NUMBER || nElementTypeGroup == NElementTypeGroup.NULL || nElementTypeGroup == NElementTypeGroup.STRING || nElementTypeGroup == NElementTypeGroup.BOOLEAN || nElementTypeGroup == NElementTypeGroup.CUSTOM) {
+
+                } else if (nElementTypeGroup == NElementTypeGroup.OPERATOR) {
+                    context.engine().log().log(NMsg.ofC("unsupported operator %s in %s", elementExpr.asOperator().get().position(), NTxUtils.snippet(elementExpr)).asWarning(), context.source());
+                } else {
+                    context.engine().log().log(NMsg.ofC("unsupported expression %s", NTxUtils.snippet(elementExpr)).asWarning(), context.source());
                 }
             }
         }
         return elementExpr;
+    }
+
+    private NElement _evalUnaryOperator(NUnaryOperatorElement elem) {
+        switch (elem.operatorSymbol()) {
+            case MINUS: {
+                NElement a = eval(elem.operand());
+                return NTxEvalUtils.negate(a);
+            }
+            case PLUS: {
+                NElement a = eval(elem.operand());
+                return a;
+            }
+        }
+        context.engine().log().log(NMsg.ofC("unsupported operator %s in %s", elem.asOperator().get().position(), NTxUtils.snippet(elem)).asWarning(), NTxUtils.sourceOf(context.node()));
+        return NElement.ofNull();
+    }
+
+    private NElement _evalBinaryOperator(NBinaryOperatorElement elem) {
+        switch (elem.operatorSymbol()) {
+            case MINUS: {
+                NElement a = eval(elem.firstOperand());
+                NElement b = eval(elem.secondOperand());
+                return NTxEvalUtils.substruct(a, b);
+            }
+            case EQ2: {
+                NElement a = eval(elem.firstOperand());
+                NElement b = eval(elem.secondOperand());
+                return NTxEvalUtils.eq(a, b);
+            }
+            case REM: {
+                NElement a = eval(elem.firstOperand());
+                NElement b = eval(elem.secondOperand());
+                return NTxEvalUtils.remainder2(a, b);
+            }
+            case PLUS: {
+                NElement a = eval(elem.firstOperand());
+                NElement b = eval(elem.secondOperand());
+                return NTxEvalUtils.add(a, b);
+            }
+            case MUL: {
+                NElement a = eval(elem.firstOperand());
+                NElement b = eval(elem.secondOperand());
+                return NTxEvalUtils.mul(a, b, MathContext.DECIMAL128);
+            }
+            case DIV: {
+                NElement a = eval(elem.firstOperand());
+                NElement b = eval(elem.secondOperand());
+                return NTxEvalUtils.div(a, b, MathContext.DECIMAL128);
+            }
+        }
+        context.engine().log().log(NMsg.ofC("unsupported operator %s in %s", elem.asOperator().get().position(), NTxUtils.snippet(elem)).asWarning(), NTxUtils.sourceOf(context.node()));
+        return NElement.ofNull();
     }
 
     private NElement[] interpretAsArrayItems_interval(NElement c) {
