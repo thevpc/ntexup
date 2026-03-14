@@ -7,6 +7,7 @@ import net.thevpc.ntexup.api.engine.NTxEngine;
 import net.thevpc.ntexup.api.extension.NTxFunction;
 import net.thevpc.ntexup.api.log.NTxLogger;
 import net.thevpc.ntexup.api.document.NTxDocument;
+import net.thevpc.ntexup.api.parser.NTxItemParser;
 import net.thevpc.ntexup.api.source.NTxSource;
 import net.thevpc.nuts.elem.NElement;
 import net.thevpc.nuts.io.NPath;
@@ -16,6 +17,8 @@ import java.util.function.Consumer;
 
 public interface NTxResolutionContext {
     String uid();
+
+    NTxItemParser itemParser();
 
     NTxDocument document();
 
@@ -118,6 +121,8 @@ public interface NTxResolutionContext {
     NTxResolutionContext setFunction(NTxFunction value);
 
     NTxResolutionContext withFunction(NTxFunction value);
+
+    NTxResolutionContext withItemParser(NTxItemParser itemParser);
 
     boolean isDef();
 
