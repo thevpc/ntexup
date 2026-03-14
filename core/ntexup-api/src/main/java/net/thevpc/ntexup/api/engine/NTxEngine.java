@@ -23,6 +23,7 @@ import net.thevpc.ntexup.api.document.node.NTxItem;
 import net.thevpc.ntexup.api.document.node.NTxNode;
 import net.thevpc.ntexup.api.extension.NTxFunction;
 import net.thevpc.ntexup.api.log.NTxLogger;
+import net.thevpc.ntexup.api.parser.NTxItemParser;
 import net.thevpc.ntexup.api.parser.NTxNodeParser;
 import net.thevpc.ntexup.api.renderer.*;
 import net.thevpc.ntexup.api.renderer.text.NTxTextRendererFlavor;
@@ -67,6 +68,8 @@ public interface NTxEngine {
     NTxLogger removeLog(NTxLogger messages);
 
     List<NTxNodeParser> nodeTypeFactories();
+
+    NTxItemParser itemParser();
 
 //    NOptional<NTxFunction> findFunction(NTxItem node, String name, NTxFunctionArg... args);
 
