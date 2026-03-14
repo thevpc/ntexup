@@ -165,15 +165,16 @@ public class Element3DPrismPrimitiveBuilder implements NTxElement3DRenderer, NTx
     }
 
     @Override
-    public NtxElement3D createElement3D(NTxNode node, NTxRendererContext rendererContext, NTxBounds2D b, RealToRelativeMapper mapper, NtxElement3DNodeParserFactory parserFactory) {
-        NTxPoint3D position = NtxShapes3dUtils.resolvePoint(node, NTxPropName.POSITION, "real-position", NTxPoint3D::ofZero, b, mapper);
+    public NtxElement3D createElement3D(NTxRendererContext rendererContext, NTxBounds2D b, RealToRelativeMapper mapper, NtxElement3DNodeParserFactory parserFactory) {
+        NTxNode node=rendererContext.node();
+        NTxPoint3D position = NtxShapes3dUtils.resolvePosition3D(node, NTxPropName.POSITION, rendererContext, b).orElse(NTxPoint3D.ofZero());
         double thickness = NTxValue.ofProp(node, "thickness").asDouble().orElse(100.0);
         NTxRegion2D region = NTxElement2DFactory.region(NTxValue.ofProp(node, "region").asElement().orNull()).orNull();
         if(region == null) {
             return null;
         }
         NtxElement3DPrism r = NTxElement3DFactory.prism(position, region, thickness);
-        NtxShapes3dUtils.apply3dProps(node, r, rendererContext, b);
+        NtxShapes3dUtils.apply3dProps(node, r, rendererContext, b,true);
         NElement faces = rendererContext.computePropertyValue("faces").orNull();
         if (faces == null) {
             r.setTop(NtxShapes3dUtils.resolveFace(rendererContext.computePropertyValue("top").orNull(), rendererContext));
