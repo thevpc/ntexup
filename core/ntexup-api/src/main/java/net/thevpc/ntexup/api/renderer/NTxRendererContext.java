@@ -33,17 +33,27 @@ public interface NTxRendererContext extends NTxResolutionContext {
     boolean isSomeChange();
 
     NTxBounds2D selfBounds2D();
+
     NTxBounds2D globalBounds2D();
+
     NTxBounds2D parentBounds2D();
+
     NTxBounds2D realBounds2D();
+
     NTxBounds2D realGlobalBounds2D();
+
     NTxBounds2D defaultSelfBounds2D();
 
     NTxBounds3D selfBounds3D();
+
     NTxBounds3D globalBounds3D();
+
     NTxBounds3D parentBounds3D();
+
     NTxBounds3D realBounds3D();
+
     NTxBounds3D realGlobalBounds3D();
+
     NTxBounds3D defaultSelfBounds3D();
 
     NTxRendererContext dryMode();
@@ -75,6 +85,10 @@ public interface NTxRendererContext extends NTxResolutionContext {
 
     NTxRendererContext withGraphics(NTxGraphics graphics);
 
+    NTxRendererContext withRealBounds3D(NTxBounds3D realBounds3D);
+
+    NTxRendererContext withRealGlobalBounds3D(NTxBounds3D realGlobalBounds3D);
+
     NTxSizeRef sizeRef();
 
     boolean isPrint();
@@ -87,7 +101,7 @@ public interface NTxRendererContext extends NTxResolutionContext {
 
     boolean hasCapability(String name);
 
-    public boolean isCapability(String name);
+    boolean isCapability(String name);
 
     void highlightNutsText(String lang, String rawText, NText parsedText, NTxTextRendererBuilder result);
 
