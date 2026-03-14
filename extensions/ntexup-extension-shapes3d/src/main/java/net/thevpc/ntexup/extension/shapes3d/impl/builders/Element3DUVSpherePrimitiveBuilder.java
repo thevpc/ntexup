@@ -132,13 +132,14 @@ public class Element3DUVSpherePrimitiveBuilder implements NTxElement3DRenderer, 
     }
 
     @Override
-    public NtxElement3D createElement3D(NTxNode node, NTxRendererContext rendererContext, NTxBounds2D b, RealToRelativeMapper mapper, NtxElement3DNodeParserFactory parserFactory) {
-        NTxPoint3D position = NtxShapes3dUtils.resolvePoint(node, NTxPropName.POSITION, "real-position", NTxPoint3D::ofZero, b, mapper);
-        NTxPoint3D radius = NtxShapes3dUtils.resolvePoint(node, "radius", "real-radius", NTxPoint3D::ofOne, b, mapper);
+    public NtxElement3D createElement3D(NTxRendererContext rendererContext, NTxBounds2D b, RealToRelativeMapper mapper, NtxElement3DNodeParserFactory parserFactory) {
+        NTxNode node=rendererContext.node();
+        NTxPoint3D position = NtxShapes3dUtils.resolvePosition3D(node, NTxPropName.POSITION, rendererContext, b).orElse(NTxPoint3D.ofZero());
+        NTxPoint3D radius = NtxShapes3dUtils.resolvePosition3D(node, "radius", rendererContext, b).orElse(NTxPoint3D.ofOne());
         int meridians = NTxValue.ofProp(node, "meridians").asInt().orElse(60);
         int parallels = NTxValue.ofProp(node, "parallels").asInt().orElse(60);
         NtxElement3D r = NTxElement3DFactory.sphereUV(position, radius.x, radius.y, radius.y, meridians, parallels);
-        NtxShapes3dUtils.apply3dProps(node, r, rendererContext, b);
+        NtxShapes3dUtils.apply3dProps(node, r, rendererContext, b,true);
         return r;
     }
 }
