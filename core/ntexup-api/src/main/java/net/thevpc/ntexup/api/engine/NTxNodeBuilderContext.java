@@ -58,7 +58,7 @@ public interface NTxNodeBuilderContext {
 
     NTxNodeBuilderContext afterParsingAllParams(ProcessNodeAction e);
 
-    NTxNodeBuilderContext processChildren(ProcessNodeAction e);
+    NTxNodeBuilderContext processChildren(ProcessChildrenAction e);
     NTxNodeBuilderContext compileNode(CompileNodeAction e);
     NTxNodeBuilderContext initializeNodeAction(InitializeNodeAction e);
 
@@ -187,6 +187,9 @@ public interface NTxNodeBuilderContext {
 
     interface ProcessNodeAction {
         void processNode(NTxAllArgumentReader info, NTxNodeBuilderContext buildContext);
+    }
+    interface ProcessChildrenAction {
+        void processChildren(NTxAllArgumentReader info, NTxNodeBuilderContext buildContext);
     }
     interface CompileNodeAction {
         void compileNode(NTxNode node, NTxResolutionContext context);
