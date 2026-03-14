@@ -22,10 +22,11 @@ public class Element3DPolylineBuilder implements  NtxElement3DNodeParser {
     }
 
     @Override
-    public NtxElement3D createElement3D(NTxNode node, NTxRendererContext rendererContext, NTxBounds2D b, RealToRelativeMapper mapper, NtxElement3DNodeParserFactory parserFactory) {
-        NTxPoint3D[] points = NtxShapes3dUtils.resolvePoints(node, NTxPropName.POINTS, "real-points", () -> new NTxPoint3D[0], b, mapper);
+    public NtxElement3D createElement3D(NTxRendererContext rendererContext, NTxBounds2D b, RealToRelativeMapper mapper, NtxElement3DNodeParserFactory parserFactory) {
+        NTxNode node=rendererContext.node();
+        NTxPoint3D[] points = NtxShapes3dUtils.resolvePositions3D(node, NTxPropName.POINTS, rendererContext,b).get();
         NtxElement3DPolyline r = new NtxElement3DPolyline(points);
-        NtxShapes3dUtils.apply3dProps(node, r, rendererContext, b);
+        NtxShapes3dUtils.apply3dProps(node, r, rendererContext, b,false);
         return r;
     }
 
