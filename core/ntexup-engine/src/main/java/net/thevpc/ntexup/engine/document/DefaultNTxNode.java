@@ -790,6 +790,7 @@ public class DefaultNTxNode implements NTxNode {
 
     public NTxNode copy() {
         DefaultNTxNode o = new DefaultNTxNode(nodeType, source());
+        o.setUuid(uuid);
         copyTo(o);
         return o;
     }
