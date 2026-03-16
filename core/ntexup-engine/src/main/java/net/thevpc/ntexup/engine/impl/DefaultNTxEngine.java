@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -25,10 +26,12 @@ import net.thevpc.ntexup.api.document.style.NTxStyleRule;
 import net.thevpc.ntexup.api.document.style.NTxStyleRuleSelector;
 import net.thevpc.ntexup.api.engine.*;
 import net.thevpc.ntexup.api.engine.CompileNodeVisitor;
+import net.thevpc.ntexup.api.eval.NTxFunctionCallContext;
+import net.thevpc.ntexup.api.eval.NTxNodePath;
 import net.thevpc.ntexup.api.extension.NTxFunction;
 import net.thevpc.ntexup.api.renderer.text.NTxTextRendererFlavor;
 import net.thevpc.ntexup.api.source.NTxSource;
-import net.thevpc.ntexup.engine.document.DefaultNTxDocument;
+import net.thevpc.ntexup.engine.document.*;
 import net.thevpc.ntexup.engine.eval.*;
 import net.thevpc.ntexup.engine.log.DefaultNTxLogger;
 import net.thevpc.ntexup.api.log.NTxLogger;
@@ -40,15 +43,12 @@ import net.thevpc.ntexup.api.util.NTxUtils;
 import net.thevpc.ntexup.engine.parser.ctrlnodes.CtrNTxNodelUncompiled;
 import net.thevpc.ntexup.engine.parser.nodeparsers.StylesSpecialParser;
 import net.thevpc.ntexup.engine.renderer.DefaultNTxRendererContext;
-import net.thevpc.ntexup.engine.document.DefaultNTxNode;
 import net.thevpc.ntexup.engine.ext.NTxNodeBuilderContextImpl;
 import net.thevpc.ntexup.engine.log.NTxMessageList;
 import net.thevpc.ntexup.engine.log.SilentNTxLogger;
 import net.thevpc.ntexup.engine.parser.*;
 import net.thevpc.ntexup.engine.parser.resources.NTxSourceFactory;
 import net.thevpc.ntexup.engine.renderer.NTxDocumentRendererFactoryContextImpl;
-import net.thevpc.ntexup.engine.document.NTxPropCalculator;
-import net.thevpc.ntexup.engine.document.NTxDocumentFactoryImpl;
 import net.thevpc.ntexup.engine.renderer.NTxGraphicsImpl;
 import net.thevpc.nuts.app.NApp;
 import net.thevpc.nuts.artifact.NDefinition;
@@ -208,6 +208,167 @@ public class DefaultNTxEngine implements NTxEngine {
         }
     }
 
+    @Override
+    public NTxFunctionCallContext createFunctionArgs(String functionName, NElement[] callArgs, NTxResolutionContext context) {
+        return new NTxFunctionCallContextImpl(functionName, callArgs, context);
+    }
+
+    public NOptional<NTxNode> findNodeByProperty(String propertyName, Predicate<NElement> propertyValueFilter, NTxResolutionContext context) {
+        Set<NTxNode> visited = new HashSet<>();
+
+        // PHASE 1: Walk up the spine to root — check every ancestor including root
+        NTxNodePath current = new NTxNodePathImpl(Arrays.asList(context.path()));
+        while (current != null && !current.isRoot()) {
+            visited.add(current.node());
+            if (matches(current.node(), propertyName, propertyValueFilter))
+                return NOptional.of(current.node());
+            if (current.isRoot()) break;
+            current = current.parent();
+        }
+
+        // PHASE 2: For each spine level, BFS into siblings radially
+        NTxNodePath spineChild = new NTxNodePathImpl(Arrays.asList(context.path()));
+        NTxNodePath spineNode = spineChild.parent();
+
+        while (spineNode != null) {
+            NTxNodeProvider children;
+            int pivot;
+            NTxNodePath finalSpineNode = spineNode;
+
+            if (spineNode.isRoot()) {
+                // at document root — use compiled pages, pivot is current page index
+                pivot = ((NTxNodePage) spineChild.node()).index();
+                if (context.compiledDocument() == null) {
+                    children = i -> null;
+                } else {
+                    children = index -> {
+                        NOptional<NTxCompiledPage> i = context.compiledDocument().page(index);
+                        if (!i.isPresent()) {
+                            return null;
+                        }
+                        return finalSpineNode.resolve(i.get().compiledPage());
+                    };
+                }
+            } else {
+                // within a page — use snapshot tree children
+                List<NTxNode> children0 = spineNode.node().children();
+                pivot = -1;
+                int _i = 0;
+                for (NTxNode x : children0) {
+                    if (x == spineChild.node() || x.uuid().equals(spineChild.node().uuid())) {
+                        pivot = _i;
+                    }
+                    _i++;
+                }
+                if (pivot == -1) {
+                    throw new NIllegalArgumentException(NMsg.ofC("invalid hierarchy"));
+                }
+                children = index -> {
+                    if (index >= 0 && index < children0.size()) {
+                        return finalSpineNode.resolve(children0.get(index));
+                    }
+                    return null;
+                };
+            }
+
+            Queue<NTxNodePath> queue = new LinkedList<>();
+            Iterator<NTxNodePath> it = oscillatingOrder(children, pivot);
+            while (it.hasNext()) {
+                NTxNodePath n = it.next();
+                if (visited.add(n.node())) {
+                    queue.add(n);
+                }
+            }
+
+            // BFS into each sibling's subtree
+            while (!queue.isEmpty()) {
+                NTxNodePath node = queue.poll();
+                if (matches(node.node(), propertyName, propertyValueFilter))
+                    return NOptional.of(node.node());
+                for (NTxNode child : node.node().children()) {
+                    if (visited.add(child)) {
+                        queue.add(node.resolve(child));
+                    }
+                }
+            }
+
+            spineChild = spineNode;
+            spineNode = spineNode.parent();
+        }
+
+        return NOptional.ofNamedEmpty(propertyName);
+    }
+
+    private interface NTxNodeProvider {
+        NTxNodePath get(int index);
+    }
+
+
+
+    private Iterator<NTxNodePath> oscillatingOrder(NTxNodeProvider nodes, int pivot) {
+        return new Iterator<NTxNodePath>() {
+            int d = 1;
+            int step = 0; // 0 = try backward (pivot-d), 1 = try forward (pivot+d)
+            boolean moreBackward = true;
+            boolean moreForward = true;
+            NTxNodePath nextItem = null;
+            boolean needsCompute = true;
+
+            private void computeNext() {
+                if (!needsCompute) return;
+                needsCompute = false;
+                nextItem = null;
+                while (moreForward || moreBackward) {
+                    if (step == 0) {
+                        // try backward
+                        step = 1;
+                        if (moreBackward) {
+                            NTxNodePath u = nodes.get(pivot - d);
+                            if (u == null) {
+                                moreBackward = false;
+                            } else {
+                                nextItem = u;
+                                return;
+                            }
+                        }
+                    }
+                    if (step == 1) {
+                        // try forward
+                        step = 0;
+                        int fd = d;
+                        d++;
+                        if (moreForward) {
+                            NTxNodePath u = nodes.get(pivot + fd);
+                            if (u == null) {
+                                moreForward = false;
+                            } else {
+                                nextItem = u;
+                                return;
+                            }
+                        }
+                    }
+                }
+            }
+
+            @Override
+            public boolean hasNext() {
+                computeNext();
+                return nextItem != null;
+            }
+
+            @Override
+            public NTxNodePath next() {
+                computeNext();
+                needsCompute = true;
+                return nextItem;
+            }
+        };
+    }
+
+    private boolean matches(NTxNode node, String prop, Predicate<NElement> filter) {
+        NElement element = node.getPropertyValue(prop).orNull();
+        return element != null && filter.test(element);
+    }
 
     public List<NTxStyleRule> getDefaultStyles() {
         if (defaultStyles == null) {
@@ -215,7 +376,9 @@ public class DefaultNTxEngine implements NTxEngine {
                 if (defaultStyles == null) {
                     NElement stylesNode = NElementReader.ofTson().read(NPath.of("classpath:/net/thevpc/ntexup/default-style.ntx", Thread.currentThread().getContextClassLoader()).readString());
                     DefaultNTxNode root = new DefaultNTxNode(NTxNodeType.PAGE_GROUP);
-                    NTxResolutionContextImpl context = new NTxResolutionContextImpl(new NTxNode[]{root}, NElement.ofNull(), null, false, this, new DefaultNTxDocument(null), null, null, null, null,itemParser());
+                    NTxResolutionContextImpl context = new NTxResolutionContextImpl(new NTxNode[]{root}, NElement.ofNull(), null, false, this, new DefaultNTxDocument(null), null, null, null,
+                            null, null,
+                            null, itemParser());
                     List<NTxStyleRule> styles = new ArrayList<>();
                     context.doWithElement(stylesNode, cc -> {
                         NTxItem sc = new StylesSpecialParser().parseNode(cc).call();
@@ -495,6 +658,9 @@ public class DefaultNTxEngine implements NTxEngine {
     }
 
     public NTxNode newDefaultNode(String id) {
+        if (NTxNodeType.PAGE.equals(id)) {
+            return new DefaultNTxNodePage();
+        }
         return new DefaultNTxNode(id);
     }
 
@@ -513,17 +679,17 @@ public class DefaultNTxEngine implements NTxEngine {
         new NTxCompiler(this).compileNode(ctx, visitor);
     }
 
-    public void compileNode(NTxNode node, NTxDocument document, NTxResolutionContext context, CompileNodeVisitor visitor) {
+    public void compileNode(NTxNode node, NTxDocument document, NTxCompiledDocument compiledDocument, NTxCompiledPage compiledPage, NTxResolutionContext context, CompileNodeVisitor visitor) {
         initializeComponents();
         node = node.copy();
         if (context == null) {
-            context = newContext(node, document, null);
+            context = newContext(node, document, compiledDocument, compiledPage, null);
         }
 //        context.setInPage(true);
         compileNode(context, visitor);
     }
 
-    public NTxResolutionContext newContext(NTxNode node, NTxDocument document, NTxResolutionContext parentContext) {
+    public NTxResolutionContext newContext(NTxNode node, NTxDocument document, NTxCompiledDocument compiledDocument, NTxCompiledPage compiledPage, NTxResolutionContext parentContext) {
         List<NTxNode> p = new ArrayList<>();
         if (node != null) {
             if (node.parent() != null) {
@@ -531,7 +697,10 @@ public class DefaultNTxEngine implements NTxEngine {
             }
         }
         p.add(node);
-        return new NTxResolutionContextImpl(p.toArray(new NTxNode[0]), NElement.ofNull(), null, parentContext != null && parentContext.inPage(), this, document, null, null, null, parentContext,
+        return new NTxResolutionContextImpl(p.toArray(new NTxNode[0]), NElement.ofNull(), null, parentContext != null && parentContext.inPage(), this, document, null, null, null,
+                compiledDocument,
+                compiledPage,
+                parentContext,
                 parentContext != null ? parentContext.itemParser() : itemParser()
         );
     }
@@ -1116,7 +1285,6 @@ public class DefaultNTxEngine implements NTxEngine {
         }
         boolean someChange = !config.isUseCache();
         DefaultNTxRendererContext context = new DefaultNTxRendererContext(
-                page,
                 new NTxNode[]{node}, this, hg,
                 null,
                 bounds2D,
@@ -1128,7 +1296,7 @@ public class DefaultNTxEngine implements NTxEngine {
                 bounds3D,
                 realBounds3D,
                 realBounds3D,
-                page, someChange,
+                someChange,
                 startTime,
                 capabilities, imageObserver,
                 repainter, null, false, null, null, null,
@@ -1136,6 +1304,8 @@ public class DefaultNTxEngine implements NTxEngine {
                 null,
                 null,
                 null,
+                page.document(),
+                page,
                 page.pageContext(),
                 itemParser()
         );
