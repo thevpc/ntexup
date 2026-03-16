@@ -83,6 +83,7 @@ class CustomNTxNodeParserFromBuilder extends NTxNodeParserBase {
                     @Override
                     public NScoredCallable<NTxItem> parseElement(String id, NElement element, NTxResolutionContext context) {
                         NTxNode p = context.documentFactory().of(resolveEffectiveId(id));
+                        p.setRaw(element);
                         String compilerDeclarationPath = NTxUtils.getCompilerDeclarationPath(element);
                         NTxSource source = context.source();
                         if (compilerDeclarationPath != null) {
