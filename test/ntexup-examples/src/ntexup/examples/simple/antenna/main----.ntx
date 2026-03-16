@@ -83,40 +83,40 @@
 //
 //}
 //
-////page{
-////    hresult=hadruwaves-mom-solver(
-////        geometry:"antenna-a"
-////        box-walls: EEEE // all Electric walls
-////        mode-functions-count: 1000 // all Electric walls
-////        test-functions: {
-////            sine-functions(geometry-selector:"@antenna", count:6)
-////            rooftops(position:(l-s,-w/2),size:(2*s,w),count:1)
-////        },
-////        compute:{
-////            S11:sweepFrequency(from:2.3_GHz,to 2.5_GHz, count:10)
-////        }
-////    )
-////    oemsresult=open-ems-solver(
-////        // will spwn a docker
-////        run: docker(image:"openems#0.2.3")
-////        geometry:antenna-a
-////        compute:{
-////            S11:sweepFrequency(from:2.3_GHz,to 2.5_GHz, count:10)
-////        }
-////    )
-////    plot2d(
-////        values: [
-////                    hresult["S11"]
-////                    oemsresult["S11"]
-////                ]
-////        as:curve
-////        titles: [
-////            "Hadruwaves S11"
-////            "OpenEMS S11"
-////        ]
-////        xdomain: result["S11_frequencies"]
-////    )
-////}
+//page{
+//    hresult=hadruwaves-mom-solver(
+//        geometry:"antenna-a"
+//        box-walls: EEEE // all Electric walls
+//        mode-functions-count: 1000 // all Electric walls
+//        test-functions: {
+//            sine-functions(geometry-selector:"@antenna", count:6)
+//            rooftops(position:(l-s,-w/2),size:(2*s,w),count:1)
+//        },
+//        compute:{
+//            S11:sweepFrequency(from:2.3_GHz,to 2.5_GHz, count:10)
+//        }
+//    )
+//    oemsresult=open-ems-solver(
+//        // will spwn a docker
+//        run: docker(image:"openems#0.2.3")
+//        geometry:antenna-a
+//        compute:{
+//            S11:sweepFrequency(from:2.3_GHz,to 2.5_GHz, count:10)
+//        }
+//    )
+//    plot2d(
+//        values: [
+//                    hresult["S11"]
+//                    oemsresult["S11"]
+//                ]
+//        as:curve
+//        titles: [
+//            "Hadruwaves S11"
+//            "OpenEMS S11"
+//        ]
+//        xdomain: result["S11_frequencies"]
+//    )
+//}
 ////include ("antenna-b.ntx")
 //
 //
