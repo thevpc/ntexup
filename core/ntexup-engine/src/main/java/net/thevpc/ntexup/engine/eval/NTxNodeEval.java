@@ -23,7 +23,7 @@ import net.thevpc.nuts.util.NOptional;
  */
 public class NTxNodeEval implements NTxObjectEvalContext {
 
-    private NTxResolutionContext context;
+    private final NTxResolutionContext context;
 
     public NTxNodeEval(NTxResolutionContext context) {
         this.context = context;
@@ -56,7 +56,7 @@ public class NTxNodeEval implements NTxObjectEvalContext {
             if (!asObjectArray.isPresent()) {
                 // Die Never: User tried to index into something that isn't an array
                 context.engine().log().log(NMsg.ofC("Cannot index into non-array element: %s",
-                        current),NTxUtils.sourceOf(context.node()));
+                        current), NTxUtils.sourceOf(context.node()));
                 return NElement.ofNull();
             }
 
@@ -135,10 +135,20 @@ public class NTxNodeEval implements NTxObjectEvalContext {
             case NAMED_UPLET: {
                 NUpletElement ff = ((NUpletElement) elementExpr);
                 String functionName = ff.name().get();
-                NTxFunctionArgsImpl args = new NTxFunctionArgsImpl(functionName, ff.params().toArray(new NElement[0]), context);
+                NTxFunctionCallContext args = context.engine().createFunctionArgs(functionName, ff.params().toArray(new NElement[0]), context);
                 NOptional<NTxFunction> f = context.getFunction(functionName/*, args.args()*/);
                 if (f.isPresent()) {
-                    return eval(f.get().invoke(args, context));
+                    NElement u = f.get().invoke(args);
+                    if(u.equals(args.callExpression())){
+                        // function could not be evaluated in the current context
+                        // perhaps needs some timeout or rendering context or....
+                        return u;
+                    }
+                    return eval(u);
+                }else{
+                    if(context.inPage()){
+                        context.engine().log().log(NMsg.ofC("unsupported function %s in %s", functionName,ff).asError(), context.source());
+                    }
                 }
                 List<NElement> r = ff.params()
                         .stream().map(x -> eval(x)).collect(Collectors.toList());
@@ -162,7 +172,7 @@ public class NTxNodeEval implements NTxObjectEvalContext {
             }
             case UPLET: {
                 NUpletElement ff = ((NUpletElement) elementExpr);
-                if(ff.params().size()==1){
+                if (ff.params().size() == 1) {
                     //this is a plain par
                     return eval(ff.params().get(0));
                 }
@@ -233,11 +243,10 @@ public class NTxNodeEval implements NTxObjectEvalContext {
         switch (elem.operatorSymbol()) {
             case MINUS: {
                 NElement a = eval(elem.operand());
-                return NTxEvalUtils.negate(a);
+                return NTxEvalUtils.negate(a).orElse(elem);
             }
             case PLUS: {
-                NElement a = eval(elem.operand());
-                return a;
+                return eval(elem.operand());
             }
         }
         context.engine().log().log(NMsg.ofC("unsupported operator %s in %s", elem.asOperator().get().position(), NTxUtils.snippet(elem)).asWarning(), NTxUtils.sourceOf(context.node()));
@@ -249,7 +258,7 @@ public class NTxNodeEval implements NTxObjectEvalContext {
             case MINUS: {
                 NElement a = eval(elem.firstOperand());
                 NElement b = eval(elem.secondOperand());
-                return NTxEvalUtils.substruct(a, b);
+                return NTxEvalUtils.substruct(a, b, MathContext.DECIMAL128).orElse(elem);
             }
             case EQ2: {
                 NElement a = eval(elem.firstOperand());
@@ -259,22 +268,22 @@ public class NTxNodeEval implements NTxObjectEvalContext {
             case REM: {
                 NElement a = eval(elem.firstOperand());
                 NElement b = eval(elem.secondOperand());
-                return NTxEvalUtils.remainder2(a, b);
+                return NTxEvalUtils.remainder(a, b, MathContext.DECIMAL128).orElse(elem);
             }
             case PLUS: {
                 NElement a = eval(elem.firstOperand());
                 NElement b = eval(elem.secondOperand());
-                return NTxEvalUtils.add(a, b);
+                return NTxEvalUtils.add(a, b, MathContext.DECIMAL128).orElse(elem);
             }
             case MUL: {
                 NElement a = eval(elem.firstOperand());
                 NElement b = eval(elem.secondOperand());
-                return NTxEvalUtils.mul(a, b, MathContext.DECIMAL128);
+                return NTxEvalUtils.mul(a, b, MathContext.DECIMAL128).orElse(elem);
             }
             case DIV: {
                 NElement a = eval(elem.firstOperand());
                 NElement b = eval(elem.secondOperand());
-                return NTxEvalUtils.div(a, b, MathContext.DECIMAL128);
+                return NTxEvalUtils.div(a, b, MathContext.DECIMAL128).orElse(elem);
             }
         }
         context.engine().log().log(NMsg.ofC("unsupported operator %s in %s", elem.asOperator().get().position(), NTxUtils.snippet(elem)).asWarning(), NTxUtils.sourceOf(context.node()));
@@ -292,28 +301,4 @@ public class NTxNodeEval implements NTxObjectEvalContext {
         return null;
     }
 
-//    public NOptional<NTxNode> findNodeByProperty(String propertyName, String propertyValue) {
-//        NTxItem nn = (node);
-//        while (nn != null) {
-//            if (nn instanceof NTxNode) {
-//                NTxNode nd = (NTxNode) nn;
-//                NOptional<NElement> v = nd.getPropertyValue(propertyName);
-//                if (v.isPresent()) {
-//                    NElement vv = v.get();
-//                    String vvn = vv.asStringValue().orNull();
-//                    if (vvn != null && vvn.equals(propertyValue)) {
-//                        return NOptional.of(nd);
-//                    }
-//                }
-//                if (NTxUtils.isComponentBody(propertyName)) {
-//                    if (nd.templateDefinition() != null) {
-//                        // do not go up in hierarchy
-//                        break;
-//                    }
-//                }
-//            }
-//            nn = nn.parent();
-//        }
-//        return NOptional.ofNamedEmpty("node with propertyName " + propertyName);
-//    }
 }
