@@ -34,7 +34,7 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class NTxCompiler {
-    private NTxEngine engine;
+    private final NTxEngine engine;
 
     public NTxCompiler(NTxEngine engine) {
         this.engine = engine;
@@ -50,7 +50,9 @@ public class NTxCompiler {
             NTxNode root = documentCopy.root();
             List<NTxNode> rootChildren = root.children();
             root.clearChildren();
-            NTxResolutionContextImpl context = new NTxResolutionContextImpl(new NTxNode[]{root}, NElement.ofNull(), null, false, engine, documentCopy, null, null, null, null, engine.itemParser());
+            NTxResolutionContextImpl context = new NTxResolutionContextImpl(new NTxNode[]{root}, NElement.ofNull(), null, false, engine, documentCopy, null, null, null,
+                    null,null,
+                    null, engine.itemParser());
             DispatchCompileNodeVisitor dv = new DispatchCompileNodeVisitor(new CompileNodeVisitor() {
                 @Override
                 public void visitNode(NTxNode node, NTxResolutionContext context) {
@@ -518,7 +520,6 @@ public class NTxCompiler {
         NOptional<NTxNodeDef> dd = context.getNamedDef(uid);
         if (dd.isPresent()) {
             _process_call_node(dd.get(), c, context, visitor);
-            return;
         } else {
             NOptional<NTxFunction> t = context.getFunction(uid);
             if (t.isPresent()) {
@@ -639,7 +640,13 @@ public class NTxCompiler {
 
     private void _process_call_fct(NTxFunction t, CtrlNTxNodeCall c, NTxResolutionContext context, CompileNodeVisitor visitor) {
         NTxSource source = NTxUtils.sourceOf(c);
-        NElement result = t.invoke(new NTxFunctionArgsImpl(t.name(), c.getCallArgs(), c, context), context);
+        NElement result = t.invoke(
+                context.engine().createFunctionArgs(
+                        t.name(),
+                        c.getCallArgs().toArray(new NElement[0]),
+                        context
+                )
+        );
         if (result == null) {
             visitor.visitNode(new CtrlNTxNodeSimpleResult(source, NElement.ofNull()), context);
             return;
