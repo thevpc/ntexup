@@ -22,6 +22,9 @@ public class NtxGraphics3DImpl implements NtxGraphics3D {
     private final NTxLight3DImpl light3D = new NTxLight3DImpl();
     private NTxCamera3D camera = NTxCamera3DImpl.defaultCamera();
     private NTx3DMesh mesh = new DefaultNTx3DMesh();
+    private final boolean meshEnabled = false;
+    private final boolean frontFacingEnabled = false;
+    private final boolean frontFacingColouringEnabled = false;
     private final NTxRenderState3D state = new NTxRenderState3D() {
         @Override
         public NTxVector3D lightOrientation() {
@@ -88,7 +91,6 @@ public class NtxGraphics3DImpl implements NtxGraphics3D {
     private NtxElement3DPrimitive[] toPrimitives(NtxElement3D element3D) {
         NTx3DMesh m = mesh.configureElement(element3D);
         java.util.List<NtxElement3DPrimitive> result = new ArrayList<>();
-        boolean doMesh=false;
         for (NtxElement3DPrimitive p : getElement3DUIFactory().toPrimitives(element3D, state)) {
             switch (p.type()) {
                 case ARC:
@@ -99,51 +101,51 @@ public class NtxGraphics3DImpl implements NtxGraphics3D {
                 }
                 case POLYGON: {
                     NtxElement3DPolygon pp = (NtxElement3DPolygon) p;
-                    if (pp.isFill()) {
-                        NtxElement3DPolygon pp3 = new NtxElement3DPolygon(pp.getNodes(), true, false);
-                        pp3.copyStyle(pp);
-                        pp3.setLinePaint(null);
-                        pp3.setContourPaint(null);
-                        if(doMesh) {
+                    if (meshEnabled) {
+                        if (pp.isFill()) {
+                            NtxElement3DPolygon pp3 = new NtxElement3DPolygon(pp.getNodes(), true, false);
+                            pp3.copyStyle(pp);
+                            pp3.setLinePaint(null);
+                            pp3.setContourPaint(null);
                             m.triangulatePolygon(pp3, result);
-                        }else{
-                            result.add(pp3);
-                        }
-                        if (pp.isContour()) {
-                            NtxElement3DPolyline p4 = new NtxElement3DPolyline(pp.getNodes());
-                            p4.copyStyle(pp);
-                            result.add(p4);
+                            if (pp.isContour()) {
+                                java.util.List<NTxPoint3D> d = new ArrayList<>(Arrays.asList(pp.getNodes()));
+                                d.add(pp.getNodes()[0]);// close the loop
+                                NtxElement3DPolyline p4 = new NtxElement3DPolyline(d.toArray(new NTxPoint3D[0]));
+                                p4.copyStyle(pp);
+                                result.add(p4);
+                            }
+                        } else {
+                            result.add(pp);
                         }
                     } else {
-                        NtxElement3DPolyline p4 = new NtxElement3DPolyline(pp.getNodes());
-                        p4.copyStyle(pp);
-                        result.add(p4);
+                        result.add(pp);
                     }
                     break;
                 }
                 case TRIANGLE: {
                     NtxElement3DTriangle pp = (NtxElement3DTriangle) p;
-                    if (pp.isFill()) {
-                        NtxElement3DTriangle pp3 = new NtxElement3DTriangle(pp.getP1(), pp.getP2(), pp.getP3(), true, false);
-                        pp3.copyStyle(pp);
-                        if(doMesh) {
-                            m.refineTriangle(pp3, result);
-                        }else{
-                            result.add(pp3);
-                        }
-                        if (pp.isContour()) {
-                            NtxElement3DTriangle p4 = new NtxElement3DTriangle(pp.getP1(), pp.getP2(), pp.getP3(), false, true);
+                    if (meshEnabled) {
+                        if (pp.isFill()) {
+                            NtxElement3DTriangle pp3 = new NtxElement3DTriangle(pp.getP1(), pp.getP2(), pp.getP3(), true, false);
                             pp3.copyStyle(pp);
-                            result.add(p4);
+                            m.refineTriangle(pp3, result);
+                            if (pp.isContour()) {
+                                NtxElement3DTriangle p4 = new NtxElement3DTriangle(pp.getP1(), pp.getP2(), pp.getP3(), false, true);
+                                pp3.copyStyle(pp);
+                                result.add(p4);
+                            }
+                        } else {
+                            if (pp.isContour()) {
+                                result.add(pp);
+                            } else {
+                                NtxElement3DTriangle p4 = new NtxElement3DTriangle(pp.getP1(), pp.getP2(), pp.getP3(), false, true);
+                                p4.copyStyle(pp);
+                                result.add(p4);
+                            }
                         }
                     } else {
-                        if (pp.isContour()) {
-                            result.add(pp);
-                        } else {
-                            NtxElement3DTriangle p4 = new NtxElement3DTriangle(pp.getP1(), pp.getP2(), pp.getP3(), false, true);
-                            p4.copyStyle(pp);
-                            result.add(p4);
-                        }
+                        result.add(pp);
                     }
                     break;
                 }
@@ -172,11 +174,16 @@ public class NtxGraphics3DImpl implements NtxGraphics3D {
                     }).toArray(NTxPoint3D[]::new);
                     c.depth = Arrays.stream(newPoints)
                             .mapToDouble(p -> p.z)
-                            .average()
+                            .min()
                             .orElse(0);
                     return c;
                 })
-                .sorted(Comparator.comparingDouble(c -> c.depth))
+                .sorted(new Comparator<DrawCommand>() {
+                    @Override
+                    public int compare(DrawCommand t1, DrawCommand t2) {
+                        return Double.compare(t1.depth,t2.depth);
+                    }
+                })
                 .toArray(DrawCommand[]::new);
         for (DrawCommand cmd : commands) {
             switch (cmd.primitive.type()) {
@@ -283,27 +290,21 @@ public class NtxGraphics3DImpl implements NtxGraphics3D {
 
         // Dot product: > 0 means face points toward camera
         boolean isFrontFacing = worldNormal.dot(viewDir) > 0;
-
+        if (!frontFacingEnabled) {
+            isFrontFacing = true;
+        }
         double d = worldNormal.dot(getLight3D().orientation());
         Graphics2D g = graphics.graphics2D();
-        if (pr.isFill() && isFrontFacing) {
+        boolean fill = pr.isFill();
+        boolean contour = pr.isContour();
+        if (!fill && !contour) {
+            contour = true;
+        }
+        if (fill && isFrontFacing) {
             Paint oldPaint = g.getPaint();
             Composite oldComposite = g.getComposite();
-            if (pr.getLinePaint() != null) {
-                graphics.setPaint(pr.getLinePaint());
-            }
-            if (pr.getLineStroke() != null) {
-                graphics.setStroke(pr.getLineStroke());
-            }
             Paint bg = pr.getBackgroundPaint();
-            if (bg == null) {
-                bg = graphics.getColor();
-            }
-            if (bg instanceof Color) {
-                graphics.setColor(NTxColors.withB((Color) bg, Math.abs((float) d)));
-            } else {
-                graphics.setPaint(bg);
-            }
+            _graphicsSetPaint(bg,d);
             if (pr.getComposite() != null) {
                 graphics.setComposite(pr.getComposite());
             }
@@ -311,12 +312,11 @@ public class NtxGraphics3DImpl implements NtxGraphics3D {
             graphics.setPaint(oldPaint);
             graphics.setComposite(oldComposite);
         }
-        if (pr.isContour()) {
+        if (contour) {
             Paint oldPaint = g.getPaint();
             Stroke oldStroke = g.getStroke();
-            if (pr.getContourPaint() != null) {
-                graphics.setPaint(pr.getContourPaint());
-            }
+            Paint cc = NUtils.firstNonNull(pr.getLinePaint(), pr.getContourPaint(), Color.BLACK);
+            _graphicsSetPaint(cc);
             if (pr.getContourStroke() != null) {
                 graphics.setStroke(pr.getContourStroke());
             }
@@ -325,6 +325,29 @@ public class NtxGraphics3DImpl implements NtxGraphics3D {
             graphics.setStroke(oldStroke);
         }
         mesh = oldMesh;
+    }
+
+    private void _graphicsSetPaint(Paint bg) {
+        if (bg == null) {
+            return;
+        }
+        if (bg instanceof Color) {
+            graphics.setColor((Color) bg);
+        } else {
+            graphics.setPaint(bg);
+        }
+    }
+
+    private void _graphicsSetPaint(Paint bg, double d) {
+        if (bg instanceof Color) {
+            if(frontFacingColouringEnabled){
+                graphics.setColor(NTxColors.withB((Color) bg, Math.abs((float) d)));
+            }else{
+                graphics.setColor((Color) bg);
+            }
+        } else {
+            graphics.setPaint(bg);
+        }
     }
 
     private void draw3DElement3DPolyline(NtxElement3DPolyline pr, NTxPoint2D origin, DrawCommand cmd) {
@@ -379,7 +402,10 @@ public class NtxGraphics3DImpl implements NtxGraphics3D {
 
         // Dot product: > 0 means face points toward camera
         double dotProduct = worldNormal.dot(viewDir);
-        boolean isFrontFacing = true;//dotProduct > 0;
+        boolean isFrontFacing = dotProduct > 0;
+        if (!frontFacingEnabled) {
+            isFrontFacing = true;
+        }
         // SKIP ENTIRE TRIANGLE IF BACK-FACING
         // DEBUG: Print to see what's happening
 //        if (centroid.z < 0) { // Triangles below z=0
@@ -393,41 +419,27 @@ public class NtxGraphics3DImpl implements NtxGraphics3D {
         }
         double d = 1;//worldNormal.dot(getLight3D().orientation());
         Graphics2D g = graphics.graphics2D();
-        if (pr.isFill() && isFrontFacing) {
+        boolean contour = pr.isContour();
+        boolean fill = pr.isFill();
+        if (!contour && !fill) {
+            contour = true;
+        }
+        if (fill && isFrontFacing) {
             Paint oldPaint = g.getPaint();
             Composite oldComposite = g.getComposite();
-
-            if (pr.getLinePaint() != null) {
-                graphics.setPaint(pr.getLinePaint());
-            }
-            if (pr.getLineStroke() != null) {
-                graphics.setStroke(pr.getLineStroke());
-            }
-            Paint bg = pr.getBackgroundPaint();
-            if (bg == null) {
-                bg = graphics.getColor();
-            }
-            if (bg instanceof Color) {
-                graphics.setColor(NTxColors.withB((Color) bg,
-                        Math.abs((float) d)
-                ));
-            } else {
-                graphics.setPaint(bg);
-            }
+            _graphicsSetPaint(NUtils.firstNonNull(pr.getLinePaint(), pr.getContourPaint()));
+            _graphicsSetPaint(pr.getBackgroundPaint(), d);
             if (pr.getComposite() != null) {
                 graphics.setComposite(pr.getComposite());
             }
             graphics.fillPolygon(xx, yy, xx.length);
             graphics.setPaint(oldPaint);
             graphics.setComposite(oldComposite);
-
         }
-        if (pr.isContour()) {
+        if (contour) {
             Paint oldPaint = g.getPaint();
             Stroke oldStroke = g.getStroke();
-            if (pr.getContourPaint() != null) {
-                graphics.setPaint(pr.getContourPaint());
-            }
+            _graphicsSetPaint(pr.getContourPaint());
             if (pr.getContourStroke() != null) {
                 graphics.setStroke(pr.getContourStroke());
             }
