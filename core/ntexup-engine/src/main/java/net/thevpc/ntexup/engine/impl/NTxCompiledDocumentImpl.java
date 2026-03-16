@@ -14,12 +14,17 @@ import net.thevpc.ntexup.api.eval.NTxResolutionContext;
 import net.thevpc.ntexup.api.eval.NTxVar;
 import net.thevpc.ntexup.api.extension.NTxFunction;
 import net.thevpc.ntexup.api.source.NTxSource;
+import net.thevpc.nuts.io.NClosable;
 import net.thevpc.nuts.text.NMsg;
 import net.thevpc.nuts.util.NCollections;
+import net.thevpc.nuts.util.NLiteral;
+import net.thevpc.nuts.util.NOptional;
 
 import java.util.*;
 
 public class NTxCompiledDocumentImpl implements NTxCompiledDocument {
+    public static final int DEFAULT_MAX_PAGE_COUNT = 1024 * 64;
+    public static final int DEFAULT_WARN_PAGE_COUNT = 1024;
     private NTxDocument rawDocument;
     private NTxDocument document;
     private NTxEngine engine;
@@ -27,10 +32,29 @@ public class NTxCompiledDocumentImpl implements NTxCompiledDocument {
     private Throwable currentThrowable;
     private Deque<NTxNodeAndContext> unparsed = new ArrayDeque<>();
     private List<NTxNodeAndContext> trailingInstrs = new ArrayList<>();
+    private int warnPageCount =DEFAULT_WARN_PAGE_COUNT;
+    private int maxPageCount = DEFAULT_MAX_PAGE_COUNT;
+    private boolean maxExceeded;
 
     public NTxCompiledDocumentImpl(NTxDocument rawDocument, NTxEngine engine) {
         this.rawDocument = rawDocument;
         this.engine = engine;
+        int _warnPageCount=this.engine.getEnv("warnPageCount").flatMap(x->NLiteral.of(x).asInt()).orElse(DEFAULT_WARN_PAGE_COUNT);
+        int _maxPageCount=this.engine.getEnv("maxPageCount").flatMap(x->NLiteral.of(x).asInt()).orElse(DEFAULT_MAX_PAGE_COUNT);
+        if(_maxPageCount<_warnPageCount){
+            _maxPageCount=_warnPageCount;
+        }
+        if(_warnPageCount<=0){
+            _warnPageCount= DEFAULT_WARN_PAGE_COUNT;
+        }
+        if(_maxPageCount<=0){
+            _maxPageCount= DEFAULT_MAX_PAGE_COUNT;
+        }
+        if(_maxPageCount<_warnPageCount){
+            _maxPageCount=_warnPageCount;
+        }
+        this.maxPageCount =_maxPageCount;
+        this.warnPageCount =_warnPageCount;
     }
 
     @Override
@@ -89,6 +113,27 @@ public class NTxCompiledDocumentImpl implements NTxCompiledDocument {
         return NCollections.list(pagesIterator());
     }
 
+    public NOptional<NTxCompiledPage> page(int index) {
+        if(index<0){
+            return NOptional.ofNamedEmpty("page "+index);
+        }
+        // check cache first before iterating
+        if (index < compiledPages.size()) {
+            return NOptional.of(compiledPages.get(index));
+        }
+        return NClosable.callWith(pagesIterator(),it->{
+            int currIndex = 0;
+            while (it.hasNext()) {
+                NTxCompiledPage o = it.next();
+                if (index == currIndex) {
+                    return NOptional.of(o);
+                }
+                currIndex++;
+            }
+            return NOptional.ofNamedEmpty("page " + index);
+        });
+    }
+
     @Override
     public Iterator<NTxCompiledPage> pagesIterator() {
         return new Iterator<NTxCompiledPage>() {
@@ -135,6 +180,9 @@ public class NTxCompiledDocumentImpl implements NTxCompiledDocument {
     }
 
     private boolean readMore() {
+        if(maxExceeded){
+            return false;
+        }
         List<NTxNodeAndContext> pendingInstr = new ArrayList<>();
         PendingAutoPage pendingAutoPage = null;
         MyNTxPageCompileListener onCompile = new MyNTxPageCompileListener();
@@ -146,11 +194,11 @@ public class NTxCompiledDocumentImpl implements NTxCompiledDocument {
             switch (part.node.type()) {
                 case NTxNodeType.PAGE: {
                     if (pendingAutoPage != null) {
-                        compiledPages.add(new NTxCompiledPageImpl(pendingAutoPage.newPage, this, compiledPages.size(), pendingAutoPage.context, pendingInstr, onCompile));
+                        safeAddPage(new NTxCompiledPageImpl(pendingAutoPage.newPage, this, compiledPages.size(), pendingAutoPage.context, pendingInstr, onCompile));
                         pendingInstr.clear();
                         pendingAutoPage = null;
                     }
-                    compiledPages.add(new NTxCompiledPageImpl(part.node, this, compiledPages.size(), part.context, pendingInstr, onCompile));
+                    safeAddPage(new NTxCompiledPageImpl(part.node, this, compiledPages.size(), part.context, pendingInstr, onCompile));
                     pendingInstr.clear();
                     return true;
                 }
@@ -158,21 +206,21 @@ public class NTxCompiledDocumentImpl implements NTxCompiledDocument {
                 case NTxNodeType.CTRL_ASSIGN_DEFAULT:
                 case NTxNodeType.CTRL_DEFINE: {
                     if (pendingAutoPage != null) {
-                        compiledPages.add(new NTxCompiledPageImpl(pendingAutoPage.newPage, this, compiledPages.size(), pendingAutoPage.context, pendingInstr, onCompile));
+                        safeAddPage(new NTxCompiledPageImpl(pendingAutoPage.newPage, this, compiledPages.size(), pendingAutoPage.context, pendingInstr, onCompile));
                         pendingInstr.clear();
                         pendingAutoPage = null;
                     }
-                    part.run(compiledDocument(),engine);
+                    part.run(compiledDocument(),engine,this,null,false);
                     pendingInstr.add(part);
                     break;
                 }
                 case NTxNodeType.PAGE_GROUP: {
                     if (pendingAutoPage != null) {
-                        compiledPages.add(new NTxCompiledPageImpl(pendingAutoPage.newPage, this, compiledPages.size(), pendingAutoPage.context, pendingInstr, onCompile));
+                        safeAddPage(new NTxCompiledPageImpl(pendingAutoPage.newPage, this, compiledPages.size(), pendingAutoPage.context, pendingInstr, onCompile));
                         pendingInstr.clear();
                         pendingAutoPage = null;
                     }
-                    NTxResolutionContext c = engine.newContext(part.node, document, part.context);
+                    NTxResolutionContext c = engine.newContext(part.node, document, this,null,part.context);
                     List<NTxNode> children = part.node.children();
                     for (int i = children.size() - 1; i >= 0; i--) {
                         unparsed.push(new NTxNodeAndContext(children.get(i), c));
@@ -180,7 +228,7 @@ public class NTxCompiledDocumentImpl implements NTxCompiledDocument {
                     break;
                 }
                 case NTxNodeType.BLOCK: {
-                    NTxResolutionContext c = engine.newContext(part.node, document, part.context);
+                    NTxResolutionContext c = engine.newContext(part.node, document,this,null, part.context);
                     List<NTxNode> children = part.node.children();
                     for (int i = children.size() - 1; i >= 0; i--) {
                         unparsed.push(new NTxNodeAndContext(children.get(i), c));
@@ -201,7 +249,7 @@ public class NTxCompiledDocumentImpl implements NTxCompiledDocument {
                             pendingAutoPage = new PendingAutoPage(part.context);
                             pendingAutoPage.addChild(part);
                         } else if (pendingAutoPage.context != part.context) {
-                            compiledPages.add(new NTxCompiledPageImpl(pendingAutoPage.newPage, this, compiledPages.size(), pendingAutoPage.context, pendingInstr, onCompile));
+                            safeAddPage(new NTxCompiledPageImpl(pendingAutoPage.newPage, this, compiledPages.size(), pendingAutoPage.context, pendingInstr, onCompile));
                             pendingInstr.clear();
 
                             pendingAutoPage = new PendingAutoPage(part.context);
@@ -254,7 +302,7 @@ public class NTxCompiledDocumentImpl implements NTxCompiledDocument {
                                     pendingAutoPage = new PendingAutoPage(pp.context);
                                     pendingAutoPage.addChild(pp);
                                 } else if (pendingAutoPage.context != pp.context) {
-                                    compiledPages.add(new NTxCompiledPageImpl(pendingAutoPage.newPage, this, compiledPages.size(), pendingAutoPage.context, pendingInstr, onCompile));
+                                    safeAddPage(new NTxCompiledPageImpl(pendingAutoPage.newPage, this, compiledPages.size(), pendingAutoPage.context, pendingInstr, onCompile));
                                     pendingInstr.clear();
 
                                     pendingAutoPage = new PendingAutoPage(pp.context);
@@ -276,7 +324,7 @@ public class NTxCompiledDocumentImpl implements NTxCompiledDocument {
                         pendingAutoPage = new PendingAutoPage(part.context);
                         pendingAutoPage.addChild(part);
                     } else if (pendingAutoPage.context != part.context) {
-                        compiledPages.add(new NTxCompiledPageImpl(pendingAutoPage.newPage, this, compiledPages.size(), pendingAutoPage.context, pendingInstr, onCompile));
+                        safeAddPage(new NTxCompiledPageImpl(pendingAutoPage.newPage, this, compiledPages.size(), pendingAutoPage.context, pendingInstr, onCompile));
                         pendingInstr.clear();
 
                         pendingAutoPage = new PendingAutoPage(part.context);
@@ -289,13 +337,27 @@ public class NTxCompiledDocumentImpl implements NTxCompiledDocument {
             }
         }
         if (pendingAutoPage != null) {
-            compiledPages.add(new NTxCompiledPageImpl(pendingAutoPage.newPage, this, compiledPages.size(), pendingAutoPage.context, pendingInstr, onCompile));
+            safeAddPage(new NTxCompiledPageImpl(pendingAutoPage.newPage, this, compiledPages.size(), pendingAutoPage.context, pendingInstr, onCompile));
             pendingInstr.clear();
             pendingAutoPage = null;
             return true;
         }
         trailingInstrs.addAll(pendingInstr);
         return false;
+    }
+    private boolean safeAddPage(NTxCompiledPageImpl a ){
+        compiledPages.add(a);
+// soft limit — warn but continue
+        if (compiledPages.size() > warnPageCount) {
+            this.engine.log().log(NMsg.ofC("page count %d exceeds warning threshold", compiledPages.size()).asWarning());
+        }
+// hard limit — stop generating
+        if (compiledPages.size() > maxPageCount) {
+            this.engine.log().log(NMsg.ofC("page count %d exceeds maximum, stopping", compiledPages.size()).asError());
+            maxExceeded=true;
+            return false; // in readMore()
+        }
+        return true;
     }
 
     public void onBeforeCompileImpl(NTxCompiledPage a) {
@@ -319,7 +381,7 @@ public class NTxCompiledDocumentImpl implements NTxCompiledDocument {
             return;
         }
         for (NTxNodeAndContext trailingInstr : trailingInstrs) {
-            trailingInstr.run(document,engine);
+            trailingInstr.run(document,engine,this,a,false);
         }
     }
 
