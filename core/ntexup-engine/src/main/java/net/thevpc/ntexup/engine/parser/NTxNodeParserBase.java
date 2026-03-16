@@ -232,6 +232,7 @@ public abstract class NTxNodeParserBase implements NTxNodeParser {
                 if (!processArgumentAsCommonStyleProperty(info)) {
                     NElement skipped = info.peek();
                     engine().log().log(NMsg.ofC("[%s] invalid argument %s", id,
+
                                     NTxUtils.snippet(skipped)
                             ).asSevere(), info.source()
                     );
@@ -257,6 +258,7 @@ public abstract class NTxNodeParserBase implements NTxNodeParser {
             case NAMED_ARRAY: {
                 NTxNode p = context.documentFactory().of(resolveEffectiveId(id));
                 p.setSource(context.source());
+                p.setRaw(element);
                 NTxResolutionContext context2 = context.resolveNode(p);
                 onStartParsingItem(id, p, element, context);
                 NTxParseHelper.fillAnnotations(element, p);
