@@ -12,12 +12,14 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 import net.thevpc.ntexup.api.document.NTxDocumentFactory;
 import net.thevpc.ntexup.api.document.NTxDocument;
 import net.thevpc.ntexup.api.document.NTxDocumentLoadingResult;
 import net.thevpc.ntexup.api.document.style.NTxProp;
 import net.thevpc.ntexup.api.document.style.NTxStyleRule;
+import net.thevpc.ntexup.api.eval.NTxFunctionCallContext;
 import net.thevpc.ntexup.api.eval.NTxResolutionContext;
 import net.thevpc.ntexup.api.document.node.NTxItem;
 import net.thevpc.ntexup.api.document.node.NTxNode;
@@ -91,7 +93,7 @@ public interface NTxEngine {
 
     NOptional<NTxDocumentRenderer> newRenderer(String type);
 
-    NTxResolutionContext newContext(NTxNode node, NTxDocument document, NTxResolutionContext parentContext);
+    NTxResolutionContext newContext(NTxNode node, NTxDocument document, NTxCompiledDocument compiledDocument,NTxCompiledPage compiledPage, NTxResolutionContext parentContext);
 
     boolean validateNode(NTxNode node);
 
@@ -136,6 +138,7 @@ public interface NTxEngine {
     List<NTxTextRendererFlavor> textRendererFlavors();
 
     BufferedImage renderImage(NTxCompiledPage page, NTxNodeRendererConfig config);
+
     void renderPage(NTxCompiledPage page, NTxNodeRendererConfig config,
                     Graphics2D g,
                     ImageObserver imageObserver, Runnable repainter
@@ -155,11 +158,48 @@ public interface NTxEngine {
 
     NTxDocumentLoadingResult compileDocument(NTxDocument document);
 
-    void compileNode(NTxNode node, NTxDocument document, NTxResolutionContext context, CompileNodeVisitor visitor);
+    void compileNode(NTxNode node, NTxDocument document, NTxCompiledDocument compiledDocument,NTxCompiledPage compiledPage,NTxResolutionContext context, CompileNodeVisitor visitor);
 
     void compileNode(NTxResolutionContext ctx, CompileNodeVisitor visitor);
 
     void defaultCompileNodeProperties(NTxNode node, NTxResolutionContext context);
 
     void defaultCompileNodeChildren(NTxNode node, NTxResolutionContext context);
+
+    /**
+     * Resolves a node within the document tree using an <b>Ancestral-First Radial Search</b>.
+     * <p>
+     * This resolution strategy is designed for document-centric architectures (NTexUp)
+     * where visual and hierarchical proximity dictates logical relationships. It prioritizes
+     * the direct lineage of the node before expanding to siblings and distant branches.
+     * </p>
+     * * <b>The Search Protocol:</b>
+     * <ol>
+     * <li><b>Phase 1: Ancestral Spine (The "Climb"):</b> Traverses vertically from the
+     * {@code startNode} to the root. Only nodes on this direct path are checked.
+     * This facilitates "Property Inheritance," where a parent can provide a
+     * configuration override for its entire subtree.</li>
+     * <li><b>Phase 2: Radial Expansion (The "Ripple"):</b> If the spine yields no results,
+     * the search re-initiates from the {@code startNode} and moves upward. At each
+     * level, it performs a Deep-Scan (DFS) of all sibling subtrees. Branches already
+     * processed in previous steps are skipped to ensure each node is visited only once.</li>
+     * </ol>
+     * * <b>Performance & Soundness:</b>
+     * <ul>
+     * <li><b>Complexity:</b> O(N), where N is the total number of nodes in the document tree.</li>
+     * <li><b>Determinism:</b> The search is deterministic and respects "Scoped Shadowing,"
+     * ensuring that local definitions in the same branch are found before global ones
+     * of the same name.</li>
+     * <li><b>Fail-Never:</b> Returns a {@link NOptional#ofNamedEmpty(String)} if no match
+     * is found, allowing the compiler to continue execution for logging or UI hints.</li>
+     * </ul>
+     * * @param propertyName        The property key to evaluate (e.g., "name" or "id").
+     *
+     * @param propertyValueFilter A predicate to validate the property value (e.g., matching a specific ID).
+     * @return An {@link NOptional} containing the first matching {@link NTxNode},
+     * or a named empty optional if the search is exhausted.
+     */
+    NOptional<NTxNode> findNodeByProperty(String propertyName, Predicate<NElement> propertyValueFilter, NTxResolutionContext context);
+
+    NTxFunctionCallContext createFunctionArgs(String functionName, NElement[] callArgs, NTxResolutionContext context);
 }
