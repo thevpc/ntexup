@@ -3,6 +3,8 @@ package net.thevpc.ntexup.api.eval;
 import net.thevpc.ntexup.api.document.NTxDocumentFactory;
 import net.thevpc.ntexup.api.document.node.NTxNode;
 import net.thevpc.ntexup.api.document.node.NTxNodeDef;
+import net.thevpc.ntexup.api.engine.NTxCompiledDocument;
+import net.thevpc.ntexup.api.engine.NTxCompiledPage;
 import net.thevpc.ntexup.api.engine.NTxEngine;
 import net.thevpc.ntexup.api.extension.NTxFunction;
 import net.thevpc.ntexup.api.log.NTxLogger;
@@ -14,6 +16,7 @@ import net.thevpc.nuts.io.NPath;
 import net.thevpc.nuts.util.NOptional;
 
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 public interface NTxResolutionContext {
     String uid();
@@ -69,6 +72,10 @@ public interface NTxResolutionContext {
     NTxNodeDef def();
 
     boolean inPage();
+
+    NTxCompiledPage compiledPage();
+
+    NTxCompiledDocument compiledDocument();
 
     NTxResolutionContext withParentOnly(NTxNode parent);
 
@@ -137,4 +144,6 @@ public interface NTxResolutionContext {
     NTxResolutionContext parentContext();
 
     NTxResolutionContext popContext();
+
+    NOptional<NTxNode> findNodeByProperty(String propertyName, Predicate<NElement> propertyValueFilter);
 }
