@@ -17,19 +17,19 @@ import java.util.List;
 
 public class NTxCompiledPageImpl implements NTxCompiledPage {
 
-    private List<NTxNodeAndContext> prefixInstructions;
-    private NTxCompiledDocument document;
-    private NTxNode rawPage;
+    private final List<NTxNodeAndContext> prefixInstructions;
+    private final NTxCompiledDocument compiledDocument;
+    private final NTxNode rawPage;
     private volatile NTxNode compiledPage;
-    private NTxResolutionContext parentContext;
+    private final NTxResolutionContext parentContext;
     private NTxResolutionContext pageContext;
-    private int index;
-    private NTxPageCompileListener onCompile;
+    private final int index;
+    private final NTxPageCompileListener onCompile;
     private boolean prefixExecuted;
 
-    public NTxCompiledPageImpl(NTxNode rawPage, NTxCompiledDocument document, int index, NTxResolutionContext parentContext, List<NTxNodeAndContext> prefixInstructions, NTxPageCompileListener onCompile) {
+    public NTxCompiledPageImpl(NTxNode rawPage, NTxCompiledDocument compiledDocument, int index, NTxResolutionContext parentContext, List<NTxNodeAndContext> prefixInstructions, NTxPageCompileListener onCompile) {
         this.rawPage = rawPage;
-        this.document = document;
+        this.compiledDocument = compiledDocument;
         this.index = index;
         this.parentContext = parentContext;
         this.prefixInstructions = new ArrayList<>(prefixInstructions);
@@ -43,18 +43,18 @@ public class NTxCompiledPageImpl implements NTxCompiledPage {
 
     @Override
     public NTxCompiledDocument document() {
-        return document;
+        return compiledDocument;
     }
 
     public void initialize() {
         if (!prefixExecuted) {
             NChronometer c = NChronometer.startNow();
             for (NTxNodeAndContext outerInstruction : prefixInstructions) {
-                outerInstruction.run(document.compiledDocument(), document().engine());
+                outerInstruction.run(compiledDocument.compiledDocument(), document().engine(), compiledDocument, this, true);
             }
             c.stop();
             prefixExecuted = true;
-            document.engine().log().log(NMsg.ofC("page %s initialized in %s", (index + 1), c), NTxUtils.sourceOf(this.rawPage));
+            compiledDocument.engine().log().log(NMsg.ofC("page %s initialized in %s", (index + 1), c), NTxUtils.sourceOf(this.rawPage));
         }
     }
 
@@ -66,7 +66,7 @@ public class NTxCompiledPageImpl implements NTxCompiledPage {
                     onCompile.onBeforeCompile(this);
                     initialize();
                     NChronometer c = NChronometer.startNow();
-                    pageContext = document.engine().newContext(this.rawPage, document.compiledDocument(), parentContext).setInPage(true);
+                    pageContext = compiledDocument.engine().newContext(this.rawPage, compiledDocument.compiledDocument(), compiledDocument, this, parentContext).setInPage(true);
 
                     NTxNode o = DefaultNTxNode.ofBlock();
                     o.setParent(this.rawPage.parent());
@@ -77,7 +77,7 @@ public class NTxCompiledPageImpl implements NTxCompiledPage {
                     });
                     this.compiledPage = NOptional.ofSingleton(o.children()).get();
                     c.stop();
-                    document.engine().log().log(NMsg.ofC("page %s compiled in %s", (index + 1), c), NTxUtils.sourceOf(this.rawPage));
+                    compiledDocument.engine().log().log(NMsg.ofC("page %s compiled in %s", (index + 1), c), NTxUtils.sourceOf(this.rawPage));
                     onCompile.onAfterCompile(this);
                 }
             }
