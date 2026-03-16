@@ -16,14 +16,14 @@ public class NTxFunctionInvertColor implements NTxFunction {
     }
 
     @Override
-    public NElement invoke(NTxFunctionArgs args, NTxResolutionContext context) {
+    public NElement invoke(NTxFunctionCallContext args) {
         if (args.size() == 0) {
             return NElement.ofNull();
         }
         if (args.size() > 1) {
-            context.log().log(NMsg.ofC("%s: expected 1 argument, got %s",NMsg.ofStyledKeyword(name()), args.size()));
+            args.scopedContext().log().log(NMsg.ofC("%s: expected 1 argument, got %s",NMsg.ofStyledKeyword(name()), args.size()));
         }
-        Color c = NTxValue.of(args.eval(0)).asColor().get();
+        Color c = NTxValue.of(args.evalArg(0)).asColor().get();
         if(c==null){
             return NElement.ofNull();
         }
