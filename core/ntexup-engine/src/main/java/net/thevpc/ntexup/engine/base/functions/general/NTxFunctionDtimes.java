@@ -5,9 +5,6 @@ import net.thevpc.ntexup.api.extension.NTxFunction;
 import net.thevpc.ntexup.api.util.NTxNumberUtils;
 import net.thevpc.nuts.elem.NElement;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class NTxFunctionDtimes implements NTxFunction {
     @Override
     public String name() {
@@ -15,7 +12,8 @@ public class NTxFunctionDtimes implements NTxFunction {
     }
 
     @Override
-    public NElement invoke(NTxFunctionArgs args, NTxResolutionContext context) {
+    public NElement invoke(NTxFunctionCallContext args) {
+        NTxResolutionContext context = args.scopedContext();
         NTxFunctionArg[] argsed = args.args();
         if(argsed.length==0){
             return NElement.ofArray();
