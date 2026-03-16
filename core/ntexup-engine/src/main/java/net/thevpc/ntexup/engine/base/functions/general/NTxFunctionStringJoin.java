@@ -1,8 +1,7 @@
 package net.thevpc.ntexup.engine.base.functions.general;
 
-import net.thevpc.ntexup.api.eval.NTxResolutionContext;
 import net.thevpc.ntexup.api.eval.NTxFunctionArg;
-import net.thevpc.ntexup.api.eval.NTxFunctionArgs;
+import net.thevpc.ntexup.api.eval.NTxFunctionCallContext;
 import net.thevpc.ntexup.api.extension.NTxFunction;
 import net.thevpc.nuts.elem.NElement;
 import net.thevpc.nuts.util.NBlankable;
@@ -17,7 +16,7 @@ public class NTxFunctionStringJoin implements NTxFunction {
     }
 
     @Override
-    public NElement invoke(NTxFunctionArgs args, NTxResolutionContext context) {
+    public NElement invoke(NTxFunctionCallContext args) {
         List<String> all = new ArrayList<>();
         NTxFunctionArg[] argsed = args.args();
         String sep="";
