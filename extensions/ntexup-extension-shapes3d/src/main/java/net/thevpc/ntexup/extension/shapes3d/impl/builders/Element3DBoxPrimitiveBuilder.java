@@ -176,7 +176,7 @@ public class Element3DBoxPrimitiveBuilder implements NTxElement3DRenderer, NTxNo
             for (int j = 0; j < points.length; j++) {
                 points[j] = vertices[surface[j]];
             }
-            NtxElement3DPolygon tt = new NtxElement3DPolygon(points, true, false);
+            NtxElement3DPolygon tt = new NtxElement3DPolygon(points, true, true);
             NTx3DUtils.copyProps(e, tt, "face" + (i + 1));
             NTx3DUtils.copyNonNullProps(face, tt);
             elements.add(tt);
