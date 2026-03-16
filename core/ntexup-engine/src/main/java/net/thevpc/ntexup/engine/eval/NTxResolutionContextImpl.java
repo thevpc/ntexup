@@ -4,6 +4,8 @@ import net.thevpc.ntexup.api.document.NTxDocument;
 import net.thevpc.ntexup.api.document.NTxDocumentFactory;
 import net.thevpc.ntexup.api.document.node.NTxNode;
 import net.thevpc.ntexup.api.document.node.NTxNodeDef;
+import net.thevpc.ntexup.api.engine.NTxCompiledDocument;
+import net.thevpc.ntexup.api.engine.NTxCompiledPage;
 import net.thevpc.ntexup.api.engine.NTxEngine;
 import net.thevpc.ntexup.api.eval.NTxResolutionContext;
 import net.thevpc.ntexup.api.eval.NTxVar;
@@ -21,9 +23,10 @@ import net.thevpc.nuts.util.*;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 public class NTxResolutionContextImpl implements NTxResolutionContext {
-    protected static AtomicInteger ID=new AtomicInteger();
+    protected static AtomicInteger ID = new AtomicInteger();
     protected String uid;
     protected NElement element;
     protected NTxNode node;
@@ -39,9 +42,14 @@ public class NTxResolutionContextImpl implements NTxResolutionContext {
     protected Map<String, NTxNodeDef> definitions = new LinkedHashMap<>();
     protected Map<String, NTxFunction> functions = new LinkedHashMap<>();
     protected NTxItemParser itemParser;
+    protected NTxCompiledDocument compiledDocument;
+    protected NTxCompiledPage compiledPage;
 
-    public NTxResolutionContextImpl(NTxNode[] path, NElement element, NTxNodeDef def, boolean isInPage, NTxEngine engine, NTxDocument document, Map<String, NTxVar> vars, Map<String, NTxNodeDef> definitions, Map<String, NTxFunction> functions, NTxResolutionContext parentContext,NTxItemParser itemParser) {
-        this.uid = ((parentContext!=null)?(parentContext.uid()+"/"):"")+String.valueOf(ID.incrementAndGet());
+    public NTxResolutionContextImpl(NTxNode[] path, NElement element, NTxNodeDef def, boolean isInPage, NTxEngine engine, NTxDocument document, Map<String, NTxVar> vars, Map<String, NTxNodeDef> definitions, Map<String, NTxFunction> functions,
+                                    NTxCompiledDocument compiledDocument,
+                                    NTxCompiledPage compiledPage,
+                                    NTxResolutionContext parentContext, NTxItemParser itemParser) {
+        this.uid = ((parentContext != null) ? (parentContext.uid() + "/") : "") + ID.incrementAndGet();
         this.path = Arrays.copyOf(path, path.length);
         this.node = path[path.length - 1];
         this.parent = (path.length - 2 >= 0) ? path[path.length - 2] : null;
@@ -50,6 +58,8 @@ public class NTxResolutionContextImpl implements NTxResolutionContext {
         this.isInPage = isInPage;
         this.engine = engine;
         this.document = document;
+        this.compiledPage = compiledPage;
+        this.compiledDocument = compiledDocument;
 
         if (parentContext != null) {
             this.vars.putAll(((NTxResolutionContextImpl) parentContext).getVars());
@@ -76,19 +86,33 @@ public class NTxResolutionContextImpl implements NTxResolutionContext {
         this.itemParser = itemParser;
     }
 
+    @Override
+    public NTxCompiledPage compiledPage() {
+        return compiledPage;
+    }
+
+    @Override
+    public NTxCompiledDocument compiledDocument() {
+        return compiledDocument;
+    }
+
+
     public String uid() {
         return uid;
     }
 
-    protected NTxResolutionContext copyAs(NTxNode[] path, NElement element, NTxNodeDef def, boolean isInPage, NTxEngine engine, NTxDocument document, Map<String, NTxVar> vars, Map<String, NTxNodeDef> definitions, Map<String, NTxFunction> functions, NTxResolutionContext parentContext,NTxItemParser nodeParserFactory) {
-        return new NTxResolutionContextImpl(path, element, def, isInPage, engine, document, vars, definitions, functions, parentContext,nodeParserFactory);
+    protected NTxResolutionContext copyAs(NTxNode[] path, NElement element, NTxNodeDef def, boolean isInPage, NTxEngine engine, NTxDocument document, Map<String, NTxVar> vars, Map<String, NTxNodeDef> definitions, Map<String, NTxFunction> functions,
+                                          NTxCompiledDocument compiledDocument,
+                                          NTxCompiledPage compiledPage,
+                                          NTxResolutionContext parentContext, NTxItemParser nodeParserFactory) {
+        return new NTxResolutionContextImpl(path, element, def, isInPage, engine, document, vars, definitions, functions, compiledDocument, compiledPage, parentContext, nodeParserFactory);
     }
 
     public NTxItemParser itemParser() {
-        if(itemParser !=null){
+        if (itemParser != null) {
             return itemParser;
         }
-        if(parentContext!=null){
+        if (parentContext != null) {
             return parentContext.itemParser();
         }
         return null;
@@ -162,7 +186,7 @@ public class NTxResolutionContextImpl implements NTxResolutionContext {
 
     @Override
     public NTxResolutionContext copy() {
-        return copyAs(path, element, def, isInPage, engine, document, vars, definitions, functions, parentContext, itemParser);
+        return copyAs(path, element, def, isInPage, engine, document, vars, definitions, functions, compiledDocument,compiledPage, parentContext, itemParser);
     }
 
     @Override
@@ -272,7 +296,7 @@ public class NTxResolutionContextImpl implements NTxResolutionContext {
         if (this.isInPage == isInPage) {
             return this;
         }
-        return copyAs(path, element, def, isInPage, engine, document, vars, definitions, functions, parentContext, itemParser);
+        return copyAs(path, element, def, isInPage, engine, document, vars, definitions, functions, compiledDocument,compiledPage, parentContext, itemParser);
     }
 
     @Override
@@ -282,7 +306,7 @@ public class NTxResolutionContextImpl implements NTxResolutionContext {
         }
         List<NTxNode> all = new ArrayList<>(Arrays.asList(path));
         all.add(NAssert.requireNamedNonNull(parent, "parent"));
-        return copyAs(all.toArray(new NTxNode[0]), element, null, isInPage, engine, document, vars, definitions, functions, parentContext, itemParser);
+        return copyAs(all.toArray(new NTxNode[0]), element, null, isInPage, engine, document, vars, definitions, functions, compiledDocument,compiledPage, parentContext, itemParser);
     }
 
     @Override
@@ -290,7 +314,7 @@ public class NTxResolutionContextImpl implements NTxResolutionContext {
         if (def == null) {
             return this;
         }
-        return copyAs(path, element, null, isInPage, engine, document, vars, definitions, functions, parentContext, itemParser);
+        return copyAs(path, element, null, isInPage, engine, document, vars, definitions, functions, compiledDocument,compiledPage, parentContext, itemParser);
     }
 
     @Override
@@ -304,7 +328,7 @@ public class NTxResolutionContextImpl implements NTxResolutionContext {
         if (def == this.def) {
             return this;
         }
-        return copyAs(path, element, def, isInPage, engine, document, vars, definitions, functions, parentContext, itemParser);
+        return copyAs(path, element, def, isInPage, engine, document, vars, definitions, functions, compiledDocument,compiledPage, parentContext, itemParser);
     }
 
     @Override
@@ -338,7 +362,7 @@ public class NTxResolutionContextImpl implements NTxResolutionContext {
         } else {
             vars2.put(name, value);
         }
-        return copyAs(path, element, def, isInPage, engine, document, vars2, definitions, functions, parentContext, itemParser);
+        return copyAs(path, element, def, isInPage, engine, document, vars2, definitions, functions, compiledDocument,compiledPage, parentContext, itemParser);
     }
 
     @Override
@@ -374,7 +398,7 @@ public class NTxResolutionContextImpl implements NTxResolutionContext {
         }
         Map<String, NTxNodeDef> def2 = new LinkedHashMap<>(definitions);
         def2.remove(name);
-        return copyAs(path, element, def, isInPage, engine, document, vars, def2, functions, parentContext, itemParser);
+        return copyAs(path, element, def, isInPage, engine, document, vars, def2, functions, compiledDocument,compiledPage, parentContext, itemParser);
     }
 
     @Override
@@ -420,7 +444,7 @@ public class NTxResolutionContextImpl implements NTxResolutionContext {
         } else {
             def2.put(value.name(), value);
         }
-        return copyAs(path, element, def, isInPage, engine, document, vars, def2, functions, parentContext, itemParser);
+        return copyAs(path, element, def, isInPage, engine, document, vars, def2, functions, compiledDocument,compiledPage, parentContext, itemParser);
     }
 
     @Override
@@ -430,8 +454,9 @@ public class NTxResolutionContextImpl implements NTxResolutionContext {
         }
         Map<String, NTxFunction> def2 = new LinkedHashMap<>(functions);
         def2.remove(name);
-        return copyAs(path, element, def, isInPage, engine, document, vars, definitions, def2, parentContext, itemParser);
+        return copyAs(path, element, def, isInPage, engine, document, vars, definitions, def2, compiledDocument,compiledPage, parentContext, itemParser);
     }
+
 
     @Override
     public NTxResolutionContext removeFunction(String name) {
@@ -487,7 +512,7 @@ public class NTxResolutionContextImpl implements NTxResolutionContext {
         } else {
             def2.put(value.name(), value);
         }
-        return copyAs(path, element, def, isInPage, engine, document, vars, definitions, def2, parentContext, itemParser);
+        return copyAs(path, element, def, isInPage, engine, document, vars, definitions, def2, compiledDocument,compiledPage, parentContext, itemParser);
     }
 
     @Override
@@ -535,17 +560,22 @@ public class NTxResolutionContextImpl implements NTxResolutionContext {
 
     @Override
     public NTxResolutionContext pushContext() {
-        return copyAs(path, element, def, isInPage, engine, document, vars, definitions, functions, this, itemParser);
+        return copyAs(path, element, def, isInPage, engine, document, vars, definitions, functions, compiledDocument,compiledPage,this, itemParser);
     }
 
     @Override
     public NTxResolutionContext withItemParser(NTxItemParser itemParser) {
-        return copyAs(path, element, def, isInPage, engine, document, vars, definitions, functions, this, itemParser);
+        return copyAs(path, element, def, isInPage, engine, document, vars, definitions, functions, compiledDocument,compiledPage, this, itemParser);
     }
 
     @Override
     public NTxResolutionContext popContext() {
         return parentContext;
+    }
+
+    @Override
+    public NOptional<NTxNode> findNodeByProperty(String propertyName, Predicate<NElement> propertyValueFilter) {
+        return engine().findNodeByProperty(propertyName, propertyValueFilter, this);
     }
 
     public NTxResolutionContext parentContext() {
