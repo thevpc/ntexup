@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class CtrlNTxNodeInclude extends CtrlNTxNodeBase {
+public class CtrlNTxNodeInclude extends CtrlNTxNodeBase implements Cloneable {
     private List<NElement> __args = new ArrayList<>();
 
     public CtrlNTxNodeInclude(NTxSource source, List<NElement> __args) {
