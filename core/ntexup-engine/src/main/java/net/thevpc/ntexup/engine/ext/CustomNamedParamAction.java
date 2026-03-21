@@ -274,7 +274,7 @@ class CustomNamedParamAction implements NTxNodeBuilderContext.NamedParamAction, 
                 NPairElement thePair = n.asPair().get();
                 if (!expectedNamedPairNames.isEmpty()) {
                     if (n.isNamedPair()) {
-                        String uid = NTxUtils.uid(thePair.key().asStringValue().get());
+                        String uid = NTxUtils.uid(thePair.key());
                         boolean u = expectedNamedPairNames.contains(uid);
                         if (u) {
                             info.read();
@@ -287,7 +287,7 @@ class CustomNamedParamAction implements NTxNodeBuilderContext.NamedParamAction, 
                     info.read();
                     String uid = null;
                     if (n.isNamedPair()) {
-                        uid = NTxUtils.uid(thePair.key().asStringValue().get());
+                        uid = NTxUtils.uid(thePair.key());
                     }
                     setProp(uid, thePair.value(), info, buildContext);
                     return true;
