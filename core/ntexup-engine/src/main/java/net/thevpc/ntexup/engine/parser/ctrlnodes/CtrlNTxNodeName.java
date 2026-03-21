@@ -5,7 +5,7 @@ import net.thevpc.ntexup.api.document.node.NTxNodeType;
 import net.thevpc.ntexup.api.source.NTxSource;
 import net.thevpc.nuts.elem.NElement;
 
-public class CtrlNTxNodeName extends CtrlNTxNodeBase {
+public class CtrlNTxNodeName extends CtrlNTxNodeBase implements Cloneable{
     private NElement __varName;
 
     private CtrlNTxNodeName(NTxSource source) {
