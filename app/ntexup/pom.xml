@@ -56,7 +56,7 @@
         <dependency><groupId>net.thevpc.ntexup</groupId><artifactId>ntexup-renderer-pdf</artifactId><version>0.8.9.0</version></dependency>
         <dependency><groupId>net.thevpc.ntexup</groupId><artifactId>ntexup-renderer-screen</artifactId><version>0.8.9.0</version></dependency>
         <dependency><groupId>net.thevpc.ntexup</groupId><artifactId>ntexup-renderer-html</artifactId><version>0.8.9.0</version></dependency>
-        <dependency><groupId>com.formdev</groupId><artifactId>flatlaf</artifactId><version>3.5.4</version></dependency>
+        <dependency><groupId>com.formdev</groupId><artifactId>flatlaf</artifactId><version>3.7.1</version></dependency>
     </dependencies>
     <build>
         <plugins>
