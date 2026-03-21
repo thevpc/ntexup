@@ -11,7 +11,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class CtrlNTxNodeSimpleResult extends CtrlNTxNodeBase {
+public class CtrlNTxNodeSimpleResult extends CtrlNTxNodeBase implements Cloneable{
     private NElement __args;
 
     public CtrlNTxNodeSimpleResult(NTxSource source, NElement __args) {
