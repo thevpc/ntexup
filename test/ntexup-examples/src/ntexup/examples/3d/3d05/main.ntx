@@ -125,7 +125,7 @@ page{
                 material-bindings:{
                     pec:pec,
                     source:lumped-port(50_Ω,E:1_V)
-                    none:(permettivity:2.2)
+                    none:(permittivity:2.2)
                 }
             )
             openEMS(
