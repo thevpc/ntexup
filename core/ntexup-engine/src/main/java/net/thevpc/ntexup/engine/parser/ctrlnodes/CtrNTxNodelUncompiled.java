@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class CtrNTxNodelUncompiled extends CtrlNTxNodeBase {
+public class CtrNTxNodelUncompiled extends CtrlNTxNodeBase implements Cloneable {
 
     public CtrNTxNodelUncompiled(NElement body,NTxSource source) {
         super(NTxNodeType.CTRL_UNCOMPILED, source);
