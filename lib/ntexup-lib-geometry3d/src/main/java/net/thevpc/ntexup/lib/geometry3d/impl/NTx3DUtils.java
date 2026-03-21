@@ -5,12 +5,15 @@ import net.thevpc.ntexup.api.document.elem2d.NTxDouble3;
 import net.thevpc.ntexup.api.document.node.NTxNode;
 import net.thevpc.ntexup.api.document.style.NTxProp;
 import net.thevpc.ntexup.api.document.style.NTxPropName;
+import net.thevpc.ntexup.api.eval.NTxResolutionContext;
 import net.thevpc.ntexup.api.eval.NTxValue;
 import net.thevpc.ntexup.api.renderer.NTxRendererContext;
 import net.thevpc.ntexup.api.util.NTxElementUtils;
 import net.thevpc.ntexup.api.util.NTxMinMax;
+import net.thevpc.ntexup.api.util.NTxNumberUtils;
 import net.thevpc.ntexup.lib.geometry3d.*;
 import net.thevpc.nuts.elem.*;
+import net.thevpc.nuts.text.NMsg;
 import net.thevpc.nuts.util.NLiteral;
 import net.thevpc.nuts.util.NOptional;
 
@@ -19,6 +22,38 @@ import java.util.Arrays;
 import java.util.List;
 
 public class NTx3DUtils {
+
+    public static NTxNumberElement3 resolveSize3DSI(NElement e, NTxResolutionContext context) {
+        NTxNumberElement3 p = resolveSize3D(e, context);
+        if(p!=null){
+            return toSIUnit(p).orNull();
+        }
+        return null;
+    }
+
+    public static NTxNumberElement3 resolveSize3D(NElement e, NTxResolutionContext context) {
+        if (e.isUplet()) {
+            NUpletElement u = e.asUplet().get();
+            if (u.size() == 3) {
+                NNumberElement p1 = NTxNumberUtils.asNumberElement(u.get(0).get(), context);
+                if (p1 == null) {
+                    context.log().log(NMsg.ofC("invalid point %s", e).asError());
+                }
+                NNumberElement p2 = NTxNumberUtils.asNumberElement(u.get(1).get(), context);
+                if (p2 == null) {
+                    context.log().log(NMsg.ofC("invalid point %s", e).asError());
+                }
+                NNumberElement p3 = NTxNumberUtils.asNumberElement(u.get(2).get(), context);
+                if (p3 == null) {
+                    context.log().log(NMsg.ofC("invalid point %s", e).asError());
+                }
+                return new NTxNumberElement3(p1, p2, p3);
+            }
+        }
+        context.log().log(NMsg.ofC("invalid point %s", e).asError());
+        return null;
+    }
+
 
     public static NTxVector3D surfaceNormal(NTxPoint3D[] all) {
         return surfaceNormal(all[0], all[1], all[2]);
@@ -373,6 +408,18 @@ public class NTx3DUtils {
             }
         }
         return NOptional.ofNamedEmpty("NTxNumberElement2 from " + element);
+    }
+
+    public static NOptional<NTxNumberElement3> toSIUnit(NTxNumberElement3 ss) {
+        NOptional<NNumberElement> x = NTxNumberUtils.toSIUnit(ss.x);
+        NOptional<NNumberElement> y = NTxNumberUtils.toSIUnit(ss.y);
+        NOptional<NNumberElement> z = NTxNumberUtils.toSIUnit(ss.z);
+        if(x.isPresent() && y.isPresent() && z.isPresent()) {
+            return  NOptional.of(new NTxNumberElement3(
+                    x.get(),y.get(),z.get()
+            ));
+        }
+        return  NOptional.ofNamedEmpty("NTxNumberElement3 from " + ss);
     }
 
     public NOptional<NTxPoint3D> asHPoint3D(NTxValue value) {
