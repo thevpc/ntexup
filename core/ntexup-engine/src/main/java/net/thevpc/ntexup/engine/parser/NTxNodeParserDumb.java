@@ -25,12 +25,12 @@ public class NTxNodeParserDumb extends NTxNodeParserBase {
         if (e != null) {
             if (e.isNamedPair()) {
                 NPairElement p = e.asPair().get();
-                String sid = NTxUtils.uid(p.key().asStringValue().get());
+                String sid = NTxUtils.uid(p.key());
                 info.node().setProperty(sid, NTxUtils.addCompilerDeclarationPath(p.value(), info.source()));
                 info.read();
                 return true;
             } else if (e.isName()) {
-                String sid = NTxUtils.uid(e.asStringValue().get());
+                String sid = NTxUtils.uid(e);
                 info.node().setProperty(sid, NTxUtils.addCompilerDeclarationPath(NElement.ofTrue(), info.source()));
                 info.read();
                 return true;
