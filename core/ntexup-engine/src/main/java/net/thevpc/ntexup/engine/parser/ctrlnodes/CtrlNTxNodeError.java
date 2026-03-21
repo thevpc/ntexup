@@ -8,7 +8,7 @@ import net.thevpc.nuts.text.NMsg;
 import java.util.ArrayList;
 import java.util.stream.Collectors;
 
-public class CtrlNTxNodeError extends CtrlNTxNodeBase {
+public class CtrlNTxNodeError extends CtrlNTxNodeBase implements Cloneable{
     private NMsg message;
 
     public CtrlNTxNodeError(NTxSource source, NMsg message) {
