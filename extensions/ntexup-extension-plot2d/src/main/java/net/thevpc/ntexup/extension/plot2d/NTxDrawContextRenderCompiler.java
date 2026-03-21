@@ -13,14 +13,15 @@ import net.thevpc.nuts.elem.NElement;
 import net.thevpc.nuts.time.NChronometer;
 import net.thevpc.nuts.util.NDoubleFunction;
 import net.thevpc.nuts.text.NMsg;
+import net.thevpc.nuts.util.NNumberUtils;
 
 import java.awt.*;
 import java.util.List;
 
 class NTxDrawContextRenderCompiler {
     public static NTxDrawContext compile(NTxRendererContext rendererContext){
-        double[] xValues = NTxValue.of(rendererContext.evalExpression(rendererContext.computePropertyValue("x").orElse(NElement.ofDoubleArray(NTxNumberUtils.dsteps(100,-100,1)))).orNull())
-                .asDoubleArray().orElse(NTxNumberUtils.dsteps(100,-100,1));
+        double[] xValues = NTxValue.of(rendererContext.evalExpression(rendererContext.computePropertyValue("x").orElse(NElement.ofDoubleArray(NNumberUtils.dsteps(100,-100,1)))).orNull())
+                .asDoubleArray().orElse(NNumberUtils.dsteps(100,-100,1));
         double minY = -100;
         double maxY = 100;
         boolean zoom = true;
