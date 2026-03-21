@@ -339,7 +339,7 @@ public class NTxUtils {
         }
         if (o instanceof Enum) {
             return NElement.ofName(
-                    NNameFormat.LOWER_KEBAB_CASE.format(((Enum<?>) o).name())
+                    NTxUtils.uid(((Enum<?>) o).name())
             );
         }
         if (o instanceof Color) {
@@ -402,6 +402,13 @@ public class NTxUtils {
             }
         }
         return all.toArray(new String[0]);
+    }
+
+    public static String uid(NElement id) {
+        if(id==null){
+            return "";
+        }
+        return  uid(id.asStringValue().orElse(""));
     }
 
     public static String uid(String id) {
