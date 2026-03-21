@@ -1,13 +1,14 @@
 package net.thevpc.ntexup.api.util;
 
+import net.thevpc.ntexup.api.eval.NTxResolutionContext;
 import net.thevpc.nuts.elem.NElement;
 import net.thevpc.nuts.elem.NNumberElement;
-import net.thevpc.nuts.elem.NNumberLayout;
+import net.thevpc.nuts.log.NLog;
+import net.thevpc.nuts.text.NMsg;
 import net.thevpc.nuts.util.NBlankable;
 import net.thevpc.nuts.util.NOptional;
 import net.thevpc.nuts.util.NStringUtils;
 
-import java.math.MathContext;
 import java.util.Objects;
 
 public class NTxNumberUtils {
@@ -319,31 +320,43 @@ public class NTxNumberUtils {
         return (NNumberElement) (a == null ? NElement.ofDouble(0) : NElement.ofDouble(a));
     }
 
-    public static double[] dtimes(double min, double max, int times) {
-        if (times <= 0) return new double[0];
-        double[] d = new double[times];
-        if (times == 1) {
-            d[0] = min;
-        } else {
-            double step = (max - min) / (times - 1);
-            for (int i = 0; i < d.length; i++) {
-                d[i] = min + i * step;
-            }
-            d[times - 1] = max; // pin last value exactly, avoiding any floating-point drift
+    public static NNumberElement asNumberElement(NElement e, NTxResolutionContext context) {
+        if (e.isNumber()) {
+            return e.asNumber().get();
         }
-        return d;
+        NOptional<NElement> e2 = context.evalExpression(e);
+        if(e2.isPresent()) {
+            if (e2.get().isNumber()) {
+                return e2.get().asNumber().get();
+            }
+        }
+        context.log().log(NMsg.ofC("invalid number %s", e).asError());
+        return null;
     }
 
-    public static double[] dsteps(double min, double max, double step) {
-        if (step == 0 || (step > 0 && max < min) || (step < 0 && min < max)) {
-            return new double[0];
+    public static double evalMeterPosition(NNumberElement e, NNumberElement baseSize, NNumberElement baseOffset) {
+        NTxNumberUtils.UnitType unitType = NTxNumberUtils.detectUnitType(e.numberSuffix());
+        switch (unitType) {
+            case METER: {
+                return NTxNumberUtils.toMeter(e).get();
+            }
+            case NONE: {
+                return baseSize.numberValue().doubleValue() * e.numberValue().doubleValue() / 100.0 + baseOffset.numberValue().doubleValue();
+            }
+            case UNKNOWN: {
+                switch (NStringUtils.trim(e.numberSuffix())) {
+                    case "%": {
+                        return baseSize.numberValue().doubleValue() * e.numberValue().doubleValue() / 100.0 + baseOffset.numberValue().doubleValue();
+                    }
+                    case "%P": {
+                        NLog.ofScoped(NTxNumberUtils.class).log(NMsg.ofC("invalid %P ignored in %s", e).asError());
+                        return baseSize.numberValue().doubleValue() * e.numberValue().doubleValue() / 100.0 + baseOffset.numberValue().doubleValue();
+                    }
+                }
+            }
         }
-        int times = (int) Math.abs((max - min) / step) + 1;
-        double[] d = new double[times];
-        for (int i = 0; i < d.length; i++) {
-            double v = min + i * step;
-            d[i] = (step >= 0) ? Math.min(v, max) : Math.max(v, max);
-        }
-        return d;
+        NLog.ofScoped(NTxNumberUtils.class).log(NMsg.ofC("invalid %s in %s", e.numberSuffix(), e).asError());
+        return baseSize.numberValue().doubleValue();
     }
+
 }
