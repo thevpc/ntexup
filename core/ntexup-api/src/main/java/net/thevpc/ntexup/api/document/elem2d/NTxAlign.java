@@ -55,7 +55,7 @@ public enum NTxAlign implements NToElement {
         } catch (Exception ex) {
             //
         }
-        e = NNameFormat.LOWER_KEBAB_CASE.format(NStringUtils.trim(e));
+        e = NTxUtils.uid(NStringUtils.trim(e));
         return NOptional.ofNamedEmpty("HAlign " + e);
     }
 
