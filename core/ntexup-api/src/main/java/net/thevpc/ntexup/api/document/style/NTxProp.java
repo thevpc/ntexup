@@ -150,7 +150,7 @@ public class NTxProp implements NTxItem, NToElement {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append(NNameFormat.LOWER_KEBAB_CASE.format(name));
+        sb.append(NTxUtils.uid(name));
         sb.append(":");
         Object vv = value;
         if (vv != null) {
