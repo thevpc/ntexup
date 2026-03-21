@@ -147,7 +147,7 @@ public class NTxNodeEval implements NTxObjectEvalContext {
                     return eval(u);
                 }else{
                     if(context.inPage()){
-                        context.engine().log().log(NMsg.ofC("unsupported function %s in %s", functionName,ff).asError(), context.source());
+                        //context.engine().log().log(NMsg.ofC("unsupported function %s in %s", functionName,ff).asError(), context.source());
                     }
                 }
                 List<NElement> r = ff.params()
@@ -172,13 +172,16 @@ public class NTxNodeEval implements NTxObjectEvalContext {
             }
             case UPLET: {
                 NUpletElement ff = ((NUpletElement) elementExpr);
-                if (ff.params().size() == 1) {
-                    //this is a plain par
-                    return eval(ff.params().get(0));
-                }
                 List<NElement> r = ff.params()
                         .stream().map(x -> eval(x)).collect(Collectors.toList());
-                return ff.builder().setParams(r).build();
+                NUpletElement o = ff.builder().setParams(r).build();
+                if (o.params().size() == 1) {
+                    NElement ee = o.params().get(0);
+                    if(ee.isNumber()){
+                        return ee;
+                    }
+                }
+                return o;
             }
             case PAIR: {
                 NPairElement ff = ((NPairElement) elementExpr);
