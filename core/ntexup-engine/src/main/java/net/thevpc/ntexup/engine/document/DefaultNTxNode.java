@@ -17,7 +17,7 @@ import java.util.*;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-public class DefaultNTxNode implements NTxNode {
+public class DefaultNTxNode implements NTxNode, Cloneable{
     private String uuid;
     private NElement raw;
     private String nodeType;
@@ -789,10 +789,24 @@ public class DefaultNTxNode implements NTxNode {
     }
 
     public NTxNode copy() {
-        DefaultNTxNode o = new DefaultNTxNode(nodeType, source());
-        o.setUuid(uuid);
-        copyTo(o);
-        return o;
+        return clone();
+    }
+
+    @Override
+    protected NTxNode clone() {
+        DefaultNTxNode c = null;
+        try {
+            c = (DefaultNTxNode) super.clone();
+            c.properties=new NTxProperties(this);
+            c.properties.set(c.properties.toList());
+            c.userObjects=userObjects==null?null:new HashMap<>(userObjects);
+            c.renderCache=renderCache==null?null:new HashMap<>(renderCache);
+            c.children=children().stream().map(NTxNode::copy).collect(Collectors.toList());
+            c.styleRules=new ArrayList<>(styleRules);
+        } catch (CloneNotSupportedException e) {
+            throw new RuntimeException(e);
+        }
+        return c;
     }
 
     public NTxNode copyTo(NTxNode other) {
