@@ -8,7 +8,7 @@ import net.thevpc.nuts.elem.NElement;
 import java.util.ArrayList;
 import java.util.List;
 
-public class CtrlNTxNodeFor extends CtrlNTxNodeBase {
+public class CtrlNTxNodeFor extends CtrlNTxNodeBase implements Cloneable{
     private NElement __varName;
     private NElement __varExpr;
     private List<NElement> __body = new ArrayList<>();
