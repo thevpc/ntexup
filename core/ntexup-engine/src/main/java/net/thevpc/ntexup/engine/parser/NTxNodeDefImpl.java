@@ -10,7 +10,7 @@ import net.thevpc.ntexup.engine.parser.ctrlnodes.CtrlNTxNodeInclude;
 
 import java.util.ArrayList;
 
-public class NTxNodeDefImpl extends DefaultNTxNode implements NTxNodeDef {
+public class NTxNodeDefImpl extends DefaultNTxNode implements NTxNodeDef, Cloneable {
     private NTxNodeDefParam[] params;
     private NTxNode bodyContainer;
 
