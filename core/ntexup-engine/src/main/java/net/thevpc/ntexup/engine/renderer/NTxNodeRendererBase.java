@@ -11,6 +11,7 @@ import net.thevpc.ntexup.api.renderer.NTxNodeRenderer;
 import net.thevpc.ntexup.api.renderer.NTxRendererContext;
 import net.thevpc.ntexup.engine.util.NTx2DUtils0;
 import net.thevpc.ntexup.engine.util.NTxNodeRendererUtils;
+import net.thevpc.nuts.text.NMsg;
 import net.thevpc.nuts.util.NOptional;
 
 public abstract class NTxNodeRendererBase implements NTxNodeRenderer {
@@ -90,6 +91,8 @@ public abstract class NTxNodeRendererBase implements NTxNodeRenderer {
                 NTxNodeRendererUtils.drawDebugBox(rendererContext, rendererContext.graphics(), rendererContext.selfBounds2D());
 
             }
+        } catch (Exception ex){
+            rendererContext.engine().log().log(NMsg.ofC("unable to render %s : %s",node.type(),ex).asFineFail(ex));
         } finally {
             if (nv != null) {
                 nv.dispose();
