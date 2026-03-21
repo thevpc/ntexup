@@ -9,13 +9,17 @@ import javax.swing.*;
 import java.awt.*;
 import java.time.Instant;
 import java.util.logging.Level;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.Document;
+import javax.swing.text.Element;
 
 public class JTextAreaNTxMessageList extends JPanel implements NTxLogger {
     private JTextArea view;
-
+    private static int MAX_LINES=1024*1024;
     public JTextAreaNTxMessageList() {
         super(new BorderLayout());
         view = new JTextArea();
+        view.setEditable(false);
         add(new JScrollPane(view));
     }
 
@@ -46,11 +50,32 @@ public class JTextAreaNTxMessageList extends JPanel implements NTxLogger {
                 source == null ? null : source.shortName(),
                 nmsg
         );
+        final String formattedMessage = mm.toString() + "\n";
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-                view.append(mm.toString());
-                view.append("\n");
+                Document doc = view.getDocument();
+                view.append(formattedMessage);
+
+                // Handle the line capping
+                Element root = doc.getDefaultRootElement();
+                if (root.getElementCount() > MAX_LINES) {
+                    try {
+                        // Calculate how many lines to remove
+                        int linesToRemove = root.getElementCount() - MAX_LINES;
+                        // Get the offset of the end of the last line to be removed
+                        int endOffset = root.getElement(linesToRemove - 1).getEndOffset();
+
+                        // Remove the old text from the beginning
+                        doc.remove(0, endOffset);
+                    } catch (BadLocationException e) {
+                        // This shouldn't happen with correct index math
+                        e.printStackTrace();
+                    }
+                }
+
+                // Optional: Auto-scroll to bottom
+                view.setCaretPosition(doc.getLength());
             }
         });
     }
