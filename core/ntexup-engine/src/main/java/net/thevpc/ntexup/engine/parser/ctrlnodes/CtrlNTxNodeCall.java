@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-public class CtrlNTxNodeCall extends CtrlNTxNodeBase {
+public class CtrlNTxNodeCall extends CtrlNTxNodeBase implements Cloneable{
     private List<NElement> __args = new ArrayList<>();
     private String callName;
     private List<NElement> __callBody = new ArrayList<>();
