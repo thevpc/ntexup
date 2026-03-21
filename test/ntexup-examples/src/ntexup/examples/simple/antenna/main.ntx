@@ -22,12 +22,13 @@ W  = 38.0mm   // Now the dimension along Y
 L  = 29.45mm  // Now the dimension along X (radiating dimension)
 w  = 3.05mm   // Feed Line Width (now a Y-dimension)
 y0 = 9.3mm    // Inset Depth (now along X)
+att= 1.3mm    // Attach needed for MoM
 g  = 1.0mm    // Gap width
 s  = 1.0mm    // Source width
 
 // Box/Substrate dimensions
 box_w = 80mm
-box_l = 80mm
+box_l = 200mm
 
 
 az  = 0.01mm    // z offset to draw arrows
@@ -37,11 +38,13 @@ page(bg:Gray90){
         text:{ color:darkBlue }
         line:{ color:black }
         ".substrate":{ bg:gray80 }
-        ".copper":{ bg:copper }
+        ".antenna":{ bg:copper }
+        ".patch":{ bg:copper }
+        ".feedline":{ bg:copper }
+        ".attachment":{ bg:red }
         ".source":{ bg:yellow }
         ".dim-arrow":{
-            start-arrow: simple()
-            end-arrow: simple()
+            arrow: simple()
             stroke: basic(dashed)
             line-color:darkBlue
         }
@@ -59,64 +62,29 @@ page(bg:Gray90){
             origin:(0,0)
         ){
             // 1. Substrate & Ground
-            @(substrate) box(size: (box_w, box_l, h), position: (0, 0, -h),contour-color:red
-//                bottom:{visible:false}
-//                left:{visible:false}
-//                right:{visible:false}
-//                front:{visible:false}
-//                back:{visible:false}
-            )
+            @(substrate) box(size: (box_w, box_l, h) , position: (-(box_w/2), -(box_l/2), -h))
+            @(ground)    box(size: (box_w, box_l, h0), position: (-(box_w/2), -(box_l/2), -h -h0))
 
             // 2. The Inset-Fed Patch
-            @(copper) polygon(
-                name:"antenna"
+            @(patch)   polygon(
                 points: [
-                        // Start at the left edge of the substrate (Feed Line)
-                        (-box_w/2, -w/2, 0), (-box_w/2, w/2, 0),
-                        // Entering the notch from the left
-                        (-L/2 + y0, w/2, 0), (-L/2 + y0, w/2 + g, 0),
-                        // Top-left corner of the patch
-                        (-L/2, w/2 + g, 0), (-L/2, W/2, 0),
-                        // Far right edge
-                        (L/2, W/2, 0), (L/2, -W/2, 0),
-                        // Bottom-left corner of the patch
-                        (-L/2, -W/2, 0), (-L/2, -w/2 - g, 0),
-                        // Bottom notch
-                        (-L/2 + y0, -w/2 - g, 0), (-L/2 + y0, -w/2, 0)
-                    ]
+                        (-(box_w/2)+y0, -W/2, 0mm), (-(box_w/2)+L+y0,  -W/2, 0mm),
+                        (-(box_w/2)+L+y0,  W/2, 0mm), ( -(box_w/2)+y0, W/2, 0mm)
+                ]
             )
+            @(feedline)   box(size:(y0,w,0mm),position:(-(box_w/2),-w/2,0mm))
+            @(attachment)   box(size:(att,w,0mm),position:(-(box_w/2)+y0-(att/2),-w/2,0mm))
 
-            // --- Optimized Dimension Arrows ---
+            // 3. Feeding source
+            @(source)    box(size:(s,w,0mm),position:(-(box_w/2),-w/2,0mm))
 
-            // L: Pushed higher to avoid W dimension
-            @(dim-arrow) line(from:(-L/2, W/2 + 5mm, az), to:(L/2, W/2 + 5mm, az)){
-                text("L=$L", font-size:2.5%P, position:(50, -130%))
-            }
 
-            // W: Moved further right
-            @(dim-arrow) line(from:(L/2 + 5mm, -W/2, az), to:(L/2 + 5mm, W/2,  az)){
-                text("W=$W", font-size:2.5%P, position:(130%, 50))
-            }
-
-            // y0: Depth along the feed line
-            @(dim-arrow) line(from:(-L/2, -w/2 - 5mm, az), to:(-L/2 + y0, -w/2 - 5mm, az)){
-                text("y0=$y0", font-size:2%P, position:(50, 160%))
-            }
-
-            // w: Feed line width at edge
-            @(dim-arrow) line(from:(-box_w/2 - 2mm, -w/2, az), to:(-box_w/2- 2mm, w/2, az)){
-                text("w=$w", font-size:2%P, position:(-160%, 50))
-            }
-
-            // h: Substrate thickness — front-right corner, visible in 3D
-            @(dim-arrow) line(from:(-box_w/2 - 3mm, box_l/2, 0), to:(-box_w/2 - 3mm, box_l/2, -h)) {
-                text("h=$h", font-size:2%P, position:(-160%, 50))
-            }
+            // --- Dimension Arrows ---
 
             // f_l: Feed line length — from substrate edge to patch left edge, below feed line
-            @(dim-arrow) line(from:(-box_w/2, -w/2 - 5mm, az), to:(-L/2, -w/2 - 5mm, az)) {
-                text("f_l", font-size:2%P, position:(50, 160%))
-            }
+//            @(dim-arrow) line(from:(-box_w/2, -w/2 - 5mm, az), to:(-box_w/2+L, -w/2 - 5mm, az)) {
+//                text("f_l", font-size:2%P, position:(50, 160%))
+//            }
 
         }
 }
@@ -125,13 +93,31 @@ page{
     hadruwaves-mom-solver(
         name:"hresult"
         geometry:"antenna-a"
-        box-walls: EEEE // all Electric walls
-        mode-functions-count: 1000 // all Electric walls
+        frequency:f
+        boundaries:{
+            lateral: EEEE
+            top: matchedLoad
+            bottom: short(material:(permittivity:εr))
+        }
+        modes:{
+            count: 1000000
+        }
         basis-functions: {
-            rwg(geometry:"antenna", count:10)
+              sinus(geometry:"feedline",     count:1, x:UDxUUy) // Up -> down, along X
+              sinus(geometry:"patch",        count:8, x:DDxUUy)
+              sinus(geometry:"attachment",   count:1,x:DDxUUy)
         },
-        compute:{
-            S11:sweepFrequency(from:2.3_GHz,to 2.5_GHz, count:10)
+        sources:{
+            planar(geometry:"source", value:5V, z:50Ω)
+        }
+        results:{
+            allS11:S11(frequency:{from:2.3GHz, to:2.5GHz, count:1})
+            mode-functions
+            test-functions
+            Zmn
+            scalar-products
+            Jx
+            Ex
         }
     )
 //    oemsresult=open-ems-solver(
