@@ -4,6 +4,7 @@ import net.thevpc.ntexup.api.eval.*;
 import net.thevpc.ntexup.api.extension.NTxFunction;
 import net.thevpc.ntexup.api.util.NTxNumberUtils;
 import net.thevpc.nuts.elem.NElement;
+import net.thevpc.nuts.util.NNumberUtils;
 
 public class NTxFunctionDsteps implements NTxFunction {
     @Override
@@ -30,7 +31,7 @@ public class NTxFunctionDsteps implements NTxFunction {
                 return NElement.ofArray();
             }
             return NElement.ofDoubleArray(
-                    NTxNumberUtils.dsteps(
+                    NNumberUtils.dsteps(
                             min,
                             max,
                             1
@@ -50,7 +51,7 @@ public class NTxFunctionDsteps implements NTxFunction {
             s=1.0;
         }
         return NElement.ofDoubleArray(
-                NTxNumberUtils.dsteps(
+                NNumberUtils.dsteps(
                         min,
                         max,
                         s
