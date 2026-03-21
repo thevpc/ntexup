@@ -10,7 +10,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class CtrlNTxNodeComplexResult extends CtrlNTxNodeBase {
+public class CtrlNTxNodeComplexResult extends CtrlNTxNodeBase implements Cloneable{
     private List<NTxItem> __args = new ArrayList<>();
 
     public CtrlNTxNodeComplexResult(NTxSource source, NTxItem... __args) {
