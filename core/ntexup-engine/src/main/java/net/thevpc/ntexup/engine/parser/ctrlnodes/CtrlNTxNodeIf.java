@@ -8,7 +8,7 @@ import net.thevpc.nuts.elem.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class CtrlNTxNodeIf extends CtrlNTxNodeBase {
+public class CtrlNTxNodeIf extends CtrlNTxNodeBase implements Cloneable {
     private NElement __cond;
     private List<NTxNode> __trueBloc;
     private List<NTxNode> __falseBloc;
