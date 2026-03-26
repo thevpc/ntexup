@@ -4,16 +4,13 @@
  */
 package net.thevpc.ntexup.engine.document;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
 
 import net.thevpc.ntexup.api.document.NTxDocumentClass;
 import net.thevpc.ntexup.api.document.node.NTxNodeType;
 import net.thevpc.ntexup.api.document.NTxDocument;
 import net.thevpc.ntexup.api.document.node.NTxNode;
 import net.thevpc.ntexup.api.source.NTxSource;
-import net.thevpc.ntexup.api.source.NTxSourceMonitor;
 import net.thevpc.ntexup.engine.util.NTxUtilsPages;
 import net.thevpc.nuts.util.NOptional;
 
@@ -25,23 +22,30 @@ public class DefaultNTxDocument implements NTxDocument, Cloneable {
     private NTxDocumentClass documentClass;
     private Properties properties = new Properties();
     private DefaultNTxNode root;
-    private NTxSourceMonitor resources = new NTxSourceMonitored();
-    private NTxSource source;
+    private final NTxSource source;
+
+    public static class NamedPart {
+        public String name;
+        public Object value;
+
+        public NamedPart(String name, Object value) {
+            this.name = name;
+            this.value = value;
+        }
+    }
 
     public DefaultNTxDocument(NTxSource source) {
         this.source = source;
         root = new DefaultNTxNode(NTxNodeType.PAGE_GROUP, source);
     }
 
+
     @Override
     public NTxSource source() {
         return source;
     }
 
-    @Override
-    public NTxSourceMonitor sourceMonitor() {
-        return resources;
-    }
+
 
     @Override
     public NTxDocumentClass documentClass() {
