@@ -5,32 +5,23 @@ import net.thevpc.nuts.text.NMsg;
 
 public class NTxMsg {
     private NMsg message;
-    private Throwable error;
     private NTxSource source;
 
-    public static NTxMsg of(NMsg message, Throwable error, NTxSource source) {
-        return new NTxMsg(message, error, source);
-    }
     public static NTxMsg of(NMsg message, NTxSource source) {
-        return new NTxMsg(message, null, source);
+        return new NTxMsg(message, source);
     }
 
     public static NTxMsg of(NMsg message) {
-        return new NTxMsg(message, null, null);
+        return new NTxMsg(message, null);
     }
 
-    public NTxMsg(NMsg message, Throwable error, NTxSource source) {
+    public NTxMsg(NMsg message, NTxSource source) {
         this.message = message;
-        this.error = error;
         this.source = source;
     }
 
     public NMsg message() {
         return message;
-    }
-
-    public Throwable error() {
-        return error;
     }
 
     public NTxSource source() {
