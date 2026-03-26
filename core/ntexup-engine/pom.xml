@@ -56,6 +56,12 @@
 <!--        <dependency><groupId>org.scilab.forge</groupId><artifactId>jlatexmath</artifactId><version>1.0.7</version></dependency>-->
         <!--delauney 3D-->
 <!--        <dependency><groupId>org.locationtech.jts</groupId><artifactId>jts-core</artifactId><version>1.18.2</version>&lt;!&ndash; Replace with the latest version &ndash;&gt;</dependency>-->
+
+        <dependency>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcpkix-jdk18on</artifactId>
+            <version>1.83</version>
+        </dependency>
     </dependencies>
     <build>
         <plugins>
