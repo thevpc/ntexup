@@ -38,7 +38,6 @@ public class JTextAreaNTxMessageList extends JPanel implements NTxLogger {
         Instant time = Instant.now();
         NMsg nmsg = msg.message();
         Level type = nmsg.getLevel();
-        Throwable error = msg.error();
         NTxSource source = msg.source();
         if (type == null) {
             type = Level.INFO;
@@ -49,7 +48,7 @@ public class JTextAreaNTxMessageList extends JPanel implements NTxLogger {
                 type,
                 source == null ? null : source.shortName(),
                 nmsg
-        );
+        ).withThrowable(nmsg.getThrowable());
         final String formattedMessage = mm.toString() + "\n";
         SwingUtilities.invokeLater(new Runnable() {
             @Override
