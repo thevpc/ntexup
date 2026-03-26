@@ -174,8 +174,8 @@ public class NTxNodeBuilderContextImpl implements NTxNodeBuilderContext {
 
     @Override
     public NTxNodeBuilderContext withToElem(String... propNames) {
-        return withToElem((item, context) -> ToElementHelper.of(
-                        item,
+        return withToElem((item, semantic, context) -> ToElementHelper.of(
+                        item,semantic,
                         context.engine()
                 )
                 .addChildrenByName(propNames)
