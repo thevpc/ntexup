@@ -1,0 +1,115 @@
+import(
+    common-functions
+    plantuml
+    animated-gif
+    svg
+    shapes2d
+    shapes3d
+    plot2d
+    presenters
+    latex
+    hadruwaves
+)
+//include ("subfolder")
+
+s=5mm   // source width long x
+a=100mm // box width long x
+b=100mm // box width long y
+t=2mm   // copper thickness
+l=45mm   // copper thickness
+w=10mm  // line width
+W=50mm  // line width
+f=2.4GHz   // Resonant Frequency (fr), Target ISM band
+εr=4.4     // FR-4, Substrate Material
+h=1.6mm    //Substrate Height (h), Standard PCB thickness
+
+page{
+    styles:{
+        text:{ color:darkBlue }
+        line:{ color:black }
+        ".substrate":{ background:"#00468B" }
+        ".substrate":{ background:"#00468B" }
+        ".copper":{ background:"#cb6d51" }
+        ".source":{ background:yellow }
+        ".dim-arrow":{
+            start-arrow: simple()
+            end-arrow: simple()
+            stroke: basic(dashed)
+        }
+    }
+        rectangle(background:Gray90)
+        scene3d(
+            name: "antenna-a"
+            draw-contour,
+            transform:{
+//                    rotate(from:(0,0,0),to:(100,0,0),angle:-30)
+                translate(0,-25,0)
+                scale:0.9
+            },
+            real-size:(200mm,200mm,200mm)
+            real-position:(0mm,-100mm,0mm)
+            size:(100,100) // 100% of the allocated 2D area from parent, aka all of it
+            origin:(0,0)
+        ){
+            box(
+                size:(200mm,200mm,10mm)
+                position(0mm,0mm,-10mm)
+                color:Caramel
+                left:{color:Brown}
+                front:{color:Brown}
+            )
+            polygon(points:[(0mm,90mm,0mm),(100mm,90mm,0mm),(100mm,110mm,0mm),(0mm,110mm,0mm)],color:brown)
+        }
+}
+
+page{
+    hadruwaves-mom-solver(
+        name:"hresult"
+        geometry:"antenna-a"
+        frequency:f
+        boundaries:{
+            lateral: EEEE
+            top: matchedLoad
+            bottom: short(material:(permittivity:εr))
+        }
+        modes:{
+            count: 1000
+        }
+        basis-functions: {
+            sine-functions(geometry:"antenna", count:6)
+            rooftops(position:(l-s,-w/2),size:(2*s,w),count:1)
+        },
+        sources:{
+            planar(geometry:"source", value:5V, z:50Ω)
+        }
+        results:{
+            allS11:S11(frequency:{from:2.3GHz, to:2.5GHz, count:1})
+            mode-functions
+            test-functions
+            Zmn
+            scalar-products
+            Jx
+            Ex
+        }
+    )
+//oemsresult=open-ems-solver(
+//        // will spwn a docker
+//        run: docker(image:"openems#0.2.3")
+//        geometry:antenna-a
+//        compute:{
+//            S11:sweepFrequency(from:2.3_GHz,to 2.5_GHz, count:10)
+//        }
+//    )
+//    plot2d(
+//        values: [
+//                    hresult["S11"]
+//                    oemsresult["S11"]
+//                ]
+//        as:curve
+//        titles: [
+//            "Hadruwaves S11"
+//            "OpenEMS S11"
+//        ]
+//        xdomain: result["S11_frequencies"]
+//    )
+}
