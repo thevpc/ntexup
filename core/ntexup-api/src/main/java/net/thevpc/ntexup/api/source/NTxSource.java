@@ -5,11 +5,7 @@ import net.thevpc.nuts.util.NOptional;
 
 public interface NTxSource {
     NOptional<NPath> path();
-
     void save();
-
     boolean changed();
-
-
     String shortName();
 }
