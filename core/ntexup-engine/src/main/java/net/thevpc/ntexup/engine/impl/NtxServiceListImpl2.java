@@ -2,6 +2,7 @@ package net.thevpc.ntexup.engine.impl;
 
 import net.thevpc.ntexup.api.engine.NTxDependencyLoadedListener;
 import net.thevpc.ntexup.api.util.NTxUtils;
+import net.thevpc.nuts.artifact.NDefinition;
 import net.thevpc.nuts.text.NMsg;
 import net.thevpc.nuts.text.NTextBuilder;
 import net.thevpc.nuts.util.NOptional;
@@ -38,7 +39,7 @@ public abstract class NtxServiceListImpl2<T> implements NTxDependencyLoadedListe
         return this;
     }
 
-    public void build(NId[] dependencies, boolean custom) {
+    public void build(NDefinition[] dependencies, boolean custom) {
         List<T> newServices = engine.loadServices(serviceType);
         for (T newService : newServices) {
             onNewService(newService, custom, dependencies, null);
@@ -46,7 +47,7 @@ public abstract class NtxServiceListImpl2<T> implements NTxDependencyLoadedListe
     }
 
     @Override
-    public void onLoadDependencyLoaded(NId[] dependencies) {
+    public void onLoadDependencyLoaded(NDefinition[] dependencies) {
         build(dependencies, true);
     }
 
@@ -88,7 +89,7 @@ public abstract class NtxServiceListImpl2<T> implements NTxDependencyLoadedListe
         return aliases.keySet().stream().filter(x -> Objects.equals(finalA, aliases.get(x))).collect(Collectors.toSet());
     }
 
-    protected void onNewService(T h, boolean custom, NId[] dependencies, NId preferredDependency) {
+    protected void onNewService(T h, boolean custom, NDefinition[] dependencies, NId preferredDependency) {
         LinkedHashSet<String> set = new LinkedHashSet<>();
         String id = NTxUtils.uid(idOf(h));
         set.add(id);
@@ -134,7 +135,7 @@ public abstract class NtxServiceListImpl2<T> implements NTxDependencyLoadedListe
         onAfterNewService(h, custom, dependencies, sourceId);
     }
 
-    public void addCustom(T h, NId[] dependencies, NId preferredDependency) {
+    public void addCustom(T h, NDefinition[] dependencies, NId preferredDependency) {
         onNewService(h, true, dependencies, preferredDependency);
     }
 
@@ -142,7 +143,7 @@ public abstract class NtxServiceListImpl2<T> implements NTxDependencyLoadedListe
         onNewService(h, false, null, null);
     }
 
-    protected void onAfterNewService(T h, boolean custom, NId[] dependencies, NId preferredDependency) {
+    protected void onAfterNewService(T h, boolean custom, NDefinition[] dependencies, NId preferredDependency) {
 
     }
 
