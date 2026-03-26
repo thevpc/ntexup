@@ -43,7 +43,7 @@ public class DocumentController {
             int sizeWidth = 1200;
             int sizeHeight = 1000;
             NTxEngine e = new DefaultNTxEngine();
-            NTxCompiledDocument doc = e.loadCompiledDocument(file);
+            NTxCompiledDocument doc = e.loadDocument(file);
 
             List<NTxCompiledPage> pages = doc.pages();
 
