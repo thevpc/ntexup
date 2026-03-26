@@ -3,6 +3,8 @@ package net.thevpc.ntexup.engine.impl;
 import net.thevpc.ntexup.api.parser.NTxNodeParser;
 
 import java.util.*;
+
+import net.thevpc.nuts.artifact.NDefinition;
 import net.thevpc.nuts.artifact.NId;
 
 public class NTxNodeParserList extends NtxServiceListImpl2<NTxNodeParser> {
@@ -21,7 +23,7 @@ public class NTxNodeParserList extends NtxServiceListImpl2<NTxNodeParser> {
     }
 
     @Override
-    protected void onAfterNewService(NTxNodeParser renderer, boolean custom, NId[] dependencies, NId preferredDependency) {
+    protected void onAfterNewService(NTxNodeParser renderer, boolean custom, NDefinition[] dependencies, NId preferredDependency) {
         renderer.init(engine);
     }
 }
