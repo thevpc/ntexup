@@ -313,7 +313,7 @@ public abstract class NTxNodeParserBase implements NTxNodeParser {
     }
 
     @Override
-    public NElement toElem(NTxNode item, NTxEngine engine) {
+    public NElement toElement(NTxNode item, boolean semantic, NTxEngine engine) {
         if (item instanceof CtrlNTxNodeName) {
             NElement v = ((CtrlNTxNodeName) item).getVarName();
             if (v != null) {
@@ -343,8 +343,8 @@ public abstract class NTxNodeParserBase implements NTxNodeParser {
             NElement v = i.getCond();
             return NElement.ofUplet(item.type(),
                     v,
-                    NElement.ofPair("whenTrue", NElement.ofObject(i.getTrueBloc().stream().map(x -> engine.nodeTypeParser(x.type()).get().toElem(x, engine)).toArray(NElement[]::new))),
-                    NElement.ofPair("whenTrue", NElement.ofObject(i.getFalseBloc().stream().map(x -> engine.nodeTypeParser(x.type()).get().toElem(x, engine)).toArray(NElement[]::new)))
+                    NElement.ofPair("whenTrue", NElement.ofObject(i.getTrueBloc().stream().map(x -> engine.nodeTypeParser(x.type()).get().toElement(x,semantic , engine)).toArray(NElement[]::new))),
+                    NElement.ofPair("whenTrue", NElement.ofObject(i.getFalseBloc().stream().map(x -> engine.nodeTypeParser(x.type()).get().toElement(x, semantic, engine)).toArray(NElement[]::new)))
             );
         }
         if (item instanceof CtrlNTxNodeFor) {
@@ -361,7 +361,7 @@ public abstract class NTxNodeParserBase implements NTxNodeParser {
                     i.getCallBody().toArray(new NElement[0])
             );
         }
-        return ToElementHelper.of(item, engine)
+        return ToElementHelper.of(item, semantic, engine)
                 .build();
     }
 
