@@ -20,7 +20,7 @@ public class NTxNodePanel extends NTxTsonPanel {
         NTxNode m = null;
         m = model.get();
         if (m != null) {
-            return NTxUtils.removeCompilerDeclarationPathAnnotations(engine.toElement(m));
+            return NTxUtils.removeCompilerDeclarationPathAnnotations(engine.toElement(m, false));
         }
         return null;
     }
