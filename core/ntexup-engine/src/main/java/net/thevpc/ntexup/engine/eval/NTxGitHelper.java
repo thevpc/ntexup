@@ -5,10 +5,9 @@ import net.thevpc.nuts.app.NApp;
 import net.thevpc.nuts.artifact.NId;
 import net.thevpc.nuts.command.NExec;
 import net.thevpc.nuts.core.NSession;
+import net.thevpc.nuts.core.NStoreKey;
 import net.thevpc.nuts.core.NWorkspace;
 import net.thevpc.nuts.io.NPath;
-import net.thevpc.nuts.platform.NStoreType;
-import net.thevpc.nuts.spi.NScopeType;
 import net.thevpc.nuts.time.NChronometer;
 import net.thevpc.nuts.text.NMsg;
 import net.thevpc.nuts.util.NStringUtils;
@@ -33,7 +32,7 @@ public class NTxGitHelper {
         NPath userConfHome;
         NPath appCacheFolder = NApp.of().getCacheFolder();
         if (appCacheFolder == null) {
-            userConfHome = NPath.ofIdStore(NId.of("net.thevpc.ntexup:ntexup"), NStoreType.CACHE).resolve("github");
+            userConfHome = NPath.of(NStoreKey.ofCache(NId.of("net.thevpc.ntexup:ntexup"))).resolve("github");
         } else {
             userConfHome = appCacheFolder.resolve("ntexup/github");
         }
