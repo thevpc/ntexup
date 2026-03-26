@@ -20,49 +20,99 @@ import java.util.function.Predicate;
 public class ToElementHelper {
     List<NElement> args = new ArrayList<>();
     List<NElement> children = new ArrayList<>();
-    private String name;
-    private NTxNode node;
+    private final String name;
+    private final NTxNode node;
     private Predicate<String> exclude;
-    private Set<String> excludeSet = new HashSet<>();
-    private Set<String> defaultExcludeSet = new HashSet<>(Arrays.asList(NTxPropName.CLASS));
-    private NTxEngine engine;
+    private final Set<String> excludeSet = new HashSet<>();
+    private final Set<String> defaultExcludeSet = new HashSet<>(Collections.singletonList(NTxPropName.CLASS));
+    private final Set<String> defaultExcludeSemantic = new HashSet<>(Arrays.asList(
+            NTxPropName.COLORS,
+            NTxPropName.BACKGROUND_COLOR,
+            NTxPropName.FOREGROUND_COLOR,
+            NTxPropName.DASH,
+            NTxPropName.DEBUG,
+            NTxPropName.DEBUG_COLOR,
+            NTxPropName.TRANSPARENT_COLOR,
+            NTxPropName.TOP_COLOR,
+            NTxPropName.SHADOW,
+            NTxPropName.MARGIN,
+            NTxPropName.PADDING,
+            NTxPropName.RAISED,
+            NTxPropName.THEED,
+            NTxPropName.ROUND_CORNER,
+            NTxPropName.DRAW_CONTOUR,
+            NTxPropName.FILL_BACKGROUND,
+            NTxPropName.DRAW_GRID,
+            NTxPropName.GRID_COLOR,
+            NTxPropName.LINE_COLOR,
+            NTxPropName.FONT_STRIKE,
+            NTxPropName.FONT_UNDERLINED,
+            NTxPropName.FONT_ITALIC,
+            NTxPropName.FONT_BOLD,
+            NTxPropName.STROKE,
+            NTxPropName.FONT_SIZE,
+            NTxPropName.FONT_FAMILY
+    ));
+    private final NTxEngine engine;
+    private final boolean semantic;
 
-    public static ToElementHelper of(NTxNode node, NTxEngine engine) {
+    public static ToElementHelper of(NTxNode node, boolean semantic, NTxEngine engine) {
         return new ToElementHelper(
                 NTxUtils.uid(node.type())
-                , node, engine);
+                , node, semantic, engine);
     }
 
-    public ToElementHelper(String name, NTxNode node, NTxEngine engine) {
+    public ToElementHelper(String name, NTxNode node, boolean semantic, NTxEngine engine) {
         this.name = name;
         this.node = node;
+        this.semantic = semantic;
         this.engine = engine;
     }
+
+    private boolean isIncludeProp(NTxProp p) {
+        String n = p.getName();
+
+        if (exclude != null && exclude.test(n)) {
+            return false;
+        }
+
+        if (excludeSet.contains(n)) {
+            return false;
+        }
+
+        if (defaultExcludeSet.contains(n)) {
+            return false;
+        }
+        if(semantic){
+            if(defaultExcludeSemantic.contains(n)){
+                return false;
+            }
+        }
+        return true;
+    }
+
 
     public NElement build() {
         List<NElement> args2 = new ArrayList<>();
         List<NElement> ch = new ArrayList<>();
         args2.addAll(args);
         for (NTxProp p : node.props()) {
-            if (
-                    (exclude == null || !exclude.test(p.getName()))
-                            && !excludeSet.contains(p.getName())
-                            //exclude class and
-                            && !defaultExcludeSet.contains(p.getName())
-            ) {
+            if (isIncludeProp(p)) {
                 args2.add(p.toElement());
             }
         }
         if (node.children().size() > 0 || node.rules().length > 0) {
-            NTxStyleRule[] rules = node.rules();
-            if (rules.length > 0) {
-                ch.add(
-                        NElement.ofPair("styles",
-                                NElement.ofObject(
-                                        Arrays.stream(rules).map(x -> x.toElement()).toArray(NElement[]::new)
-                                )
-                        )
-                );
+            if (!semantic) {
+                NTxStyleRule[] rules = node.rules();
+                if (rules.length > 0) {
+                    ch.add(
+                            NElement.ofPair("styles",
+                                    NElement.ofObject(
+                                            Arrays.stream(rules).map(x -> x.toElement()).toArray(NElement[]::new)
+                                    )
+                            )
+                    );
+                }
             }
             ch.addAll(children);
             for (NTxNode child : node.children()) {
@@ -77,41 +127,44 @@ public class ToElementHelper {
             return u.build();
         }
     }
-    private NElement defaultToElement(NTxNode child){
+
+    private NElement defaultToElement(NTxNode child) {
         NOptional<NTxNodeParser> p = engine.nodeTypeParser(child.type());
-        if(p.isPresent()){
-            return p.get().toElem(child, engine);
+        if (p.isPresent()) {
+            return p.get().toElement(child, semantic, engine);
         }
         NElement raw = child.getRaw();
-        switch (NTxUtils.uid(child.type())){
-            case NTxNodeType.CTRL_DEFINE:{
-                return raw ==null?NElement.ofNamedUplet("define"): raw;
+        switch (NTxUtils.uid(child.type())) {
+            case NTxNodeType.CTRL_DEFINE: {
+                return raw == null ? NElement.ofNamedUplet("define") : raw;
             }
-            case NTxNodeType.BLOCK:{
+            case NTxNodeType.BLOCK: {
                 return NElement.ofNamedObject("block",
-                        child.children().stream().map(x->defaultToElement(x)).toArray(NElement[]::new)
-                        );
+                        child.children().stream().map(x -> defaultToElement(x)).toArray(NElement[]::new)
+                );
             }
-            case NTxNodeType.FRAGMENT:{
+            case NTxNodeType.FRAGMENT: {
                 return NElement.ofNamedObject("fragment",
-                        child.children().stream().map(x->defaultToElement(x)).toArray(NElement[]::new)
-                        );
+                        child.children().stream().map(x -> defaultToElement(x)).toArray(NElement[]::new)
+                );
             }
-            case NTxNodeType.CTRL_UNCOMPILED:{
+            case NTxNodeType.CTRL_UNCOMPILED: {
                 return NElement.ofNamedObject("uncompiled",
                         child.getRaw()
-                        );
+                );
             }
         }
-        return raw ==null?NElement.ofNamedUplet("unknown"): raw;
+        return raw == null ? NElement.ofNamedUplet("unknown") : raw;
     }
 
     private void applyAnnotations(NElementBuilder u) {
-        NOptional<String[]> sa = NTxValue.of(node.getPropertyValue(NTxPropName.CLASS).orNull()).asStringArrayOrString();
-        if (sa.isPresent()) {
-            u.addAnnotation(null,
-                    Arrays.stream(sa.get()).map(x -> NElement.ofString(x)).toArray(NElement[]::new)
-            );
+        if (!semantic) {
+            NOptional<String[]> sa = NTxValue.of(node.getPropertyValue(NTxPropName.CLASS).orNull()).asStringArrayOrString();
+            if (sa.isPresent()) {
+                u.addAnnotation(null,
+                        Arrays.stream(sa.get()).map(x -> NElement.ofString(x)).toArray(NElement[]::new)
+                );
+            }
         }
     }
 
@@ -148,7 +201,7 @@ public class ToElementHelper {
     public ToElementHelper addChildrenByName(String... names) {
         for (String s : names) {
             NTxProp p = node.getProperty(s).orNull();
-            if(p!=null){
+            if (p != null) {
                 addChild(NElement.ofPair(name, p.getValue()));
             }
         }
