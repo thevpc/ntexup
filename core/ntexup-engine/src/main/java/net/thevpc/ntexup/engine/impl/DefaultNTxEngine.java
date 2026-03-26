@@ -6,6 +6,7 @@ import java.awt.image.ImageObserver;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.security.KeyPair;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.List;
@@ -31,6 +32,8 @@ import net.thevpc.ntexup.api.eval.NTxNodePath;
 import net.thevpc.ntexup.api.extension.NTxFunction;
 import net.thevpc.ntexup.api.renderer.text.NTxTextRendererFlavor;
 import net.thevpc.ntexup.api.source.NTxSource;
+import net.thevpc.ntexup.engine.conf.AuthorInfo;
+import net.thevpc.ntexup.engine.conf.AuthorInfoConfigFile;
 import net.thevpc.ntexup.engine.document.*;
 import net.thevpc.ntexup.engine.eval.*;
 import net.thevpc.ntexup.engine.log.DefaultNTxLogger;
@@ -56,6 +59,7 @@ import net.thevpc.nuts.artifact.NDependency;
 import net.thevpc.nuts.artifact.NDependencyBuilder;
 import net.thevpc.nuts.concurrent.NScoredCallable;
 import net.thevpc.nuts.core.NMutableClassLoader;
+import net.thevpc.nuts.core.NStoreKey;
 import net.thevpc.nuts.elem.*;
 import net.thevpc.nuts.ext.NExtensions;
 import net.thevpc.nuts.io.NPath;
@@ -67,7 +71,6 @@ import net.thevpc.nuts.util.*;
 
 import javax.imageio.ImageIO;
 
-import net.thevpc.nuts.artifact.NId;
 import net.thevpc.nuts.text.NTextBuilder;
 
 /**
@@ -92,7 +95,7 @@ public class DefaultNTxEngine implements NTxEngine {
     NTxNodeRendererList renderers;
     private NTxImageTypeRendererFactoryList imageTypeRendererFactoryList;
     private final Map<String, Object> env = new HashMap<>();
-    private final Set<String> dependenciesLoadingPerformed = new HashSet<>();
+    private final Map<String, ImportDependencyResult> dependenciesLoadingPerformed = new HashMap<>();
     private volatile List<NTxStyleRule> defaultStyles;
     private final AtomicBoolean componentsInitialized = new AtomicBoolean(false);
     private final NTxItemParser itemParser = new NTxItemParser() {
@@ -108,6 +111,11 @@ public class DefaultNTxEngine implements NTxEngine {
             return NOptional.ofNamedEmpty("node type parser for NodeType " + id);
         }
     };
+    private String authorName;
+    private String authorUrl;
+    private String authorOrcid;
+    private String authorEmail;
+    private KeyPair authorPublicKey;
 
     public DefaultNTxEngine() {
         init();
@@ -120,6 +128,59 @@ public class DefaultNTxEngine implements NTxEngine {
         init();
     }
 
+    @Override
+    public String getAuthorEmail() {
+        return authorEmail;
+    }
+
+    @Override
+    public DefaultNTxEngine setAuthorEmail(String authorEmail) {
+        this.authorEmail = authorEmail;
+        return this;
+    }
+
+    @Override
+    public String getAuthorName() {
+        return authorName;
+    }
+
+    @Override
+    public DefaultNTxEngine setAuthorName(String authorName) {
+        this.authorName = authorName;
+        return this;
+    }
+
+    @Override
+    public String getAuthorUrl() {
+        return authorUrl;
+    }
+
+    @Override
+    public DefaultNTxEngine setAuthorUrl(String authorUrl) {
+        this.authorUrl = authorUrl;
+        return this;
+    }
+
+    @Override
+    public String getAuthorOrcid() {
+        return authorOrcid;
+    }
+
+    public DefaultNTxEngine setAuthorOrcid(String authorOrcid) {
+        this.authorOrcid = authorOrcid;
+        return this;
+    }
+
+    @Override
+    public KeyPair getAuthorKey() {
+        return authorPublicKey;
+    }
+
+    @Override
+    public DefaultNTxEngine setAuthorKey(KeyPair authorPublicKey) {
+        this.authorPublicKey = authorPublicKey;
+        return this;
+    }
 
     private NOptional<NTxItem> parseItem0(NTxResolutionContext context) {
         NElement element = context.element();
@@ -158,21 +219,28 @@ public class DefaultNTxEngine implements NTxEngine {
         renderers = new NTxNodeRendererList(this);
         imageTypeRendererFactoryList = new NTxImageTypeRendererFactoryList(this);
 
-
+        AuthorInfoConfigFile cf=new  AuthorInfoConfigFile(log);
+        AuthorInfo aa = cf.ensureGeneratedKey();
+        setAuthorEmail(aa.authorEmail);
+        setAuthorName(aa.authorName);
+        setAuthorUrl(aa.authorUrl);
+        setAuthorOrcid(aa.authorOrcid);
+        setAuthorKey(aa.keyPair);
     }
+
 
     private void initializeComponents() {
         if (componentsInitialized.compareAndSet(false, true)) {
             log().log(NMsg.ofC("bootstrap base components...").asFineAlert());
-            textFlavors.build(new NId[0], false);
-            functions.build(new NId[0], false);
-            documentRendererFactories.build(new NId[0], false);
-            builderContexts.build(new NId[0], false);
-            nodeTypeFactories.build(new NId[0], false);
+            textFlavors.build(new NDefinition[0], false);
+            functions.build(new NDefinition[0], false);
+            documentRendererFactories.build(new NDefinition[0], false);
+            builderContexts.build(new NDefinition[0], false);
+            nodeTypeFactories.build(new NDefinition[0], false);
             nodeParserFactories.addBase(new DefaultNTxDocumentItemParserFactory());
-            nodeParserFactories.build(new NId[0], false);
-            renderers.build(new NId[0], false);
-            imageTypeRendererFactoryList.build(new NId[0], false);
+            nodeParserFactories.build(new NDefinition[0], false);
+            renderers.build(new NDefinition[0], false);
+            imageTypeRendererFactoryList.build(new NDefinition[0], false);
             log().log(NMsg.ofC("%s engine ready!", NMsg.ofStyledPrimary1("NTexUp")).asFineAlert());
         }
     }
@@ -302,7 +370,6 @@ public class DefaultNTxEngine implements NTxEngine {
     private interface NTxNodeProvider {
         NTxNodePath get(int index);
     }
-
 
 
     private Iterator<NTxNodePath> oscillatingOrder(NTxNodeProvider nodes, int pivot) {
@@ -452,17 +519,20 @@ public class DefaultNTxEngine implements NTxEngine {
         return classLoader;
     }
 
-    public boolean importDependencies(String... deps) {
-        NDependency[] okDeps = Arrays.stream(deps)
+    public ImportDependencyResults importDependencies(String... deps) {
+        ImportDependencyResult[] initDeps = Arrays.stream(deps)
                 .filter(x -> !NBlankable.isBlank(x))
                 .map(x -> NDependency.get(x).orNull())
-                .map(x -> {
+                .flatMap(x -> {
                     if (x == null) {
-                        return null;
+                        return Stream.empty();
                     }
                     NDependencyBuilder b = x.builder();
                     if (NBlankable.isBlank(b.getArtifactId())) {
-                        return null;
+                        return Stream.empty();
+                    }
+                    if (x.toId().getLongName().equals("defaults")) {
+                        return Arrays.stream(defaultDependencies());
                     }
                     if (NBlankable.isBlank(x.getGroupId())) {
                         b.setGroupId("net.thevpc.ntexup");
@@ -474,19 +544,64 @@ public class DefaultNTxEngine implements NTxEngine {
                     if (NBlankable.isBlank(x.getVersion())) {
                         b.setVersion(NTxEngine.CURRENT_VERSION);
                     }
-                    return b.build();
+                    return Stream.of(b.build());
                 })
-                .filter(dep -> dep != null && !dependenciesLoadingPerformed.contains(dep.toString()))
+                .filter(Objects::nonNull)
+                .distinct()
+                .map(dep -> {
+                            //short name aka without version, check if any version is already loaded
+                            ImportDependencyResult sn = dependenciesLoadingPerformed.get(dep.toId().getShortName());
+                            if (sn != null) {
+                                if (sn.isLoaded()) {
+                                    return new ImportDependencyResult(
+                                            dep,
+                                            sn.getLoadedDependency(),
+                                            true,
+                                            false
+                                    );
+                                }
+                                if (sn.isFailed()) {
+                                    return new ImportDependencyResult(
+                                            dep,
+                                            sn.getLoadedDependency(),
+                                            false,
+                                            true
+                                    );
+                                }
+                            }
+                            return new ImportDependencyResult(
+                                    dep,
+                                    null,
+                                    false,
+                                    false
+                            );
+                        }
+                )
+                .toArray(ImportDependencyResult[]::new);
+        NDependency[] okDeps = Arrays.stream(initDeps).filter(x -> !x.isLoaded() && !x.isFailed()).map(x -> x.getDependency())
                 .toArray(NDependency[]::new);
-
         if (okDeps.length > 0) {
-            dependenciesLoadingPerformed.addAll(Arrays.stream(deps).map(x -> x).collect(Collectors.toList()));
             log().log(NMsg.ofC("importing dependencies %s",
                     NTextBuilder.of()
                             .appendJoined(",", Arrays.asList(okDeps))
                             .build()
             ));
-            NId[] u = classLoader.loadDependencies(okDeps);
+            NDefinition[] u = classLoader.loadDependencies(okDeps);
+            Map<String, NDefinition> reallyLoaded = new HashMap<>();
+            for (NDefinition u0 : u) {
+                reallyLoaded.put(u0.getId().getShortName(), u0);
+            }
+            for (int i = 0; i < initDeps.length; i++) {
+                ImportDependencyResult c = initDeps[i];
+                String sn = c.getDependency().toId().getShortName();
+                NDefinition ld = reallyLoaded.get(sn);
+                if (ld != null) {
+                    if (c.isFailed() || !c.isLoaded()) {
+                        initDeps[i] = new ImportDependencyResult(c.getDependency(), ld, true, false);
+                    }
+                }
+                dependenciesLoadingPerformed.put(sn, initDeps[i]);
+            }
             if (u.length > 0) {
                 log().log(NMsg.ofC("new dependencies %s",
                         NTextBuilder.of()
@@ -497,22 +612,29 @@ public class DefaultNTxEngine implements NTxEngine {
                     d.onLoadDependencyLoaded(u);
                 }
             }
-            return true;
         }
-        return false;
+        return new ImportDependencyResults(initDeps);
+    }
+
+    private NDependency[] defaultDependencies() {
+        return Arrays.stream(
+                new String[]{
+                        "net.thevpc.ntexup:ntexup-extension-plantuml:" + NTxEngine.CURRENT_VERSION,
+                        "net.thevpc.ntexup:ntexup-extension-animated-gif:" + NTxEngine.CURRENT_VERSION,
+                        "net.thevpc.ntexup:ntexup-extension-svg:" + NTxEngine.CURRENT_VERSION,
+                        "net.thevpc.ntexup:ntexup-extension-shapes2d:" + NTxEngine.CURRENT_VERSION,
+                        "net.thevpc.ntexup:ntexup-extension-shapes3d:" + NTxEngine.CURRENT_VERSION,
+                        "net.thevpc.ntexup:ntexup-extension-plot2d:" + NTxEngine.CURRENT_VERSION,
+                        "net.thevpc.ntexup:ntexup-extension-presenters:" + NTxEngine.CURRENT_VERSION,
+                        "net.thevpc.ntexup:ntexup-extension-latex:" + NTxEngine.CURRENT_VERSION
+                }
+        ).map(x -> NDependency.of(x)).toArray(NDependency[]::new);
     }
 
     @Override
-    public boolean importDefaultDependencies() {
+    public ImportDependencyResults importDefaultDependencies() {
         return importDependencies(
-                "net.thevpc.ntexup:ntexup-extension-plantuml:" + NTxEngine.CURRENT_VERSION,
-                "net.thevpc.ntexup:ntexup-extension-animated-gif:" + NTxEngine.CURRENT_VERSION,
-                "net.thevpc.ntexup:ntexup-extension-svg:" + NTxEngine.CURRENT_VERSION,
-                "net.thevpc.ntexup:ntexup-extension-shapes2d:" + NTxEngine.CURRENT_VERSION,
-                "net.thevpc.ntexup:ntexup-extension-shapes3d:" + NTxEngine.CURRENT_VERSION,
-                "net.thevpc.ntexup:ntexup-extension-plot2d:" + NTxEngine.CURRENT_VERSION,
-                "net.thevpc.ntexup:ntexup-extension-presenters:" + NTxEngine.CURRENT_VERSION,
-                "net.thevpc.ntexup:ntexup-extension-latex:" + NTxEngine.CURRENT_VERSION
+                Arrays.stream(defaultDependencies()).map(x -> x.toString()).toArray(String[]::new)
         );
     }
 
@@ -668,11 +790,6 @@ public class DefaultNTxEngine implements NTxEngine {
         return itemParser().nodeTypeParser(id);
     }
 
-    public NTxDocumentLoadingResult compileDocument(NTxDocument document) {
-        initializeComponents();
-        return new NTxCompiler(this).compileDocument(document);
-    }
-
     @Override
     public void compileNode(NTxResolutionContext ctx, CompileNodeVisitor visitor) {
         initializeComponents();
@@ -710,18 +827,12 @@ public class DefaultNTxEngine implements NTxEngine {
     }
 
     @Override
-    public NTxCompiledDocument loadCompiledDocument(NPath path) {
-        NTxDocumentLoadingResult d = loadDocument(path);
-        return asCompiledDocument(d.get());
-    }
-
-    @Override
     public NTxCompiledDocument asCompiledDocument(NTxDocument document) {
         return new NTxCompiledDocumentImpl(document, this);
     }
 
     @Override
-    public NTxDocumentLoadingResult loadDocument(NPath path) {
+    public NTxCompiledDocument loadDocument(NPath path) {
         initializeComponents();
         NAssert.requireNamedNonNull(path, "path");
         synchronized (this) {
@@ -735,34 +846,36 @@ public class DefaultNTxEngine implements NTxEngine {
             NTxSource source = NTxSourceFactory.of(path);
             if (path.exists()) {
                 if (path.isRegularFile()) {
-                    NTxSource nPathResource = NTxSourceFactory.of(path);
-                    NOptional<NElement> f = new NTxDocStreamParser(this).parsePath(path, nPathResource);
+                    NOptional<NElement> f = new NTxDocStreamParser(this).parsePath(path, source);
                     if (!f.isPresent()) {
-                        log().log(f.getMessage().get().asSevere(), nPathResource);
+                        log().log(f.getMessage().get().asSevere(), source);
+                        return elementToDocument(null, source);
                     }
                     NElement d = f.get();
                     SilentNTxLogger slog = new SilentNTxLogger();
                     try {
                         this.addLog(slog);
-                        NOptional<NTxDocument> dd = convertDocument(d, source);
-                        if (dd.isPresent()) {
-                            return new NTxDocumentLoadingResultImpl(dd.get(), nPathResource, slog.isSuccessful());
-                        } else {
-                            log().log(dd.getMessage().get().asSevere(), nPathResource);
+                        NTxCompiledDocumentImpl dd = (NTxCompiledDocumentImpl) elementToDocument(d, source);
+                        dd.addSourceFingerprintPart(null, path.readBytes());
+                        if (!slog.isSuccessful()) {
+                            dd.setSuccessfullyLoaded(false);
                         }
+                        return dd;
                     } finally {
                         this.removeLog(slog);
                     }
-
                 } else if (path.isDirectory()) {
-                    NTxDocument document = documentFactory().ofDocument(source);
-                    document.sourceMonitor().add(path.resolve(NTxEngineUtils.NTEXUP_EXT_STAR));
+                    DefaultNTxDocument document = new DefaultNTxDocument(source);
+                    document.root().addRules(NTxDocumentRootRules.DEFAULT);
+                    NTxCompiledDocumentImpl cd=new NTxCompiledDocumentImpl(document,this);
+                    cd.sourceMonitor().add(path.resolve(NTxEngineUtils.NTEXUP_EXT_STAR));
                     List<NPath> all = path.stream().filter(x -> x.isRegularFile() && NTxEngineUtils.isNTexupFile(x)).toList();
                     if (all.isEmpty()) {
                         log().log(
                                 NMsg.ofC("invalid folder (no valid enclosed files) %s", path.normalize().toAbsolute()).asSevere()
                         );
-                        return new NTxDocumentLoadingResultImpl(document, source, false);
+                        cd.setSuccessfullyLoaded(false);
+                        return cd;
                     }
                     NPath main = null;
                     for (String mainFiled : new String[]{
@@ -783,7 +896,7 @@ public class DefaultNTxEngine implements NTxEngine {
                         NOptional<NTxItem> d = null;
                         NTxSource nPathResource = NTxSourceFactory.of(nPath);
                         try {
-                            d = loadNode(document.root(), nPath, document);
+                            d = loadNode(document.root(), nPath, cd, true);
                         } catch (Exception ex) {
                             log().log(NMsg.ofC("unable to load %s : %s", nPath, ex).asSevere(), nPathResource);
                         }
@@ -798,14 +911,15 @@ public class DefaultNTxEngine implements NTxEngine {
                     if (document.root().source() == null) {
                         document.root().setSource(NTxSourceFactory.of(path));
                     }
-                    return new NTxDocumentLoadingResultImpl(document, source, true);
+                    cd.setSuccessfullyLoaded(true);
+                    return cd;
                 } else {
                     log().log(NMsg.ofC("invalid file %s", path).asSevere());
-                    return new NTxDocumentLoadingResultImpl(null, source, false);
+                    return elementToDocument(null, source);
                 }
             }
             log().log(NMsg.ofC("file does not exist %s", path).asSevere());
-            return new NTxDocumentLoadingResultImpl(null, source, false);
+            return elementToDocument(null, source);
         }
     }
 
@@ -825,12 +939,16 @@ public class DefaultNTxEngine implements NTxEngine {
     }
 
     @Override
-    public NOptional<NTxItem> loadNode(NTxNode into, NPath path, NTxDocument document) {
+    public NOptional<NTxItem> loadNode(NTxNode into, NPath path, NTxCompiledDocument document) {
+        return loadNode(into, path, document, false);
+    }
+
+    public NOptional<NTxItem> loadNode(NTxNode into, NPath path, NTxCompiledDocument document, boolean bootNode) {
         initializeComponents();
         if (path.exists()) {
             if (path.isRegularFile()) {
                 NTxSource source = NTxSourceFactory.of(path);
-                NOptional<NTxItem> d = loadNode0(into, path, document);
+                NOptional<NTxItem> d = loadNode0(path, document, bootNode);
                 if (d.isPresent()) {
                     updateSource(d.get(), source);
                 }
@@ -840,7 +958,7 @@ public class DefaultNTxEngine implements NTxEngine {
                 all.sort(NTxEngineUtils::comparePaths);
                 NTxItem node = null;
                 for (NPath nPath : all) {
-                    NOptional<NTxItem> d = loadNode0((node instanceof NTxNode) ? (NTxNode) node : null, nPath, document);
+                    NOptional<NTxItem> d = loadNode0(nPath, document, bootNode);
                     if (!d.isPresent()) {
                         log().log(NMsg.ofC("invalid file %s", nPath));
                         return NOptional.ofError(() -> NMsg.ofC("invalid file %s", nPath));
@@ -867,7 +985,7 @@ public class DefaultNTxEngine implements NTxEngine {
         return NOptional.ofError(() -> NMsg.ofC("file does not exist %s", path));
     }
 
-    public NTxDocumentLoadingResult loadDocument(InputStream is) {
+    public NTxCompiledDocument loadDocument(InputStream is) {
         initializeComponents();
         NTxSource source = NTxSourceFactory.of(is);
 
@@ -880,32 +998,36 @@ public class DefaultNTxEngine implements NTxEngine {
                 log().log(f.getMessage().get().asSevere());
             }
             NElement d = f.get();
-            NOptional<NTxDocument> dd = convertDocument(d, source);
-            if (dd.isPresent()) {
-                return new NTxDocumentLoadingResultImpl(dd.get(), source, slog.isSuccessful());
-            } else {
-                log().log(dd.getMessage().get().asSevere());
-                return new NTxDocumentLoadingResultImpl(null, source, false);
+            NTxCompiledDocument dd = elementToDocument(d, source);
+            if (!slog.isSuccessful()) {
+                ((NTxCompiledDocumentImpl) dd).setSuccessfullyLoaded(false);
             }
+            return dd;
         } finally {
             this.removeLog(slog);
         }
     }
 
-    private NOptional<NTxDocument> convertDocument(NElement doc, NTxSource source) {
-        if (doc == null) {
-            log().log(NMsg.ofPlain("missing document").asError());
-            return NOptional.ofNamedEmpty("document");
+    private NTxCompiledDocument elementToDocument(NElement element, NTxSource source) {
+        if (element == null) {
+            DefaultNTxDocument docd = (DefaultNTxDocument) documentFactory().ofDocument(source);
+            docd.root().setSource(source);
+            NTxCompiledDocumentImpl cd = new NTxCompiledDocumentImpl(docd, this);
+            cd.sourceMonitor().add(source);
+            cd.setSuccessfullyLoaded(false);
+            return cd;
         }
         initializeComponents();
         NTxDocument docd = documentFactory().ofDocument(source);
-        docd.sourceMonitor().add(source);
         docd.root().setSource(source);
-        docd.root().append(new CtrNTxNodelUncompiled(doc, source));
-        return NOptional.of(docd);
+        docd.root().append(new CtrNTxNodelUncompiled(element, source));
+        NTxCompiledDocumentImpl cd = new NTxCompiledDocumentImpl(docd, this);
+        cd.sourceMonitor().add(source);
+        cd.setSuccessfullyLoaded(true);
+        return cd;
     }
 
-    private NOptional<NTxItem> loadNode0(NTxNode into, NPath path, NTxDocument document) {
+    private NOptional<NTxItem> loadNode0(NPath path, NTxCompiledDocument document, boolean bootNode) {
         initializeComponents();
         NTxSource source = NTxSourceFactory.of(path);
         document.sourceMonitor().add(source);
@@ -914,30 +1036,21 @@ public class DefaultNTxEngine implements NTxEngine {
             return NOptional.ofEmpty(u.getMessage());
         }
         NElement c = u.get();
-        ArrayList<NTxNode> parents = new ArrayList<>();
-        if (into != null) {
-            parents.add(into);
+        if (bootNode) {
+            ((NTxCompiledDocumentImpl) document).addSourceFingerprintPart(null, path.readBytes());
         }
-        //document.root().setRaw(c);
         return NOptional.of(new CtrNTxNodelUncompiled(c, source));
-//        return newNode(c, new DefaultNTxNodeFactoryParseContext(
-//                document,
-//                null,
-//                this,
-//                parents,
-//                source
-//        ));
     }
 
     @Override
-    public NElement toElement(NTxDocument doc) {
+    public NElement toElement(NTxDocument doc, boolean semantic) {
         NTxNode r = doc.root();
-        return nodeTypeParser(r.type()).get().toElem(r, this);
+        return nodeTypeParser(r.type()).get().toElement(r, semantic, this);
     }
 
     @Override
-    public NElement toElement(NTxNode node) {
-        return nodeTypeParser(node.type()).get().toElem(node, this);
+    public NElement toElement(NTxNode node, boolean semantic) {
+        return nodeTypeParser(node.type()).get().toElement(node, semantic, this);
     }
 
     @Override
@@ -1121,8 +1234,8 @@ public class DefaultNTxEngine implements NTxEngine {
         for (Repo repo : new Repo[]{
                 new Repo("dev", NPath.ofUserHome().resolve("xprojects/nuts-world/nuts-productivity/ntexup/ntexup-templates")),
                 new Repo("local", NApp.of().getSharedConfFolder().resolve("templates")),
-                new Repo("user", NPath.ofUserStore(NStoreType.CONF).resolve("ntexup/templates")),
-                new Repo("system", NPath.ofSystemStore(NStoreType.CONF).resolve("ntexup/templates")),
+                new Repo("user", NPath.of(NStoreKey.ofUser(NStoreType.CONF)).resolve("ntexup/templates")),
+                new Repo("system", NPath.of(NStoreKey.ofSystem(NStoreType.CONF)).resolve("ntexup/templates")),
                 new Repo("central-github", NPath.of("https://github.com/thevpc/ntexup-templates.git"))
         }) {
             allTemplates.addAll(loader.loadTemplateInfo(repo.name, repo.path, log()));
@@ -1300,7 +1413,7 @@ public class DefaultNTxEngine implements NTxEngine {
                 startTime,
                 capabilities, imageObserver,
                 repainter, null, false, null, null, null,
-                page.document().compiledDocument(),
+                page.document().document(),
                 null,
                 null,
                 null,
