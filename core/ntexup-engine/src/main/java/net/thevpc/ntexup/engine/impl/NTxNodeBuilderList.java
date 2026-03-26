@@ -5,6 +5,7 @@ import net.thevpc.ntexup.api.parser.NTxNodeParser;
 import net.thevpc.ntexup.api.renderer.NTxNodeRenderer;
 import net.thevpc.ntexup.api.renderer.text.NTxTextRendererFlavor;
 import net.thevpc.ntexup.engine.ext.NTxNodeBuilderContextImpl;
+import net.thevpc.nuts.artifact.NDefinition;
 import net.thevpc.nuts.text.NMsg;
 import net.thevpc.nuts.util.NNameFormat;
 
@@ -40,7 +41,7 @@ public class NTxNodeBuilderList extends NtxServiceListImpl2<NTxNodeBuilder> {
         }
     }
     @Override
-    protected void onAfterNewService(NTxNodeBuilder h, boolean custom, NId[] dependencies, NId preferredDependency) {
+    protected void onAfterNewService(NTxNodeBuilder h, boolean custom, NDefinition[] dependencies, NId preferredDependency) {
         NTxNodeBuilderContextImpl b = new NTxNodeBuilderContextImpl(h, engine);
         h.build(b);
         b.compile();
