@@ -119,7 +119,7 @@ public class RepositoryController {
                     .normalize();
 
             NTxEngine e = new DefaultNTxEngine();
-            NTxCompiledDocument doc = e.loadCompiledDocument(file);
+            NTxCompiledDocument doc = e.loadDocument(file);
             List<NTxCompiledPage> pages = doc.pages();
             if (pageNumber >= 0 && pageNumber < pages.size()) {
                 int sizeWidth = 1200;
