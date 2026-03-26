@@ -5,6 +5,8 @@ import net.thevpc.ntexup.api.document.style.NTxProp;
 import net.thevpc.ntexup.api.document.style.NTxPropName;
 import net.thevpc.ntexup.api.document.style.NTxStyleRule;
 import net.thevpc.ntexup.api.engine.CompileNodeVisitor;
+import net.thevpc.ntexup.api.engine.ImportDependencyResult;
+import net.thevpc.ntexup.api.engine.NTxCompiledDocument;
 import net.thevpc.ntexup.api.extension.NTxFunction;
 import net.thevpc.ntexup.api.eval.*;
 import net.thevpc.ntexup.api.engine.NTxEngine;
@@ -13,6 +15,8 @@ import net.thevpc.ntexup.api.parser.NTxNodeParser;
 import net.thevpc.ntexup.api.parser.NTxNodeParserFactory;
 import net.thevpc.ntexup.api.source.NTxSource;
 import net.thevpc.ntexup.api.util.NTxUtils;
+import net.thevpc.ntexup.engine.document.DefaultNTxDocument;
+import net.thevpc.ntexup.engine.impl.NTxCompiledDocumentImpl;
 import net.thevpc.ntexup.engine.impl.NTxEngineUtils;
 import net.thevpc.ntexup.engine.log.SilentNTxLogger;
 import net.thevpc.ntexup.engine.parser.NTxDocumentLoadingResultImpl;
@@ -40,9 +44,9 @@ public class NTxCompiler {
         this.engine = engine;
     }
 
-    public NTxDocumentLoadingResult compileDocument(NTxDocument document0) {
+    public NTxDocumentLoadingResult compileDocument(NTxCompiledDocument compiledDocument) {
         NChronometer chronometer = NChronometer.startNow();
-        NTxDocument documentCopy = document0.copy();
+        NTxDocument documentCopy = compiledDocument.rawDocument().copy();
         NTxSource source = documentCopy.root().source();
         SilentNTxLogger slog = new SilentNTxLogger();
         try {
@@ -51,7 +55,7 @@ public class NTxCompiler {
             List<NTxNode> rootChildren = root.children();
             root.clearChildren();
             NTxResolutionContextImpl context = new NTxResolutionContextImpl(new NTxNode[]{root}, NElement.ofNull(), null, false, engine, documentCopy, null, null, null,
-                    null,null,
+                    compiledDocument,null,
                     null, engine.itemParser());
             DispatchCompileNodeVisitor dv = new DispatchCompileNodeVisitor(new CompileNodeVisitor() {
                 @Override
@@ -538,16 +542,17 @@ public class NTxCompiler {
             if (path.isDirectory()) {
                 path = path.resolve(NTxEngineUtils.NTEXUP_EXT_STAR_STAR);
             }
-            context.document().sourceMonitor().add(path);
+            ((NTxCompiledDocumentImpl)context.compiledDocument()).addMonitoredSource(path);
             List<NPath> list = path.walkGlob().toList();
             list.sort(NTxEngineUtils::comparePaths);
             if (!list.isEmpty()) {
                 for (NPath nPath : list) {
                     if (nPath.isRegularFile()) {
-                        NOptional<NTxItem> se = engine.loadNode(node, nPath, context.document());
+                        NOptional<NTxItem> se = engine.loadNode(node, nPath, context.compiledDocument());
                         if (se.isPresent()) {
                             NTxItem item = se.get();
                             NTxUtils.setNodeParent(item, context.parent());
+                            ((NTxCompiledDocumentImpl)context.compiledDocument()).addMonitoredSource(nPath);
                             new DispatchCompileNodeVisitor(visitor).visitItem(item, context);
                         } else {
                             context.log().log(NMsg.ofC("invalid include. error loading : %s", nPath).asSevere(), NTxUtils.sourceOf(node));
@@ -574,7 +579,9 @@ public class NTxCompiler {
         // TODO : add some context to "accessible imports some how!!
         // dont now how (need track each class where is came from
         // does nuts support this ? it should, its a common use
-        engine.importDependencies(toImport.toArray(new String[0]));
+        for (ImportDependencyResult a : engine.importDependencies(toImport.toArray(new String[0])).all()) {
+            ((NTxCompiledDocumentImpl)context.compiledDocument()).addDependencyFingerprintPart(a.getLoadedDependency());
+        };
     }
 
     private void compileNodeTree_if(NTxResolutionContext context, CompileNodeVisitor visitor) {
