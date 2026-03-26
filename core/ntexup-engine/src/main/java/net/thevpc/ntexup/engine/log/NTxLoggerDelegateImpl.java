@@ -40,7 +40,6 @@ public class NTxLoggerDelegateImpl implements NTxLogger {
         if (level == null) {
             level = Level.INFO;
         }
-        Throwable error = message.error();
         msg = msg.withLevel(level);
         NTxSource source = message.source();
         if (source == null) {
@@ -59,8 +58,8 @@ public class NTxLoggerDelegateImpl implements NTxLogger {
             errorCount++;
         }
         if (other != null) {
-            other.log(NTxMsg.of(msg, error, source));
+            other.log(NTxMsg.of(msg, source));
         }
-        NLog.of(getClass()).log(NMsg.ofC("%s %s",source, msg).asInfo().withThrowable(error));
+        NLog.of(getClass()).log(NMsg.ofC("%s %s",source, msg).asInfo().withThrowable(msg.getThrowable()));
     }
 }
