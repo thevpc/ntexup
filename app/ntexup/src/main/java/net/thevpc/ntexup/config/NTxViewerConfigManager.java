@@ -2,12 +2,12 @@ package net.thevpc.ntexup.config;
 
 import net.thevpc.nuts.app.NApp;
 import net.thevpc.nuts.artifact.NId;
+import net.thevpc.nuts.core.NStoreKey;
 import net.thevpc.nuts.elem.NElement;
 import net.thevpc.nuts.elem.NElementReader;
 import net.thevpc.nuts.elem.NElementWriter;
 import net.thevpc.nuts.elem.NElements;
 import net.thevpc.nuts.io.NPath;
-import net.thevpc.nuts.platform.NStoreType;
 import net.thevpc.nuts.util.NBlankable;
 
 import java.io.*;
@@ -26,7 +26,7 @@ public class NTxViewerConfigManager {
         NPath appCacheFolder = NApp.of().getConfFolder();
         if (viewerConfigFile == null) {
             if (appCacheFolder == null) {
-                viewerConfigFile = NPath.ofIdStore(NId.of("net.thevpc.ntexup:ntexup"), NStoreType.CACHE).resolve(configName);
+                viewerConfigFile = NPath.of(NStoreKey.ofCache(NId.of("net.thevpc.ntexup:ntexup"))).resolve(configName);
             } else {
                 viewerConfigFile = appCacheFolder.resolve(configName);
             }
