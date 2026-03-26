@@ -247,8 +247,7 @@ public class PdfConfigDialog extends JDialog {
                         NTxDocumentStreamRenderer renderer = engine.newPdfRenderer().get();
                         renderer.setStreamRendererConfig(config);
                         renderer.setOutput(outputPdfPath);
-                        NTxCompiledDocument newCompiledDocument = engine.asCompiledDocument(engine.compileDocument(raw).document().get());
-                        renderer.render(newCompiledDocument);
+                        renderer.render(document);
                     } finally {
                         SwingUtilities.invokeLater(() -> progressBar.setIndeterminate(false));
                     }
