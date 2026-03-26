@@ -87,7 +87,7 @@ public abstract class NTxDocumentRendererBase implements NTxDocumentRenderer {
 
     @Override
     public NTxDocumentView renderPath(NPath path) {
-        return renderSupplier(r -> engine.loadCompiledDocument(path));
+        return renderSupplier(r -> engine.loadDocument(path));
     }
 
     @Override
