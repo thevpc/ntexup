@@ -26,9 +26,9 @@ class CustomNTxNodeParserFromBuilder extends NTxNodeParserBase {
     }
 
     @Override
-    public NElement toElem(NTxNode item, NTxEngine engine) {
+    public NElement toElement(NTxNode item, boolean semantic, NTxEngine engine) {
         if (ctx.toElem != null) {
-            NElement u = ctx.toElem.toElem(item, ctx);
+            NElement u = ctx.toElem.toElement(item, semantic, ctx);
             if (u != null) {
                 return u;
             }
@@ -36,12 +36,13 @@ class CustomNTxNodeParserFromBuilder extends NTxNodeParserBase {
         if (ctx.knownArgNames != null && !ctx.knownArgNames.isEmpty()) {
             return ToElementHelper.of(
                             item,
+                            semantic ,
                             engine()
                     )
                     .addChildrenByName(ctx.knownArgNames.toArray(new String[0]))
                     .build();
         }
-        return super.toElem(item, engine);
+        return super.toElement(item, semantic, engine);
     }
 
     @Override
@@ -87,7 +88,7 @@ class CustomNTxNodeParserFromBuilder extends NTxNodeParserBase {
                         String compilerDeclarationPath = NTxUtils.getCompilerDeclarationPath(element);
                         NTxSource source = context.source();
                         if (compilerDeclarationPath != null) {
-                            NTxSource s = context.document().sourceMonitor().find(compilerDeclarationPath).orNull();
+                            NTxSource s = context.compiledDocument().sourceMonitor().find(compilerDeclarationPath).orNull();
                             if (s != null) {
                                 source = s;
                             }
