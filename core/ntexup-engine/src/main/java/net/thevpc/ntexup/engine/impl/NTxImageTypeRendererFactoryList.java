@@ -6,6 +6,4 @@ public class NTxImageTypeRendererFactoryList extends  NtxServiceListImpl2<NTxIma
     public NTxImageTypeRendererFactoryList(DefaultNTxEngine engine) {
         super("image type renderer", NTxImageTypeRendererFactory.class, engine);
     }
-
-
 }
