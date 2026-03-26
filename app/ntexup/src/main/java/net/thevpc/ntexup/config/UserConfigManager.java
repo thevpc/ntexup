@@ -1,16 +1,16 @@
 package net.thevpc.ntexup.config;
 
 import net.thevpc.nuts.artifact.NId;
+import net.thevpc.nuts.core.NStoreKey;
 import net.thevpc.nuts.elem.NElementReader;
 import net.thevpc.nuts.elem.NElementWriter;
 import net.thevpc.nuts.io.NPath;
-import net.thevpc.nuts.platform.NStoreType;
 
 public class UserConfigManager {
     private NPath userConfigFile;
 
     public UserConfigManager() {
-        this.userConfigFile = NPath.ofIdStore(NId.of("net.thevpc.nuts:nuts"), NStoreType.CONF).resolve("user-config.tson");
+        this.userConfigFile = NPath.of(NStoreKey.ofConf(NId.of("net.thevpc.nuts:nuts"))).resolve("user-config.tson");
     }
 
 
