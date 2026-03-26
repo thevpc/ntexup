@@ -15,7 +15,9 @@ import net.thevpc.ntexup.api.parser.NTxItemParser;
 import net.thevpc.ntexup.api.source.NTxSource;
 import net.thevpc.ntexup.api.util.NTxElementUtils;
 import net.thevpc.ntexup.api.util.NTxUtils;
+import net.thevpc.ntexup.engine.impl.NTxCompiledDocumentImpl;
 import net.thevpc.nuts.elem.NElement;
+import net.thevpc.nuts.io.NDigest;
 import net.thevpc.nuts.io.NPath;
 import net.thevpc.nuts.text.NMsg;
 import net.thevpc.nuts.util.*;
@@ -550,10 +552,18 @@ public class NTxResolutionContextImpl implements NTxResolutionContext {
         if (path.isAnyString()) {
             String pathStr = path.asStringValue().get();
             if (NTxGitHelper.isGithubFolder(pathStr)) {
-                return NTxGitHelper.resolveGithubPath(pathStr, log());
+                NPath pp = NTxGitHelper.resolveGithubPath(pathStr, log());
+                if(pp.isRegularFile()){
+                    ((NTxCompiledDocumentImpl)compiledDocument).getFingerPrintBuilder()
+                            .addResource(pp,pathStr);
+                }
+                return pp;
             }
             NTxSource source = source();
-            return NTxUtils.resolvePath(path, source);
+            NPath pp = NTxUtils.resolvePath(path, source);
+            ((NTxCompiledDocumentImpl)compiledDocument).getFingerPrintBuilder()
+                    .addResource(pp,pathStr);
+            return pp;
         }
         throw new NIllegalArgumentException(NMsg.ofC("unsupported path type : %s", path));
     }
