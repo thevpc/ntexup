@@ -139,7 +139,7 @@ public interface NTxNodeBuilderContext {
     }
 
     interface ToElemAction {
-        NElement toElem(NTxNode item, NTxNodeBuilderContext buildContext);
+        NElement toElement(NTxNode item, boolean semantic, NTxNodeBuilderContext buildContext);
     }
 
     interface RenderAction {
