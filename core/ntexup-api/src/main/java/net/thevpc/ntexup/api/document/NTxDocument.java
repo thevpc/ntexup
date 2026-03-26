@@ -6,12 +6,13 @@ import java.util.Properties;
 import net.thevpc.ntexup.api.document.node.NTxNode;
 import net.thevpc.ntexup.api.source.NTxSource;
 import net.thevpc.ntexup.api.source.NTxSourceMonitor;
+import net.thevpc.nuts.elem.NElement;
 import net.thevpc.nuts.util.NOptional;
 
 public interface NTxDocument {
     NTxSource source();
 
-    NTxSourceMonitor sourceMonitor();
+//    NTxSourceMonitor sourceMonitor();
 
     NTxDocument add(NTxNode part);
 
@@ -34,5 +35,7 @@ public interface NTxDocument {
     NTxDocument copy();
 
     List<NTxNode> pages();
+
+//    boolean isSuccessfullyLoaded();
 
 }
