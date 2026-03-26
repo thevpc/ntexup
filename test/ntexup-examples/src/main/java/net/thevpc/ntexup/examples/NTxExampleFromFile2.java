@@ -4,8 +4,8 @@
  */
 package net.thevpc.ntexup.examples;
 
+import net.thevpc.ntexup.api.engine.NTxCompiledDocument;
 import net.thevpc.ntexup.api.engine.NTxEngine;
-import net.thevpc.ntexup.api.document.NTxDocument;
 import net.thevpc.ntexup.engine.impl.DefaultNTxEngine;
 import net.thevpc.nuts.Nuts;
 import net.thevpc.nuts.io.NPath;
@@ -19,8 +19,7 @@ public class NTxExampleFromFile2 {
         Nuts.openWorkspace().share();
         NTxEngine e = new DefaultNTxEngine();
         NPath file = NPath.of("src/ntexup/test1.ndoc").toAbsolute().normalize();
-        NTxDocument doc = e.loadDocument(file).get();
-
-        System.out.println(e.toElement(doc));
+        NTxCompiledDocument doc = e.loadDocument(file);
+        System.out.println(e.toElement(doc.document(), false));
     }
 }
