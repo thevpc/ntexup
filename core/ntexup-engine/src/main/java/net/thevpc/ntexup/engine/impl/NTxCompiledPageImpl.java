@@ -8,6 +8,7 @@ import net.thevpc.ntexup.api.eval.NTxResolutionContext;
 import net.thevpc.ntexup.api.util.NTxUtils;
 import net.thevpc.ntexup.engine.document.DefaultNTxNode;
 import net.thevpc.ntexup.engine.eval.FillNodeCompileNodeVisitor;
+import net.thevpc.nuts.elem.NElement;
 import net.thevpc.nuts.time.NChronometer;
 import net.thevpc.nuts.text.NMsg;
 import net.thevpc.nuts.util.NOptional;
@@ -50,7 +51,7 @@ public class NTxCompiledPageImpl implements NTxCompiledPage {
         if (!prefixExecuted) {
             NChronometer c = NChronometer.startNow();
             for (NTxNodeAndContext outerInstruction : prefixInstructions) {
-                outerInstruction.run(compiledDocument.compiledDocument(), document().engine(), compiledDocument, this, true);
+                outerInstruction.run(compiledDocument.document(), document().engine(), compiledDocument, this, true);
             }
             c.stop();
             prefixExecuted = true;
@@ -66,7 +67,7 @@ public class NTxCompiledPageImpl implements NTxCompiledPage {
                     onCompile.onBeforeCompile(this);
                     initialize();
                     NChronometer c = NChronometer.startNow();
-                    pageContext = compiledDocument.engine().newContext(this.rawPage, compiledDocument.compiledDocument(), compiledDocument, this, parentContext).setInPage(true);
+                    pageContext = compiledDocument.engine().newContext(this.rawPage, compiledDocument.document(), compiledDocument, this, parentContext).setInPage(true);
 
                     NTxNode o = DefaultNTxNode.ofBlock();
                     o.setParent(this.rawPage.parent());
@@ -83,6 +84,13 @@ public class NTxCompiledPageImpl implements NTxCompiledPage {
             }
         }
         return compiledPage;
+    }
+
+    @Override
+    public NElement toElement(boolean semantic) {
+        NTxNode p = compiledPage();
+        return compiledDocument.engine().nodeTypeParser(p.type()).get()
+                .toElement(p, semantic, compiledDocument.engine());
     }
 
     public NTxResolutionContext pageContext() {
