@@ -4,8 +4,6 @@ import net.thevpc.ntexup.api.engine.NTxCompiledDocument;
 import net.thevpc.ntexup.api.engine.NTxCompiledPage;
 import net.thevpc.ntexup.api.engine.NTxEngine;
 import net.thevpc.ntexup.api.log.NTxLogger;
-import net.thevpc.ntexup.api.renderer.NTxDocumentView;
-import net.thevpc.ntexup.api.renderer.NTxDocumentViewManager;
 import net.thevpc.ntexup.engine.util.NTxUtilsImages;
 import net.thevpc.ntexup.api.renderer.NTxDocumentRendererListener;
 import net.thevpc.ntexup.api.renderer.NTxDocumentStreamRendererConfig;
@@ -15,7 +13,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
-import java.util.ArrayList;
 
 public class NTxDebugFrame extends JFrame {
     private NTxDebugPanel debugPanel;
@@ -24,7 +21,7 @@ public class NTxDebugFrame extends JFrame {
     NTxDocumentRendererListener hDocumentRendererListener = new NTxDocumentRendererListener() {
         @Override
         public void onChangedCompiledDocument(NTxCompiledDocument compiledDocument) {
-            model().setCompiledDocument(compiledDocument.compiledDocument());
+            model().setCompiledDocument(compiledDocument.document());
             model().setRawDocument(compiledDocument.rawDocument());
             updateContent();
         }
