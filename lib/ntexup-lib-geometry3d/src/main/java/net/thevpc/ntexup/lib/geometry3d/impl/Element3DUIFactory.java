@@ -6,6 +6,7 @@ import net.thevpc.ntexup.lib.geometry3d.NTxRenderState3D;
 import net.thevpc.ntexup.api.engine.NTxDependencyLoadedListener;
 import net.thevpc.ntexup.api.engine.NTxEngine;
 import net.thevpc.ntexup.lib.geometry3d.NTxElement3DRenderer;
+import net.thevpc.nuts.artifact.NDefinition;
 import net.thevpc.nuts.artifact.NId;
 import net.thevpc.nuts.io.NLibPaths;
 import net.thevpc.nuts.io.NServiceLoader;
@@ -19,23 +20,23 @@ public class Element3DUIFactory {
 
     public Element3DUIFactory(NTxEngine engine) {
         this.engine=engine;
-        update(new NId[0]);
+        update(new NDefinition[0]);
         engine.addDependencyLoadedListener(new NTxDependencyLoadedListener() {
             @Override
-            public void onLoadDependencyLoaded(NId[] dependencies) {
+            public void onLoadDependencyLoaded(NDefinition[] dependencies) {
                 update(dependencies);
             }
         });
     }
 
-    private void update(NId[] dependencies) {
+    private void update(NDefinition[] dependencies) {
         NServiceLoader<NTxElement3DRenderer> serviceLoader = NServiceLoader.of(NTxElement3DRenderer.class, null,engine.getEngineClassLoader().asClassLoader());
         for (NTxElement3DRenderer element3DPrimitiveBuilder : serviceLoader.loadAll(null)) {
             register(element3DPrimitiveBuilder.forType(), element3DPrimitiveBuilder, dependencies);
         }
     }
 
-    void register(Class c, NTxElement3DRenderer f, NId[] dependencies) {
+    void register(Class c, NTxElement3DRenderer f, NDefinition[] dependencies) {
         if (!map.containsKey(c)) {
             map.put(c, f);
             NId sourceId = NLibPaths.of().resolveId(c).orNull();
