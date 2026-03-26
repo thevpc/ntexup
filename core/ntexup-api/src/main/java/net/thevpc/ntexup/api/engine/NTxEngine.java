@@ -8,6 +8,7 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.ImageObserver;
 import java.io.InputStream;
+import java.security.KeyPair;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -47,9 +48,9 @@ public interface NTxEngine {
 
     List<NTxImageTypeRendererFactory> imageTypeRendererFactories();
 
-    boolean importDefaultDependencies();
+    ImportDependencyResults importDefaultDependencies();
 
-    boolean importDependencies(String... deps);
+    ImportDependencyResults importDependencies(String... deps);
 
     NMutableClassLoader getEngineClassLoader();
 
@@ -93,23 +94,21 @@ public interface NTxEngine {
 
     NOptional<NTxDocumentRenderer> newRenderer(String type);
 
-    NTxResolutionContext newContext(NTxNode node, NTxDocument document, NTxCompiledDocument compiledDocument,NTxCompiledPage compiledPage, NTxResolutionContext parentContext);
+    NTxResolutionContext newContext(NTxNode node, NTxDocument document, NTxCompiledDocument compiledDocument, NTxCompiledPage compiledPage, NTxResolutionContext parentContext);
 
     boolean validateNode(NTxNode node);
 
-    NTxDocumentLoadingResult loadDocument(NPath of);
-
-    NTxCompiledDocument loadCompiledDocument(NPath of);
+    NTxCompiledDocument loadDocument(NPath of);
 
     NTxCompiledDocument asCompiledDocument(NTxDocument of);
 
-    NOptional<NTxItem> loadNode(NTxNode into, NPath of, NTxDocument document);
+    NOptional<NTxItem> loadNode(NTxNode into, NPath of, NTxCompiledDocument document);
 
-    NTxDocumentLoadingResult loadDocument(InputStream is);
+    NTxCompiledDocument loadDocument(InputStream is);
 
-    NElement toElement(NTxDocument doc);
+    NElement toElement(NTxDocument doc, boolean semantic);
 
-    NElement toElement(NTxNode node);
+    NElement toElement(NTxNode node, boolean semantic);
 
     NOptional<NTxProp> computeProperty(NTxNode node, String... propertyNames);
 
@@ -148,6 +147,8 @@ public interface NTxEngine {
 
     NOptional<NTxNodeRenderer> getRenderer(String type);
 
+    NTxEngine setAuthorKey(KeyPair authorPublicKey);
+
     <T> NOptional<T> getEnv(String name);
 
     <T> NOptional<T> computeIfAbsent(String name, Function<String, T> fct);
@@ -156,9 +157,8 @@ public interface NTxEngine {
 
     NTxEngine setEnv(String env, Object value);
 
-    NTxDocumentLoadingResult compileDocument(NTxDocument document);
 
-    void compileNode(NTxNode node, NTxDocument document, NTxCompiledDocument compiledDocument,NTxCompiledPage compiledPage,NTxResolutionContext context, CompileNodeVisitor visitor);
+    void compileNode(NTxNode node, NTxDocument document, NTxCompiledDocument compiledDocument, NTxCompiledPage compiledPage, NTxResolutionContext context, CompileNodeVisitor visitor);
 
     void compileNode(NTxResolutionContext ctx, CompileNodeVisitor visitor);
 
@@ -202,4 +202,19 @@ public interface NTxEngine {
     NOptional<NTxNode> findNodeByProperty(String propertyName, Predicate<NElement> propertyValueFilter, NTxResolutionContext context);
 
     NTxFunctionCallContext createFunctionArgs(String functionName, NElement[] callArgs, NTxResolutionContext context);
+
+    NTxEngine setAuthorEmail(String authorEmail);
+
+    String getAuthorName();
+
+    String getAuthorEmail();
+
+    NTxEngine setAuthorName(String authorName);
+
+    String getAuthorUrl();
+    String getAuthorOrcid();
+
+    NTxEngine setAuthorUrl(String authorUrl);
+
+    KeyPair getAuthorKey();
 }
