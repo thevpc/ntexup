@@ -158,7 +158,7 @@ public class DefaultNTxRendererContext extends NTxResolutionContextImpl implemen
 
     @Override
     public NTxSourceMonitor sourceMonitor() {
-        return compiledPage.document().rawDocument().sourceMonitor();
+        return compiledPage.document().sourceMonitor();
     }
 
 
