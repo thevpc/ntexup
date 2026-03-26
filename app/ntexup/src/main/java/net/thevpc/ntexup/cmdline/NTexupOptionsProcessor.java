@@ -164,7 +164,7 @@ public class NTexupOptionsProcessor {
         }
         for (NPath path : paths) {
             NChronometer ch = NChronometer.startNow();
-            NTxCompiledDocument doc = info.engine.loadCompiledDocument(path);
+            NTxCompiledDocument doc = info.engine.loadDocument(path);
             if (doc.pages().isEmpty()) {
                 info.engine.log().log(NMsg.ofC("no pages to render : %s", path.normalize().toAbsolute()).asError());
                 return;
