@@ -20,7 +20,7 @@ public interface NTxNodeParser {
 
     void compileNode(NTxNode node, NTxResolutionContext context);
 
-    NElement toElem(NTxNode item, NTxEngine engine);
+    NElement toElement(NTxNode item, boolean semantic, NTxEngine engine);
 
     NTxNode newNode();
 
