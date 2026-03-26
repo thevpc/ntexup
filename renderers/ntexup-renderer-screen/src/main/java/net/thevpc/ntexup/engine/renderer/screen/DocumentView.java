@@ -132,7 +132,7 @@ public class DocumentView implements NTxDocumentView {
                 return;
             }
             if (compiledDocument != null) {
-                NTxSourceMonitor r = compiledDocument.compiledDocument().sourceMonitor();
+                NTxSourceMonitor r = compiledDocument.sourceMonitor();
                 if (r.changed()) {
                     reloadDocumentAsync();
                 }
@@ -280,7 +280,7 @@ public class DocumentView implements NTxDocumentView {
             }
             listener.onChangedCompiledDocument(compiledDocument);
 
-            compiledDocument.compiledDocument().sourceMonitor().save();
+            compiledDocument.sourceMonitor().save();
             pageViews.clear();
             contentPane.removeAll();
             pagesMapById.clear();
