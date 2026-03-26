@@ -19,9 +19,12 @@ import java.awt.*;
 import java.util.List;
 
 class NTxDrawContextRenderCompiler {
-    public static NTxDrawContext compile(NTxRendererContext rendererContext){
-        double[] xValues = NTxValue.of(rendererContext.evalExpression(rendererContext.computePropertyValue("x").orElse(NElement.ofDoubleArray(NNumberUtils.dsteps(100,-100,1)))).orNull())
-                .asDoubleArray().orElse(NNumberUtils.dsteps(100,-100,1));
+    public static NTxDrawContext compile(NTxRendererContext rendererContext) {
+        double[] xValues = NTxValue.of(rendererContext.evalExpression(rendererContext.computePropertyValue("x").orElse(NElement.ofDoubleArray(NNumberUtils.dsteps(-100, 100, 1)))).orNull())
+                .asDoubleArray().orElse(NNumberUtils.dsteps(100, 100, 1));
+        if (xValues.length == 0) {
+            xValues = new double[]{0};
+        }
         double minY = -100;
         double maxY = 100;
         boolean zoom = true;
@@ -58,14 +61,14 @@ class NTxDrawContextRenderCompiler {
                 }
             }
 
-            switch (pd.pld.source){
-                case FUNCTION_X:{
+            switch (pd.pld.source) {
+                case FUNCTION_X: {
                     NDoubleFunction ff = NTxPlotNExprEvaluator.compileFunctionX(pld, rendererContext);
                     if (ff != null) {
                         NChronometer c = NChronometer.startNow();
                         pd.prepareX(ff, xValues, minMaxY);
                         c.stop();
-                        rendererContext.log().log(NMsg.ofC("FUNCTION_X : %s",c));
+                        rendererContext.log().log(NMsg.ofC("FUNCTION_X : %s", c));
                         drawContext.allData.add(pd);
                     }
                     break;
