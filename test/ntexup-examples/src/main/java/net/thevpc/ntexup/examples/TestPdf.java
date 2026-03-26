@@ -1,5 +1,6 @@
 package net.thevpc.ntexup.examples;
 
+import net.thevpc.ntexup.api.engine.NTxCompiledDocument;
 import net.thevpc.ntexup.api.engine.NTxEngine;
 import net.thevpc.ntexup.api.document.NTxDocument;
 import net.thevpc.ntexup.engine.impl.DefaultNTxEngine;
@@ -12,7 +13,7 @@ public class TestPdf {
         Nuts.openWorkspace().share();
         NTxEngine e = new DefaultNTxEngine();
         NPath file = NPath.of("documentation/ntexup-doc").toAbsolute().normalize();
-        NTxDocument doc = e.loadDocument(file).get();
+        NTxCompiledDocument doc = e.loadDocument(file);
         NTxDocumentStreamRenderer renderer = e.newPdfRenderer().get();
         renderer.setOutput(file.resolve("output.pdf"));
         renderer.render(doc);
