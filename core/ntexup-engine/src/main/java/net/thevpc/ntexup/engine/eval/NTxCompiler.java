@@ -12,19 +12,15 @@ import net.thevpc.ntexup.api.eval.*;
 import net.thevpc.ntexup.api.engine.NTxEngine;
 import net.thevpc.ntexup.api.document.*;
 import net.thevpc.ntexup.api.parser.NTxNodeParser;
-import net.thevpc.ntexup.api.parser.NTxNodeParserFactory;
 import net.thevpc.ntexup.api.source.NTxSource;
 import net.thevpc.ntexup.api.util.NTxUtils;
-import net.thevpc.ntexup.engine.document.DefaultNTxDocument;
 import net.thevpc.ntexup.engine.impl.NTxCompiledDocumentImpl;
 import net.thevpc.ntexup.engine.impl.NTxEngineUtils;
 import net.thevpc.ntexup.engine.log.SilentNTxLogger;
 import net.thevpc.ntexup.engine.parser.NTxDocumentLoadingResultImpl;
 import net.thevpc.ntexup.engine.document.DefaultNTxNode;
 import net.thevpc.ntexup.engine.parser.ctrlnodes.*;
-import net.thevpc.ntexup.engine.parser.nodeparsers.StylesSpecialParser;
 import net.thevpc.nuts.concurrent.NScoredCallable;
-import net.thevpc.nuts.elem.NElementReader;
 import net.thevpc.nuts.text.NMsg;
 import net.thevpc.nuts.time.NChronometer;
 import net.thevpc.nuts.elem.NElement;
@@ -45,7 +41,7 @@ public class NTxCompiler {
     }
 
     public NTxDocumentLoadingResult compileDocument(NTxCompiledDocument compiledDocument) {
-        NChronometer chronometer = NChronometer.startNow();
+        NChronometer chronometer = NChronometer.of();
         NTxDocument documentCopy = compiledDocument.rawDocument().copy();
         NTxSource source = documentCopy.root().source();
         SilentNTxLogger slog = new SilentNTxLogger();

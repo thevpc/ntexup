@@ -88,7 +88,7 @@ public class NTxGitHelper {
         boolean succeeded = false;
         String errorMessage = null;
         NSession session = NSession.of();
-        NChronometer c = NChronometer.startNow();
+        NChronometer c = NChronometer.of();
         try {
             if (localRepo.isDirectory()) {
                 Instant now = Instant.now();

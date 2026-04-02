@@ -1,7 +1,7 @@
 package net.thevpc.ntexup.extension.plot2d.model;
 
 import net.thevpc.ntexup.api.document.elem2d.NTxBounds2D;
-import net.thevpc.ntexup.api.util.NTxMinMax;
+import net.thevpc.nuts.math.NDoubleRange;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,12 +30,12 @@ public class NTxDrawContext {
     public boolean legend=true;
     public String xLabel;
     public String yLabel;
-    public NTxMinMax minMaxY;
+    public NDoubleRange minMaxY;
     public boolean zoomY;
     public double userMinY;
     public double userMaxY;
 
-    public NTxDrawContext(NTxBounds2D bounds, double[] gridXvalues, double minY, double maxY, boolean zoomY, NTxMinMax minMaxY) {
+    public NTxDrawContext(NTxBounds2D bounds, double[] gridXvalues, double minY, double maxY, boolean zoomY, NDoubleRange minMaxY) {
         this.componentWidth = bounds.widthX();
         this.componentHeight = bounds.widthY();
         this.componentMinX = bounds.minX();
@@ -50,10 +50,10 @@ public class NTxDrawContext {
         double yWidth = 0;
         double minY=userMinY;
         double maxY=userMaxY;
-        if (zoomY && Double.isFinite(minMaxY.getMax()) && Double.isFinite(minMaxY.getMin())) {
-            yWidth = minMaxY.getMax() - minMaxY.getMin();
-            minY = minMaxY.getMin() - yWidth * 0.1;
-            maxY = minMaxY.getMax() + yWidth * 0.1;
+        if (zoomY && Double.isFinite(minMaxY.max()) && Double.isFinite(minMaxY.min())) {
+            yWidth = minMaxY.max() - minMaxY.min();
+            minY = minMaxY.min() - yWidth * 0.1;
+            maxY = minMaxY.max() + yWidth * 0.1;
         } else {
             if(maxY<=minY){
                 maxY=minY+10;

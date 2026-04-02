@@ -9,10 +9,10 @@ import net.thevpc.ntexup.api.eval.NTxResolutionContext;
 import net.thevpc.ntexup.api.eval.NTxValue;
 import net.thevpc.ntexup.api.renderer.NTxRendererContext;
 import net.thevpc.ntexup.api.util.NTxElementUtils;
-import net.thevpc.ntexup.api.util.NTxMinMax;
 import net.thevpc.ntexup.api.util.NTxNumberUtils;
 import net.thevpc.ntexup.lib.geometry3d.*;
 import net.thevpc.nuts.elem.*;
+import net.thevpc.nuts.math.NDoubleRange;
 import net.thevpc.nuts.text.NMsg;
 import net.thevpc.nuts.util.NLiteral;
 import net.thevpc.nuts.util.NOptional;
@@ -205,10 +205,10 @@ public class NTx3DUtils {
         }
     }
 
-    public static final NTxMinMax minMaxZ(NTxPoint3D[] points) {
-        NTxMinMax m = new NTxMinMax();
+    public static final NDoubleRange minMaxZ(NTxPoint3D[] points) {
+        NDoubleRange m = NDoubleRange.of();
         for (NTxPoint3D point : points) {
-            m.registerValue(point.z);
+            m.add(point.z);
         }
         return m;
     }

@@ -10,7 +10,6 @@ import net.thevpc.ntexup.api.renderer.NTxDocumentStreamRendererConfig;
 import net.thevpc.ntexup.cmdline.options.*;
 import net.thevpc.ntexup.engine.repo.RepoBuilderTool;
 import net.thevpc.ntexup.main.MainFrame;
-import net.thevpc.ntexup.util.NTexupUtils;
 import net.thevpc.nuts.artifact.NId;
 import net.thevpc.nuts.command.NSysEditorFamily;
 import net.thevpc.nuts.command.NSysEditorSupportCmd;
@@ -163,7 +162,7 @@ public class NTexupOptionsProcessor {
             expecteOutput = NPath.of(".");
         }
         for (NPath path : paths) {
-            NChronometer ch = NChronometer.startNow();
+            NChronometer ch = NChronometer.of();
             NTxCompiledDocument doc = info.engine.loadDocument(path);
             if (doc.pages().isEmpty()) {
                 info.engine.log().log(NMsg.ofC("no pages to render : %s", path.normalize().toAbsolute()).asError());
@@ -185,7 +184,7 @@ public class NTexupOptionsProcessor {
             renderer.setOutput(output);
             renderer.render(doc);
             ch.stop();
-            info.engine.log().log(NMsg.ofC("generated : %s (%s) in %s", output.normalize().toAbsolute(), NMemorySizeFormat.DEFAULT.format(NMemorySize.ofBytes(output.getContentLength()).normalize()), ch).asInfo().withDurationMillis(ch.getDurationMs()));
+            info.engine.log().log(NMsg.ofC("generated : %s (%s) in %s", output.normalize().toAbsolute(), NMemoryFormat.DEFAULT.format(NMemorySize.ofBytes(output.getContentLength()).normalize()), ch).asInfo().withDurationMillis(ch.getDurationMs()));
 
         }
     }

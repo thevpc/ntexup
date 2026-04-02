@@ -1,7 +1,7 @@
 package net.thevpc.ntexup.extension.plot2d.model;
 
 import net.thevpc.ntexup.api.renderer.NTxRendererContext;
-import net.thevpc.ntexup.api.util.NTxMinMax;
+import net.thevpc.nuts.math.NDoubleRange;
 import net.thevpc.nuts.util.NDoubleFunction;
 
 import java.awt.*;
@@ -19,14 +19,14 @@ public class NTxPlot2DData {
         this.pld = pld;
     }
 
-    public void prepareX(NDoubleFunction f, double[] xx, NTxMinMax minMaxY) {
+    public void prepareX(NDoubleFunction f, double[] xx, NDoubleRange minMaxY) {
         this.xx = xx;
         this.yy = new double[xx.length];
         for (int i = 0; i < xx.length; i++) {
             double x = xx[i];
             yy[i] = f.apply(x);
             if (Double.isFinite(yy[i])) {
-                minMaxY.registerValue(yy[i]);
+                minMaxY.add(yy[i]);
             }
         }
 

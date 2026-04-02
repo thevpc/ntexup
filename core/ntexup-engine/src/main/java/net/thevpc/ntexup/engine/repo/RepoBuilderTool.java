@@ -53,7 +53,7 @@ public class RepoBuilderTool {
                 for (NTxTemplateInfo nTxTemplateInfo : all) {
                     List<String> bv = nTxTemplateInfo.binaryVersions();
                     for (String v : bv) {
-                        if (NVersion.of(v).filter().acceptVersion(version)) {
+                        if (NVersion.of(v).toFilter().acceptVersion(version)) {
                             out.println(nTxTemplateInfo.toElement().toString());
                         }
                     }

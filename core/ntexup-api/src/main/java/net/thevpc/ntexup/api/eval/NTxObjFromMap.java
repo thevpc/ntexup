@@ -32,7 +32,7 @@ public class NTxObjFromMap implements NTxObj {
         return o.build();
     }
 
-    public NTxObj set(String name, NTxObj e) {
+    public NTxObjFromMap set(String name, NTxObj e) {
         if (e == null) {
             all.remove(name);
         } else {

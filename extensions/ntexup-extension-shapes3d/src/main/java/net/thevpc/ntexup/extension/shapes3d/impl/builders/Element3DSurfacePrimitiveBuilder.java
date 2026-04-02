@@ -11,10 +11,10 @@ import net.thevpc.ntexup.lib.geometry3d.*;
 import net.thevpc.ntexup.api.engine.NTxNodeBuilderContext;
 import net.thevpc.ntexup.api.extension.NTxNodeBuilder;
 import net.thevpc.ntexup.api.renderer.NTxRendererContext;
-import net.thevpc.ntexup.api.util.NTxMinMax;
 import net.thevpc.ntexup.lib.geometry3d.impl.NTx3DUtils;
 import net.thevpc.ntexup.lib.geometry3d.impl.composite.NtxElement3DSurface;
 import net.thevpc.ntexup.lib.geometry3d.impl.primitives.NtxElement3DTriangle;
+import net.thevpc.nuts.math.NDoubleRange;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryCollection;
 import org.locationtech.jts.geom.GeometryFactory;
@@ -58,7 +58,7 @@ public class Element3DSurfacePrimitiveBuilder implements NTxElement3DRenderer , 
         // Perform Delaunay triangulation
         DelaunayTriangulationBuilder builder = new DelaunayTriangulationBuilder();
         builder.setSites(Arrays.asList(points).stream().map(x -> new Coordinate(x.x, x.y, x.z)).collect(Collectors.toList()));
-        NTxMinMax m = NTx3DUtils.minMaxZ(points);
+        NDoubleRange m = NTx3DUtils.minMaxZ(points);
         QuadEdgeSubdivision subdivision = builder.getSubdivision();
         // Get the triangles as JTS Geometry objects
         GeometryCollection triangles = (GeometryCollection) subdivision.getTriangles(new GeometryFactory());

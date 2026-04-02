@@ -49,7 +49,7 @@ public class NTxCompiledPageImpl implements NTxCompiledPage {
 
     public void initialize() {
         if (!prefixExecuted) {
-            NChronometer c = NChronometer.startNow();
+            NChronometer c = NChronometer.of();
             for (NTxNodeAndContext outerInstruction : prefixInstructions) {
                 outerInstruction.run(compiledDocument.document(), document().engine(), compiledDocument, this, true);
             }
@@ -66,7 +66,7 @@ public class NTxCompiledPageImpl implements NTxCompiledPage {
                 if (compiledPage == null) {
                     onCompile.onBeforeCompile(this);
                     initialize();
-                    NChronometer c = NChronometer.startNow();
+                    NChronometer c = NChronometer.of();
                     pageContext = compiledDocument.engine().newContext(this.rawPage, compiledDocument.document(), compiledDocument, this, parentContext).setInPage(true);
 
                     NTxNode o = DefaultNTxNode.ofBlock();

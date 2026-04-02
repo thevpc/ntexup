@@ -8,7 +8,6 @@ import net.thevpc.ntexup.api.engine.NTxEngine;
 import net.thevpc.ntexup.lib.geometry3d.NTxElement3DRenderer;
 import net.thevpc.nuts.artifact.NDefinition;
 import net.thevpc.nuts.artifact.NId;
-import net.thevpc.nuts.io.NLibPaths;
 import net.thevpc.nuts.io.NServiceLoader;
 import net.thevpc.nuts.text.NMsg;
 
@@ -39,7 +38,7 @@ public class Element3DUIFactory {
     void register(Class c, NTxElement3DRenderer f, NDefinition[] dependencies) {
         if (!map.containsKey(c)) {
             map.put(c, f);
-            NId sourceId = NLibPaths.of().resolveId(c).orNull();
+            NId sourceId = NId.getForClass(c).orNull();
             engine.log().log(NMsg.ofC("[%s] loaded %s : %s", sourceId, NMsg.ofStyledPrimary1("3DRenderer"), c));
         }
     }

@@ -184,11 +184,15 @@ public class NTxNumberUtils {
         return UnitType.UNKNOWN;
     }
 
-    public static NOptional<Double> toMeter(NNumberElement a) {
-        if (a == null) return NOptional.of(0.0);
-        if (a.isComplexNumber()) {
+    public static NOptional<Double> toMeter(NElement e) {
+        if (e == null || e.isNull()) return NOptional.of(0.0);
+        if(!e.isNumber()){
             return NOptional.ofNamedEmpty("not a double");
         }
+        if (e.isComplexNumber()) {
+            return NOptional.ofNamedEmpty("not a double");
+        }
+        NNumberElement a = e.asNumber().get();
 
         double d = a.asDoubleValue().get();
         String s = NStringUtils.trim(a.numberSuffix()).toLowerCase();

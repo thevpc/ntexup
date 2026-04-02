@@ -2,9 +2,8 @@ package net.thevpc.ntexup.engine.base.functions.general;
 
 import net.thevpc.ntexup.api.eval.*;
 import net.thevpc.ntexup.api.extension.NTxFunction;
-import net.thevpc.ntexup.api.util.NTxNumberUtils;
 import net.thevpc.nuts.elem.NElement;
-import net.thevpc.nuts.util.NNumberUtils;
+import net.thevpc.nuts.util.NArrays;
 
 public class NTxFunctionDsteps implements NTxFunction {
     @Override
@@ -31,7 +30,7 @@ public class NTxFunctionDsteps implements NTxFunction {
                 return NElement.ofArray();
             }
             return NElement.ofDoubleArray(
-                    NNumberUtils.dsteps(
+                    NArrays.range(
                             min,
                             max,
                             1
@@ -51,7 +50,7 @@ public class NTxFunctionDsteps implements NTxFunction {
             s=1.0;
         }
         return NElement.ofDoubleArray(
-                NNumberUtils.dsteps(
+                NArrays.range(
                         min,
                         max,
                         s

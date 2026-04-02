@@ -10,17 +10,17 @@ import net.thevpc.nuts.util.NOptional;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+
 import net.thevpc.nuts.artifact.NId;
-import net.thevpc.nuts.io.NLibPaths;
 
 public abstract class NtxServiceListImpl2<T> implements NTxDependencyLoadedListener {
 
     protected DefaultNTxEngine engine;
-    private Class<T> serviceType;
-    private Map<String, T> map = new LinkedHashMap<>();
-    private Map<String, T> map2 = new LinkedHashMap<>();
-    private Map<String, String> aliases = new LinkedHashMap<>();
-    private String name;
+    private final Class<T> serviceType;
+    private final Map<String, T> map = new LinkedHashMap<>();
+    private final Map<String, T> map2 = new LinkedHashMap<>();
+    private final Map<String, String> aliases = new LinkedHashMap<>();
+    private final String name;
     private boolean logLoadFinished = true;
 
     public NtxServiceListImpl2(String name, Class<T> serviceType, DefaultNTxEngine engine) {
@@ -115,10 +115,10 @@ public abstract class NtxServiceListImpl2<T> implements NTxDependencyLoadedListe
         NId sourceId = preferredDependency;
         if (preferredDependency == null) {
             if (custom) {
-                sourceId = NLibPaths.of().resolveId(h.getClass()).orNull();
+                sourceId = NId.getForClass(h.getClass()).orNull();
             }
         }
-        if(logLoadFinished){
+        if (logLoadFinished) {
             ArrayList<String> hAliases2 = new ArrayList<>(hAliases);
             hAliases2.remove(id);
             if (hAliases2.isEmpty()) {
@@ -131,7 +131,7 @@ public abstract class NtxServiceListImpl2<T> implements NTxDependencyLoadedListe
                 ));
             }
         }
-        
+
         onAfterNewService(h, custom, dependencies, sourceId);
     }
 

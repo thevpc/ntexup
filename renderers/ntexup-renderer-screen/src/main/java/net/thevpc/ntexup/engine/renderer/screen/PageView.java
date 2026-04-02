@@ -75,7 +75,7 @@ public class PageView extends JComponent {
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
         if (page.isCompiled()) {
-            NChronometer c = NChronometer.startNow();
+            NChronometer c = NChronometer.of();
             Dimension size = getSize();
             Dimension lastSize=null;
             boolean someChange = false;

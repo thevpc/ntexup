@@ -2,7 +2,6 @@ package net.thevpc.ntexup.debug;
 
 import net.thevpc.ntexup.api.document.NTxDocument;
 import net.thevpc.ntexup.api.engine.NTxEngine;
-import net.thevpc.ntexup.api.log.NTxLogger;
 import net.thevpc.nuts.elem.NElement;
 import net.thevpc.nuts.log.NLog;
 import net.thevpc.nuts.text.NMsg;
@@ -29,17 +28,17 @@ public abstract class NTxTsonPanel extends JPanel {
     public abstract NElement createTson();
 
     public void updateContent() {
-        NChronometer chronometer = NChronometer.startNow();
+        NChronometer chronometer = NChronometer.of();
         NChronometer chronometer1 = null;
         NChronometer chronometer2 = null;
         NChronometer chronometer3 = null;
         String txt = "";
         try {
-            chronometer1 = NChronometer.startNow();
+            chronometer1 = NChronometer.of();
             NElement e = createTson();
             chronometer1.stop();
             if (e != null) {
-                chronometer2 = NChronometer.startNow();
+                chronometer2 = NChronometer.of();
                 txt = e.toPrettyString();
                 chronometer2.stop();
             }
@@ -49,7 +48,7 @@ public abstract class NTxTsonPanel extends JPanel {
         }
         String finalTxt = txt;
         if (SwingUtilities.isEventDispatchThread()) {
-            chronometer3 = NChronometer.startNow();
+            chronometer3 = NChronometer.of();
             view.setText(finalTxt);
             chronometer3.stop();
         } else {

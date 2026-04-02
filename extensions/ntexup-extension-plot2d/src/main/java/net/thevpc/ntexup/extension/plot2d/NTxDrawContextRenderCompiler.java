@@ -3,32 +3,31 @@ package net.thevpc.ntexup.extension.plot2d;
 import net.thevpc.ntexup.api.document.elem2d.NTxBounds2D;
 import net.thevpc.ntexup.api.eval.NTxValue;
 import net.thevpc.ntexup.api.renderer.NTxRendererContext;
-import net.thevpc.ntexup.api.util.NTxMinMax;
-import net.thevpc.ntexup.api.util.NTxNumberUtils;
 import net.thevpc.ntexup.extension.plot2d.expr.NTxPlotNExprEvaluator;
 import net.thevpc.ntexup.extension.plot2d.model.NTxDrawContext;
 import net.thevpc.ntexup.extension.plot2d.model.NTxFunctionPlotInfo;
 import net.thevpc.ntexup.extension.plot2d.model.NTxPlot2DData;
 import net.thevpc.nuts.elem.NElement;
+import net.thevpc.nuts.math.NDoubleRange;
 import net.thevpc.nuts.time.NChronometer;
+import net.thevpc.nuts.util.NArrays;
 import net.thevpc.nuts.util.NDoubleFunction;
 import net.thevpc.nuts.text.NMsg;
-import net.thevpc.nuts.util.NNumberUtils;
 
 import java.awt.*;
 import java.util.List;
 
 class NTxDrawContextRenderCompiler {
     public static NTxDrawContext compile(NTxRendererContext rendererContext) {
-        double[] xValues = NTxValue.of(rendererContext.evalExpression(rendererContext.computePropertyValue("x").orElse(NElement.ofDoubleArray(NNumberUtils.dsteps(-100, 100, 1)))).orNull())
-                .asDoubleArray().orElse(NNumberUtils.dsteps(100, 100, 1));
+        double[] xValues = NTxValue.of(rendererContext.evalExpression(rendererContext.computePropertyValue("x").orElse(NElement.ofDoubleArray(NArrays.range(-100.0, 100, 1)))).orNull())
+                .asDoubleArray().orElse(NArrays.range(100.0, 100, 1));
         if (xValues.length == 0) {
             xValues = new double[]{0};
         }
         double minY = -100;
         double maxY = 100;
         boolean zoom = true;
-        NTxMinMax minMaxY = new NTxMinMax();
+        NDoubleRange minMaxY = NDoubleRange.of();
 
         Paint color = rendererContext.getForegroundColor(true);
 
@@ -65,7 +64,7 @@ class NTxDrawContextRenderCompiler {
                 case FUNCTION_X: {
                     NDoubleFunction ff = NTxPlotNExprEvaluator.compileFunctionX(pld, rendererContext);
                     if (ff != null) {
-                        NChronometer c = NChronometer.startNow();
+                        NChronometer c = NChronometer.of();
                         pd.prepareX(ff, xValues, minMaxY);
                         c.stop();
                         rendererContext.log().log(NMsg.ofC("FUNCTION_X : %s", c));
