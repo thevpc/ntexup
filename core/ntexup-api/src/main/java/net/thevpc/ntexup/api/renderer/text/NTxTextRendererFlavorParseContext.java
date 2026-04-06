@@ -22,7 +22,7 @@ public interface NTxTextRendererFlavorParseContext {
 
     char read();
 
-    char readAt(int index);
+    char peekAt(int index);
 
     List<NTxTextToken> parseDefault(String[] flavorIds, String[] startEndDelimiters, Function<String,String> converter);
 }

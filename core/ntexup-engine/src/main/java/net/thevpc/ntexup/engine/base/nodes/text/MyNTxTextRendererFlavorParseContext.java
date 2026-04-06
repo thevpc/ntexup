@@ -4,8 +4,8 @@ import net.thevpc.ntexup.api.renderer.NTxRendererContext;
 import net.thevpc.ntexup.api.renderer.text.NTxTextRendererFlavorParseContext;
 import net.thevpc.ntexup.api.renderer.text.NTxTextToken;
 import net.thevpc.ntexup.api.renderer.text.NTxTextTokenFlavored;
+import net.thevpc.nuts.util.NCharQueue;
 import net.thevpc.nuts.util.NExceptions;
-import net.thevpc.nuts.internal.util.NReservedSimpleCharQueue;
 import net.thevpc.nuts.util.NAssert;
 import net.thevpc.nuts.text.NMsg;
 
@@ -15,9 +15,9 @@ import java.util.function.Function;
 
 class MyNTxTextRendererFlavorParseContext implements NTxTextRendererFlavorParseContext {
     private final NTxRendererContext rendererContext;
-    private final NReservedSimpleCharQueue cq;
+    private final NCharQueue cq;
 
-    public MyNTxTextRendererFlavorParseContext(NTxRendererContext rendererContext, NReservedSimpleCharQueue cq) {
+    public MyNTxTextRendererFlavorParseContext(NTxRendererContext rendererContext, NCharQueue cq) {
         this.rendererContext = rendererContext;
         this.cq = cq;
     }
@@ -63,8 +63,8 @@ class MyNTxTextRendererFlavorParseContext implements NTxTextRendererFlavorParseC
     }
 
     @Override
-    public char readAt(int index) {
-        return cq.readAt(index);
+    public char peekAt(int index) {
+        return cq.peekAt(index);
     }
 
     @Override

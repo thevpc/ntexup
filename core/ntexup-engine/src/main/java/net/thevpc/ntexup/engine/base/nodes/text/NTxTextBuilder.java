@@ -11,7 +11,7 @@ import net.thevpc.ntexup.api.document.style.NTxPropName;
 import net.thevpc.ntexup.api.renderer.*;
 import net.thevpc.ntexup.api.renderer.text.*;
 import net.thevpc.nuts.elem.NElement;
-import net.thevpc.nuts.internal.util.NReservedSimpleCharQueue;
+import net.thevpc.nuts.util.NCharQueue;
 
 import java.util.*;
 
@@ -33,7 +33,7 @@ public class NTxTextBuilder implements NTxNodeBuilder {
     }
 
     public void buildText(String text, NTxTextOptions options, NTxRendererContext ctx, NTxTextRendererBuilder builder) {
-        NTxTextTokenParseHelper aa = new NTxTextTokenParseHelper(ctx, new NReservedSimpleCharQueue(ctx.engine().tools().trimBloc(text).toCharArray()), ctx.buildContext());
+        NTxTextTokenParseHelper aa = new NTxTextTokenParseHelper(ctx, NCharQueue.of(ctx.engine().tools().trimBloc(text).toCharArray()), ctx.buildContext());
         List<NTxTextToken> all = aa.parse();
         for (NTxTextToken a : all) {
             consumeSpecialTokenType(a, ctx, builder);
