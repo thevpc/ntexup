@@ -205,7 +205,7 @@ public class DefaultNTxDocumentItemParserFactory
                                             null
                                     );
                                 } else {
-                                    context.log().log(NMsg.ofC("invalid definition param, expected var name %s in %s", x, object).asError());
+                                    context.log(NMsg.ofC("invalid definition param, expected var name %s in %s", x, object).asError());
                                     return null;
                                 }
                             }).filter(x -> x != null).collect(Collectors.toList());
@@ -220,7 +220,7 @@ public class DefaultNTxDocumentItemParserFactory
                     if (b.isNodes()) {
                         defBody.addAll(b.nodes());
                     } else {
-                        context.log().log(NMsg.ofC("expected nodes, but got other items when creating node from %s", NTxUtils.snippet(child)).asError());
+                        context.log(NMsg.ofC("expected nodes, but got other items when creating node from %s", NTxUtils.snippet(child)).asError());
                     }
                 }
                 DefaultNTxNode bodyContainer = new DefaultNTxNode(NTxNodeType.GROUP);
@@ -306,7 +306,7 @@ public class DefaultNTxDocumentItemParserFactory
 
     private NScoredCallable<NTxItem> _invalidSupport(NMsg msg, NTxResolutionContext context) {
         msg = msg.asError();
-        context.log().log(msg.asError());
+        context.log(msg.asError());
         return NScoredCallable.ofInvalid(msg);
     }
 
@@ -345,7 +345,7 @@ public class DefaultNTxDocumentItemParserFactory
                 __callBody.addAll(fb.children());
                 c = fb.build();
             } else {
-                context.log().log(NMsg.ofC("unexpected call : %s (ignored)", c).asError(), context.source());
+                context.log(NMsg.ofC("unexpected call : %s (ignored)", c).asError(), context.source());
             }
         } else {
             if (c.isNamedUplet()) {
@@ -361,7 +361,7 @@ public class DefaultNTxDocumentItemParserFactory
                 }
                 __callBody.addAll(fb.children());
             } else {
-                context.log().log(NMsg.ofC("unexpected call : %s (ignored)", c).asError(), context.source());
+                context.log(NMsg.ofC("unexpected call : %s (ignored)", c).asError(), context.source());
             }
         }
         cc.setCallName(__name);

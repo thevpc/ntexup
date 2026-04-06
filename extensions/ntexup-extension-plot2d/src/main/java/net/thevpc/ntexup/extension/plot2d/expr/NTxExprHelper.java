@@ -140,7 +140,7 @@ public class NTxExprHelper {
 
     public static double asDouble(NOptional<Object>  any, NTxRendererContext rendererContext){
         if(any.isError()){
-            rendererContext.log().log(NMsg.ofC("evaluation error : %s",any.getMessage().get()));
+            rendererContext.log(NMsg.ofC("evaluation error : %s",any.getMessage().get()));
         }
         return NTxValue.of(any.orNull()).asDoubleOrNumber().orElse(0.0);
     }

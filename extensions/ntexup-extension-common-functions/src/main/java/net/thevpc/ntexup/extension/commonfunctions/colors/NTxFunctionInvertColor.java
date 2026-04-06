@@ -21,7 +21,7 @@ public class NTxFunctionInvertColor implements NTxFunction {
             return NElement.ofNull();
         }
         if (args.size() > 1) {
-            args.scopedContext().log().log(NMsg.ofC("%s: expected 1 argument, got %s",NMsg.ofStyledKeyword(name()), args.size()));
+            args.log(NMsg.ofC("%s: expected 1 argument, got %s",NMsg.ofStyledKeyword(name()), args.size()));
         }
         Color c = NTxValue.of(args.evalArg(0)).asColor().get();
         if(c==null){

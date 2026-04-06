@@ -200,7 +200,7 @@ public abstract class NTxNodeParserBase implements NTxNodeParser {
         if (NTxParserUtils.isCommonStyleProperty(info.getId())) {
             NTxValue es = NTxValue.of(currentArg);
             if (es.isFunction()) {
-                info.parseContext().log().log(NMsg.ofC("[%s] invalid argument %s. did you mean %s:%s ?",
+                info.parseContext().log(NMsg.ofC("[%s] invalid argument %s. did you mean %s:%s ?",
                         info.parseContext().source(),
                         currentArg,
                         es.name(), NElement.ofUplet(es.args().toArray(new NElement[0]))
@@ -208,10 +208,10 @@ public abstract class NTxNodeParserBase implements NTxNodeParser {
                 // empty result
                 return false;
             }
-            info.parseContext().log().log(NMsg.ofC("[%s] invalid argument %s in : %s", info.parseContext().source(), currentArg, info.element()).asSevere(), info.parseContext().source());
+            info.parseContext().log(NMsg.ofC("[%s] invalid argument %s in : %s", info.parseContext().source(), currentArg, info.element()).asSevere(), info.parseContext().source());
             return false;
         } else {
-            info.parseContext().log().log(NMsg.ofC("[%s] invalid argument %s in : %s", NTxUtils.shortName(info.parseContext().source()), NTxUtils.snippet(currentArg), NTxUtils.snippet(info.element())).asSevere(), info.parseContext().source());
+            info.parseContext().log(NMsg.ofC("[%s] invalid argument %s in : %s", NTxUtils.shortName(info.parseContext().source()), NTxUtils.snippet(currentArg), NTxUtils.snippet(info.element())).asSevere(), info.parseContext().source());
             return false;
         }
     }
@@ -383,11 +383,11 @@ public abstract class NTxNodeParserBase implements NTxNodeParser {
 
     protected NScoredCallable<NTxItem> _invalidSupport(NMsg msg, NTxResolutionContext context) {
         msg = msg.asError();
-        context.log().log(msg.asError());
+        context.log(msg.asError());
         return NScoredCallable.ofInvalid(msg);
     }
 
     protected void _logError(NMsg nMsg, NTxResolutionContext context) {
-        context.log().log(nMsg.asError(), context.source());
+        context.log(nMsg.asError(), context.source());
     }
 }

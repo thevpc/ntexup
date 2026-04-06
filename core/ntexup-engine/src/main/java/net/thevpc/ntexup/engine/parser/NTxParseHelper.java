@@ -17,6 +17,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import net.thevpc.nuts.util.NBlankable;
 
 /**
  * @author vpc
@@ -24,7 +25,7 @@ import java.util.Set;
 public class NTxParseHelper {
 
     public static String toString(NElement e, NTxParseMode mode) {
-        if(e.isAnyString()){
+        if (e.isAnyString()) {
             return e.asStringValue().get();
         }
         switch (mode) {
@@ -41,26 +42,31 @@ public class NTxParseHelper {
         throw new IllegalArgumentException("expected string. got " + e);
     }
 
-
     public static boolean fillAnnotations(NElement e, NTxNode p) {
+        boolean some = false;
+        Set<String> allClasses = new HashSet<>();
         for (NElementAnnotation a : e.annotations()) {
-            String nn=a.name();
-            // add classes as well
-            Set<String> allClasses = new HashSet<>();
-            List<NElement> params = a.params().orNull();
-            if (params != null) {
-                for (NElement cls : params) {
-                    NOptional<String[]> ss = NTxValue.of(cls).asStringArrayOrString();
-                    if (ss.isPresent()) {
-                        allClasses.addAll(Arrays.asList(ss.get()));
+            String nn = a.name();
+            if (NBlankable.isBlank(nn)) {
+                // add classes as well
+                List<NElement> params = a.params().orNull();
+                if (params != null) {
+                    for (NElement cls : params) {
+                        NOptional<String[]> ss = NTxValue.of(cls).asStringArrayOrString();
+                        if (ss.isPresent()) {
+                            allClasses.addAll(Arrays.asList(ss.get()));
+                        }
                     }
                 }
+            }else if(!a.isParametrized()){
+                // name only
+                allClasses.add(nn);
             }
-            if (!allClasses.isEmpty()) {
-                p.addStyleClasses(allClasses.toArray(new String[0]));
-            }
-            return true;
         }
-        return false;
+        if (!allClasses.isEmpty()) {
+            p.addStyleClasses(allClasses.toArray(new String[0]));
+            some = true;
+        }
+        return some;
     }
 }

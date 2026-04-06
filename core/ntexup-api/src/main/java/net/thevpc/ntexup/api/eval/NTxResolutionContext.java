@@ -13,12 +13,15 @@ import net.thevpc.ntexup.api.parser.NTxItemParser;
 import net.thevpc.ntexup.api.source.NTxSource;
 import net.thevpc.nuts.elem.NElement;
 import net.thevpc.nuts.io.NPath;
+import net.thevpc.nuts.text.NMsg;
 import net.thevpc.nuts.util.NOptional;
 
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
-public interface NTxResolutionContext {
+import net.thevpc.nuts.log.NLogger;
+
+public interface NTxResolutionContext extends NLogger {
     String uid();
 
     NTxItemParser itemParser();
@@ -26,6 +29,8 @@ public interface NTxResolutionContext {
     NTxDocument document();
 
     NTxEngine engine();
+
+    void log(NMsg message, NTxSource source);
 
     NTxResolutionContext copy();
 

@@ -334,7 +334,7 @@ public class NTxNumberUtils {
                 return e2.get().asNumber().get();
             }
         }
-        context.log().log(NMsg.ofC("invalid number %s", e).asError());
+        context.log(NMsg.ofC("invalid number %s", e).asError());
         return null;
     }
 

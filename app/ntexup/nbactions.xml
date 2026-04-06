@@ -10,14 +10,14 @@
                 <goal>org.codehaus.mojo:exec-maven-plugin:3.1.0:exec</goal>
             </goals>
             <properties>
-                <nuts.args>-Zy</nuts.args>
-                <exec.vmArgs>-agentlib:jdwp=transport=dt_socket,server=n,address=${jpda.address}</exec.vmArgs>
+                
+                <exec.vmArgs>-agentlib:jdwp=transport=dt_socket,server=n,address=${jpda.address} "-Dnuts.args=-Zy"</exec.vmArgs>
                 <exec.args>-e java ${exec.vmArgs} -classpath %classpath ${exec.mainClass} ${exec.appArgs}</exec.args>
                 <exec.appArgs>show</exec.appArgs>
                 <exec.mainClass>net.thevpc.ntexup.NTexupMain</exec.mainClass>
                 <exec.executable>konsole</exec.executable>
                 <jpda.listen>true</jpda.listen>
-                <exec.workingdir>/home/vpc/xprojects/nuts-world/nuts-productivity/ntexup/ntexup-doc-slides-to-fix</exec.workingdir>
+                <exec.workingdir>/home/vpc/xprojects/nuts-world/nuts-productivity/ntexup/ntexup/test/ntexup-examples/src/ntexup/examples/mw/antenna-patch</exec.workingdir>
             </properties>
         </action>
         <action>
@@ -35,7 +35,7 @@
                 <exec.appArgs>show</exec.appArgs>
                 <exec.mainClass>net.thevpc.ntexup.NTexupMain</exec.mainClass>
                 <exec.executable>java</exec.executable>
-                <exec.workingdir>/home/vpc/xprojects/nuts-world/nuts-productivity/ntexup/ntexup-doc-slides-to-fix</exec.workingdir>
+                <exec.workingdir>/home/vpc/xprojects/nuts-world/nuts-productivity/ntexup/ntexup/test/ntexup-examples/src/ntexup/examples/mw/antenna-patch-notches/</exec.workingdir>
             </properties>
         </action>
         <action>
@@ -53,7 +53,7 @@
                 <exec.mainClass>net.thevpc.ntexup.NTexupMain</exec.mainClass>
                 <exec.executable>java</exec.executable>
                 <exec.appArgs>show</exec.appArgs>
-                <exec.workingdir>/home/vpc/xprojects/nuts-world/nuts-productivity/ntexup/ntexup-doc-slides-to-fix</exec.workingdir>
+                <exec.workingdir>/home/vpc/xprojects/nuts-world/nuts-productivity/ntexup/ntexup/test/ntexup-examples/src/ntexup/examples/mw/antenna-patch-notches/</exec.workingdir>
             </properties>
         </action>
     </actions>

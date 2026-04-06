@@ -402,7 +402,7 @@ public class NTxCompiler {
             for (NElement e : all) {
                 engine.parseNode(e, context, n -> {
                     if (!n.isPresent()) {
-                        context.log().log(NMsg.ofC("variable '%s' as '%s' could not be evaluated as a valid node", name, e).asWarning(), NTxUtils.sourceOf(node));
+                        context.log(NMsg.ofC("variable '%s' as '%s' could not be evaluated as a valid node", name, e).asWarning(), NTxUtils.sourceOf(node));
                     } else {
                         new DispatchCompileNodeVisitor(visitor).visitItem(n.get(), context);
                     }
@@ -414,9 +414,9 @@ public class NTxCompiler {
         } else {
             NTxNodeParser p = context.itemParser().nodeTypeParser(name).orNull();
             if (p != null) {
-                context.log().log(NMsg.ofC("variable '%s' not found, rendering as plain text.  If you meant a component, use '%s()' syntax", name, name).asWarning(), NTxUtils.sourceOf(node));
+                context.log(NMsg.ofC("variable '%s' not found, rendering as plain text.  If you meant a component, use '%s()' syntax", name, name).asWarning(), NTxUtils.sourceOf(node));
             } else {
-                context.log().log(NMsg.ofC("variable '%s' not found, rendering as plain text", name).asWarning(), NTxUtils.sourceOf(node));
+                context.log(NMsg.ofC("variable '%s' not found, rendering as plain text", name).asWarning(), NTxUtils.sourceOf(node));
             }
             DefaultNTxNode t = DefaultNTxNode.ofText(name);
             t.setSource(node.source());
@@ -551,14 +551,14 @@ public class NTxCompiler {
                             ((NTxCompiledDocumentImpl)context.compiledDocument()).addMonitoredSource(nPath);
                             new DispatchCompileNodeVisitor(visitor).visitItem(item, context);
                         } else {
-                            context.log().log(NMsg.ofC("invalid include. error loading : %s", nPath).asSevere(), NTxUtils.sourceOf(node));
+                            context.log(NMsg.ofC("invalid include. error loading : %s", nPath).asSevere(), NTxUtils.sourceOf(node));
                         }
                     } else {
-                        context.log().log(NMsg.ofC("invalid include. error loading : %s", nPath).asWarning(), NTxUtils.sourceOf(node));
+                        context.log(NMsg.ofC("invalid include. error loading : %s", nPath).asWarning(), NTxUtils.sourceOf(node));
                     }
                 }
             } else {
-                context.log().log(NMsg.ofC("invalid include. error loading : %s", path).asWarning(), NTxUtils.sourceOf(node));
+                context.log(NMsg.ofC("invalid include. error loading : %s", path).asWarning(), NTxUtils.sourceOf(node));
             }
         }
     }

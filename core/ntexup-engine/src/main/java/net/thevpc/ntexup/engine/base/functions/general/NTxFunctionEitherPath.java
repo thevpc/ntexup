@@ -30,7 +30,7 @@ public class NTxFunctionEitherPath implements NTxFunction {
                             return NElement.ofString(pp.toString());
                         } catch (Exception ex) {
                             //just ignore
-                            context.log().log(NMsg.ofC("include git folder not found, ignored %s : %s", NMsg.ofStyledPath(sp),ex).asSevere(), context.source());
+                            context.log(NMsg.ofC("include git folder not found, ignored %s : %s", NMsg.ofStyledPath(sp),ex).asSevere(), context.source());
                         }
                     } else {
                         NPath p = NPath.of(sp);
@@ -44,7 +44,7 @@ public class NTxFunctionEitherPath implements NTxFunction {
                                 return u;
                             }
                         }
-                        context.log().log(NMsg.ofC("include folder not found, ignored %s", p).asSevere(), context.source());
+                        context.log(NMsg.ofC("include folder not found, ignored %s", p).asSevere(), context.source());
                     }
                 }
             }

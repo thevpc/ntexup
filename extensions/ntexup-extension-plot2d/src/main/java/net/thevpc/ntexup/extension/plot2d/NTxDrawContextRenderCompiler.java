@@ -67,7 +67,7 @@ class NTxDrawContextRenderCompiler {
                         NChronometer c = NChronometer.of();
                         pd.prepareX(ff, xValues, minMaxY);
                         c.stop();
-                        rendererContext.log().log(NMsg.ofC("FUNCTION_X : %s", c));
+                        rendererContext.log(NMsg.ofC("FUNCTION_X : %s", c));
                         drawContext.allData.add(pd);
                     }
                     break;

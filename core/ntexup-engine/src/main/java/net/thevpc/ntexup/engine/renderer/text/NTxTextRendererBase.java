@@ -25,23 +25,23 @@ public class NTxTextRendererBase extends NTxTextBaseRenderer {
         this.flavor = flavor;
     }
 
-    public NTxTextRendererBuilder createRichTextHelper(NTxRendererContext ctx) {
-        NTxTextRendererFlavor f = ctx.engine().textRendererFlavor(flavor).orNull();
+    public NTxTextRendererBuilder createRichTextHelper(NTxRendererContext context) {
+        NTxTextRendererFlavor f = context.engine().textRendererFlavor(flavor).orNull();
         if (f == null) {
-            ctx.log().log(NMsg.ofC("TextRendererFlavor not found %s", flavor));
-            f = ctx.engine().textRendererFlavor("text").get();
+            context.log(NMsg.ofC("TextRendererFlavor not found %s", flavor));
+            f = context.engine().textRendererFlavor("text").get();
         }
-        NTxNode node = ctx.node();
-        ctx = ctx.withDefaultStyles(defaultStyles);
-        String text = resolveStringOrFileOr(node.getPropertyValue(NTxPropName.VALUE).orNull(), node.getPropertyValue(NTxPropName.FILE).orNull(), "", ctx);
+        NTxNode node = context.node();
+        context = context.withDefaultStyles(defaultStyles);
+        String text = resolveStringOrFileOr(node.getPropertyValue(NTxPropName.VALUE).orNull(), node.getPropertyValue(NTxPropName.FILE).orNull(), "", context);
 
-        Paint fg = NTxValueByName.getForegroundColor(ctx, true);
-        NtxFontInfo font = NTxValueByName.getFontInfo(ctx);
+        Paint fg = NTxValueByName.getForegroundColor(context, true);
+        NtxFontInfo font = NTxValueByName.getFontInfo(context);
         if (font.baseFont == null && NBlankable.isBlank(font.family)) {
-            font.baseFont = ctx.graphics().getFont();
+            font.baseFont = context.graphics().getFont();
         }
-        NTxTextRendererBuilderImpl builder = new NTxTextRendererBuilderImpl(ctx.engine(), fg, font);
-        f.buildText(text, new NTxTextOptions(), ctx, builder);
+        NTxTextRendererBuilderImpl builder = new NTxTextRendererBuilderImpl(context.engine(), fg, font);
+        f.buildText(text, new NTxTextOptions(), context, builder);
         return builder;
     }
 
@@ -58,7 +58,7 @@ public class NTxTextRendererBase extends NTxTextBaseRenderer {
                     try {
                         return nPath.readString().trim();
                     } catch (Exception e) {
-                        ctx.log().log(NMsg.ofC("unable to read path %s : %s", nPath, e).asError(), ctx.source());
+                        ctx.log(NMsg.ofC("unable to read path %s : %s", nPath, e).asError(), ctx.source());
                     }
                 }
             }

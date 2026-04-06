@@ -96,7 +96,7 @@ public class NTxEquationBuilder implements NTxNodeBuilder {
                 } catch (Exception ex) {
                     error = true;
                     formula = new TeXFormula("?error?");
-                    rendererContext.log().log(NMsg.ofC("error evaluating latex formula %s : %s", tex, ex), NTxUtils.sourceOf(node));
+                    rendererContext.log(NMsg.ofC("error evaluating latex formula %s : %s", tex, ex), NTxUtils.sourceOf(node));
                 }
 
                 NTxTextOptions oo=new NTxTextOptions();
@@ -145,7 +145,7 @@ public class NTxEquationBuilder implements NTxNodeBuilder {
             } catch (Exception ex) {
                 error = true;
                 formula = new TeXFormula("?error?");
-                rendererContext.log().log(NMsg.ofC("error evaluating latex formula %s : %s", tex, ex), NTxUtils.sourceOf(node));
+                rendererContext.log(NMsg.ofC("error evaluating latex formula %s : %s", tex, ex), NTxUtils.sourceOf(node));
             }
 
             NTxTextOptions oo=new NTxTextOptions();
@@ -221,7 +221,7 @@ public class NTxEquationBuilder implements NTxNodeBuilder {
         } catch (Exception ex) {
             error = true;
             formula = new TeXFormula("?error?");
-            ctx.log().log(NMsg.ofC("error evaluating latex formula %s : %s", tex, ex), ctx.source());
+            ctx.log(NMsg.ofC("error evaluating latex formula %s : %s", tex, ex), ctx.source());
         }
         float size = (float) (fontSize);
         TeXIcon icon = formula.createTeXIcon(TeXConstants.STYLE_DISPLAY, size);

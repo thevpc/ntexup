@@ -4,6 +4,7 @@ import net.thevpc.ntexup.api.engine.NTxNodeBuilderContext;
 import net.thevpc.ntexup.api.log.NTxLogger;
 import net.thevpc.ntexup.api.parser.*;
 import net.thevpc.ntexup.api.renderer.text.NTxTextRendererFlavor;
+import net.thevpc.ntexup.api.source.NTxSource;
 import net.thevpc.ntexup.engine.parser.NTxNodeParserBase;
 import net.thevpc.ntexup.api.document.node.NTxItem;
 import net.thevpc.ntexup.api.document.node.NTxNode;
@@ -175,7 +176,7 @@ public class NTxNodeBuilderContextImpl implements NTxNodeBuilderContext {
     @Override
     public NTxNodeBuilderContext withToElem(String... propNames) {
         return withToElem((item, semantic, context) -> ToElementHelper.of(
-                        item,semantic,
+                        item, semantic,
                         context.engine()
                 )
                 .addChildrenByName(propNames)
@@ -285,6 +286,15 @@ public class NTxNodeBuilderContextImpl implements NTxNodeBuilderContext {
     @Override
     public NTxLogger log() {
         return engine.log();
+    }
+
+    @Override
+    public void log(NMsg message) {
+        log().log(message);
+    }
+
+    public void log(NMsg message, NTxSource source) {
+        log().log(message, source);
     }
 
     @Override

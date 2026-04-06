@@ -89,6 +89,16 @@ public class NTxResolutionContextImpl implements NTxResolutionContext {
     }
 
     @Override
+    public void log(NMsg message, NTxSource source) {
+        log().log(message, source);
+    }
+
+    @Override
+    public void log(NMsg message) {
+        log().log(message);
+    }
+
+    @Override
     public NTxCompiledPage compiledPage() {
         return compiledPage;
     }

@@ -95,7 +95,7 @@ public class NTxImageBuilder implements NTxNodeBuilder {
                     g.drawImage(cache.img, x, y, cache.options);
                 } catch (Exception ex) {
                     NTxSource src = NTxUtils.sourceOf(node);
-                    rendererContext.log().log(NMsg.ofC("[%s] [ERROR] error loading image : %s (%s)",
+                    rendererContext.log(NMsg.ofC("[%s] [ERROR] error loading image : %s (%s)",
                             src == null ? null : src.shortName(),
                             cache.img, ex).asSevere(), src);
 
@@ -108,7 +108,7 @@ public class NTxImageBuilder implements NTxNodeBuilder {
                 nTxTextOptions.sr=rendererContext.sizeRef();
                 g.drawString("Image not found "+cache.img, x, y+descent, nTxTextOptions.setForegroundColor(Color.YELLOW).setBackgroundColor(Color.RED).setFontSize(NTxSize.ofPx(8.0f)));
                 NTxSource src = NTxUtils.sourceOf(node);
-                rendererContext.log().log(NMsg.ofC("[%s] [ERROR] image not found : %s",
+                rendererContext.log(NMsg.ofC("[%s] [ERROR] image not found : %s",
                         src == null ? null : src.shortName(),
                         cache.img).asSevere(), src);
             }

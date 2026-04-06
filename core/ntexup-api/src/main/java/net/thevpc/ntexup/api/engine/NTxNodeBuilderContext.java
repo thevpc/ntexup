@@ -15,29 +15,36 @@ import net.thevpc.ntexup.api.renderer.text.NTxTextRendererFlavorParseContext;
 import net.thevpc.ntexup.api.renderer.text.NTxTextToken;
 import net.thevpc.ntexup.api.renderer.text.NTxTextOptions;
 import net.thevpc.ntexup.api.renderer.text.NTxTextRendererBuilder;
+import net.thevpc.ntexup.api.source.NTxSource;
 import net.thevpc.nuts.concurrent.NScoredCallable;
 import net.thevpc.nuts.elem.NElement;
+import net.thevpc.nuts.log.NLogger;
+import net.thevpc.nuts.text.NMsg;
 
 import java.util.List;
 import java.util.function.Predicate;
 
-public interface NTxNodeBuilderContext {
+public interface NTxNodeBuilderContext extends NLogger {
     String id();
 
-    NTxNodeBuilderContext ids(String ...id);
+    void log(NMsg message, NTxSource source);
+
+    NTxNodeBuilderContext ids(String... id);
+
     NTxNodeBuilderContext id(String id);
 
     NTxNodeBuilderContext alias(String... aliases);
 
-    public NTxNodeBuilderContext parseAny(NTxItemSpecialParser a);
+    NTxNodeBuilderContext parseAny(NTxItemSpecialParser a);
 
-    public NTxNodeBuilderContext parseAny(Predicate<NElement> a);
+    NTxNodeBuilderContext parseAny(Predicate<NElement> a);
 
-    public NTxNodeBuilderContext parseAny(Predicate<NElement> a, int support);
+    NTxNodeBuilderContext parseAny(Predicate<NElement> a, int support);
 
     NTxNodeBuilderContext sizeRequirements(SizeRequirementsAction e);
 
     NTxNodeBuilderContext selfBounds2D(SelfBounds2DAction e);
+
     NTxNodeBuilderContext selfBounds3D(SelfBounds3DAction e);
 
     NTxNodeBuilderContext withToElem(ToElemAction e);
@@ -59,10 +66,13 @@ public interface NTxNodeBuilderContext {
     NTxNodeBuilderContext afterParsingAllParams(ProcessNodeAction e);
 
     NTxNodeBuilderContext processChildren(ProcessChildrenAction e);
+
     NTxNodeBuilderContext compileNode(CompileNodeAction e);
+
     NTxNodeBuilderContext initializeNodeAction(InitializeNodeAction e);
 
     NTxLogger log();
+
     NTxEngine engine();
 
     boolean isAncestorScene3D(NTxNode p0);
@@ -153,6 +163,7 @@ public interface NTxNodeBuilderContext {
     interface RenderConvertAction {
         NTxNode convert(NTxNode p, NTxRendererContext ctx);
     }
+
     interface InitializeNodeAction {
         void initializeNode(NTxNode p, NTxNodeBuilderContext ctx);
     }
@@ -188,9 +199,11 @@ public interface NTxNodeBuilderContext {
     interface ProcessNodeAction {
         void processNode(NTxAllArgumentReader info, NTxNodeBuilderContext buildContext);
     }
+
     interface ProcessChildrenAction {
         void processChildren(NTxAllArgumentReader info, NTxNodeBuilderContext buildContext);
     }
+
     interface CompileNodeAction {
         void compileNode(NTxNode node, NTxResolutionContext context);
     }

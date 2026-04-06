@@ -79,13 +79,13 @@ page(bg:Gray90){
         )
 
         // 4. Patch - Box 2: Right Flank (X: 3.05 to 19, Y: 0 to 10.3)
-        @(antenna) @(patch) @(right-flank)  box(
+        @(antenna) @(right-flank) @(right-flank)  box(
             size:( (W/2) - (wf/2 + gap), y0, h0),
             position:( (wf/2 + gap), 0mm, 0mm)
         )
 
         // 5. Patch - Box 3: Full Width Body (X: -19 to 19, Y: 10.3 to 29.4)
-        @(antenna) box(
+        @(antenna) @(patch) box(
             size:(W, L - y0, h0),
             position:(-19mm, y0, 0mm)
         )
@@ -123,31 +123,26 @@ page{
         }
         modes:{ count:5000 }
         basis-functions:{
-            // 1. Feedline: Current is forced from the source to the patch connection
-            // We use UUy because it's 'open' at both ends of the segment
-            sinus(geometry:"feedline", count:2, y:UDxUUy)
+//            sinus(geometry:"feedline",     count:2, y:DDxUUy)
+//            sinus(geometry:"left-flank",   count:3, y:DDxDUy)
+//            sinus(geometry:"right-flank",  count:3, y:DDxDUy)
+//            sinus(geometry:"patch",        count:8, y:DDxUDy)
 
-            // 2. Left & Right Flanks:
-            // These touch the main patch body at Y=10.3.
-            // They should be 'D' at Y=0 (bottom) and 'U' at Y=10.3 (junction)
-            sinus(geometry:"left-flank",  count:3, y:UDxDUy)
-            sinus(geometry:"right-flank", count:3, y:UDxDUy)
+            rwg(geometry:"antenna",        count:50)
 
-            // 3. Main Patch Body:
-            // This is the big radiating part.
-            // It's 'U' at the bottom junction (Y=10.3) and 'D' at the top edge (Y=29.4)
-            sinus(geometry:"patch", count:8, y:DDxUDy)
-
-            // Optional: Add X-directed current if you want to see cross-polarization
-            // sinus(geometry:"patch", count:3, x:DUxDDy)
         }
         sources:{
             planar(geometry:"source", value:5V, z:50Ω)
         }
         results:{
-            allS11:S11(frequency:{from:2.3GHz, to:2.5GHz, count:1})
-            Jx
-            Jy
+            mesh
+            basis-functions
+            mode-functions
+            a-matrix
+            b-matrix
+            //allS11:S11(frequency:{from:2.3GHz, to:2.5GHz, count:1})
+            //Jx
+            //Jy
         }
     )
 }

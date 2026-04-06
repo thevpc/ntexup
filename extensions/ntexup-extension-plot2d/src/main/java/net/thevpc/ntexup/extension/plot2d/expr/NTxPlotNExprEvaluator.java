@@ -21,7 +21,7 @@ public class NTxPlotNExprEvaluator implements NExprEvaluator {
         NExprMutableDeclarations d = NTxExprHelper.create(rendererContext);
         NOptional<NExprNode> ne = d.parse(e.fexpr.isAnyString() ? e.fexpr.asStringValue().get() : NTxUtils.removeCompilerDeclarationPathAnnotations(e.fexpr).toString());
         if (!ne.isPresent()) {
-            rendererContext.log().log(NMsg.ofC("unable to parse expression %s : %s", ne.getMessage(), e.fexpr));
+            rendererContext.log(NMsg.ofC("unable to parse expression %s : %s", ne.getMessage(), e.fexpr));
             return null;
         }
         NExprNode nExprNode = ne.get();

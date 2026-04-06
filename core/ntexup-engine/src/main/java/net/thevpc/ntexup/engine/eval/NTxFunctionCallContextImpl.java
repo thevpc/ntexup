@@ -4,6 +4,7 @@ import net.thevpc.ntexup.api.document.node.NTxNode;
 import net.thevpc.ntexup.api.eval.NTxResolutionContext;
 import net.thevpc.ntexup.api.eval.NTxFunctionArg;
 import net.thevpc.ntexup.api.eval.NTxFunctionCallContext;
+import net.thevpc.ntexup.api.source.NTxSource;
 import net.thevpc.nuts.elem.NElement;
 import net.thevpc.nuts.text.NMsg;
 import net.thevpc.nuts.util.NOptional;
@@ -33,6 +34,16 @@ public class NTxFunctionCallContextImpl implements NTxFunctionCallContext {
     }
 
     @Override
+    public void log(NMsg message, NTxSource source) {
+        scopedContext().log(message,source);
+    }
+
+    @Override
+    public void log(NMsg message) {
+        scopedContext().log(message);
+    }
+
+    @Override
     public int size() {
         return args.length;
     }
@@ -59,7 +70,7 @@ public class NTxFunctionCallContextImpl implements NTxFunctionCallContext {
     @Override
     public NElement argExpression(int index) {
         if (index < 0 || index >= args.length) {
-            context.log().log(NMsg.ofC("%s: source for arg at %s could not be evaluated : %s", NMsg.ofStyledKeyword(functionName), index,
+            context.log(NMsg.ofC("%s: source for arg at %s could not be evaluated : %s", NMsg.ofStyledKeyword(functionName), index,
                     NMsg.ofC("invalid index, should be in [%s...%s]", 0, args.length)).asError());
             return null;
         }
@@ -74,7 +85,7 @@ public class NTxFunctionCallContextImpl implements NTxFunctionCallContext {
     @Override
     public boolean checkTooManyArgs(int maxArgs) {
         if (size() > maxArgs) {
-            context.log().log(NMsg.ofC("%s: too many arguments, got %s > %s", NMsg.ofStyledKeyword(functionName), size(), maxArgs).asError());
+            context.log(NMsg.ofC("%s: too many arguments, got %s > %s", NMsg.ofStyledKeyword(functionName), size(), maxArgs).asError());
             return true;
         }
         return false;
@@ -83,7 +94,7 @@ public class NTxFunctionCallContextImpl implements NTxFunctionCallContext {
     @Override
     public boolean checkTooFewArgs(int minArgs) {
         if (size() < minArgs) {
-            context.log().log(NMsg.ofC("%s: too few arguments, got %s < %s", NMsg.ofStyledKeyword(functionName), size(), minArgs).asError());
+            context.log(NMsg.ofC("%s: too few arguments, got %s < %s", NMsg.ofStyledKeyword(functionName), size(), minArgs).asError());
             return true;
         }
         return false;
@@ -100,7 +111,7 @@ public class NTxFunctionCallContextImpl implements NTxFunctionCallContext {
                         return whenError.get();
                     }
                 } catch (Exception ex) {
-                    context.log().log(NMsg.ofC("%s: arg at %s could not be evaluated as safe %s : %s", NMsg.ofStyledKeyword(functionName), index, convertName,
+                    context.log(NMsg.ofC("%s: arg at %s could not be evaluated as safe %s : %s", NMsg.ofStyledKeyword(functionName), index, convertName,
                             NMsg.ofC("error evaluating : %s", ex)).asError());
                 }
                 return null;
@@ -108,7 +119,7 @@ public class NTxFunctionCallContextImpl implements NTxFunctionCallContext {
         };
         if (index < 0 || index >= args.length) {
             c = safeSupplier.get();
-            context.log().log(NMsg.ofC("%s: arg at %s could not be evaluated as %s : %s", NMsg.ofStyledKeyword(functionName), index, convertName,
+            context.log(NMsg.ofC("%s: arg at %s could not be evaluated as %s : %s", NMsg.ofStyledKeyword(functionName), index, convertName,
                     NMsg.ofC("invalid index, should be in [%s...%s]", 0, args.length)).asError());
             return c;
         }
@@ -118,7 +129,7 @@ public class NTxFunctionCallContextImpl implements NTxFunctionCallContext {
             arg0 = args[index].eval();
         } catch (Exception ex) {
             c = safeSupplier.get();
-            context.log().log(NMsg.ofC("%s: arg at %s (as %s) could not be evaluated as %s : %s", NMsg.ofStyledKeyword(functionName), index, arg, convertName,
+            context.log(NMsg.ofC("%s: arg at %s (as %s) could not be evaluated as %s : %s", NMsg.ofStyledKeyword(functionName), index, arg, convertName,
                     NMsg.ofC("error evaluating : %s", ex)).asError());
             return c;
         }
@@ -127,14 +138,14 @@ public class NTxFunctionCallContextImpl implements NTxFunctionCallContext {
             oc = converter.apply(arg0);
         } catch (Exception ex) {
             c = safeSupplier.get();
-            context.log().log(NMsg.ofC("%s: arg at %s (as %s) could not be converted as %s (from %s) : %s", NMsg.ofStyledKeyword(functionName), index, arg, convertName,
+            context.log(NMsg.ofC("%s: arg at %s (as %s) could not be converted as %s (from %s) : %s", NMsg.ofStyledKeyword(functionName), index, arg, convertName,
                     arg0,
                     NMsg.ofC("error converting : %s", ex)).asError());
             return c;
         }
         if (!oc.isPresent()) {
             c = safeSupplier.get();
-            context.log().log(NMsg.ofC("%s: arg at %s as %s could not be evaluated as %s : %s", NMsg.ofStyledKeyword(functionName), index, arg, convertName,
+            context.log(NMsg.ofC("%s: arg at %s as %s could not be evaluated as %s : %s", NMsg.ofStyledKeyword(functionName), index, arg, convertName,
                     oc.getMessage().get()).asError());
         } else {
             c = oc.get();

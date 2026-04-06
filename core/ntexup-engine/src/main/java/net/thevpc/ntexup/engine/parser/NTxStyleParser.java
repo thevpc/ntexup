@@ -134,7 +134,7 @@ public class NTxStyleParser {
                         classes.addAll(Arrays.asList(cc.get()));
                     } else {
                         NMsg errMsg = NMsg.ofC("[%s] invalid style rule selector %s. expected a string or a string array", NTxUtils.shortName(context.source()), pair).asSevere();
-                        context.log().log(errMsg, context.source());
+                        context.log(errMsg, context.source());
                     }
                     break;
                 }
@@ -146,7 +146,7 @@ public class NTxStyleParser {
                         names.addAll(Arrays.asList(cc.get()));
                     } else {
                         NMsg errMsg = NMsg.ofC("[%s] invalid style rule selector %s. expected a string or a string array.", NTxUtils.shortName(context.source()), pair).asSevere();
-                        context.log().log(errMsg, context.source());
+                        context.log(errMsg, context.source());
                     }
                     break;
                 }
@@ -158,18 +158,18 @@ public class NTxStyleParser {
                         types.addAll(Arrays.asList(cc.get()));
                     } else {
                         NMsg errMsg = NMsg.ofC("[%s] invalid style rule selector %s. expected a valid node type or array", NTxUtils.shortName(context.source()), pair).asSevere();
-                        context.log().log(errMsg, context.source());
+                        context.log(errMsg, context.source());
                     }
                     break;
                 }
                 default: {
                     NMsg errMsg = NMsg.ofC("[%s] invalid style rule selector %s. expected one of 'name', 'class' or 'type'", NTxUtils.shortName(context.source()), pair).asSevere();
-                    context.log().log(errMsg, context.source());
+                    context.log(errMsg, context.source());
                 }
             }
         } else {
             NMsg errMsg = NMsg.ofC("[%s] invalid style rule selector %s. expected one of 'name', 'class' or 'type'", NTxUtils.shortName(context.source()), pair).asSevere();
-            context.log().log(errMsg, context.source());
+            context.log(errMsg, context.source());
         }
     }
 
@@ -237,7 +237,7 @@ public class NTxStyleParser {
             }
         }
         NMsg msg = NMsg.ofC("unable to resolve style selector from %s", selector).asError();
-        context.log().log(msg);
+        context.log(msg);
     }
 
     private static boolean isExactUpletPair(NElement e) {
@@ -309,14 +309,14 @@ public class NTxStyleParser {
                 return _parseStyleRule(e, NElement.ofString(name), children, f, context, errMsg);
             }
         }
-        context.log().log(errMsg, context.source());
+        context.log(errMsg, context.source());
         return NOptional.ofEmpty(errMsg);
     }
 
     public static NOptional<NTxStyleRule[]> _parseStyleRule(NElement e, NElement selectors, List<NElement> children, NTxDocumentFactory f, NTxResolutionContext context, NMsg errMsg) {
         NOptional<NTxStyleRuleSelector> r = parseStyleRuleSelector(selectors, context);
         if (!r.isPresent()) {
-            context.log().log(errMsg, context.source());
+            context.log(errMsg, context.source());
             return NOptional.ofEmpty(errMsg);
         }
         List<NTxProp> styles = new ArrayList<>();

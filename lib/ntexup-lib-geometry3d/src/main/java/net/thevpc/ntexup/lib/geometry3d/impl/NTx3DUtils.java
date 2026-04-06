@@ -37,20 +37,20 @@ public class NTx3DUtils {
             if (u.size() == 3) {
                 NNumberElement p1 = NTxNumberUtils.asNumberElement(u.get(0).get(), context);
                 if (p1 == null) {
-                    context.log().log(NMsg.ofC("invalid point %s", e).asError());
+                    context.log(NMsg.ofC("invalid point %s", e).asError());
                 }
                 NNumberElement p2 = NTxNumberUtils.asNumberElement(u.get(1).get(), context);
                 if (p2 == null) {
-                    context.log().log(NMsg.ofC("invalid point %s", e).asError());
+                    context.log(NMsg.ofC("invalid point %s", e).asError());
                 }
                 NNumberElement p3 = NTxNumberUtils.asNumberElement(u.get(2).get(), context);
                 if (p3 == null) {
-                    context.log().log(NMsg.ofC("invalid point %s", e).asError());
+                    context.log(NMsg.ofC("invalid point %s", e).asError());
                 }
                 return new NTxNumberElement3(p1, p2, p3);
             }
         }
-        context.log().log(NMsg.ofC("invalid point %s", e).asError());
+        context.log(NMsg.ofC("invalid point %s", e).asError());
         return null;
     }
 

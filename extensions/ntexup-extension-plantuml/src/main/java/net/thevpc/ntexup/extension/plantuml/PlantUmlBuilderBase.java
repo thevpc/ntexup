@@ -114,7 +114,7 @@ public abstract class PlantUmlBuilderBase implements NTxNodeBuilder {
                 image = ImageIO.read(new ByteArrayInputStream(bos.toByteArray()));
             } catch (Exception ex) {
                 NTxSource src = NTxUtils.sourceOf(node);
-                rendererContext.log().log(NMsg.ofC("Unable to evaluate UML : %s", ex).asSevere(), src);
+                rendererContext.log(NMsg.ofC("Unable to evaluate UML : %s", ex).asSevere(), src);
             }
         }
         if (image != null) {

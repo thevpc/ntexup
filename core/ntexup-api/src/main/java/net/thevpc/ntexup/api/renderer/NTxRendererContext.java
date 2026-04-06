@@ -10,9 +10,11 @@ import net.thevpc.ntexup.api.document.style.*;
 
 import net.thevpc.ntexup.api.document.NTxSizeRequirements;
 import net.thevpc.ntexup.api.renderer.text.NTxTextRendererBuilder;
+import net.thevpc.ntexup.api.source.NTxSource;
 import net.thevpc.ntexup.api.source.NTxSourceMonitor;
 import net.thevpc.ntexup.api.util.NTxSizeRef;
 import net.thevpc.nuts.elem.NElement;
+import net.thevpc.nuts.text.NMsg;
 import net.thevpc.nuts.text.NText;
 import net.thevpc.nuts.util.NOptional;
 
