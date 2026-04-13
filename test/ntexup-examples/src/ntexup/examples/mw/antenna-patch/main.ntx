@@ -31,7 +31,8 @@ gap = 1.5mm     // inset gap
 box_w = 58mm    // X: -29 to 29
 box_l = 59mm    // Y: -20 to 39
 
-feed_y_start = -14mm
+feed_y_start = -15mm
+feed_y_length = 15mm
 port_y_start = -15mm
 
 // --------------------------------------------------
@@ -93,7 +94,7 @@ page(bg:Gray90){
         // 6. Feed Line (X: -1.55 to 1.55, Y: -14 to 10.3)
         // Note: It overlaps with the patch at the connection point y=10.3
         @(antenna) @(feedline) box(
-            size:(wf, y0 + 14mm, h0),
+            size:(wf, y0 + 15mm, h0),
             position:(-wf/2, feed_y_start, 0mm)
         )
 
@@ -101,6 +102,10 @@ page(bg:Gray90){
         // Spans from ground (Z=-1.6) to feed line (Z=0)
         @(source) box(
             size:(wf, 1mm, h0),
+            position:(-wf/2, port_y_start, 0mm)
+        )
+        @(source-extra) box(
+            size:(wf, 2mm, h0),
             position:(-wf/2, port_y_start, 0mm)
         )
     }
@@ -128,21 +133,24 @@ page{
 //            sinus(geometry:"right-flank",  count:3, y:DDxDUy)
 //            sinus(geometry:"patch",        count:8, y:DDxUDy)
 
-            rwg(geometry:"antenna",        count:50)
+            rwg(geometry:"antenna")
+            rwg(geometry:"source-extra")
 
         }
         sources:{
             planar(geometry:"source", value:5V, z:50Ω)
         }
         results:{
+            chronometer
             mesh
+            scalar-products
             basis-functions
             mode-functions
             a-matrix
             b-matrix
-            //allS11:S11(frequency:{from:2.3GHz, to:2.5GHz, count:1})
-            //Jx
-            //Jy
+            allS11:S11(frequency:{from:2.3GHz, to:2.5GHz, count:1})
+            Jx
+            Jy
         }
     )
 }
