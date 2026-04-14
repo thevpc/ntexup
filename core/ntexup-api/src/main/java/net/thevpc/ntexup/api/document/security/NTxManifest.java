@@ -325,7 +325,7 @@ public class NTxManifest implements NToElement, NCopiable, Cloneable {
                 "ntexup-manifest",
                 elements.toArray(new NElement[0])
         );
-        NElementBuilder e = payload.builder().addAffix(0, metadata, NAffixAnchor.START);
+        NElementBuilder e = payload.builder().addAffixAt(0, metadata, NAffixAnchor.START);
         return e.build();
     }
 }
