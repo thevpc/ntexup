@@ -3,7 +3,7 @@ package net.thevpc.ntexup.extension.plot2d;
 import net.thevpc.ntexup.api.document.elem2d.NTxBounds2D;
 import net.thevpc.ntexup.api.eval.NTxValue;
 import net.thevpc.ntexup.api.renderer.NTxRendererContext;
-import net.thevpc.ntexup.extension.plot2d.expr.NTxPlotNExprEvaluator;
+import net.thevpc.ntexup.extension.plot2d.expr.NTxPlotNExprResolver;
 import net.thevpc.ntexup.extension.plot2d.model.NTxDrawContext;
 import net.thevpc.ntexup.extension.plot2d.model.NTxFunctionPlotInfo;
 import net.thevpc.ntexup.extension.plot2d.model.NTxPlot2DData;
@@ -62,7 +62,7 @@ class NTxDrawContextRenderCompiler {
 
             switch (pd.pld.source) {
                 case FUNCTION_X: {
-                    NDoubleFunction ff = NTxPlotNExprEvaluator.compileFunctionX(pld, rendererContext);
+                    NDoubleFunction ff = NTxPlotNExprResolver.compileFunctionX(pld, rendererContext);
                     if (ff != null) {
                         NChronometer c = NChronometer.of();
                         pd.prepareX(ff, xValues, minMaxY);

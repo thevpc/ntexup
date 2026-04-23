@@ -11,14 +11,14 @@ import net.thevpc.nuts.util.NOptional;
 import java.util.HashMap;
 import java.util.Map;
 
-public class NTxPlotNExprEvaluator implements NExprEvaluator {
+public class NTxPlotNExprResolver implements NExprResolver {
     private final NTxFunctionPlotInfo e;
-    private NExprMutableDeclarations d;
+    private NExprMutableContext d;
     private Map<String, NExprVar> extraVars = new HashMap<>();
 
 
     public static NDoubleFunction compileFunctionX(NTxFunctionPlotInfo e, NTxRendererContext rendererContext) {
-        NExprMutableDeclarations d = NTxExprHelper.create(rendererContext);
+        NExprMutableContext d = NTxExprHelper.create(rendererContext);
         NOptional<NExprNode> ne = d.parse(e.fexpr.isAnyString() ? e.fexpr.asStringValue().get() : NTxUtils.removeCompilerDeclarationPathAnnotations(e.fexpr).toString());
         if (!ne.isPresent()) {
             rendererContext.log(NMsg.ofC("unable to parse expression %s : %s", ne.getMessage(), e.fexpr));
@@ -27,13 +27,15 @@ public class NTxPlotNExprEvaluator implements NExprEvaluator {
         NExprNode nExprNode = ne.get();
         return x -> {
             NOptional<Object> r = nExprNode.eval(
-                    d.newDeclarations(new NTxPlotNExprEvaluator(e, d, x, 0, 0, 0))
+                    d.childContext()
+                            .declareResolver(new NTxPlotNExprResolver(e, d, x, 0, 0, 0))
+                            .build()
             );
             return NTxExprHelper.asDouble(r,rendererContext);
         };
     }
 
-    public NTxPlotNExprEvaluator(NTxFunctionPlotInfo e, NExprMutableDeclarations d, double x, double y, double z, double t) {
+    public NTxPlotNExprResolver(NTxFunctionPlotInfo e, NExprMutableContext d, double x, double y, double z, double t) {
         this.e = e;
         this.d = d;
         addVar(e.var1, x);
@@ -49,11 +51,11 @@ public class NTxPlotNExprEvaluator implements NExprEvaluator {
     }
 
     private void addVar(String varName, Object varValue) {
-        extraVars.put(varName, d.ofVar(varName, varValue));
+        extraVars.put(varName, NExprVar.ofVar(varName, varValue));
     }
 
     @Override
-    public NOptional<NExprVar> getVar(String varName, NExprDeclarations context) {
+    public NOptional<NExprVar> getVar(String varName, NExprContext context) {
         return NOptional.ofNamed(extraVars.get(varName), "var " + varName);
     }
 }

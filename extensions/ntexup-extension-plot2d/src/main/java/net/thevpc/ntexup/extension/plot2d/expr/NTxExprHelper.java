@@ -7,8 +7,9 @@ import net.thevpc.nuts.text.NMsg;
 import net.thevpc.nuts.util.NOptional;
 
 public class NTxExprHelper {
-    public static NExprMutableDeclarations create(NTxRendererContext rendererContext){
-        NExprMutableDeclarations d = NExprs.of().newMutableDeclarations();
+    public static NExprMutableContext create(NTxRendererContext rendererContext){
+        NExprMutableContext d = NExprContextBuilder.of()
+                .buildMutable();
         d.declareConstant("pi",Math.PI);
         d.declareConstant("PI",Math.PI);
         d.declareConstant("π",Math.PI);
