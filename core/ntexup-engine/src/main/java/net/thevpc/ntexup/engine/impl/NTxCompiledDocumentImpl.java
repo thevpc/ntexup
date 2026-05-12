@@ -74,7 +74,7 @@ public class NTxCompiledDocumentImpl implements NTxCompiledDocument {
         public FingerprintBuilder addContent(NPath path) {
             String normalized = path.normalize().toString();
             if (!contentFiles.containsKey(normalized)) {
-                NPath s = document.source().path().orNull();
+                NPath s = source().path().orNull();
                 if (s != null && path.isEqOrDeepChildOf(s)) {
                     NOptional<String> r = path.toRelative(s);
                     if (!r.isEmpty()) {
@@ -127,7 +127,7 @@ public class NTxCompiledDocumentImpl implements NTxCompiledDocument {
                 }
                 // 2. File System Boundary Identification
                 else {
-                    NPath sp = document.source().path().orNull();
+                    NPath sp = source().path().orNull();
                     // A resource is LOCAL only if it exists within the project folder
                     if (sp != null && pp.isFile() && pp.isEqOrDeepChildOf(sp)) {
                         t = NTxManifestResourceType.LOCAL;
@@ -219,7 +219,7 @@ public class NTxCompiledDocumentImpl implements NTxCompiledDocument {
 
     @Override
     public NTxSource source() {
-        return rawDocument.source();
+        return rawDocument.root().source();
     }
 
     @Override
@@ -229,6 +229,7 @@ public class NTxCompiledDocumentImpl implements NTxCompiledDocument {
                 document = new NTxCompiler(engine()).compileDocument(this).get();
                 unparsed.push(new NTxNodeAndContext(document.root(), null));
             } catch (Exception ex) {
+                ex.printStackTrace();
                 engine.log().log(NMsg.ofC("compile document failed %s", ex));
                 this.currentThrowable = ex;
             }
@@ -254,7 +255,7 @@ public class NTxCompiledDocumentImpl implements NTxCompiledDocument {
         if (rawDocument == null) {
             return "New Document";
         }
-        NTxSource source = rawDocument.root().source();
+        NTxSource source = source();
 
         if (source == null) {
             return ("New Document");
