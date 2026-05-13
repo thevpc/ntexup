@@ -139,14 +139,14 @@ public class NTxNodeEval implements NTxObjectEvalContext {
                 NOptional<NTxFunction> f = context.getFunction(functionName/*, args.args()*/);
                 if (f.isPresent()) {
                     NElement u = f.get().invoke(args);
-                    if(u.equals(args.callExpression())){
+                    if (u.equals(args.callExpression())) {
                         // function could not be evaluated in the current context
                         // perhaps needs some timeout or rendering context or....
                         return u;
                     }
                     return eval(u);
-                }else{
-                    if(context.inPage()){
+                } else {
+                    if (context.inPage()) {
                         //context.engine().log().log(NMsg.ofC("unsupported function %s in %s", functionName,ff).asError(), context.source());
                     }
                 }
@@ -177,7 +177,7 @@ public class NTxNodeEval implements NTxObjectEvalContext {
                 NUpletElement o = ff.builder().setParams(r).build();
                 if (o.params().size() == 1) {
                     NElement ee = o.params().get(0);
-                    if(ee.isNumber()){
+                    if (ee.isNumber()) {
                         return ee;
                     }
                 }
@@ -222,12 +222,56 @@ public class NTxNodeEval implements NTxObjectEvalContext {
                 }
                 break;
             }
+            case FULL_OBJECT:
             case PARAM_OBJECT:
             case OBJECT:
             case NAMED_OBJECT: {
                 // this is a complex object
                 break;
             }
+            case INSTANT:
+            case INT:
+            case LONG:
+            case LOCAL_DATE:
+            case CHAR:
+            case BYTE:
+            case CHAR_STREAM:
+            case DOUBLE:
+            case FLOAT:
+            case FLOAT_COMPLEX:
+            case DOUBLE_COMPLEX:
+            case NULL:
+            case BOOLEAN:
+            case LOCAL_DATETIME:
+            case LOCAL_TIME:
+            case SHORT:
+            case UBYTE:
+            case UINT:
+            case ULONG:
+            case USHORT:
+            case BIG_INT:
+            case BIG_COMPLEX:
+            case BIG_DECIMAL:
+            case CUSTOM:
+            case BINARY_STREAM:
+                return elementExpr;
+            case ORDERED_LIST:
+            case UNORDERED_LIST: {
+                NListElementBuilder builder = (NListElementBuilder) elementExpr.builder();
+                int size = builder.size();
+                for (int i = 0; i < size; i++) {
+                    NListItemElement v = builder.get(i);
+                    NElement n = v.value().orNull();
+                    if (n != null) {
+                        NElement n2 = eval(n);
+                        if (n2 != n) {
+                            builder.setItemAt(i, v.builder().value(n2).build());
+                        }
+                    }
+                }
+                return builder.build();
+            }
+
             default: {
                 NElementTypeGroup nElementTypeGroup = elementExpr.type().group();
                 if (nElementTypeGroup == NElementTypeGroup.NUMBER || nElementTypeGroup == NElementTypeGroup.NULL || nElementTypeGroup == NElementTypeGroup.STRING || nElementTypeGroup == NElementTypeGroup.BOOLEAN || nElementTypeGroup == NElementTypeGroup.CUSTOM) {
