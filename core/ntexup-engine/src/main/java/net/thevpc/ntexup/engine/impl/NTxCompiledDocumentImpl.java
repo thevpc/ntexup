@@ -72,25 +72,33 @@ public class NTxCompiledDocumentImpl implements NTxCompiledDocument {
         }
 
         public FingerprintBuilder addContent(NPath path) {
-            String normalized = path.normalize().toString();
-            if (!contentFiles.containsKey(normalized)) {
-                NPath s = source().path().orNull();
-                if (s != null && path.isEqOrDeepChildOf(s)) {
-                    NOptional<String> r = path.toRelative(s);
-                    if (!r.isEmpty()) {
-                        if (!contentFiles.containsKey(normalized)) {
-                            contentFiles.put(normalized, new DefaultNTxDocument.NamedPart(
-                                    r.get(),
-                                    path.readBytes()
-                            ));
-                            return this;
+            List<NPath> paths=new ArrayList<>();
+            if (path.toString().contains("*")) {
+                paths.addAll(path.walkGlob().toList());
+            }else{
+                paths.add(path);
+            }
+            for (NPath nPath : paths) {
+                String normalized = nPath.normalize().toString();
+                if (!contentFiles.containsKey(normalized)) {
+                    NPath s = source().path().orNull();
+                    if (s != null && nPath.isEqOrDeepChildOf(s)) {
+                        NOptional<String> r = nPath.toRelative(s);
+                        if (!r.isEmpty()) {
+                            if (!contentFiles.containsKey(normalized)) {
+                                contentFiles.put(normalized, new DefaultNTxDocument.NamedPart(
+                                        r.get(),
+                                        nPath.readBytes()
+                                ));
+                                return this;
+                            }
                         }
                     }
+                    contentFiles.put(normalized, new DefaultNTxDocument.NamedPart(
+                            nPath.toString(),
+                            nPath.readBytes()
+                    ));
                 }
-                contentFiles.put(normalized, new DefaultNTxDocument.NamedPart(
-                        path.toString(),
-                        path.readBytes()
-                ));
             }
             return this;
         }
