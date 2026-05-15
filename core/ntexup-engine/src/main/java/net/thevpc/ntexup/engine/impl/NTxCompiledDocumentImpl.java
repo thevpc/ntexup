@@ -82,8 +82,8 @@ public class NTxCompiledDocumentImpl implements NTxCompiledDocument {
                 String normalized = nPath.normalize().toString();
                 if (!contentFiles.containsKey(normalized)) {
                     NPath s = source().path().orNull();
-                    if (s != null && nPath.isEqOrDeepChildOf(s)) {
-                        NOptional<String> r = nPath.toRelative(s);
+                    if (s != null && nPath.startsWith(s)) {
+                        NOptional<String> r = nPath.stripParent(s);
                         if (!r.isEmpty()) {
                             if (!contentFiles.containsKey(normalized)) {
                                 contentFiles.put(normalized, new DefaultNTxDocument.NamedPart(
@@ -137,10 +137,10 @@ public class NTxCompiledDocumentImpl implements NTxCompiledDocument {
                 else {
                     NPath sp = source().path().orNull();
                     // A resource is LOCAL only if it exists within the project folder
-                    if (sp != null && pp.isFile() && pp.isEqOrDeepChildOf(sp)) {
+                    if (sp != null && pp.isFile() && pp.startsWith(sp)) {
                         t = NTxManifestResourceType.LOCAL;
                         // Store as relative path to ensure the ZIP remains portable
-                        sval = pp.toRelative(sp).toString();
+                        sval = pp.stripParent(sp).toString();
                     } else {
                         // It's an absolute path outside the project: cannot be easily bundled
                         t = NTxManifestResourceType.DETACHED;
@@ -333,6 +333,7 @@ public class NTxCompiledDocumentImpl implements NTxCompiledDocument {
 
             @Override
             public boolean hasNext() {
+                document();
                 while (true) {
                     if (index < compiledPages.size()) {
                         return true;

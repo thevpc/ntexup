@@ -23,6 +23,13 @@ public class NTexupOptionsParser {
                             }
                             continueParsingShow(cmdLine, options);
                         })
+                        .with("show-html").matchAny(a -> {
+                            options.getOrCreate(ShowHtmlActionOptions.class).html = true;
+                            if (a.getStringValue().isPresent()) {
+                                options.getOrCreate(ShowHtmlActionOptions.class).path=NPath.of(a.stringValue());
+                            }
+                            continueParsingShow(cmdLine, options);
+                        })
                         .with("show-doc").matchTrueFlag(a -> {
                             options.getOrCreate(ShowFrameActionOptions.class);
                             options.getOrCreate(ShowActionOptions.class).addPath(NPath.of("https://github.com/thevpc/ntexup-doc-slides.git"));

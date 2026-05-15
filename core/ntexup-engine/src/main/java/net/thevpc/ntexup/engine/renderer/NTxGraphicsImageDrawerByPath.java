@@ -3,7 +3,7 @@ package net.thevpc.ntexup.engine.renderer;
 import net.thevpc.ntexup.api.document.elem2d.NTxImageOptions;
 import net.thevpc.ntexup.api.renderer.NTxGraphics;
 import net.thevpc.ntexup.api.renderer.NTxGraphicsImageDrawer;
-import net.thevpc.ntexup.engine.util.NTxUtilsImages;
+import net.thevpc.ntexup.api.util.NTxUtilsImages;
 import net.thevpc.nuts.io.NPath;
 
 import javax.imageio.ImageIO;

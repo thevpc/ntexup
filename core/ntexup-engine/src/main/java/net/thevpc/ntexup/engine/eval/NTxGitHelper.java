@@ -97,7 +97,7 @@ public class NTxGitHelper {
                     pulling = true;
                     messages.log(NMsg.ofC("pull repo at %s", localRepo));
                     NExec.ofSystem("git", "pull")
-                            .setDirectory(localRepo)
+                            .directory(localRepo)
                             .failFast()
                             .run();
                 } else {
@@ -117,7 +117,7 @@ public class NTxGitHelper {
                     rex=null;
                     try {
                         NExec.ofSystem("git", "clone", githubPaths[i])
-                                .setDirectory(userConfHome.resolve(user))
+                                .directory(userConfHome.resolve(user))
                                 .failFast()
                                 .run();
                         break;

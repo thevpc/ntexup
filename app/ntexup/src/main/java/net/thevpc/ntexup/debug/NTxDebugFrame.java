@@ -4,7 +4,7 @@ import net.thevpc.ntexup.api.engine.NTxCompiledDocument;
 import net.thevpc.ntexup.api.engine.NTxCompiledPage;
 import net.thevpc.ntexup.api.engine.NTxEngine;
 import net.thevpc.ntexup.api.log.NTxLogger;
-import net.thevpc.ntexup.engine.util.NTxUtilsImages;
+import net.thevpc.ntexup.api.util.NTxUtilsImages;
 import net.thevpc.ntexup.api.renderer.NTxDocumentRendererListener;
 import net.thevpc.ntexup.api.renderer.NTxDocumentStreamRendererConfig;
 import net.thevpc.ntexup.util.NTexupUtils;

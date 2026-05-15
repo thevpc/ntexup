@@ -4,9 +4,11 @@
  */
 package net.thevpc.ntexup.engine.renderer.html;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.PrintStream;
+import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.io.*;
+import java.text.DecimalFormat;
+import java.util.List;
 
 import net.thevpc.ntexup.api.engine.NTxCompiledDocument;
 import net.thevpc.ntexup.api.engine.NTxCompiledPage;
@@ -15,15 +17,25 @@ import net.thevpc.ntexup.api.document.NTxDocument;
 import net.thevpc.ntexup.api.document.node.NTxNodeType;
 import net.thevpc.ntexup.api.document.node.NTxNode;
 import net.thevpc.ntexup.api.renderer.*;
+import net.thevpc.nuts.io.NCompress;
 import net.thevpc.nuts.io.NIOException;
 import net.thevpc.nuts.io.NPath;
+import net.thevpc.nuts.io.NPathRenameOptions;
+import net.thevpc.nuts.text.NMsg;
+import net.thevpc.nuts.util.NException;
+import net.thevpc.nuts.util.NExceptions;
+import net.thevpc.nuts.util.NIllegalArgumentException;
+import net.thevpc.nuts.util.NStringUtils;
+
+import javax.imageio.ImageIO;
+import javax.swing.*;
 
 /**
  * @author vpc
  */
 public class NTxHtmlDocumentRenderer extends NTxDocumentStreamRendererBase implements NTxDocumentStreamRenderer {
 
-    private NTxDocumentRendererContext rendererContext = new NTxDocumentRendererContextImpl();
+    private final NTxDocumentRendererContext rendererContext = new NTxDocumentRendererContextImpl();
 
     public NTxHtmlDocumentRenderer(NTxEngine engine) {
         super(engine);
@@ -47,18 +59,88 @@ public class NTxHtmlDocumentRenderer extends NTxDocumentStreamRendererBase imple
         NTxCompiledDocument d = document.get(rendererContext);
         Object o = output;
         if (o == null) {
-            o = NPath.of("document.pdf");
+            o = NPath.of("dist");
         }
+
         if (o instanceof NPath) {
-            try (OutputStream os = ((NPath) o).getOutputStream()) {
-                renderStream(d, os);
-            } catch (IOException ex) {
-                throw new NIOException(ex);
+            NPath pp = (NPath) o;
+            if (!pp.exists()) {
+                pp.mkdirs();
+            }
+            if (pp.isDirectory()) {
+                writeIntoDirectory(d, pp);
+            } else if (pp.isFile()) {
+                NPath toRemoveFolder = NPath.ofTempFolder();
+                writeIntoDirectory(d, toRemoveFolder);
+                if (!pp.getName().endsWith(".zip")) {
+                    pp = pp.resolveSibling(NPathRenameOptions.ofExtension("zip"));
+                }
+                NCompress.of().addSource(toRemoveFolder).to(pp);
+                toRemoveFolder.deleteTree();
+            } else {
+                throw new IllegalArgumentException("invalid output path " + pp);
             }
         } else if (o instanceof OutputStream) {
-            renderStream(d, (OutputStream) o);
+            NPath toRemoveFolder = NPath.ofTempFolder();
+            writeIntoDirectory(d, toRemoveFolder);
+            NCompress.of().addSource(toRemoveFolder).to((OutputStream) o);
+            toRemoveFolder.deleteTree();
         }
         return null;
+    }
+
+    private void writeIntoDirectory(NTxCompiledDocument d, NPath writeIntoDirectory) {
+        NTxDocumentStreamRendererConfig config = engine.tools().validateDocumentStreamRendererConfig(this.config);
+        int usableWidth;
+        int usableHeight;
+        int a4_w = 595;
+        int a4_h = 842;
+        int marginLeft = 0;
+        int marginRight = 0;
+        int marginTop = 0;
+        int padding = 0;
+        int marginBottom = 0;
+        int pageIndex = 1;
+        if (config.getOrientation() == NTxPageOrientation.LANDSCAPE) {
+            usableWidth = a4_h - marginLeft - marginRight - padding;
+            usableHeight = a4_w - marginTop - marginBottom - padding;
+        } else {
+            usableWidth = a4_w - marginLeft - marginRight - padding;
+            usableHeight = a4_h - marginTop - marginBottom - padding;
+        }
+        int pixelWidth = usableWidth;
+        int pixelHeight = usableHeight;
+        NPath imagesFolder = writeIntoDirectory.resolve("images");
+        imagesFolder.list().stream().filter(x -> x.getName().matches("page-[0-9]+[.]png"))
+                .forEach(x -> x.delete());
+        List<NTxCompiledPage> allPages = d.pages();
+        int zeros = (int) Math.ceil(Math.log10(allPages.size()));
+        if (zeros <= 0) {
+            zeros = 1;
+        }
+        DecimalFormat zformat = new DecimalFormat(NStringUtils.repeat("0", zeros));
+        for (NTxCompiledPage page : allPages) {
+            try (InputStream is = new ByteArrayInputStream(engine.renderImageBytes(
+                    page,
+                    new NTxNodeRendererConfig(pixelWidth, pixelHeight)
+                            .withAnimate(false)
+                            .withPrint(true)
+            ))) {
+                Image img = ImageIO.read(is);
+                if (img == null) {
+                    throw new NIllegalArgumentException(NMsg.ofC("invalid image for page %s", pageIndex));
+                }
+                BufferedImage bi = net.thevpc.ntexup.api.util.NTxUtilsImages.resizeImage(
+                        new ImageIcon(img).getImage(),
+                        pixelWidth, pixelHeight);
+                NPath imageFile = imagesFolder.resolve("page-" + zformat.format(pageIndex) + ".png").toAbsolute();
+                ImageIO.write(bi, "png", imageFile.mkParentDirs().toFile().get());
+                engine.log().log(NMsg.ofC("rendered page %s to %s", pageIndex, imageFile));
+            } catch (IOException ex) {
+                throw NExceptions.ofUncheckedException(ex);
+            }
+            pageIndex++;
+        }
     }
 
     public PrintStream psOf(OutputStream out) {

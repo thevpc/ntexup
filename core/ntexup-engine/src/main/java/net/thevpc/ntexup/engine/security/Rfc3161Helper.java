@@ -1,12 +1,8 @@
 package net.thevpc.ntexup.engine.security;
 
-import net.thevpc.nuts.elem.NAffixAnchor;
-import net.thevpc.nuts.elem.NElement;
-import net.thevpc.nuts.elem.NElementAnnotation;
 import net.thevpc.nuts.net.NWebCli;
 import net.thevpc.nuts.net.NWebResponse;
 import net.thevpc.nuts.text.NMsg;
-import net.thevpc.nuts.time.NDuration;
 import net.thevpc.nuts.util.NBlankable;
 import net.thevpc.nuts.util.NExceptions;
 import net.thevpc.nuts.util.NOptional;
@@ -25,9 +21,7 @@ import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
 import java.io.IOException;
 import java.math.BigInteger;
-import java.nio.charset.StandardCharsets;
 import java.security.KeyStore;
-import java.security.MessageDigest;
 import java.security.cert.*;
 import java.time.Instant;
 import java.util.*;
@@ -86,7 +80,7 @@ public class Rfc3161Helper {
                 .POST(tsaUrl)
                 .addHeader("Content-Type", "application/timestamp-query")
                 .addHeader("Accept", "application/timestamp-reply")
-                .setRequestBody(requestBytes)
+                .requestBody(requestBytes)
 //                .setConnectTimeout(NDuration.ofSeconds(10))  // short so fallback is fast
                 .run();
         if (!response.isOk()) {

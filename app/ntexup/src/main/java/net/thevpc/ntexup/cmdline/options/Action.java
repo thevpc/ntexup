@@ -2,6 +2,7 @@ package net.thevpc.ntexup.cmdline.options;
 
 public enum Action {
     SHOW_FRAME,
+    SHOW_HTML,
     SHOW_DOCUMENT,
     NEW,
     GENERATE,

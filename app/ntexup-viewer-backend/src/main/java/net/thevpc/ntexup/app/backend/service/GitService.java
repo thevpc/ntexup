@@ -34,14 +34,14 @@ public class GitService {
         if (baseFolder.isDirectory()) {
             NExec.of()
                     .system()
-                    .setDirectory(baseFolder.resolve(n))
+                    .directory(baseFolder.resolve(n))
                     .addCommand("git", "pull")
                     .failFast()
                     .run();
         } else {
             NExec.of()
                     .system()
-                    .setDirectory(baseFolder)
+                    .directory(baseFolder)
                     .addCommand("git", "clone", url)
                     .failFast()
                     .run();

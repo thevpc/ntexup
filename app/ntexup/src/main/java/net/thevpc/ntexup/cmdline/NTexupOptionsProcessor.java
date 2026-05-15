@@ -69,6 +69,11 @@ public class NTexupOptionsProcessor {
                     runActionShowFrame(info);
                     break;
                 }
+                case SHOW_HTML: {
+                    optionsMap.remove(a.getKey());
+                    runActionShowHtml(info);
+                    break;
+                }
                 case NEW: {
                     optionsMap.remove(a.getKey());
                     runActionNew(info);
@@ -114,6 +119,41 @@ public class NTexupOptionsProcessor {
         if(false){
             info.mainFrame.displayFrame();
         }
+    }
+
+    private void runActionShowHtml(Info info) {
+        ShowHtmlActionOptions showFrameActionOptions = info.options.getOrCreate(ShowHtmlActionOptions.class);
+        if (showFrameActionOptions != null && showFrameActionOptions.html) {
+            NPath expecteOutput=showFrameActionOptions.path;
+            if (expecteOutput == null) {
+                expecteOutput = NPath.of(".").resolve("dist/html").toAbsolute();
+            }
+            List<NPath> paths = info.options.get(ShowActionOptions.class).paths;
+            for (NPath path : paths) {
+                NChronometer ch = NChronometer.of();
+                NTxCompiledDocument doc = info.engine.loadDocument(path);
+                if (doc.pages().isEmpty()) {
+                    info.engine.log().log(NMsg.ofC("no pages to render : %s", path.normalize().toAbsolute()).asError());
+                    return;
+                }
+                NTxDocumentStreamRendererConfig renderConfig = new NTxDocumentStreamRendererConfig();
+                NTxDocumentStreamRenderer renderer = info.engine.newHtmlRenderer().get();
+                renderer.setStreamRendererConfig(renderConfig);
+                NPath output = null;
+                if (paths.size() == 1) {
+                    output = expecteOutput;
+                } else {
+                    output = expecteOutput.resolve(path.getName());
+                }
+                renderer.setOutput(output);
+                renderer.render(doc);
+                ch.stop();
+                info.engine.log().log(NMsg.ofC("generated : %s (%s) in %s", output.normalize().toAbsolute(), NMemoryFormat.DEFAULT.format(NMemorySize.ofBytes(output.getContentLength()).normalize()), ch).asInfo().withDurationMillis(ch.durationMs()));
+
+            }
+
+        }
+
     }
 
     private void runActionListTemplates(Options options, NTxEngine engine) {

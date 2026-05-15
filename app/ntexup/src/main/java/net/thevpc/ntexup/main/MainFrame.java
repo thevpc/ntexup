@@ -6,7 +6,7 @@ import net.thevpc.ntexup.api.renderer.NTxDocumentViewListener;
 import net.thevpc.ntexup.api.renderer.NTxDocumentViewManager;
 import net.thevpc.ntexup.engine.impl.DefaultNTxEngine;
 import net.thevpc.ntexup.main.components.EntryComponent;
-import net.thevpc.ntexup.engine.util.NTxUtilsImages;
+import net.thevpc.ntexup.api.util.NTxUtilsImages;
 import net.thevpc.ntexup.util.NTexupUtils;
 import net.thevpc.nuts.io.NPath;
 import net.thevpc.nuts.util.NBlankable;

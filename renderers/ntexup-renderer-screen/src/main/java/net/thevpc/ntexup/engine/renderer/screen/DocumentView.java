@@ -10,7 +10,7 @@ import net.thevpc.ntexup.api.renderer.*;
 
 import net.thevpc.ntexup.engine.impl.NTxCompiledDocumentImpl;
 import net.thevpc.ntexup.engine.renderer.screen.components.RatioPanel;
-import net.thevpc.ntexup.engine.util.NTxUtilsImages;
+import net.thevpc.ntexup.api.util.NTxUtilsImages;
 
 import javax.swing.*;
 import java.awt.*;
