@@ -98,7 +98,7 @@ public class NTxGitHelper {
                     messages.log(NMsg.ofC("pull repo at %s", localRepo));
                     NExec.ofSystem("git", "pull")
                             .directory(localRepo)
-                            .failFast()
+                            .failFast(true)
                             .run();
                 } else {
                     NMsg message = NMsg.ofC("ignored pull repo %s to %s", NPath.of(githubPaths[0]), localRepo).asWarning();
@@ -118,7 +118,7 @@ public class NTxGitHelper {
                     try {
                         NExec.ofSystem("git", "clone", githubPaths[i])
                                 .directory(userConfHome.resolve(user))
-                                .failFast()
+                                .failFast(true)
                                 .run();
                         break;
                     }catch (RuntimeException ex) {

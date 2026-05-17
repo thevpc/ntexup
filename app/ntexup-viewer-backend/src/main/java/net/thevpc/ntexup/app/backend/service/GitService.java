@@ -36,14 +36,14 @@ public class GitService {
                     .system()
                     .directory(baseFolder.resolve(n))
                     .addCommand("git", "pull")
-                    .failFast()
+                    .failFast(true)
                     .run();
         } else {
             NExec.of()
                     .system()
                     .directory(baseFolder)
                     .addCommand("git", "clone", url)
-                    .failFast()
+                    .failFast(true)
                     .run();
         }
         return baseFolder.resolve(localFolderName);
