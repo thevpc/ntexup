@@ -880,14 +880,14 @@ public class DefaultNTxEngine implements NTxEngine {
                     NPath main = null;
                     for (String mainFiled : new String[]{
                             "main." + FILE_EXT,}) {
-                        NPath m = all.stream().filter(x -> mainFiled.equals(x.getName())).findFirst().orElse(null);
+                        NPath m = all.stream().filter(x -> mainFiled.equals(x.name())).findFirst().orElse(null);
                         if (m != null) {
                             main = m;
                             all.remove(m);
                             break;
                         }
                     }
-                    all.sort((a, b) -> a.getName().compareTo(b.getName()));
+                    all.sort((a, b) -> a.name().compareTo(b.name()));
                     if (main != null) {
                         all.add(0, main);
                     }
@@ -954,7 +954,7 @@ public class DefaultNTxEngine implements NTxEngine {
                 }
                 return d;
             } else if (path.isDirectory()) {
-                List<NPath> all = path.stream().filter(x -> x.isRegularFile() && NTxEngineUtils.isNTexupFile(x.getName())).toList();
+                List<NPath> all = path.stream().filter(x -> x.isRegularFile() && NTxEngineUtils.isNTexupFile(x.name())).toList();
                 all.sort(NTxEngineUtils::comparePaths);
                 NTxItem node = null;
                 for (NPath nPath : all) {
@@ -1102,7 +1102,7 @@ public class DefaultNTxEngine implements NTxEngine {
 
     public boolean isNtxProject(NPath path) {
         try (NStream<NPath> stream = path.stream()) {
-            return stream.anyMatch(x -> x.getName().endsWith(".ntx"));
+            return stream.anyMatch(x -> x.name().endsWith(".ntx"));
         }
     }
 
@@ -1134,7 +1134,7 @@ public class DefaultNTxEngine implements NTxEngine {
                 log().log(msg);
                 throw new NIllegalArgumentException(msg);
             } else {
-                if (path.getName().endsWith(".ntx")) {
+                if (path.name().endsWith(".ntx")) {
                     path.mkParentDirs().writeString(resolveEmptyNtxContent());
                 } else {
                     NPath main = path.resolve("main.ntx");
@@ -1175,9 +1175,9 @@ public class DefaultNTxEngine implements NTxEngine {
                 case "template.templateUrl": {
                     try {
                         NPath bp = templateUrl;
-                        NPath pp = bp.getParent();
-                        if (pp != null && pp.getName().equals("templates")) {
-                            pp = pp.getParent();
+                        NPath pp = bp.parent();
+                        if (pp != null && pp.name().equals("templates")) {
+                            pp = pp.parent();
                             if (pp != null) {
                                 pp = pp.resolve("theme");
                                 return pp.toString();
@@ -1261,7 +1261,7 @@ public class DefaultNTxEngine implements NTxEngine {
                 throw new IllegalArgumentException("cannot copy folder " + from + " to " + to);
             }
             for (NPath nPath : from.list()) {
-                copyTemplate(nPath, to.resolve(nPath.getName()), vars, dry, acceptOverride);
+                copyTemplate(nPath, to.resolve(nPath.name()), vars, dry, acceptOverride);
             }
         } else if (from.isRegularFile()) {
             if (to.isRegularFile()) {

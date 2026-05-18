@@ -27,7 +27,7 @@ public class GitService {
     }
 
     public NPath cloneRepositoryPath(String url, String cloneDirectoryPath) throws GitAPIException {
-        String n = NPath.of(url).getName();
+        String n = NPath.of(url).name();
         String localFolderName = n + "-" + url.hashCode();
 
         NPath baseFolder = NPath.ofUserHome().resolve(localFolderName);
@@ -81,7 +81,7 @@ public class GitService {
 //        return contents;
 //    }
     public String[] listRepositoryContents(String localPath) {
-        return NPath.of(localPath).list().stream().map(x -> x.getName()).toArray(String[]::new);
+        return NPath.of(localPath).list().stream().map(x -> x.name()).toArray(String[]::new);
     }
 
     public String getFileContent(String localPath) throws IOException {

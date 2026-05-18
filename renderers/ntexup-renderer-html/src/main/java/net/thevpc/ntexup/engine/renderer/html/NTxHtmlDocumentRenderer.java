@@ -13,16 +13,13 @@ import java.util.List;
 import net.thevpc.ntexup.api.engine.NTxCompiledDocument;
 import net.thevpc.ntexup.api.engine.NTxCompiledPage;
 import net.thevpc.ntexup.api.engine.NTxEngine;
-import net.thevpc.ntexup.api.document.NTxDocument;
 import net.thevpc.ntexup.api.document.node.NTxNodeType;
 import net.thevpc.ntexup.api.document.node.NTxNode;
 import net.thevpc.ntexup.api.renderer.*;
 import net.thevpc.nuts.io.NCompress;
-import net.thevpc.nuts.io.NIOException;
 import net.thevpc.nuts.io.NPath;
 import net.thevpc.nuts.io.NPathRenameOptions;
 import net.thevpc.nuts.text.NMsg;
-import net.thevpc.nuts.util.NException;
 import net.thevpc.nuts.util.NExceptions;
 import net.thevpc.nuts.util.NIllegalArgumentException;
 import net.thevpc.nuts.util.NStringUtils;
@@ -72,7 +69,7 @@ public class NTxHtmlDocumentRenderer extends NTxDocumentStreamRendererBase imple
             } else if (pp.isFile()) {
                 NPath toRemoveFolder = NPath.ofTempFolder();
                 writeIntoDirectory(d, toRemoveFolder);
-                if (!pp.getName().endsWith(".zip")) {
+                if (!pp.name().endsWith(".zip")) {
                     pp = pp.resolveSibling(NPathRenameOptions.ofExtension("zip"));
                 }
                 NCompress.of().addSource(toRemoveFolder).to(pp);
@@ -111,7 +108,7 @@ public class NTxHtmlDocumentRenderer extends NTxDocumentStreamRendererBase imple
         int pixelWidth = usableWidth;
         int pixelHeight = usableHeight;
         NPath imagesFolder = writeIntoDirectory.resolve("images");
-        imagesFolder.list().stream().filter(x -> x.getName().matches("page-[0-9]+[.]png"))
+        imagesFolder.list().stream().filter(x -> x.name().matches("page-[0-9]+[.]png"))
                 .forEach(x -> x.delete());
         List<NTxCompiledPage> allPages = d.pages();
         int zeros = (int) Math.ceil(Math.log10(allPages.size()));

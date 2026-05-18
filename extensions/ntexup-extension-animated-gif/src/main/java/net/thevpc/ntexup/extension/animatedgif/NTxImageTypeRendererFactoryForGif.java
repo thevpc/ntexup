@@ -18,7 +18,7 @@ public class NTxImageTypeRendererFactoryForGif implements NTxImageTypeRendererFa
     @Override
     public NScoredCallable<NTxGraphicsImageDrawer> resolveRenderer(NPath path, NTxImageOptions options, NTxGraphics graphics) {
         if (!options.isDisableAnimation()) {
-            if (path.getName().toLowerCase().endsWith(".gif")) {
+            if (path.name().toLowerCase().endsWith(".gif")) {
                 return NScoredCallable.ofValid(
                         () -> {
                             byte[] b = path.readBytes();

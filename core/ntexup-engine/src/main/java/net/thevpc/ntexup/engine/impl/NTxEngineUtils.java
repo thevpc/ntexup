@@ -10,7 +10,7 @@ public class NTxEngineUtils {
     public static final String NTEXUP_EXT_STAR_STAR = "**/*."+NTxEngine.FILE_EXT;
 
     public static boolean isNTexupFile(NPath path) {
-        return path != null && isNTexupFile(path.getName());
+        return path != null && isNTexupFile(path.name());
     }
 
     public static boolean isNTexupFile(String name) {

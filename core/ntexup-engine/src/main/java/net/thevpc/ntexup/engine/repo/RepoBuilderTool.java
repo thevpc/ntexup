@@ -100,7 +100,7 @@ public class RepoBuilderTool {
         List<NPath> versions = folder.list().stream().filter(x -> isThemeVersionFolder(x)).collect(Collectors.toList());
         List<NTxTemplateInfo> ok = new ArrayList<>();
         for (NPath version : versions) {
-            for (NTxTemplateInfo a : buildRepoVersionTheme(version, folder.getName())) {
+            for (NTxTemplateInfo a : buildRepoVersionTheme(version, folder.name())) {
                 ok.add(
                         new NTxTemplateInfoImpl(
                                 null,
@@ -109,7 +109,7 @@ public class RepoBuilderTool {
                                 a.recommended(),
                                 null,
                                 null,
-                                "/" + folder.getName() + "/" + version.getName() + "/templates/" + a.localPath(),
+                                "/" + folder.name() + "/" + version.name() + "/templates/" + a.localPath(),
                                 a.binaryVersions().toArray(new String[0])
                         )
                 );
@@ -119,7 +119,7 @@ public class RepoBuilderTool {
     }
 
     private List<NTxTemplateInfo> buildRepoVersionTheme(NPath versionFolder, String themeName) {
-        String versionName = versionFolder.getName();
+        String versionName = versionFolder.name();
         List<NPath> templateFolders = versionFolder.resolve("templates").list().stream().filter(x -> x.isDirectory()).collect(Collectors.toList());
         NPath themeInfo = versionFolder.resolve("ndoc-theme.tson");
         List<NTxTemplateInfo> existing = null;
@@ -130,9 +130,9 @@ public class RepoBuilderTool {
             newTemplates.addAll(existing);
             newTemplates.removeIf(x -> !versionFolder.resolve("templates").resolve(x.localPath()).isDirectory());
             for (NPath templateFolder : templateFolders) {
-                NTxTemplateInfo old = newTemplates.stream().filter(x -> x.localPath().equals(templateFolder.getName())).findFirst().orElse(null);
+                NTxTemplateInfo old = newTemplates.stream().filter(x -> x.localPath().equals(templateFolder.name())).findFirst().orElse(null);
                 if (old == null) {
-                    newTemplates.add(new NTxTemplateInfoImpl(null,themeName, templateFolder.getName(), versionName, null, false, null, null, templateFolder.getName(), new String[]{NTxEngine.CURRENT_VERSION}));
+                    newTemplates.add(new NTxTemplateInfoImpl(null,themeName, templateFolder.name(), versionName, null, false, null, null, templateFolder.name(), new String[]{NTxEngine.CURRENT_VERSION}));
                 } else {
                     if (old.binaryVersions().isEmpty()) {
                         newTemplates.remove(old);
@@ -142,7 +142,7 @@ public class RepoBuilderTool {
             }
         } else {
             for (NPath templateFolder : templateFolders) {
-                newTemplates.add(new NTxTemplateInfoImpl(null,themeName, templateFolder.getName(), versionName, null, false, null, null, templateFolder.getName(), new String[]{NTxEngine.CURRENT_VERSION}));
+                newTemplates.add(new NTxTemplateInfoImpl(null,themeName, templateFolder.name(), versionName, null, false, null, null, templateFolder.name(), new String[]{NTxEngine.CURRENT_VERSION}));
             }
         }
         if (!newTemplates.isEmpty()) {

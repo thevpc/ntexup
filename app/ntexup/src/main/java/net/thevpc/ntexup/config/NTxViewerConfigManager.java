@@ -32,7 +32,7 @@ public class NTxViewerConfigManager {
             }
         } else if (viewerConfigFile.isDirectory()) {
             viewerConfigFile = viewerConfigFile.resolve(configName);
-        } else if (!viewerConfigFile.exists() && !viewerConfigFile.getName().endsWith(".tson")) {
+        } else if (!viewerConfigFile.exists() && !viewerConfigFile.name().endsWith(".tson")) {
             viewerConfigFile = viewerConfigFile.resolve(configName);
         }
         this.viewerConfigFile = viewerConfigFile;

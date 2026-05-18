@@ -143,12 +143,12 @@ public class NTexupOptionsProcessor {
                 if (paths.size() == 1) {
                     output = expecteOutput;
                 } else {
-                    output = expecteOutput.resolve(path.getName());
+                    output = expecteOutput.resolve(path.name());
                 }
                 renderer.setOutput(output);
                 renderer.render(doc);
                 ch.stop();
-                info.engine.log().log(NMsg.ofC("generated : %s (%s) in %s", output.normalize().toAbsolute(), NMemoryFormat.DEFAULT.format(NMemorySize.ofBytes(output.getContentLength()).normalize()), ch).asInfo().withDurationMillis(ch.durationMs()));
+                info.engine.log().log(NMsg.ofC("generated : %s (%s) in %s", output.normalize().toAbsolute(), NMemoryFormat.DEFAULT.format(NMemorySize.ofBytes(output.contentLength()).normalize()), ch).asInfo().withDurationMillis(ch.durationMs()));
 
             }
 
@@ -214,17 +214,17 @@ public class NTexupOptionsProcessor {
             NPath output = null;
             if (paths.size() == 1) {
                 if (expecteOutput.isDirectory()) {
-                    output = expecteOutput.resolve(path.getName()).resolveSibling(NPathRenameOptions.ofExtension("pdf"));
+                    output = expecteOutput.resolve(path.name()).resolveSibling(NPathRenameOptions.ofExtension("pdf"));
                 } else {
                     output = expecteOutput.resolveSibling(NPathRenameOptions.ofExtension("pdf"));
                 }
             } else {
-                output = expecteOutput.resolve(path.getName()).resolveSibling(NPathRenameOptions.ofExtension("pdf"));
+                output = expecteOutput.resolve(path.name()).resolveSibling(NPathRenameOptions.ofExtension("pdf"));
             }
             renderer.setOutput(output);
             renderer.render(doc);
             ch.stop();
-            info.engine.log().log(NMsg.ofC("generated : %s (%s) in %s", output.normalize().toAbsolute(), NMemoryFormat.DEFAULT.format(NMemorySize.ofBytes(output.getContentLength()).normalize()), ch).asInfo().withDurationMillis(ch.durationMs()));
+            info.engine.log().log(NMsg.ofC("generated : %s (%s) in %s", output.normalize().toAbsolute(), NMemoryFormat.DEFAULT.format(NMemorySize.ofBytes(output.contentLength()).normalize()), ch).asInfo().withDurationMillis(ch.durationMs()));
 
         }
     }

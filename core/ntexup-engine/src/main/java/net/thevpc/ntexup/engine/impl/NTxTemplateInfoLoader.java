@@ -128,8 +128,8 @@ public class NTxTemplateInfoLoader {
             if (NTxGitHelper.isGithubFolder(path.toString())) {
                 NPath nPath1 = NTxGitHelper.resolveGithubPath(path.toString(), log);
                 if (nPath1.resolve("ntexup-repository.tson").isRegularFile()) {
-                    String layout = path.getParent().getName();
-                    String version = path.getParent().getParent().getName();
+                    String layout = path.parent().name();
+                    String version = path.parent().parent().name();
                     try {
                         loadTemplateInfoOwn(NElementReader.ofTson().read(nPath1.resolve("ntexup-repository.tson")), name, path, allTemplates,version, layout);
                     } catch (Exception e) {
@@ -141,8 +141,8 @@ public class NTxTemplateInfoLoader {
             } else if (path.isLocal()) {
                 if (path.resolve("ntexup-repository.tson").isRegularFile()) {
                     try {
-                        String layout = path.getParent().getName();
-                        String version = path.getParent().getParent().getName();
+                        String layout = path.parent().name();
+                        String version = path.parent().parent().name();
                         loadTemplateInfoOwn(NElementReader.ofTson().read(path.resolve("ntexup-repository.tson")), name, path, allTemplates, layout, version);
                     } catch (Exception e) {
                         log.log(NMsg.ofC("unable to parse repository templates '%s' at '%s' : %s", name, path, e).asError());

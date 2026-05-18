@@ -157,7 +157,7 @@ public class DocumentView implements NTxDocumentView {
             if (s instanceof NTxSource) {
                 NPath path = ((NTxSource) s).path().orNull();
                 if (path != null) {
-                    return path.getName();
+                    return path.name();
                 }
             }
         }

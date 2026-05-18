@@ -187,7 +187,7 @@ public class NTxUtils {
         NPath base;
         if (referencePath != null) {
             if (referencePath.isRegularFile()) {
-                referencePath = referencePath.getParent();
+                referencePath = referencePath.parent();
             }
             if (referencePath != null) {
                 base = referencePath.resolve(pathString);

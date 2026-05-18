@@ -28,7 +28,7 @@ public class EntryComponent extends JPanel {
                     String path = pr.getPath();
                     NPath p = NPath.of(path);
                     valid=p.exists();
-                    showObj="<html><b><span style='color:#00ffff'>"+p.getName()+"</span></b> (<small>"+path+"</small>), last accessed <b>"+pr.getLastAccess()+"</b>";
+                    showObj="<html><b><span style='color:#00ffff'>"+p.name()+"</span></b> (<small>"+path+"</small>), last accessed <b>"+pr.getLastAccess()+"</b>";
                 }
                 setEnabled(valid);
                 super.getListCellRendererComponent(list, showObj, index, isSelected, cellHasFocus);

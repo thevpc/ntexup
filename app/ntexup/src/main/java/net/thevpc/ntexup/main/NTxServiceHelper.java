@@ -1,6 +1,5 @@
 package net.thevpc.ntexup.main;
 
-import net.thevpc.ntexup.api.document.NTxDocument;
 import net.thevpc.ntexup.api.engine.NTxCompiledDocument;
 import net.thevpc.ntexup.api.engine.NTxEngine;
 import net.thevpc.ntexup.api.engine.NTxTemplateInfo;
@@ -171,7 +170,7 @@ public class NTxServiceHelper {
                     index++;
                 }
                 if (index != 1) {
-                    if (JOptionPane.showConfirmDialog(mainFrame.getContentPane(), "Folder " + baseName + " already exists. Should we consider new name " + newProjectPath.getName(), "Warning", JOptionPane.WARNING_MESSAGE, JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
+                    if (JOptionPane.showConfirmDialog(mainFrame.getContentPane(), "Folder " + baseName + " already exists. Should we consider new name " + newProjectPath.name(), "Warning", JOptionPane.WARNING_MESSAGE, JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
                         //usersConfig().saveUserConfig(newUserConfig);
                     } else {
                         return;

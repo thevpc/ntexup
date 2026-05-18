@@ -121,7 +121,7 @@ public class NTxImageBuilder implements NTxNodeBuilder {
             return p;
         }
         for (String ext : new String[]{"png", "jpg", "gif", "jpeg","svg"}) {
-            String n = p.getName();
+            String n = p.name();
             String nLowered = n.toLowerCase();
             if (nLowered.endsWith(".")) {
                 NPath p2 = p.resolveSibling(n + ext);

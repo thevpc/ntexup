@@ -19,7 +19,7 @@ import java.net.URL;
 public class NTxImageTypeRendererFactorySalamanderForSVG implements NTxImageTypeRendererFactory {
     @Override
     public NScoredCallable<NTxGraphicsImageDrawer> resolveRenderer(NPath path, NTxImageOptions options, NTxGraphics graphics) {
-        if (path.getName().toLowerCase().endsWith(".svg")) {
+        if (path.name().toLowerCase().endsWith(".svg")) {
             return NScoredCallable.ofValid(
                     () -> {
                         return new SvgNTxImageByTypeRenderer(path);
