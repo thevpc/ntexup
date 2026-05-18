@@ -240,10 +240,10 @@ public class NTxManifestElementMetaDataBuilder {
         for (String s : new TreeSet<>(ed.keySet())) {
             NDefinition d = ed.get(s);
             deps.add(new NTxManifestDependency()
-                            .setValue(d.getId().getLongName())
+                            .setValue(d.id().longName())
                     .setFingerprint(NDigest.of()
-                            .setAlgorithm(digestAlgo)
-                            .addSource(d.getContent().get()).computeString())
+                            .algorithm(digestAlgo)
+                            .addSource(d.content().get()).computeString())
             );
         }
         return deps.toArray(new NTxManifestDependency[0]);

@@ -58,7 +58,7 @@ public class AuthorInfoConfigFile {
                 logger.log(NMsg.ofC("store author PrivateKey to %s", value.effPrivateKeyFile));
                 value.effPrivateKeyFile.writeString(privateB64);
                 // set permissions to owner-read-only if possible
-                value.effPrivateKeyFile.setPermissions(NPathPermission.OWNER_READ);
+                value.effPrivateKeyFile.permissions(NPathPermission.OWNER_READ);
 
                 // public key — X509
                 String publicB64 = Base64.getEncoder().encodeToString(

@@ -54,7 +54,7 @@ public class PdfDocumentRenderer extends NTxDocumentStreamRendererBase implement
             outputTarget = NPath.of("document.pdf");
         }
         if (outputTarget instanceof NPath) {
-            try (OutputStream os = ((NPath) outputTarget).getOutputStream()) {
+            try (OutputStream os = ((NPath) outputTarget).outputStream()) {
                 renderStream(document, os);
             } catch (IOException ex) {
                 throw new NIOException(ex);

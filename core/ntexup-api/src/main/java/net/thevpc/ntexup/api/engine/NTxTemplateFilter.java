@@ -95,11 +95,11 @@ public class NTxTemplateFilter {
         if (found.isPresent()) {
             return found;
         }
-        found = disambiguate(Arrays.stream(getTemplates()).filter(x -> Objects.equals(NId.of(x.id()).getLongName(), word)).collect(Collectors.toList()));
+        found = disambiguate(Arrays.stream(getTemplates()).filter(x -> Objects.equals(NId.of(x.id()).longName(), word)).collect(Collectors.toList()));
         if (found.isPresent()) {
             return found;
         }
-        found = disambiguate(Arrays.stream(getTemplates()).filter(x -> Objects.equals(NId.of(x.id()).getShortName(), word)).collect(Collectors.toList()));
+        found = disambiguate(Arrays.stream(getTemplates()).filter(x -> Objects.equals(NId.of(x.id()).shortName(), word)).collect(Collectors.toList()));
         if (found.isPresent()) {
             return found;
         }
@@ -131,11 +131,11 @@ public class NTxTemplateFilter {
                 return found;
             }
         }
-        found = disambiguate(Arrays.stream(getTemplates()).filter(x -> Objects.equals(NId.of(x.repoName() + ":" + x.name()).getShortName(), word)).collect(Collectors.toList()));
+        found = disambiguate(Arrays.stream(getTemplates()).filter(x -> Objects.equals(NId.of(x.repoName() + ":" + x.name()).shortName(), word)).collect(Collectors.toList()));
         if (found.isPresent()) {
             return found;
         }
-        found = disambiguate(Arrays.stream(getTemplates()).filter(x -> Objects.equals(NId.of(x.name()).getShortName(), word)).collect(Collectors.toList()));
+        found = disambiguate(Arrays.stream(getTemplates()).filter(x -> Objects.equals(NId.of(x.name()).shortName(), word)).collect(Collectors.toList()));
         if (found.isPresent()) {
             return found;
         }

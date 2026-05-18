@@ -23,7 +23,7 @@ public class NTexupMain {
     public void run() {
         NWorkspace.of().share();
         Options options = new Options();
-        NCmdLine cmdLine = NApp.of().getCmdLine();
+        NCmdLine cmdLine = NApp.of().cmdLine();
         cmdLine.setCommandName("ntexup");
         new NTexupOptionsParser().parse(cmdLine, options);
         DefaultNTxEngine engine = new DefaultNTxEngine();

@@ -30,7 +30,7 @@ public class NTxGitHelper {
 
     public static NPath resolveGithubPath(String githubPath, NTxLogger messages) {
         NPath userConfHome;
-        NPath appCacheFolder = NApp.of().getCacheFolder();
+        NPath appCacheFolder = NApp.of().cacheFolder();
         if (appCacheFolder == null) {
             userConfHome = NPath.of(NStoreKey.ofCache(NId.of("net.thevpc.ntexup:ntexup"))).resolve("github");
         } else {

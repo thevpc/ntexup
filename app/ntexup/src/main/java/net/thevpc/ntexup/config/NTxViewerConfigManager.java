@@ -23,7 +23,7 @@ public class NTxViewerConfigManager {
 
     public NTxViewerConfigManager(NPath viewerConfigFile) {
         String configName = "ntexup-config.tson";
-        NPath appCacheFolder = NApp.of().getConfFolder();
+        NPath appCacheFolder = NApp.of().confFolder();
         if (viewerConfigFile == null) {
             if (appCacheFolder == null) {
                 viewerConfigFile = NPath.of(NStoreKey.ofCache(NId.of("net.thevpc.ntexup:ntexup"))).resolve(configName);
@@ -104,7 +104,7 @@ public class NTxViewerConfigManager {
         config = validate(config);
         NElement elem = NElements.of().toElement(config);
         viewerConfigFile.mkParentDirs();
-        try (OutputStream os = viewerConfigFile.getOutputStream()) {
+        try (OutputStream os = viewerConfigFile.outputStream()) {
             NElementWriter.ofTson().write(elem, os);
         } catch (IOException ex) {
             throw new IllegalArgumentException(ex);
@@ -130,7 +130,7 @@ public class NTxViewerConfigManager {
     public NTxViewerConfig loadViewerConfig() {
         NTxViewerConfig config = null;
         if (viewerConfigFile.isRegularFile()) {
-            try (InputStream is = viewerConfigFile.getInputStream()) {
+            try (InputStream is = viewerConfigFile.inputStream()) {
                 NElement d = NElementReader.ofTson().read(is);
                 config = NElements.of().fromElement(d, NTxViewerConfig.class);
             } catch (IOException ex) {

@@ -498,7 +498,7 @@ public class DefaultNTxEngine implements NTxEngine {
         List<NDefinition> dependencies = classLoader.getLoadedDependencies();
         out.accept(NMsg.ofC("Dependencies : %s", dependencies.size()));
         for (NDefinition dependency : dependencies) {
-            out.accept(NMsg.ofC("\t %s", dependency.getId()));
+            out.accept(NMsg.ofC("\t %s", dependency.id()));
         }
     }
 
@@ -531,7 +531,7 @@ public class DefaultNTxEngine implements NTxEngine {
                     if (NBlankable.isBlank(b.getArtifactId())) {
                         return Stream.empty();
                     }
-                    if (x.toId().getLongName().equals("defaults")) {
+                    if (x.toId().longName().equals("defaults")) {
                         return Arrays.stream(defaultDependencies());
                     }
                     if (NBlankable.isBlank(x.getGroupId())) {
@@ -550,7 +550,7 @@ public class DefaultNTxEngine implements NTxEngine {
                 .distinct()
                 .map(dep -> {
                             //short name aka without version, check if any version is already loaded
-                            ImportDependencyResult sn = dependenciesLoadingPerformed.get(dep.toId().getShortName());
+                            ImportDependencyResult sn = dependenciesLoadingPerformed.get(dep.toId().shortName());
                             if (sn != null) {
                                 if (sn.isLoaded()) {
                                     return new ImportDependencyResult(
@@ -589,11 +589,11 @@ public class DefaultNTxEngine implements NTxEngine {
             NDefinition[] u = classLoader.loadDependencies(okDeps);
             Map<String, NDefinition> reallyLoaded = new HashMap<>();
             for (NDefinition u0 : u) {
-                reallyLoaded.put(u0.getId().getShortName(), u0);
+                reallyLoaded.put(u0.id().shortName(), u0);
             }
             for (int i = 0; i < initDeps.length; i++) {
                 ImportDependencyResult c = initDeps[i];
-                String sn = c.getDependency().toId().getShortName();
+                String sn = c.getDependency().toId().shortName();
                 NDefinition ld = reallyLoaded.get(sn);
                 if (ld != null) {
                     if (c.isFailed() || !c.isLoaded()) {
@@ -1233,7 +1233,7 @@ public class DefaultNTxEngine implements NTxEngine {
         NTxTemplateInfoLoader loader = new NTxTemplateInfoLoader();
         for (Repo repo : new Repo[]{
                 new Repo("dev", NPath.ofUserHome().resolve("xprojects/nuts-world/nuts-productivity/ntexup/ntexup-templates")),
-                new Repo("local", NApp.of().getSharedConfFolder().resolve("templates")),
+                new Repo("local", NApp.of().sharedConfFolder().resolve("templates")),
                 new Repo("user", NPath.of(NStoreKey.ofUser(NStoreType.CONF)).resolve("ntexup/templates")),
                 new Repo("system", NPath.of(NStoreKey.ofSystem(NStoreType.CONF)).resolve("ntexup/templates")),
                 new Repo("central-github", NPath.of("https://github.com/thevpc/ntexup-templates.git"))

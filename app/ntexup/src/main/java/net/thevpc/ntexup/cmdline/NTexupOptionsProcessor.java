@@ -274,10 +274,10 @@ public class NTexupOptionsProcessor {
                             .newLine();
                 }
                 String value = NIn.ask().forString(NMsg.ofC("%s", sb))
-                        .setValidator((sval, a) -> {
+                        .validator((sval, a) -> {
                             return NTxTemplateFilter.of(templates).selectOneUrl(sval);
                         })
-                        .getValue();
+                        .value();
                 if (value == null) {
                     throw new NValidationException(NMsg.ofC("Invalid template url: %s", value));
                 }
