@@ -84,10 +84,10 @@ public class Rfc3161Helper {
 //                .setConnectTimeout(NDuration.ofSeconds(10))  // short so fallback is fast
                 .run();
         if (!response.isOk()) {
-            throw new IOException("HTTP " + response.getCode());
+            throw new IOException("HTTP " + response.statusCode());
         }
 
-        TimeStampResponse tsResponse = new TimeStampResponse(response.getContentAsBytes());
+        TimeStampResponse tsResponse = new TimeStampResponse(response.contentAsBytes());
         tsResponse.validate(request);
         if (tsResponse.getStatus() != 0) {
             throw new IOException("TSA rejected: " + tsResponse.getStatusString());
