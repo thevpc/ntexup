@@ -495,7 +495,7 @@ public class DefaultNTxEngine implements NTxEngine {
     }
 
     private void dump_classloader(Consumer<NMsg> out) {
-        List<NDefinition> dependencies = classLoader.getLoadedDependencies();
+        List<NDefinition> dependencies = classLoader.loadedDependencies();
         out.accept(NMsg.ofC("Dependencies : %s", dependencies.size()));
         for (NDefinition dependency : dependencies) {
             out.accept(NMsg.ofC("\t %s", dependency.id()));
@@ -528,21 +528,21 @@ public class DefaultNTxEngine implements NTxEngine {
                         return Stream.empty();
                     }
                     NDependencyBuilder b = x.builder();
-                    if (NBlankable.isBlank(b.getArtifactId())) {
+                    if (NBlankable.isBlank(b.artifactId())) {
                         return Stream.empty();
                     }
                     if (x.toId().longName().equals("defaults")) {
                         return Arrays.stream(defaultDependencies());
                     }
-                    if (NBlankable.isBlank(x.getGroupId())) {
-                        b.setGroupId("net.thevpc.ntexup");
-                        String r = b.getArtifactId();
+                    if (NBlankable.isBlank(x.groupId())) {
+                        b.groupId("net.thevpc.ntexup");
+                        String r = b.artifactId();
                         if (!r.startsWith("ntexup-extension-")) {
-                            b.setArtifactId("ntexup-extension-" + r);
+                            b.artifactId("ntexup-extension-" + r);
                         }
                     }
-                    if (NBlankable.isBlank(x.getVersion())) {
-                        b.setVersion(NTxEngine.CURRENT_VERSION);
+                    if (NBlankable.isBlank(x.version())) {
+                        b.version(NTxEngine.CURRENT_VERSION);
                     }
                     return Stream.of(b.build());
                 })

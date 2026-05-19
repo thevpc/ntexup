@@ -92,12 +92,12 @@ public class NTexupOptionsProcessor {
                 case EDITOR: {
                     EditorActionOptions v = (EditorActionOptions) a.getValue();
                     NSysEditorSupportCmd.of()
-                            .setSource(NPath.of("https://github.com/thevpc/ntexup/raw/refs/heads/main/documentation/integration/ntx-support"))
-                            .setLanguageId("ntexup")
-                            .setLanguageName("NTexUp")
-                            .setLanguageVersion("1.0.0")
-                            .setFileExtension("ntx")
-                            .setFileName("*.ntx")
+                            .source(NPath.of("https://github.com/thevpc/ntexup/raw/refs/heads/main/documentation/integration/ntx-support"))
+                            .languageId("ntexup")
+                            .languageName("NTexUp")
+                            .languageVersion("1.0.0")
+                            .fileExtension("ntx")
+                            .fileName("*.ntx")
                             .addEditorFamilies(v.getSyntaxInfo().toArray(new NSysEditorFamily[0]))
                             .run();
                     break;
