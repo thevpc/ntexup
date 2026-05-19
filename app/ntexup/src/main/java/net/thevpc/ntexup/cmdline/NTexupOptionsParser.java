@@ -68,7 +68,7 @@ public class NTexupOptionsParser {
                         })
                         .with("--gui").matchFlag(a -> {
                             options.getOrCreate(ShowFrameActionOptions.class);
-                            NSession.of().setGui(a.booleanValue());
+                            NSession.of().gui(a.booleanValue());
                         })
                         .with("install-editor-syntax").matchEntry(a -> {
                             EditorActionOptions w = options.getOrCreate(EditorActionOptions.class);
