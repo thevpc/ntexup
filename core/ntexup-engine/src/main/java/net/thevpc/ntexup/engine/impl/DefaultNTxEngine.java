@@ -190,7 +190,7 @@ public class DefaultNTxEngine implements NTxEngine {
                         nodeParserFactories.list().stream()
                                 .map(x -> x.parseNode(context))
                 )
-                .getBest().map(x -> x.call())
+                .best().map(x -> x.call())
                 .withMessage(() -> NMsg.ofC("support for node from type '%s' value '%s'", element.type().id(), NTxUtils.snippet(element)))
                 ;
     }
@@ -751,7 +751,7 @@ public class DefaultNTxEngine implements NTxEngine {
                         documentRendererFactories().stream()
                                 .map(x -> x.createDocumentRenderer(ctx))
                 )
-                .getBest().map(x -> x.call());
+                .best().map(x -> x.call());
     }
 
     private List<NTxDocumentRendererFactory> documentRendererFactories() {

@@ -36,7 +36,7 @@ public class NTxLoggerDelegateImpl implements NTxLogger {
     public void log(NTxMsg message) {
         Instant time = Instant.now();
         NMsg msg = message.message();
-        Level level = msg.getLevel();
+        Level level = msg.level();
         if (level == null) {
             level = Level.INFO;
         }
@@ -60,6 +60,6 @@ public class NTxLoggerDelegateImpl implements NTxLogger {
         if (other != null) {
             other.log(NTxMsg.of(msg, source));
         }
-        NLog.of(getClass()).log(NMsg.ofC("%s %s",source, msg).asInfo().withThrowable(msg.getThrowable()));
+        NLog.of(getClass()).log(NMsg.ofC("%s %s",source, msg).asInfo().withThrowable(msg.throwable()));
     }
 }

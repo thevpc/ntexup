@@ -532,7 +532,7 @@ public class NTxGraphicsImpl implements NTxGraphics {
                                     .fromStream(engine.imageTypeRendererFactories().stream()
                                     .map(n -> n.resolveRenderer(nPath, options, NTxGraphicsImpl.this))
                             )
-                    .getBest().map(v->v.call())
+                    .best().map(v->v.call())
                     ;
             if (tr.isPresent()) {
                 putCache(new Object[]{nPath}, o = tr.get());

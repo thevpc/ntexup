@@ -26,7 +26,7 @@ public class SilentNTxLogger implements NTxLogger {
     @Override
     public void log(NTxMsg message) {
         NMsg msg = message.message();
-        Level level = msg.getLevel();
+        Level level = msg.level();
         if (level == null) {
             level = Level.INFO;
         }

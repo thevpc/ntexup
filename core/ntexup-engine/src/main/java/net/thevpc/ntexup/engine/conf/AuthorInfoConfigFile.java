@@ -46,7 +46,7 @@ public class AuthorInfoConfigFile {
         ob.add("private-key", value.privateKeyFile);
         ob.add("public-key", value.publicKeyFile);
         logger.log(NMsg.ofC("store author config to %s : %s", conf, value));
-        NElementWriter.ofTson().setFormatter(NElementFormatterStyle.PRETTY).write(ob.build(), conf);
+        NElementWriter.ofTson().formatter(NElementFormatterStyle.PRETTY).write(ob.build(), conf);
 
         // save key pair if present
         if (!value.effPublicKeyFile.isFile() || !value.effPrivateKeyFile.isFile()) {

@@ -290,7 +290,7 @@ public class DocumentView implements NTxDocumentView {
                 pageViews.add(createPageView(page));
             }
             for (PageView pageView : pageViews) {
-                contentPane.add(new RatioPanel(pageView.component(), documentRatio, new Color(NColor.GRAY_15.getRGB())), pageView.id());
+                contentPane.add(new RatioPanel(pageView.component(), documentRatio, new Color(NColor.GRAY_15.rgb())), pageView.id());
                 pagesMapById.put(pageView.id(), pageView);
                 pagesMapByIndex.put(pageView.index(), pageView);
             }

@@ -24,15 +24,15 @@ public class NTxHighlighterMapper {
         //String[] allLines = code.trim().split("[\n]");
         NTexts ttt = NTexts.of();
         NTextTransformConfig nTextTransformConfig = new NTextTransformConfig();
-        nTextTransformConfig.setFlatten(true);
-        nTextTransformConfig.setNormalize(true);
-        nTextTransformConfig.setProcessTitleNumbers(true);
+        nTextTransformConfig.flatten(true);
+        nTextTransformConfig.normalize(true);
+        nTextTransformConfig.processTitleNumbers(true);
         processNTextRecursively(ttt.normalize(parsedText, nTextTransformConfig), result, ctx, new NTextStyle[0], cache);
         result.computeBound(ctx);
     }
 
     private static void applyOptions(NTxTextOptions to, NTextStyle nTextStyle, NTxRendererContext ctx, Map<String, NTxTextPartStyle> cache) {
-        switch (nTextStyle.getType()) {
+        switch (nTextStyle.type()) {
             case BOLD: {
                 to.setBold(true);
                 break;
@@ -51,19 +51,19 @@ public class NTxHighlighterMapper {
             }
 
             case FORE_TRUE_COLOR: {
-                to.foregroundColor = new Color(nTextStyle.getVariant());
+                to.foregroundColor = new Color(nTextStyle.variant());
                 break;
             }
             case BACK_TRUE_COLOR: {
-                to.backgroundColor = new Color(nTextStyle.getVariant());
+                to.backgroundColor = new Color(nTextStyle.variant());
                 break;
             }
             case FORE_COLOR: {
-                to.foregroundColor = NTxColors.resolveDefaultColorByIndex(nTextStyle.getVariant(),null, ctx);
+                to.foregroundColor = NTxColors.resolveDefaultColorByIndex(nTextStyle.variant(),null, ctx);
                 break;
             }
             case BACK_COLOR: {
-                to.backgroundColor = NTxColors.resolveDefaultColorByIndex(nTextStyle.getVariant(),null, ctx);
+                to.backgroundColor = NTxColors.resolveDefaultColorByIndex(nTextStyle.variant(),null, ctx);
                 break;
             }
             case PLAIN: {
@@ -132,19 +132,19 @@ public class NTxHighlighterMapper {
                     result.nextLine();
                 }
                 NTextPlain np = (NTextPlain) nText;
-                if (np.getValue().equals("\n")) {
+                if (np.value().equals("\n")) {
                     result.nextLine();
                 } else {
                     if (styles.length==0) {
                         result.currRow();
-                        NTxRichTextToken col = new NTxRichTextToken(NTxRichTextTokenType.PLAIN, np.getValue());
+                        NTxRichTextToken col = new NTxRichTextToken(NTxRichTextTokenType.PLAIN, np.value());
                         col.tok = nText;
                         //g.setFont(col.textOptions.font);
                         col.bounds = g.getStringBounds(col.text);
                         result.addToken(col);
                     } else {
                         result.currRow();
-                        NTxRichTextToken col = new NTxRichTextToken(NTxRichTextTokenType.STYLED, np.getValue());
+                        NTxRichTextToken col = new NTxRichTextToken(NTxRichTextTokenType.STYLED, np.value());
                         col.tok = nText;
                         //g.setFont(col.textOptions.font);
                         col.bounds = g.getStringBounds(col.text);
@@ -159,13 +159,13 @@ public class NTxHighlighterMapper {
             case STYLED:{
                 NTextStyled ss=(NTextStyled)nText;
                 List<NTextStyle> newStyles=new ArrayList<>(Arrays.asList(styles));
-                newStyles.addAll(ss.getStyles().toList());
-                processNTextRecursively((NNormalizedText) ss.getChild(), result, ctx,newStyles.toArray(new NTextStyle[0]), cache);
+                newStyles.addAll(ss.styles().toList());
+                processNTextRecursively((NNormalizedText) ss.child(), result, ctx,newStyles.toArray(new NTextStyle[0]), cache);
                 break;
             }
             case LIST:{
                 NTextList list = (NTextList) nText;
-                for (NText nt : list.getChildren()) {
+                for (NText nt : list.children()) {
                     processNTextRecursively((NNormalizedText)nt, result, ctx,styles, cache);
                 }
                 break;
@@ -177,7 +177,7 @@ public class NTxHighlighterMapper {
     }
 
     private static NTxTextPartStyle resolveCodeStyle(NTextStyle nTextStyle, NTxRendererContext ctx, Map<String, NTxTextPartStyle> cache) {
-        String styleTypeId = nTextStyle.getType().id();
+        String styleTypeId = nTextStyle.type().id();
         String prefix = "source-" + styleTypeId + "-";
         NTxTextPartStyle ss = cache.get(nTextStyle.id());
         if (ss != null) {
@@ -187,7 +187,7 @@ public class NTxHighlighterMapper {
         {
             NTxValue e = NTxValue.of(ctx.computePropertyValue(prefix + "color").orNull());
             Color[] colors = e.asColorArrayOrColor().orNull();
-            ss.foreground = NTxColors.resolveDefaultColorByIndex(nTextStyle.getVariant(), colors, ctx);
+            ss.foreground = NTxColors.resolveDefaultColorByIndex(nTextStyle.variant(), colors, ctx);
         }
         {
             NTxValue e = NTxValue.of(ctx.computePropertyValue(prefix + "background").orNull());
@@ -195,7 +195,7 @@ public class NTxHighlighterMapper {
             if (colors == null || colors.length == 0) {
                 // od nothing
             } else {
-                int i = nTextStyle.getVariant() % colors.length;
+                int i = nTextStyle.variant() % colors.length;
                 ss.background = colors[i];
             }
         }
@@ -240,7 +240,7 @@ public class NTxHighlighterMapper {
 
     protected static List<NTextPlain> toNTextPlains(NText a) {
         if (a instanceof NTextStyled) {
-            return toNTextPlains(((NTextStyled) a).getChild());
+            return toNTextPlains(((NTextStyled) a).child());
         }
         if (a instanceof NTextPlain) {
             return Arrays.asList((NTextPlain) a);

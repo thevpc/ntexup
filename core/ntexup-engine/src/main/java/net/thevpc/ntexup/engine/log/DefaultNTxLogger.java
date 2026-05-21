@@ -33,7 +33,7 @@ public class DefaultNTxLogger implements NTxLogger {
     public void log(NTxMsg msg) {
         Instant time = Instant.now();
         NMsg nmsg=msg.message();
-        Level type=nmsg.getLevel();
+        Level type=nmsg.level();
         NTxSource source=msg.source();
         if (type == null) {
             type = Level.INFO;
@@ -45,8 +45,8 @@ public class DefaultNTxLogger implements NTxLogger {
                 source == null ? "engine" : source.shortName(),
                 nmsg
         ));
-        if (nmsg.getThrowable() != null) {
-            for (String s : NStringUtils.stacktraceArray(nmsg.getThrowable())) {
+        if (nmsg.throwable() != null) {
+            for (String s : NStringUtils.stacktraceArray(nmsg.throwable())) {
                 NOut.println(NMsg.ofC("\t%s", s));
             }
         }
