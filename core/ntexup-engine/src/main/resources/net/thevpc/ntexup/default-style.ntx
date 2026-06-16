@@ -13,7 +13,7 @@ styles {
     // Default Page Behavior
     page {
         background  : White,
-        margin      : 5%P,          // "Safety zone" for projectors
+//        margin      : 5%P,          // "Safety zone" for projectors
     }
 
 //    group {

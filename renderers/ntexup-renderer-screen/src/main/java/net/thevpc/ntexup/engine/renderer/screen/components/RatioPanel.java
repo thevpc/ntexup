@@ -39,6 +39,7 @@ public class RatioPanel extends JPanel {
         return new Dimension(400, 300);
     }
 
+
     @Override
     public void doLayout() {
         int pw = getWidth();
@@ -62,12 +63,36 @@ public class RatioPanel extends JPanel {
         int y = (ph - ch) / 2;
 
         content.setBounds(x, y, cw, ch);
+//        content.setBounds(0, 0, cw, ch);
     }
-
+//    @Override
+//    protected void paintChildren(Graphics g) {
+//        int pw = getWidth();
+//        int ph = getHeight();
+//        double panelRatio = (double) pw / ph;
+//
+//        int cw, ch;
+//        if (panelRatio > ratio) {
+//            ch = ph;
+//            cw = (int) (ph * ratio);
+//        } else {
+//            cw = pw;
+//            ch = (int) (pw / ratio);
+//        }
+//
+//        int x = (pw - cw) / 2;
+//        int y = (ph - ch) / 2;
+//
+//        Graphics clipped = g.create(x, y, cw, ch);
+//        try {
+//            super.paintChildren(clipped);
+//        } finally {
+//            clipped.dispose();
+//        }
+//    }
     @Override
     protected void paintComponent(Graphics g) {
-        super.paintComponent(g);
-
+//        super.paintComponent(g);
         int pw = getWidth();
         int ph = getHeight();
 
@@ -85,6 +110,16 @@ public class RatioPanel extends JPanel {
 
         int x = (pw - cw) / 2;
         int y = (ph - ch) / 2;
+
+//        {
+//            Graphics clipped = g.create(x, y, cw, ch);
+//            try {
+//                super.paintComponent(clipped);
+//            } finally {
+//                clipped.dispose();
+//            }
+//        }
+        super.paintComponent(g);
 
         // Paint boundaries (letterboxing/pillarboxing)
         g.setColor(boundaryColor);

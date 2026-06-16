@@ -14,6 +14,7 @@ import net.thevpc.ntexup.api.renderer.NTxRendererContext;
 import net.thevpc.ntexup.api.util.NTxUtils;
 import net.thevpc.nuts.util.NBlankable;
 import net.thevpc.nuts.text.NMsg;
+import net.thevpc.nuts.util.NStringBuilder;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -22,10 +23,10 @@ import java.io.ByteArrayOutputStream;
 
 
 public abstract class PlantUmlBuilderBase implements NTxNodeBuilder {
-    private String id;
+    private final String id;
     private String mode;
-    private String[] aliases;
-    private NTxProperties defaultStyles = new NTxProperties();
+    private final String[] aliases;
+    private final NTxProperties defaultStyles = new NTxProperties();
 
     public PlantUmlBuilderBase(String id) {
         this("plantuml-" + id, id);
@@ -46,7 +47,7 @@ public abstract class PlantUmlBuilderBase implements NTxNodeBuilder {
     public void build(NTxNodeBuilderContext builderContext) {
         builderContext.id(id)
                 .alias(aliases)
-                .parseParam().matchesNamedPair(NTxPropName.VALUE,NTxPropName.FILE).then()
+                .parseParam().matchesNamedPair(NTxPropName.VALUE, NTxPropName.FILE).then()
                 .parseParam().matchesAnyNonPair().storeFirstMissingName(NTxPropName.VALUE).then()
                 .renderComponent(this::renderMain)
         ;
@@ -67,8 +68,8 @@ public abstract class PlantUmlBuilderBase implements NTxNodeBuilder {
         double y = b.minY();
         BufferedImage image = null;
         String plantUMLText = null;
-        if(mode.startsWith("plantuml-")){
-            mode=mode.substring("plantuml-".length());
+        if (mode.startsWith("plantuml-")) {
+            mode = mode.substring("plantuml-".length());
         }
         switch (mode) {
             case "": {
@@ -140,11 +141,15 @@ public abstract class PlantUmlBuilderBase implements NTxNodeBuilder {
     }
 
     private String prepare(String type, String txt, NTxBounds2D b) {
-        return "@start" + type + "\n"
-                + "scale " + (b.widthX().intValue()) + "*" + (b.widthY().intValue()) + "\n"
-                + "skinparam backgroundcolor transparent\n"
-//                        + "skinparam dpi 300\n"
-                + txt
-                + "\n@end" + type + "\n";
+        NStringBuilder out = NStringBuilder.of();
+        out.println("@start" + type);
+        if ("uml".equals(type)) {
+            out.println("!pragma layout smetana");
+        }
+        out.println("scale " + (b.widthX().intValue()) + "*" + (b.widthY().intValue()));
+        out.println("skinparam backgroundcolor transparent");
+        out.println(txt);
+        out.println("@end" + type);
+        return out.build();
     }
 }

@@ -283,6 +283,83 @@ public class NTxGraphicsImpl implements NTxGraphics {
         g.setTransform(originalTransform);
     }
 
+    /**
+     * Returns the distance (in pixels) by which the line endpoint must be
+     * pulled back so the shaft stops exactly at the arrow's base — not at its tip.
+     *
+     * For SIMPLE (open chevron):  no setback needed, the line IS the shaft.
+     * For TRIANGLE / TRIANGLE_FULL: setback = arrowWidth (the depth of the head).
+     * For DIAMOND / DIAMOND_FULL:  setback = full diamond length (arrowWidth / 2 * 2 = arrowWidth).
+     * For OVAL / OVAL_FULL:        setback = full oval length = arrowWidth / 2 (xlen in your code).
+     * For RECTANGLE / RECTANGLE_FULL: same as oval.
+     */
+    private double computeArrowSetback(NTxArrow arrow) {
+        if (arrow == null || arrow.getType() == null) {
+            return 0;
+        }
+        NTxArrowType type = arrow.getType();
+        if (type == NTxArrowType.DEFAULT) {
+            type = NTxArrowType.SIMPLE;
+        }
+
+        double arrowWidth = arrow.getWidth();
+        double arrowHeight = arrow.getHeight();
+        if (arrowWidth <= 0) arrowWidth = arrowHeight;
+        if (arrowHeight <= 0) arrowHeight = arrowWidth;
+
+        switch (type) {
+            case SIMPLE:
+                return 0; // open chevron: line extends to tip, no setback
+
+            case TRIANGLE:
+            case TRIANGLE_FULL: {
+                if (arrowWidth <= 0) arrowWidth = 10;
+                return arrowWidth; // arrowWidth is the depth along the axis
+            }
+
+            case DIAMOND:
+            case DIAMOND_FULL: {
+                if (arrowWidth <= 0) arrowWidth = 50;
+                // In your code: xlen = arrowWidth/2, diamond spans from xmin to xmin+xlen
+                // but xmin = -arrowWidth/2 + ... let me trace your coords:
+                // xPoints = {xmin+xlen/2, xmin+xlen, xmin+xlen/2, xmin}
+                // rightmost point (tip) = xmin+xlen, leftmost = xmin
+                // total width along axis = xlen = arrowWidth/2
+                // BUT there's an offset: xmin = -arrowWidth/2
+                // So tip is at: -arrowWidth/2 + arrowWidth/2 = 0  ✓ (the origin)
+                // And base is at: xmin = -arrowWidth/2
+                // Setback = arrowWidth/2 (full diamond depth)
+                return arrowWidth / 2.0;
+            }
+
+            case OVAL:
+            case OVAL_FULL: {
+                if (arrowWidth <= 0) arrowWidth = 30;
+                // xlen = arrowWidth/2; oval spans from xmin to xmin+xlen
+                // xmin = -arrowWidth/2 + arrowHeight/4  (note: same offset as diamond)
+                // Tip (rightmost of oval) = xmin + xlen = -arrowWidth/2 + arrowHeight/4 + arrowWidth/2
+                //                         = arrowHeight/4
+                // That's not at origin — your oval is slightly offset. Fix in drawArrayHead too.
+                // For setback: full extent from origin to left edge of oval:
+                // left edge = xmin = -arrowWidth/2 + arrowHeight/4
+                // setback = arrowWidth/2 - arrowHeight/4   (when arrowWidth==arrowHeight: W/4)
+                if (arrowHeight <= 0) arrowHeight = arrowWidth;
+                return arrowWidth / 2.0 - arrowHeight / 4.0;
+            }
+
+            case RECTANGLE:
+            case RECTANGLE_FULL: {
+                if (arrowWidth <= 0) arrowWidth = 30;
+                if (arrowHeight <= 0) arrowHeight = arrowWidth;
+                // Same geometry as oval
+                return arrowWidth / 2.0 - arrowHeight / 4.0;
+            }
+
+            default:
+                return 0;
+        }
+    }
+
     @Override
     public void draw2D(NtxElement2D element2D) {
         NtxElement2DPrimitive[] primitives = element2DUIFactory.toPrimitives(element2D);
@@ -616,24 +693,53 @@ public class NTxGraphicsImpl implements NTxGraphics {
     private void draw2DHElement2DLine(NtxElement2DLine pr) {
         NTxPoint2D a = pr.getFrom();
         NTxPoint2D b = pr.getTo();
-        Paint oldPaint = g.getPaint();
+
+        // Compute the direction vector and its length
+        double dx = b.x - a.x;
+        double dy = b.y - a.y;
+        double len = Math.sqrt(dx * dx + dy * dy);
+
+        // Adjusted endpoints: pull each end back by the arrow's setback distance
+        NTxPoint2D lineStart = a;
+        NTxPoint2D lineEnd   = b;
+
+        if (len > 1e-9) {
+            double ux = dx / len; // unit vector a→b
+            double uy = dy / len;
+
+            double setbackA = computeArrowSetback(pr.getStartArrow());
+            double setbackB = computeArrowSetback(pr.getEndArrow());
+
+            // Clamp so the two setbacks don't cross each other
+            double totalSetback = setbackA + setbackB;
+            if (totalSetback > len) {
+                double scale = len / totalSetback;
+                setbackA *= scale;
+                setbackB *= scale;
+            }
+
+            lineStart = new NTxPoint2D(a.x + ux * setbackA, a.y + uy * setbackA);
+            lineEnd   = new NTxPoint2D(b.x - ux * setbackB, b.y - uy * setbackB);
+        }
+
+        Paint  oldPaint  = g.getPaint();
         Stroke oldStroke = g.getStroke();
-        if (pr.getLinePaint() != null) {
-            setPaint(pr.getLinePaint());
-        }
-        if (pr.getLineStroke() != null) {
-            setStroke(pr.getLineStroke());
-        }
+
+        if (pr.getLinePaint()  != null) setPaint(pr.getLinePaint());
+        if (pr.getLineStroke() != null) setStroke(pr.getLineStroke());
+
         g.drawLine(
-                (int) a.x,
-                (int) a.y,
-                (int) b.x,
-                (int) b.y
+                (int) lineStart.x, (int) lineStart.y,
+                (int) lineEnd.x,   (int) lineEnd.y
         );
-        //restore default stroke?
-        setStroke(oldStroke);
+
+        setStroke(oldStroke); // restore before drawing arrows (they use their own geometry)
+
+        // Arrow directions: start arrow points from b toward a (into point a)
+        //                   end   arrow points from a toward b (into point b)
         drawArrayHead(a, a.minus(b).asVector(), pr.getStartArrow());
         drawArrayHead(b, b.minus(a).asVector(), pr.getEndArrow());
+
         setPaint(oldPaint);
         setStroke(oldStroke);
     }
