@@ -112,6 +112,10 @@ public class NTexupOptionsParser {
                         .requireDefaults();
             }
         }
+        if(options.isEmpty()){
+            options.getOrCreate(ShowFrameActionOptions.class).ifNoProjectViewCurrentDirectory = true;
+            options.getOrCreate(ShowActionOptions.class).addPath(NPath.ofUserDirectory());
+        }
 //        if (options.documentation) {
 //            options.paths.add(NPath.of("https://github.com/thevpc/ntexup-doc-slides.git"));
 //        }

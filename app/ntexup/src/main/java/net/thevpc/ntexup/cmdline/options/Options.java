@@ -14,6 +14,10 @@ public class Options {
     public List<ActionOptions> actionOptions = new ArrayList<>();
     public Map<String,String> vars=new LinkedHashMap<>();
 
+    public boolean isEmpty(){
+        return actionOptions.isEmpty();
+    }
+
     public <T extends ActionOptions> T get(Class<T> cls){
         for (ActionOptions actionOption : actionOptions) {
             if(actionOption.getClass().equals(cls)) {
