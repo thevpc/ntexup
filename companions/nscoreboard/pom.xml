@@ -13,11 +13,7 @@
         <repository><id>thevpc</id><url>https://maven.thevpc.net</url></repository>
     </repositories>
     <dependencies>
-        <dependency>
-            <groupId>net.thevpc.nuts</groupId>
-            <artifactId>nuts</artifactId>
-            <version>0.8.9</version>
-        </dependency>
+        <dependency><groupId>net.thevpc.nuts</groupId><artifactId>nuts</artifactId><version>1.0.0</version></dependency>
     </dependencies>
 
 </project>
