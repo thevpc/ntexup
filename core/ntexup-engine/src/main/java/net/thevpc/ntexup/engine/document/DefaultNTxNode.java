@@ -348,7 +348,7 @@ public class DefaultNTxNode implements NTxNode, Cloneable{
         if (y.isPresent()) {
             return new LinkedHashSet<>(Arrays.asList(NTxValue.of(y.get().getValue()).asStringArray().orElse(new String[0])).stream()
                     .filter(x -> x != null && x.trim().length() > 0)
-                    .map(String::trim)
+                    .map(NStringUtils::strip)
                     .collect(Collectors.toList()));
         }
         return new HashSet<>();
@@ -396,7 +396,7 @@ public class DefaultNTxNode implements NTxNode, Cloneable{
     }
 
     private static String validateClassName(String className) {
-        className = NStringUtils.trimToNull(className);
+        className = NStringUtils.stripToNull(className);
         if (className != null) {
             className = className.replace(" ","_");
         }

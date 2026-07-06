@@ -308,10 +308,10 @@ public class NTxManifest implements NToElement, NCopiable, Cloneable {
         elements.add(NElement.ofPair("resources", NElement.ofArray(Arrays.stream(resources == null ? new NTxManifestResource[0] : resources).map(NToElement::toElement).toArray(NElement[]::new))));
         elements.add(NElement.ofPair("content-fingerprint", contentFingerprint));
         elements.add(NElement.ofPair("timestamp", timestamp != null ? timestamp : Instant.now()));
-        elements.add(((NBlankable.isBlank(authorName)) ? null : NElement.ofPair("author-name", NElement.ofString(NStringUtils.trimToNull(authorName)))));
-        elements.add(((NBlankable.isBlank(authorEmail)) ? null : NElement.ofPair("author-email", NElement.ofString(NStringUtils.trimToNull(authorEmail)))));
-        elements.add(((NBlankable.isBlank(authorUrl)) ? null : NElement.ofPair("author-url", NElement.ofString(NStringUtils.trimToNull(authorUrl)))));
-        elements.add(((NBlankable.isBlank(authorOrcId)) ? null : NElement.ofPair("author-orc-id", NElement.ofString(NStringUtils.trimToNull(authorOrcId)))));
+        elements.add(((NBlankable.isBlank(authorName)) ? null : NElement.ofPair("author-name", NElement.ofString(NStringUtils.stripToNull(authorName)))));
+        elements.add(((NBlankable.isBlank(authorEmail)) ? null : NElement.ofPair("author-email", NElement.ofString(NStringUtils.stripToNull(authorEmail)))));
+        elements.add(((NBlankable.isBlank(authorUrl)) ? null : NElement.ofPair("author-url", NElement.ofString(NStringUtils.stripToNull(authorUrl)))));
+        elements.add(((NBlankable.isBlank(authorOrcId)) ? null : NElement.ofPair("author-orc-id", NElement.ofString(NStringUtils.stripToNull(authorOrcId)))));
         elements.add(((authorPublicKey == null) ? null : NElement.ofPair("author-public-key", authorPublicKey)));
         if (!NBlankable.isBlank(signature)) {
             elements.add(NElement.ofPair("manifest-signature", signature));

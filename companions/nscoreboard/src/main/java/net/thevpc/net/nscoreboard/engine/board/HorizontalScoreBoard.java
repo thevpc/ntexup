@@ -176,13 +176,13 @@ public class HorizontalScoreBoard extends JComponent {
         } else {
             info.score.foreground.apply(info.pc);
         }
-        String subname = NStringUtils.trim(info.score.subName);
+        String subname = NStringUtils.strip(info.score.subName);
         if (info.score.finished) {
             if (!NBlankable.isBlank(info.score.disclosedName)) {
                 if (!NBlankable.isBlank(subname)) {
                     subname += " ";
                 }
-                subname += NStringUtils.trim(info.score.disclosedName);
+                subname += NStringUtils.strip(info.score.disclosedName);
             }
         }
         if (!NBlankable.isBlank(subname)) {

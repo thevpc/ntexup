@@ -49,7 +49,7 @@ public class NTxElement2DFactory {
             NParametrizedContainerElement lp = region.asParametrizedContainer().orNull();
             String name = li.asNamed().flatMap(x -> x.name()).orNull();
 
-            switch (NTxUtils.uid(NStringUtils.trim(name))) {
+            switch (NTxUtils.uid(NStringUtils.strip(name))) {
                 case "substruct": {
                     List<NTxRegion2D> acceptableChildren = new ArrayList<>();
                     for (NParamOrChild pchild : lp.paramsOrChildren()) {

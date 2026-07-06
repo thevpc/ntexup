@@ -73,7 +73,7 @@ public class NTexupOptionsParser {
                         .with("install-editor-syntax").matchEntry(a -> {
                             EditorActionOptions w = options.getOrCreate(EditorActionOptions.class);
                             String s = NStringUtils.firstNonBlank(a.getStringValue().orNull(), "all");
-                            if (NStringUtils.trim(s).equalsIgnoreCase("all")) {
+                            if (NStringUtils.strip(s).equalsIgnoreCase("all")) {
                                 w.getSyntaxInfo().addAll(Arrays.asList(NSysEditorFamily.values()));
                             } else {
                                 w.getSyntaxInfo().addAll(NSysEditorFamily.parseSet(s).get());
@@ -84,8 +84,8 @@ public class NTexupOptionsParser {
                                             w.setForce(aa.booleanValue());
                                         })
                                         .withNonOption().matchAny(aa -> {
-                                            String ss = NStringUtils.trim(aa.asString().orNull());
-                                            if (NStringUtils.trim(ss).equalsIgnoreCase("all")) {
+                                            String ss = NStringUtils.strip(aa.asString().orNull());
+                                            if (NStringUtils.strip(ss).equalsIgnoreCase("all")) {
                                                 w.getSyntaxInfo().addAll(Arrays.asList(NSysEditorFamily.values()));
                                             } else {
                                                 w.getSyntaxInfo().addAll(NSysEditorFamily.parseSet(ss).get());

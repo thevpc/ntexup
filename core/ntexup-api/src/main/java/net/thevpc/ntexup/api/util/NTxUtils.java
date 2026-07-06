@@ -393,7 +393,7 @@ public class NTxUtils {
             for (String[] ids1 : ids) {
                 if (ids1 != null) {
                     for (String s : ids1) {
-                        s = NStringUtils.trimToNull(s);
+                        s = NStringUtils.stripToNull(s);
                         if (s != null) {
                             all.add(uid(s));
                         }
@@ -412,7 +412,7 @@ public class NTxUtils {
     }
 
     public static String uid(String id) {
-        return NNameFormat.LOWER_KEBAB_CASE.format(NStringUtils.trim(id));
+        return NNameFormat.LOWER_KEBAB_CASE.format(NStringUtils.strip(id));
     }
 
     public static Color paintAsColor(Paint paint) {

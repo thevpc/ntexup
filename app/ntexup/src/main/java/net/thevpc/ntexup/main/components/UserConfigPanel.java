@@ -87,7 +87,7 @@ public class UserConfigPanel extends JPanel {
 
     private String[] extractFirstAndLastName(String a) {
         if(a!=null){
-            a=a.trim();
+            a=NStringUtils.strip(a);
             int i = a.indexOf(' ');
             if(i>=0){
                 return new String[]{a.substring(0, i),a.substring(i+1)};

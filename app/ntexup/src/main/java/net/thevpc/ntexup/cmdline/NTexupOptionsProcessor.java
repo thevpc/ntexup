@@ -160,20 +160,20 @@ public class NTexupOptionsProcessor {
         NTxTemplateInfo[] templates = engine.getTemplates();
         if (NSession.of().isPlainOut()) {
             int idLayoutWidth = Math.max(Arrays.stream(templates).mapToInt(x -> x.id().length()).max().orElse(0), 3);
-            int nameLayoutWidth = Math.max(Arrays.stream(templates).mapToInt(x -> NStringUtils.trim(x.name()).length()).max().orElse(0), 3);
+            int nameLayoutWidth = Math.max(Arrays.stream(templates).mapToInt(x -> NStringUtils.strip(x.name()).length()).max().orElse(0), 3);
             for (NTxTemplateInfo template : templates) {
                 NId id = NId.get(template.id()).orNull();
                 if (id != null) {
                     NOut.println(NMsg.ofC("%-" + idLayoutWidth + "s %-" + nameLayoutWidth + "s %-3s %s",
                             id,
-                            NMsg.ofStyledPrimary3(NStringUtils.trim(template.name())),
+                            NMsg.ofStyledPrimary3(NStringUtils.strip(template.name())),
                             template.recommended() ? NMsg.ofStyledError(" (*)") : "",
                             NMsg.ofStyledPath(template.url())
                     ));
                 } else {
                     NOut.println(NMsg.ofC("%-" + idLayoutWidth + "s %-" + nameLayoutWidth + "s %-3s %s",
                             NMsg.ofStyledPrimary1(template.id()),
-                            NMsg.ofStyledPrimary3(NStringUtils.trim(template.name())),
+                            NMsg.ofStyledPrimary3(NStringUtils.strip(template.name())),
                             template.recommended() ? NMsg.ofStyledError(" (*)") : "",
                             NMsg.ofStyledPath(template.url())
                     ));

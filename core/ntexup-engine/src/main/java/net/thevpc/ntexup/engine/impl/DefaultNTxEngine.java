@@ -100,7 +100,7 @@ public class DefaultNTxEngine implements NTxEngine {
     private final AtomicBoolean componentsInitialized = new AtomicBoolean(false);
     private final NTxItemParser itemParser = new NTxItemParser() {
         public NOptional<NTxNodeParser> nodeTypeParser(String id) {
-            id = NStringUtils.trim(id);
+            id = NStringUtils.strip(id);
             if (!id.isEmpty()) {
                 initializeComponents();
                 NOptional<NTxNodeParser> a = nodeTypeFactories.get(id);

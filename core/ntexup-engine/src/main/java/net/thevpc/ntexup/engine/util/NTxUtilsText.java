@@ -53,7 +53,7 @@ public class NTxUtilsText {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < rows.size(); i++) {
             String r = rows.get(i);
-            sb.append(NStringUtils.trimRight(r));
+            sb.append(NStringUtils.stripRight(r));
             if (i + 1 < rows.size()) {
                 sb.append("\n");
             }

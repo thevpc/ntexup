@@ -26,8 +26,8 @@ public class AuthorshipSigner {
 
     public AuthorshipSigner(PrivateKey privateKey, String digestAlgo0, String sigAlgo0) {
         this.privateKey = privateKey;
-        this.digestAlgo = NStringUtils.firstNonBlankTrimmed(digestAlgo0, DEFAULT_DIGEST);
-        this.sigAlgo = NStringUtils.firstNonBlankTrimmed(sigAlgo0, DEFAULT_SIG);
+        this.digestAlgo = NStringUtils.firstNonBlankStripped(digestAlgo0, DEFAULT_DIGEST);
+        this.sigAlgo = NStringUtils.firstNonBlankStripped(sigAlgo0, DEFAULT_SIG);
         if (privateKey == null) {
             updater = new HashUpdater() {
                 final MessageDigest md;

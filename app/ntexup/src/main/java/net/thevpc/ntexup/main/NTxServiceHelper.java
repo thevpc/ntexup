@@ -155,7 +155,7 @@ public class NTxServiceHelper {
                 }
                 NPath rootPath = NPath.of(NStringUtils.firstNonBlank(projectPanel.getSelectedRootFolder(), "."));
                 NPath newProjectPath;
-                String baseName = NStringUtils.trim(projectPanel.getSelectedProjectName());
+                String baseName = NStringUtils.strip(projectPanel.getSelectedProjectName());
                 if (NBlankable.isBlank(baseName)) {
                     baseName = "new-project";
                 }

@@ -13,11 +13,9 @@ import net.thevpc.ntexup.api.extension.NTxFunction;
 import net.thevpc.ntexup.api.log.NTxLogger;
 import net.thevpc.ntexup.api.parser.NTxItemParser;
 import net.thevpc.ntexup.api.source.NTxSource;
-import net.thevpc.ntexup.api.util.NTxElementUtils;
 import net.thevpc.ntexup.api.util.NTxUtils;
 import net.thevpc.ntexup.engine.impl.NTxCompiledDocumentImpl;
 import net.thevpc.nuts.elem.NElement;
-import net.thevpc.nuts.io.NDigest;
 import net.thevpc.nuts.io.NPath;
 import net.thevpc.nuts.text.NMsg;
 import net.thevpc.nuts.util.*;
@@ -387,7 +385,7 @@ public class NTxResolutionContextImpl implements NTxResolutionContext {
         if (value != null) {
             return NOptional.ofNamed(value, varName);
         }
-        switch (NStringUtils.trim(varName)) {
+        switch (NStringUtils.strip(varName)) {
             case "HOME": {
                 return NTxVarImpl.ofOptional(varName, () -> NElement.ofString(System.getProperty("user.home")));
             }

@@ -248,7 +248,7 @@ public class DefaultNTxDocumentItemParserFactory
         if (k.isName()) {
             NOptional<String> nn = kh.asStringOrName();
             if (nn.isPresent()) {
-                String nnn = NStringUtils.trim(nn.get());
+                String nnn = NStringUtils.strip(nn.get());
                 return NScoredCallable.ofValid(() -> DefaultNTxNode.ofAssignDefault(nnn, v, context.source()));
             } else {
                 return _invalidSupport(NMsg.ofC("unable to interpret left hand of assignment as a valid var : %s", k), context);
@@ -266,7 +266,7 @@ public class DefaultNTxDocumentItemParserFactory
         if (k.isName()) {
             NOptional<String> nn = kh.asStringOrName();
             if (nn.isPresent()) {
-                String nnn = NStringUtils.trim(nn.get());
+                String nnn = NStringUtils.strip(nn.get());
                 return NScoredCallable.ofValid(() -> DefaultNTxNode.ofAssign(nnn, v, context.source()));
             } else {
                 return _invalidSupport(NMsg.ofC("unable to interpret left hand of assignment as a valid var : %s", k), context);

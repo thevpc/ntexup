@@ -32,9 +32,9 @@ public class UserConfig implements Cloneable {
     }
 
     public String resolveFullName() {
-        return NStringUtils.firstNonBlankTrimmed(
+        return NStringUtils.firstNonBlankStripped(
                 getFullName(),
-                NStringUtils.trimToNull(NStringUtils.trim(getFirstName()) + " " + NStringUtils.trim(getLastName())),
+                NStringUtils.stripToNull(NStringUtils.strip(getFirstName()) + " " + NStringUtils.strip(getLastName())),
                 System.getProperty("user.name")
         );
     }
@@ -154,14 +154,14 @@ public class UserConfig implements Cloneable {
     }
 
     public UserConfig validate() {
-        String id = NStringUtils.firstNonBlank(NStringUtils.trimToNull(this.getId()),"default");
+        String id = NStringUtils.firstNonBlank(NStringUtils.stripToNull(this.getId()),"default");
         this.setId(id);
-        this.setAffiliation(NStringUtils.trimToNull(this.getAffiliation()));
-        this.setEmailAddress(NStringUtils.trimToNull(this.getEmailAddress()));
-        this.setUsername(NStringUtils.trimToNull(this.getUsername()));
-        this.setLastName(NStringUtils.trimToNull(this.getLastName()));
-        this.setFullName(NStringUtils.trimToNull(this.getFullName()));
-        this.setFirstName(NStringUtils.trimToNull(this.getFirstName()));
+        this.setAffiliation(NStringUtils.stripToNull(this.getAffiliation()));
+        this.setEmailAddress(NStringUtils.stripToNull(this.getEmailAddress()));
+        this.setUsername(NStringUtils.stripToNull(this.getUsername()));
+        this.setLastName(NStringUtils.stripToNull(this.getLastName()));
+        this.setFullName(NStringUtils.stripToNull(this.getFullName()));
+        this.setFirstName(NStringUtils.stripToNull(this.getFirstName()));
         return this;
     }
 

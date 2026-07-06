@@ -57,8 +57,8 @@ public class NTxEvalUtils {
             NNumberElement nna = a1.asNumber().get();
             NNumberElement nnb = b1.asNumber().get();
 
-            String sa = NStringUtils.trim(nna.numberSuffix()).toLowerCase();
-            String sb = NStringUtils.trim(nnb.numberSuffix()).toLowerCase();
+            String sa = NStringUtils.strip(nna.numberSuffix()).toLowerCase();
+            String sb = NStringUtils.strip(nnb.numberSuffix()).toLowerCase();
             if (sa.equals(sb)) {
                 //same unit
                 Number na = nna.numberValue();
@@ -138,8 +138,8 @@ public class NTxEvalUtils {
         if (aa.isNumber() && bb.isNumber()) {
             NNumberElement nna = aa.asNumber().get();
             NNumberElement nnb = bb.asNumber().get();
-            String sa = NStringUtils.trim(nna.numberSuffix()).toLowerCase();
-            String sb = NStringUtils.trim(nnb.numberSuffix()).toLowerCase();
+            String sa = NStringUtils.strip(nna.numberSuffix()).toLowerCase();
+            String sb = NStringUtils.strip(nnb.numberSuffix()).toLowerCase();
             if (sa.equals(sb)) {
                 //same unit
                 Number na = aa.asNumberValue().get();
@@ -173,8 +173,8 @@ public class NTxEvalUtils {
         if (aa.isNumber() && bb.isNumber()) {
             NNumberElement nna = aa.asNumber().get();
             NNumberElement nnb = bb.asNumber().get();
-            String sa = NStringUtils.trim(nna.numberSuffix()).toLowerCase();
-            String sb = NStringUtils.trim(nnb.numberSuffix()).toLowerCase();
+            String sa = NStringUtils.strip(nna.numberSuffix()).toLowerCase();
+            String sb = NStringUtils.strip(nnb.numberSuffix()).toLowerCase();
             if (sa.isEmpty()) {
                 //upper no unit, result is inverse of the unit =>> no unit
                 Number na = aa.asNumberValue().get();
@@ -203,8 +203,8 @@ public class NTxEvalUtils {
         if (aa.isNumber() && bb.isNumber()) {
             NNumberElement nna = aa.asNumber().get();
             NNumberElement nnb = bb.asNumber().get();
-            String sa = NStringUtils.trim(nna.numberSuffix()).toLowerCase();
-            String sb = NStringUtils.trim(nnb.numberSuffix()).toLowerCase();
+            String sa = NStringUtils.strip(nna.numberSuffix()).toLowerCase();
+            String sb = NStringUtils.strip(nnb.numberSuffix()).toLowerCase();
             if (sa.equals(sb)) {
                 //same unit
                 Number na = aa.asNumberValue().get();
@@ -250,8 +250,8 @@ public class NTxEvalUtils {
         if (aa.isNumber() && bb.isNumber()) {
             NNumberElement nna = aa.asNumber().get();
             NNumberElement nnb = bb.asNumber().get();
-            String sa = NStringUtils.trim(nna.numberSuffix()).toLowerCase();
-            String sb = NStringUtils.trim(nnb.numberSuffix()).toLowerCase();
+            String sa = NStringUtils.strip(nna.numberSuffix()).toLowerCase();
+            String sb = NStringUtils.strip(nnb.numberSuffix()).toLowerCase();
             if (sa.equals(sb)) {
                 //same unit
                 Number na = aa.asNumberValue().get();

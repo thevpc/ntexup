@@ -11,7 +11,7 @@ public class NTxDocumentRendererFactoryContextImpl implements NTxDocumentRendere
 
     public NTxDocumentRendererFactoryContextImpl(DefaultNTxEngine hEngine, String type) {
         this.hEngine = hEngine;
-        this.type = NStringUtils.trim(type);
+        this.type = NStringUtils.strip(type);
     }
 
     @Override

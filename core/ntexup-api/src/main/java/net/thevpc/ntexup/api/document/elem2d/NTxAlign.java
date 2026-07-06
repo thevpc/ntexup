@@ -49,13 +49,13 @@ public enum NTxAlign implements NToElement {
 
     public static NOptional<NTxAlign> parse(String e) {
         try {
-            String u = NNameFormat.CONST_NAME.format(NStringUtils.trim(e));
+            String u = NNameFormat.CONST_NAME.format(NStringUtils.strip(e));
             NTxAlign p = valueOf(u);
             return NOptional.of(p);
         } catch (Exception ex) {
             //
         }
-        e = NTxUtils.uid(NStringUtils.trim(e));
+        e = NTxUtils.uid(NStringUtils.strip(e));
         return NOptional.ofNamedEmpty("HAlign " + e);
     }
 

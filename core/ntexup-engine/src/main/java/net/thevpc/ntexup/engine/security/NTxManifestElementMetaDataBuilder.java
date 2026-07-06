@@ -202,10 +202,10 @@ public class NTxManifestElementMetaDataBuilder {
         info.setDigestAlgo(memd.digestAlgo);
         info.setSignatureAlgo(memd.signatureAlgo);
         info.setPayload(compiledDocument.toElement(true));
-        info.setAuthorName(NStringUtils.trimToNull(memd.authorName));
-        info.setAuthorEmail(NStringUtils.trimToNull(memd.authorEmail));
-        info.setAuthorOrcId(NStringUtils.trimToNull(memd.authorOrcId));
-        info.setAuthorUrl(NStringUtils.trimToNull(memd.authorUrl));
+        info.setAuthorName(NStringUtils.stripToNull(memd.authorName));
+        info.setAuthorEmail(NStringUtils.stripToNull(memd.authorEmail));
+        info.setAuthorOrcId(NStringUtils.stripToNull(memd.authorOrcId));
+        info.setAuthorUrl(NStringUtils.stripToNull(memd.authorUrl));
         info.setDependencies(dependencies(memd.digestAlgo));
         info.setResources(resources(memd.digestAlgo));
 

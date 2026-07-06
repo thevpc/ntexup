@@ -63,7 +63,7 @@ public class NtxShapes3dUtils {
      * POSITION Logic: (Input - Origin) / Span
      */
     private static double normalizePos(NNumberElement el, Double minPhy, Double spanPhy, Double local2D, Double page2D) {
-        String s = NStringUtils.trim(el.numberSuffix()).toLowerCase();
+        String s = NStringUtils.strip(el.numberSuffix()).toLowerCase();
         double val = el.asDoubleValue().get();
 
         if (s.equals("%p")) return (val / 100.0) * page2D;
@@ -81,7 +81,7 @@ public class NtxShapes3dUtils {
      * DISTANCE Logic: Input / Span (Ignoring Origin)
      */
     private static double normalizeDist(NNumberElement el, Double spanPhy, Double local2D, Double page2D) {
-        String s = NStringUtils.trim(el.numberSuffix()).toLowerCase();
+        String s = NStringUtils.strip(el.numberSuffix()).toLowerCase();
         double val = el.asDoubleValue().get();
 
         if (s.equals("%p")) return (val / 100.0) * page2D;

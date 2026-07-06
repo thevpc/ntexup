@@ -2,7 +2,6 @@ package net.thevpc.ntexup.api.document.style;
 
 import net.thevpc.ntexup.api.document.node.NTxNode;
 import net.thevpc.ntexup.api.log.NTxLogger;
-import net.thevpc.nuts.util.NCollections;
 import net.thevpc.nuts.util.NOptional;
 import net.thevpc.nuts.util.NStringUtils;
 
@@ -122,9 +121,9 @@ public abstract class NTxStyleRuleSelectorItem {
     }
 
     public static NTxStyleRuleSelectorItem of(String[] types, String[] names, String[] classes) {
-        Set<String> stypes = types == null ? Collections.emptySet() : Arrays.stream(types).map(x -> NStringUtils.trim(x)).filter(x -> x.length() > 0).collect(Collectors.toSet());
-        Set<String> snames = names == null ? Collections.emptySet() : Arrays.stream(names).map(x -> NStringUtils.trim(x)).filter(x -> x.length() > 0).collect(Collectors.toSet());
-        Set<String> sclasses = classes == null ? Collections.emptySet() : Arrays.stream(classes).map(x -> NStringUtils.trim(x)).filter(x -> x.length() > 0).collect(Collectors.toSet());
+        Set<String> stypes = types == null ? Collections.emptySet() : Arrays.stream(types).map(x -> NStringUtils.strip(x)).filter(x -> x.length() > 0).collect(Collectors.toSet());
+        Set<String> snames = names == null ? Collections.emptySet() : Arrays.stream(names).map(x -> NStringUtils.strip(x)).filter(x -> x.length() > 0).collect(Collectors.toSet());
+        Set<String> sclasses = classes == null ? Collections.emptySet() : Arrays.stream(classes).map(x -> NStringUtils.strip(x)).filter(x -> x.length() > 0).collect(Collectors.toSet());
         if (stypes.isEmpty() && snames.isEmpty() && sclasses.isEmpty()) {
             return DefaultNTxNodeSelector.ANY_ITEM;
         }
@@ -132,7 +131,7 @@ public abstract class NTxStyleRuleSelectorItem {
     }
 
     public static NOptional<NTxStyleRuleSelectorItem> of(String item, NTxLogger log) {
-        item = NStringUtils.trim(item);
+        item = NStringUtils.strip(item);
         if (item.isEmpty() || item.equals("*")) {
             return NOptional.of(DefaultNTxNodeSelector.ANY_ITEM);
         }

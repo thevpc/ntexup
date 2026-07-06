@@ -103,7 +103,7 @@ public class NTxTemplateFilter {
         if (found.isPresent()) {
             return found;
         }
-        found = disambiguate(Arrays.stream(getTemplates()).filter(x -> NStringUtils.trim(x.name()).equalsIgnoreCase(NStringUtils.trim(word))).collect(Collectors.toList()));
+        found = disambiguate(Arrays.stream(getTemplates()).filter(x -> NStringUtils.strip(x.name()).equalsIgnoreCase(NStringUtils.strip(word))).collect(Collectors.toList()));
         if (found.isPresent()) {
             return found;
         }
@@ -126,7 +126,7 @@ public class NTxTemplateFilter {
             }
         }
         {
-            found = disambiguate(Arrays.stream(getTemplates()).filter(x -> NStringUtils.trim(x.name()).contains(NStringUtils.trim(word))).collect(Collectors.toList()));
+            found = disambiguate(Arrays.stream(getTemplates()).filter(x -> NStringUtils.strip(x.name()).contains(NStringUtils.strip(word))).collect(Collectors.toList()));
             if (found.isPresent()) {
                 return found;
             }

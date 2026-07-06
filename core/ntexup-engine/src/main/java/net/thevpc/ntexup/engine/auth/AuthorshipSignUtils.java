@@ -33,7 +33,7 @@ public class AuthorshipSignUtils {
     public static NElement sign(byte[] dataToSign, PrivateKey privateKey, String digestAlgo, String sigAlgo) {
         try {
             if (privateKey == null) {
-                digestAlgo = NStringUtils.firstNonBlankTrimmed(digestAlgo, DEFAULT_DIGEST);
+                digestAlgo = NStringUtils.firstNonBlankStripped(digestAlgo, DEFAULT_DIGEST);
                 MessageDigest md;
                 md = MessageDigest.getInstance(digestAlgo);
                 md.update(dataToSign, 0, dataToSign.length);
@@ -42,7 +42,7 @@ public class AuthorshipSignUtils {
                         NElement.ofPair("value", NElement.ofString(Base64.getEncoder().encodeToString(md.digest())))
                 );
             }
-            sigAlgo = NStringUtils.firstNonBlankTrimmed(sigAlgo, DEFAULT_SIG);
+            sigAlgo = NStringUtils.firstNonBlankStripped(sigAlgo, DEFAULT_SIG);
             Signature sig = Signature.getInstance(sigAlgo);
             sig.initSign(privateKey);
             sig.update(dataToSign);
@@ -58,7 +58,7 @@ public class AuthorshipSignUtils {
     // --- Verify ---
     public static boolean verify(byte[] originalData, String signatureB64, PublicKey publicKey,String sigAlgo)
             throws Exception {
-        Signature sig = Signature.getInstance(NStringUtils.firstNonBlankTrimmed(sigAlgo, DEFAULT_SIG));
+        Signature sig = Signature.getInstance(NStringUtils.firstNonBlankStripped(sigAlgo, DEFAULT_SIG));
         sig.initVerify(publicKey);
         sig.update(originalData);
         return sig.verify(Base64.getDecoder().decode(signatureB64));

@@ -26,7 +26,7 @@ public class NTxManifestPublishInfo implements Cloneable, Serializable, NToEleme
         }
         if (element.isAnyObject()) {
             NObjectElement o = element.asObject().get();
-            String n = NStringUtils.trimToNull(o.name().get());
+            String n = NStringUtils.stripToNull(o.name().get());
             if(n!=null){
                 n= NNameFormat.LOWER_KEBAB_CASE.format(n);
             }

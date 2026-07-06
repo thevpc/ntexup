@@ -36,7 +36,7 @@ public class NTxPlainTextBuilder implements NTxNodeBuilder {
 //        Paint fg = rendererContext.getForegroundColor(p,true);
         NElement d = ctx.computePropertyValue(NTxPropName.VALUE).orElse(NElement.ofString(""));
 
-        String message = NStringUtils.trim(d.asStringValue().get());
+        String message = NStringUtils.strip(d.asStringValue().get());
         String[] allLines = message.trim().split("[\n]");
         for (int i = 0; i < allLines.length; i++) {
             allLines[i] = allLines[i].trim();

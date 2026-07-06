@@ -28,7 +28,7 @@ public class UserConfigs implements Cloneable {
 
     public UserConfig findUser(String id) {
         validate();
-        id=NStringUtils.firstNonBlank(NStringUtils.trim(id), "default");
+        id=NStringUtils.firstNonBlank(NStringUtils.strip(id), "default");
         for (UserConfig user : users) {
             if(Objects.equals(user.getId(),id)){
                 return user;
@@ -89,7 +89,7 @@ public class UserConfigs implements Cloneable {
     }
 
     public UserConfigs validate() {
-        this.setMain(NStringUtils.trimToNull(this.getMain()));
+        this.setMain(NStringUtils.stripToNull(this.getMain()));
         if (this.getUsers() == null) {
             this.setUsers(new UserConfig[0]);
         }

@@ -85,7 +85,7 @@ public class NTxEquationBuilder implements NTxNodeBuilder {
             NElement vElemValue = rendererContext.evalExpression(vElemExpr).orNull();
             String text = NTxValue.of(vElemValue).asStringOrName().orElse("");
 
-            String tex = NStringUtils.trim(rendererContext.engine().tools().trimBloc(text));
+            String tex = NStringUtils.strip(rendererContext.engine().tools().trimBloc(text));
             if (tex.isEmpty()) {
                 u.selfBounds = rendererContext.defaultSelfBounds2D();
             } else {
@@ -127,7 +127,7 @@ public class NTxEquationBuilder implements NTxNodeBuilder {
         NTxGraphics g = rendererContext.graphics();
 
 
-        String tex = NStringUtils.trim(rendererContext.engine().tools().trimBloc(text));
+        String tex = NStringUtils.strip(rendererContext.engine().tools().trimBloc(text));
         if (tex.isEmpty()) {
             NTxBounds2D selfBounds = rendererContext.selfBounds2D();
             double x = selfBounds.minX();

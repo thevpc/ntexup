@@ -42,7 +42,7 @@ public class NTxGitHelper {
             if (matcher.matches()) {
                 String user = matcher.group("user");
                 String repo = matcher.group("repo");
-                String path = NStringUtils.trim(matcher.group("path"));
+                String path = NStringUtils.strip(matcher.group("path"));
                 cloneOrPull(userConfHome, user, repo, new String[]{
                         "git@github.com:" + user + "/" + repo + ".git",
                         "https://github.com/" + user + "/" + repo + ".git"
@@ -55,7 +55,7 @@ public class NTxGitHelper {
             if (matcher.matches()) {
                 String user = matcher.group("user");
                 String repo = matcher.group("repo");
-                String path = NStringUtils.trim(matcher.group("path"));
+                String path = NStringUtils.strip(matcher.group("path"));
                 //always consider https because we assume it is a public repo
                 cloneOrPull(userConfHome, user, repo, new String[]{
                         "git@github.com:" + user + "/" + repo + ".git",
@@ -70,7 +70,7 @@ public class NTxGitHelper {
             if (matcher.matches()) {
                 String user = matcher.group("user");
                 String repo = matcher.group("repo");
-                String path = NStringUtils.trim(matcher.group("path"));
+                String path = NStringUtils.strip(matcher.group("path"));
                 cloneOrPull(userConfHome, user, repo, new String[]{
                         "https://github.com/" + user + "/" + repo + ".git",
                         "git@github.com:" + user + "/" + repo + ".git",

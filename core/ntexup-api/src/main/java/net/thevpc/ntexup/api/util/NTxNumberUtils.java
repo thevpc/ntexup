@@ -31,7 +31,7 @@ public class NTxNumberUtils {
             }
         }
         // dont use a1.equals(b1), this includes the comments etc!!
-        if(!NStringUtils.trim(a1.numberSuffix()).equalsIgnoreCase(NStringUtils.trim(b1.numberSuffix()))){
+        if(!NStringUtils.strip(a1.numberSuffix()).equalsIgnoreCase(NStringUtils.strip(b1.numberSuffix()))){
             return false;
         }
         return Objects.equals(a1.numberValue(), b1.numberValue());
@@ -118,7 +118,7 @@ public class NTxNumberUtils {
         if (NBlankable.isBlank(any)) {
             return UnitType.NONE;
         }
-        any = NStringUtils.trim(any).toLowerCase();
+        any = NStringUtils.strip(any).toLowerCase();
         switch (any) {
             // --- Metric (SI) ---
             case "m":
@@ -195,7 +195,7 @@ public class NTxNumberUtils {
         NNumberElement a = e.asNumber().get();
 
         double d = a.asDoubleValue().get();
-        String s = NStringUtils.trim(a.numberSuffix()).toLowerCase();
+        String s = NStringUtils.strip(a.numberSuffix()).toLowerCase();
 
         switch (s) {
             // --- Metric (SI) ---
@@ -265,7 +265,7 @@ public class NTxNumberUtils {
         }
 
         double d = a.asDoubleValue().get();
-        String s = NStringUtils.trim(a.numberSuffix()).toLowerCase();
+        String s = NStringUtils.strip(a.numberSuffix()).toLowerCase();
 
         switch (s) {
             // --- Standard SI Prefixes ---
@@ -348,7 +348,7 @@ public class NTxNumberUtils {
                 return baseSize.numberValue().doubleValue() * e.numberValue().doubleValue() / 100.0 + baseOffset.numberValue().doubleValue();
             }
             case UNKNOWN: {
-                switch (NStringUtils.trim(e.numberSuffix())) {
+                switch (NStringUtils.strip(e.numberSuffix())) {
                     case "%": {
                         return baseSize.numberValue().doubleValue() * e.numberValue().doubleValue() / 100.0 + baseOffset.numberValue().doubleValue();
                     }

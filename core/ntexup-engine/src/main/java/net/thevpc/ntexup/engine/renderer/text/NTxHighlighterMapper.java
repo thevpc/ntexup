@@ -205,7 +205,7 @@ public class NTxHighlighterMapper {
                             .orElseGetOptionalFrom(() -> ctx.computePropertyValue("font-family"))
                             .orNull()
             );
-            String value = NStringUtils.trimToNull(e.asStringOrName().orNull());
+            String value = NStringUtils.stripToNull(e.asStringOrName().orNull());
             if (value == null) {
                 // od nothing
             } else {
