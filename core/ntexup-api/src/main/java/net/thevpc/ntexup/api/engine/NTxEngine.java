@@ -17,7 +17,6 @@ import java.util.function.Predicate;
 
 import net.thevpc.ntexup.api.document.NTxDocumentFactory;
 import net.thevpc.ntexup.api.document.NTxDocument;
-import net.thevpc.ntexup.api.document.NTxDocumentLoadingResult;
 import net.thevpc.ntexup.api.document.style.NTxProp;
 import net.thevpc.ntexup.api.document.style.NTxStyleRule;
 import net.thevpc.ntexup.api.eval.NTxFunctionCallContext;
