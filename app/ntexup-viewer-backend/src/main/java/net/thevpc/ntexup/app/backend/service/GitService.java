@@ -35,14 +35,14 @@ public class GitService {
             NExec.of()
                     .system()
                     .directory(baseFolder.resolve(n))
-                    .addCommand("git", "pull")
+                    .command("git", "pull")
                     .failFast(true)
                     .run();
         } else {
             NExec.of()
                     .system()
                     .directory(baseFolder)
-                    .addCommand("git", "clone", url)
+                    .command("git", "clone", url)
                     .failFast(true)
                     .run();
         }

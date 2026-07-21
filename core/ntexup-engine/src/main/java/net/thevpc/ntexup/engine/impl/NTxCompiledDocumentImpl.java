@@ -149,7 +149,7 @@ public class NTxCompiledDocumentImpl implements NTxCompiledDocument {
 
                 // 3. Register with Hash
                 effectiveResources.put(pathStr, new NTxManifestResource()
-                        .setFingerprint(NDigest.of().addSource(pp).computeString())
+                        .setFingerprint(NDigest.of().source(pp).computeString())
                         .setType(t)
                         .setLastVisited(Instant.now())
                         .setValue(sval)

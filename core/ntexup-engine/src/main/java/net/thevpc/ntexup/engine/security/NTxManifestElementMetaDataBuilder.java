@@ -243,7 +243,7 @@ public class NTxManifestElementMetaDataBuilder {
                             .setValue(d.id().longName())
                     .setFingerprint(NDigest.of()
                             .algorithm(digestAlgo)
-                            .addSource(d.content().get()).computeString())
+                            .source(d.content().get()).computeString())
             );
         }
         return deps.toArray(new NTxManifestDependency[0]);
