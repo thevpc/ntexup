@@ -11,13 +11,13 @@ import net.thevpc.ntexup.cmdline.options.*;
 import net.thevpc.ntexup.engine.repo.RepoBuilderTool;
 import net.thevpc.ntexup.main.MainFrame;
 import net.thevpc.nuts.artifact.NId;
-import net.thevpc.nuts.command.NSysEditorFamily;
+import net.thevpc.nuts.platform.NSysEditorFamily;
 import net.thevpc.nuts.command.NSysEditorSupportCmd;
 import net.thevpc.nuts.io.*;
 import net.thevpc.nuts.core.NSession;
 import net.thevpc.nuts.swing.NSwingUtils;
 import net.thevpc.nuts.text.*;
-import net.thevpc.nuts.time.NChronometer;
+import net.thevpc.nuts.mon.NChronometer;
 import net.thevpc.nuts.util.NValidationException;
 import net.thevpc.nuts.util.*;
 

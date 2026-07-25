@@ -58,14 +58,13 @@ import net.thevpc.nuts.artifact.NDefinition;
 import net.thevpc.nuts.artifact.NDependency;
 import net.thevpc.nuts.artifact.NDependencyBuilder;
 import net.thevpc.nuts.concurrent.NScoredCallable;
-import net.thevpc.nuts.core.NMutableClassLoader;
+import net.thevpc.nuts.reflect.NMutableClassLoader;
 import net.thevpc.nuts.core.NStoreKey;
 import net.thevpc.nuts.elem.*;
-import net.thevpc.nuts.ext.NExtensions;
 import net.thevpc.nuts.io.NPath;
-import net.thevpc.nuts.io.NServiceLoader;
+import net.thevpc.nuts.ext.NServiceLoader;
 import net.thevpc.nuts.platform.NStoreType;
-import net.thevpc.nuts.util.NScorable;
+import net.thevpc.nuts.reflect.NScorable;
 import net.thevpc.nuts.text.NMsg;
 import net.thevpc.nuts.util.*;
 
@@ -197,7 +196,7 @@ public class DefaultNTxEngine implements NTxEngine {
 
     public DefaultNTxEngine(ClassLoader classLoader) {
         if (classLoader != null) {
-            this.classLoader = NExtensions.of().createMutableClassLoader(classLoader);
+            this.classLoader = NMutableClassLoader.of("ntx",classLoader);
         }
         init();
     }
@@ -206,7 +205,7 @@ public class DefaultNTxEngine implements NTxEngine {
         propCalculator = new NTxPropCalculator(this);
         addLog(new DefaultNTxLogger());
         if (classLoader == null) {
-            classLoader = NExtensions.of().createMutableClassLoader(Thread.currentThread().getContextClassLoader());
+            classLoader = NMutableClassLoader.of("ntx",Thread.currentThread().getContextClassLoader());
         }
         log().log(NMsg.ofC("starting %s engine...", NMsg.ofStyledPrimary1("NTexUp")).asFineAlert());
         tools = new MyNTxEngineTools(this);
@@ -495,7 +494,7 @@ public class DefaultNTxEngine implements NTxEngine {
     }
 
     private void dump_classloader(Consumer<NMsg> out) {
-        List<NDefinition> dependencies = classLoader.loadedDependencies();
+        List<NDefinition> dependencies = classLoader.loadedDefinitions();
         out.accept(NMsg.ofC("Dependencies : %s", dependencies.size()));
         for (NDefinition dependency : dependencies) {
             out.accept(NMsg.ofC("\t %s", dependency.id()));
@@ -586,7 +585,10 @@ public class DefaultNTxEngine implements NTxEngine {
                             .appendJoined(",", Arrays.asList(okDeps))
                             .build()
             ));
-            NDefinition[] u = classLoader.loadDependencies(okDeps);
+            for (NDependency okDep : okDeps) {
+                classLoader.add(okDep);
+            }
+            NDefinition[] u = classLoader.build();
             Map<String, NDefinition> reallyLoaded = new HashMap<>();
             for (NDefinition u0 : u) {
                 reallyLoaded.put(u0.id().shortName(), u0);

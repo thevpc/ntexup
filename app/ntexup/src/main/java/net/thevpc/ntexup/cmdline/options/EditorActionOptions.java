@@ -1,6 +1,6 @@
 package net.thevpc.ntexup.cmdline.options;
 
-import net.thevpc.nuts.command.NSysEditorFamily;
+import net.thevpc.nuts.platform.NSysEditorFamily;
 
 import java.util.LinkedHashSet;
 import java.util.Set;

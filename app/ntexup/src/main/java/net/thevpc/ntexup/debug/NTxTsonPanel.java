@@ -5,7 +5,7 @@ import net.thevpc.ntexup.api.engine.NTxEngine;
 import net.thevpc.nuts.elem.NElement;
 import net.thevpc.nuts.log.NLog;
 import net.thevpc.nuts.text.NMsg;
-import net.thevpc.nuts.time.NChronometer;
+import net.thevpc.nuts.mon.NChronometer;
 
 import javax.swing.*;
 import java.awt.*;

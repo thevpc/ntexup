@@ -2,7 +2,7 @@ package net.thevpc.ntexup.cmdline;
 
 import net.thevpc.ntexup.cmdline.options.*;
 import net.thevpc.ntexup.config.NTxViewerConfigManager;
-import net.thevpc.nuts.command.NSysEditorFamily;
+import net.thevpc.nuts.platform.NSysEditorFamily;
 import net.thevpc.nuts.core.NSession;
 import net.thevpc.nuts.cmdline.NArg;
 import net.thevpc.nuts.cmdline.NCmdLine;

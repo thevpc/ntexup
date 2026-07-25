@@ -8,7 +8,7 @@ import net.thevpc.ntexup.api.engine.NTxEngine;
 import net.thevpc.ntexup.lib.geometry3d.NTxElement3DRenderer;
 import net.thevpc.nuts.artifact.NDefinition;
 import net.thevpc.nuts.artifact.NId;
-import net.thevpc.nuts.io.NServiceLoader;
+import net.thevpc.nuts.ext.NServiceLoader;
 import net.thevpc.nuts.text.NMsg;
 
 import java.util.*;

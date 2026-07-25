@@ -9,7 +9,7 @@ import net.thevpc.ntexup.extension.plot2d.model.NTxFunctionPlotInfo;
 import net.thevpc.ntexup.extension.plot2d.model.NTxPlot2DData;
 import net.thevpc.nuts.elem.NElement;
 import net.thevpc.nuts.math.NDoubleRange;
-import net.thevpc.nuts.time.NChronometer;
+import net.thevpc.nuts.mon.NChronometer;
 import net.thevpc.nuts.util.NArrays;
 import net.thevpc.nuts.util.NDoubleFunction;
 import net.thevpc.nuts.text.NMsg;
