@@ -136,7 +136,7 @@ public class ToElementHelper {
         NElement raw = child.getRaw();
         switch (NTxUtils.uid(child.type())) {
             case NTxNodeType.CTRL_DEFINE: {
-                return raw == null ? NElement.ofNamedUplet("define") : raw;
+                return raw == null ? NElement.ofNamedTuple("define") : raw;
             }
             case NTxNodeType.BLOCK: {
                 return NElement.ofNamedObject("block",
@@ -154,7 +154,7 @@ public class ToElementHelper {
                 );
             }
         }
-        return raw == null ? NElement.ofNamedUplet("unknown") : raw;
+        return raw == null ? NElement.ofNamedTuple("unknown") : raw;
     }
 
     private void applyAnnotations(NElementBuilder u) {

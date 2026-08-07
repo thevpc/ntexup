@@ -4,7 +4,7 @@ import net.thevpc.ntexup.api.document.NTxArrow;
 import net.thevpc.ntexup.lib.geometry2d.NTxRegion2D;
 import net.thevpc.ntexup.lib.geometry3d.impl.composite.*;
 import net.thevpc.ntexup.lib.geometry3d.impl.primitives.*;
-import net.thevpc.nuts.util.NDoubleFunction2;
+import net.thevpc.nuts.math.NDoubleFunction2;
 
 import java.awt.*;
 import java.util.ArrayList;

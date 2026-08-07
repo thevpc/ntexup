@@ -4,7 +4,7 @@ import net.thevpc.ntexup.api.renderer.NTxRendererContext;
 import net.thevpc.ntexup.api.renderer.text.NTxTextRendererFlavorParseContext;
 import net.thevpc.ntexup.api.renderer.text.NTxTextToken;
 import net.thevpc.ntexup.api.renderer.text.NTxTextTokenFlavored;
-import net.thevpc.nuts.util.NCharQueue;
+import net.thevpc.nuts.collections.NCharQueue;
 import net.thevpc.nuts.util.NExceptions;
 import net.thevpc.nuts.util.NAssert;
 import net.thevpc.nuts.text.NMsg;

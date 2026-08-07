@@ -38,7 +38,7 @@ public class NTxDocStreamParser {
             } else if (base.cond.size() == 1) {
                 i.addParam("$condition", base.cond.get(0));
             } else {
-                i.addParam("$condition", NElement.ofNamedUplet("and", base.cond.toArray(new NElement[0])));
+                i.addParam("$condition", NElement.ofNamedTuple("and", base.cond.toArray(new NElement[0])));
             }
             i.addAll(base.trueBody);
             NObjectElementBuilder goodElse = null;
@@ -50,7 +50,7 @@ public class NTxDocStreamParser {
                 } else if (b.cond.size() == 1) {
                     i2.set("$condition", b.cond.get(0));
                 } else {
-                    i2.set("$condition", NElement.ofNamedUplet("and", b.cond.toArray(new NElement[0])));
+                    i2.set("$condition", NElement.ofNamedTuple("and", b.cond.toArray(new NElement[0])));
                 }
                 i2.addAll(base.trueBody);
                 if (goodElse == null) {

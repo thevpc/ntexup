@@ -8,6 +8,7 @@ import net.thevpc.ntexup.api.document.node.*;
 import net.thevpc.ntexup.api.util.NTxUtils;
 import net.thevpc.ntexup.api.util.DefaultNTxColorPalette;
 import net.thevpc.nuts.elem.*;
+import net.thevpc.nuts.pipeline.NStream;
 import net.thevpc.nuts.text.NMsg;
 import net.thevpc.nuts.util.*;
 

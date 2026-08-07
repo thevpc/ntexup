@@ -58,6 +58,7 @@ import net.thevpc.nuts.artifact.NDefinition;
 import net.thevpc.nuts.artifact.NDependency;
 import net.thevpc.nuts.artifact.NDependencyBuilder;
 import net.thevpc.nuts.concurrent.NScoredCallable;
+import net.thevpc.nuts.pipeline.NStream;
 import net.thevpc.nuts.reflect.NMutableClassLoader;
 import net.thevpc.nuts.core.NStoreKey;
 import net.thevpc.nuts.elem.*;
@@ -71,6 +72,7 @@ import net.thevpc.nuts.util.*;
 import javax.imageio.ImageIO;
 
 import net.thevpc.nuts.text.NTextBuilder;
+import net.thevpc.nuts.collections.NCollections;
 
 /**
  * @author vpc

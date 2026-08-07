@@ -34,7 +34,7 @@ public class DefaultNTxNode implements NTxNode, Cloneable{
     public static DefaultNTxNode ofText(String message) {
         DefaultNTxNode t = new DefaultNTxNode(NTxNodeType.TEXT);
         t.setProperty(NTxPropName.VALUE, NElement.ofString(message));
-        t.setRaw(NElement.ofNamedUplet("text", NElement.ofPair(NTxPropName.VALUE, message)));
+        t.setRaw(NElement.ofNamedTuple("text", NElement.ofPair(NTxPropName.VALUE, message)));
         return t;
     }
 

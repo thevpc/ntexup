@@ -2,7 +2,7 @@ package net.thevpc.ntexup.extension.plot2d.model;
 
 import net.thevpc.ntexup.api.renderer.NTxRendererContext;
 import net.thevpc.nuts.math.NDoubleRange;
-import net.thevpc.nuts.util.NDoubleFunction;
+import net.thevpc.nuts.math.NDoubleFunction;
 
 import java.awt.*;
 

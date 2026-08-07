@@ -11,7 +11,7 @@ import net.thevpc.ntexup.api.document.style.NTxPropName;
 import net.thevpc.ntexup.api.renderer.*;
 import net.thevpc.ntexup.api.renderer.text.*;
 import net.thevpc.nuts.elem.NElement;
-import net.thevpc.nuts.util.NCharQueue;
+import net.thevpc.nuts.collections.NCharQueue;
 
 import java.util.*;
 

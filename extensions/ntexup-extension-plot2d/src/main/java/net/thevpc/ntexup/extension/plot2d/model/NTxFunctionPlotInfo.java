@@ -1,7 +1,7 @@
 package net.thevpc.ntexup.extension.plot2d.model;
 
 import net.thevpc.nuts.elem.NElement;
-import net.thevpc.nuts.util.NDoubleFunction;
+import net.thevpc.nuts.math.NDoubleFunction;
 
 public class NTxFunctionPlotInfo {
     public NTxPlotType plotType;

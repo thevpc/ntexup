@@ -3,7 +3,7 @@ package net.thevpc.ntexup.extension.svg;
 import com.kitfox.svg.SVGDiagram;
 import com.kitfox.svg.SVGException;
 import com.kitfox.svg.SVGUniverse;
-import net.thevpc.nuts.util.NMaps;
+import net.thevpc.nuts.collections.NMaps;
 
 import java.awt.*;
 import java.awt.geom.AffineTransform;

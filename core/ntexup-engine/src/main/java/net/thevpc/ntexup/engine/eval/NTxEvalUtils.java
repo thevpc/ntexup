@@ -3,7 +3,7 @@ package net.thevpc.ntexup.engine.eval;
 import net.thevpc.ntexup.api.util.NTxNumberUtils;
 import net.thevpc.ntexup.api.util.NTxUtils;
 import net.thevpc.nuts.elem.*;
-import net.thevpc.nuts.util.NNumberUtils;
+import net.thevpc.nuts.math.NNumberUtils;
 import net.thevpc.nuts.util.NOptional;
 import net.thevpc.nuts.util.NStringUtils;
 

@@ -32,6 +32,7 @@ import java.time.Instant;
 import java.util.*;
 
 import net.thevpc.ntexup.api.document.security.NTxManifestResource;
+import net.thevpc.nuts.collections.NCollections;
 
 public class NTxCompiledDocumentImpl implements NTxCompiledDocument {
     public static final int DEFAULT_MAX_PAGE_COUNT = 1024 * 64;
