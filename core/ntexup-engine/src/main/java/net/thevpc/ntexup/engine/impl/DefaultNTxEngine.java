@@ -587,10 +587,7 @@ public class DefaultNTxEngine implements NTxEngine {
                             .appendJoined(",", Arrays.asList(okDeps))
                             .build()
             ));
-            for (NDependency okDep : okDeps) {
-                classLoader.add(okDep);
-            }
-            NDefinition[] u = classLoader.build();
+            NDefinition[] u = classLoader.add(okDeps);
             Map<String, NDefinition> reallyLoaded = new HashMap<>();
             for (NDefinition u0 : u) {
                 reallyLoaded.put(u0.id().shortName(), u0);
