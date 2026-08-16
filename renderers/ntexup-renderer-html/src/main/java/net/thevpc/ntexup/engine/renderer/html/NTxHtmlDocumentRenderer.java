@@ -72,7 +72,7 @@ public class NTxHtmlDocumentRenderer extends NTxDocumentStreamRendererBase imple
                 if (!pp.name().endsWith(".zip")) {
                     pp = pp.resolveSibling(NPathRenameOptions.ofExtension("zip"));
                 }
-                NCompress.of().addSource(toRemoveFolder).to(pp);
+                NCompress.of().source(toRemoveFolder).to(pp);
                 toRemoveFolder.deleteTree();
             } else {
                 throw new IllegalArgumentException("invalid output path " + pp);
@@ -80,7 +80,7 @@ public class NTxHtmlDocumentRenderer extends NTxDocumentStreamRendererBase imple
         } else if (o instanceof OutputStream) {
             NPath toRemoveFolder = NPath.ofTempFolder();
             writeIntoDirectory(d, toRemoveFolder);
-            NCompress.of().addSource(toRemoveFolder).to((OutputStream) o);
+            NCompress.of().source(toRemoveFolder).to((OutputStream) o);
             toRemoveFolder.deleteTree();
         }
         return null;
