@@ -9,8 +9,8 @@ import net.thevpc.ntexup.api.renderer.text.NTxTextOptions;
 import net.thevpc.ntexup.api.renderer.text.NTxTextRendererBuilder;
 import net.thevpc.ntexup.api.eval.NTxValue;
 import net.thevpc.nuts.elem.NElement;
+import net.thevpc.nuts.text.NText;
 import net.thevpc.nuts.text.NTextCode;
-import net.thevpc.nuts.text.NTexts;
 
 public class NTxSourceBuilder implements NTxNodeBuilder {
 
@@ -26,11 +26,10 @@ public class NTxSourceBuilder implements NTxNodeBuilder {
     }
 
     private void renderTextBuildText(String text, NTxTextOptions options, NTxRendererContext rendererContext, NTxTextRendererBuilder builder) {
-        NTexts ttt = NTexts.of();
         NElement lng = rendererContext.computePropertyValue(NTxPropName.LANG).orNull();
         String lang = NTxValue.of(lng).asString().orNull();
         text=rendererContext.engine().tools().trimBloc(text);
-        NTextCode ncode = ttt.ofCode(lang, text);
+        NTextCode ncode = NText.ofCode(lang, text);
         rendererContext.highlightNutsText(lang, text, ncode, builder);
     }
 

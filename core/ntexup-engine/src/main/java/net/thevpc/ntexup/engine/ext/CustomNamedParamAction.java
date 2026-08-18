@@ -331,8 +331,8 @@ class CustomNamedParamAction implements NTxNodeBuilderContext.NamedParamAction, 
                 }
                 break;
             }
-            case NAMED_UPLET: {
-                String uid = NTxUtils.uid(n.asUplet().get().name().orNull());
+            case NAMED_TUPLE: {
+                String uid = NTxUtils.uid(n.asTuple().get().name().orNull());
                 if (dmatches(null, info)) {
                     info.read();
                     setProp(uid, n, info, buildContext);

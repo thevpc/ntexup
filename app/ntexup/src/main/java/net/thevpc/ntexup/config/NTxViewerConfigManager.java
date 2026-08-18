@@ -3,10 +3,7 @@ package net.thevpc.ntexup.config;
 import net.thevpc.nuts.app.NApp;
 import net.thevpc.nuts.artifact.NId;
 import net.thevpc.nuts.core.NStoreKey;
-import net.thevpc.nuts.elem.NElement;
-import net.thevpc.nuts.elem.NElementReader;
-import net.thevpc.nuts.elem.NElementWriter;
-import net.thevpc.nuts.elem.NElements;
+import net.thevpc.nuts.elem.*;
 import net.thevpc.nuts.io.NPath;
 import net.thevpc.nuts.util.NBlankable;
 
@@ -102,7 +99,7 @@ public class NTxViewerConfigManager {
 
     public void saveViewerConfig(NTxViewerConfig config) {
         config = validate(config);
-        NElement elem = NElements.of().toElement(config);
+        NElement elem = NElement.of(config);
         viewerConfigFile.mkParentDirs();
         try (OutputStream os = viewerConfigFile.outputStream()) {
             NElementWriter.ofTson().write(elem, os);
@@ -132,7 +129,7 @@ public class NTxViewerConfigManager {
         if (viewerConfigFile.isRegularFile()) {
             try (InputStream is = viewerConfigFile.inputStream()) {
                 NElement d = NElementReader.ofTson().read(is);
-                config = NElements.of().fromElement(d, NTxViewerConfig.class);
+                config = NElement.convertAny(d, NTxViewerConfig.class);
             } catch (IOException ex) {
                 throw new UncheckedIOException(ex);
             }

@@ -29,7 +29,7 @@ public class ZigzagStroke implements Stroke {
         double flatness = 1;
         for (NElement arg : o.args()) {
             if (
-                    arg.isAnyUplet()
+                    arg.isAnyTuple()
                             || arg.isAnyArray()
                             || arg.isAnyObject()
             ) {

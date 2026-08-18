@@ -19,8 +19,8 @@ public class NTxEvalUtils {
     }
 
     public static NElement simplifyPars(NElement e) {
-        if (e.isUplet()) {
-            NUpletElement u = e.asUplet().get();
+        if (e.isTuple()) {
+            NTupleElement u = e.asTuple().get();
             if (u.params().size() == 1) {
                 return simplifyPars(u.params().get(0));
             }
@@ -314,7 +314,7 @@ public class NTxEvalUtils {
         f = simplify(f);
         s = simplify(s);
         if (f.isNumber() && s.isNumber()) {
-            NElementType ct = NElements.of().commonNumberType(f.type(), s.type());
+            NElementType ct = NElementType.computeNumber(f.type(), s.type());
             if (ct.isAnyNumber()) {
                 Number fn = f.asNumberType(ct).get().asNumberValue().get();
                 Number sn = s.asNumberType(ct).get().asNumberValue().get();

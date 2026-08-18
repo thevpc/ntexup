@@ -27,7 +27,7 @@ public class NTxInt2 implements NToElement {
 
     @Override
     public NElement toElement() {
-        return NElement.ofUplet(
+        return NElement.ofTuple(
                 NElement.ofInt(getX()),
                 NElement.ofInt(getY())
         );

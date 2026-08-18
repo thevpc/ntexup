@@ -74,7 +74,7 @@ public class NTxPolylineBuilder implements NTxNodeBuilder {
                                     }
 //                                }
                             }
-                        }else if(k.isUplet()){
+                        }else if(k.isTuple()){
 //                            if (buildContext.isAncestorScene3D(info.node())) {
 //                                NOptional<NTxPoint3D> p2d = NTxValue.of(k).asHPoint3D();
 //                                if (p2d.isPresent()) {

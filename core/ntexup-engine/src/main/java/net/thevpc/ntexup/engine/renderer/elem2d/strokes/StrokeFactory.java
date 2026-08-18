@@ -60,7 +60,7 @@ public class StrokeFactory {
         double advance = 15;
         for (NElement arg : o.args()) {
             if (
-                    arg.isAnyUplet()
+                    arg.isAnyTuple()
                             || arg.isAnyArray()
                             || arg.isAnyObject()
             ) {

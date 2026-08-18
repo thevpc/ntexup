@@ -128,8 +128,8 @@ public class NTxGraphicsImpl implements NTxGraphics {
             {
                 return CompositeStroke.of(e, this);
             }
-            case UPLET:
-            case NAMED_UPLET:
+            case TUPLE:
+            case NAMED_TUPLE:
             {
                 return StrokeFactory.createBasic(o);
             }

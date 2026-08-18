@@ -122,7 +122,7 @@ public class ToElementHelper {
             applyAnnotations(u);
             return u.build();
         } else {
-            NUpletElementBuilder u = NElement.ofUplet(name, args2.toArray(new NElement[0])).builder();
+            NTupleElementBuilder u = NElement.ofTuple(name, args2.toArray(new NElement[0])).builder();
             applyAnnotations(u);
             return u.build();
         }

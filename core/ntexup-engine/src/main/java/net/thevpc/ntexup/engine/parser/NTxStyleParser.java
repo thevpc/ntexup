@@ -216,8 +216,8 @@ public class NTxStyleParser {
                 items.add(NTxStyleRuleSelectorItem.of(types.toArray(new String[0]), names.toArray(new String[0]), classes.toArray(new String[0])));
                 return;
             }
-            case UPLET: {
-                NUpletElement u = selector.asUplet().get();
+            case TUPLE: {
+                NTupleElement u = selector.asTuple().get();
                 if (isExactUpletPair(selector)) {
                     List<String> classes = new ArrayList<>();
                     List<String> types = new ArrayList<>();
@@ -241,8 +241,8 @@ public class NTxStyleParser {
     }
 
     private static boolean isExactUpletPair(NElement e) {
-        if (e.isUplet()) {
-            NUpletElement u = e.asUplet().get();
+        if (e.isTuple()) {
+            NTupleElement u = e.asTuple().get();
             return (u.children().stream().allMatch(x -> x.isNamedPair(s -> {
                 switch (NTxUtils.uid(s)) {
                     case "class":
@@ -300,7 +300,7 @@ public class NTxStyleParser {
             case PARAM_ARRAY: {
                 List<NElement> params = e.asParametrizedContainer().get().params().get();
                 List<NElement> children = e.asListContainer().get().children();
-                return _parseStyleRule(e, NElement.ofUplet(params.toArray(new NElement[0])), children, f, context, errMsg);
+                return _parseStyleRule(e, NElement.ofTuple(params.toArray(new NElement[0])), children, f, context, errMsg);
             }
             case NAMED_OBJECT:
             case NAMED_ARRAY: {

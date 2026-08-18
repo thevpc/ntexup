@@ -36,7 +36,7 @@ public class NTxRotation implements NToElement {
 
     @Override
     public NElement toElement() {
-        return NElement.ofUplet(
+        return NElement.ofTuple(
                 angle,
                 x,
                 y

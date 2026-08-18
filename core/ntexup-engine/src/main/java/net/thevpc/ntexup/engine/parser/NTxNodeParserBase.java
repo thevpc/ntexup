@@ -119,8 +119,8 @@ public abstract class NTxNodeParserBase implements NTxNodeParser {
                 }
                 break;
             }
-            case NAMED_UPLET: {
-                NUpletElement uplet = e.asUplet().get();
+            case NAMED_TUPLE: {
+                NTupleElement uplet = e.asTuple().get();
                 if (acceptTypeName(uplet.name().orNull())) {
                     return uplet.name().orNull();
                 }
@@ -203,7 +203,7 @@ public abstract class NTxNodeParserBase implements NTxNodeParser {
                 info.parseContext().log(NMsg.ofC("[%s] invalid argument %s. did you mean %s:%s ?",
                         info.parseContext().source(),
                         currentArg,
-                        es.name(), NElement.ofUplet(es.args().toArray(new NElement[0]))
+                        es.name(), NElement.ofTuple(es.args().toArray(new NElement[0]))
                 ).asSevere(), info.parseContext().source());
                 // empty result
                 return false;
@@ -245,7 +245,7 @@ public abstract class NTxNodeParserBase implements NTxNodeParser {
     public NOptional<NTxItem> parseItem(String id, NElement element, NTxResolutionContext context) {
         NTxDocumentFactory f = context.documentFactory();
         switch (element.type()) {
-            case NAMED_UPLET:
+            case NAMED_TUPLE:
 
             case OBJECT:
             case FULL_OBJECT:
@@ -269,9 +269,9 @@ public abstract class NTxNodeParserBase implements NTxNodeParser {
                 info.setElement(NTxUtils.addCompilerDeclarationPath(element, info.parseContext().source()));
                 info.setNode(p);
                 switch (element.type()) {
-                    case UPLET:
-                    case NAMED_UPLET: {
-                        info.setArguments(element.asUplet().get().params().toArray(new NElement[0]));
+                    case TUPLE:
+                    case NAMED_TUPLE: {
+                        info.setArguments(element.asTuple().get().params().toArray(new NElement[0]));
                         break;
                     }
                     default: {
@@ -299,8 +299,8 @@ public abstract class NTxNodeParserBase implements NTxNodeParser {
         NElement element = info.element();
         List<NElement> body = null;
         switch (element.type()) {
-            case UPLET:
-            case NAMED_UPLET: {
+            case TUPLE:
+            case NAMED_TUPLE: {
                 return;
             }
             default: {
@@ -329,19 +329,19 @@ public abstract class NTxNodeParserBase implements NTxNodeParser {
         if (item instanceof CtrlNTxNodeInclude) {
             List<NElement> v = ((CtrlNTxNodeInclude) item).getCallArgs();
             if (v != null) {
-                return NElement.ofUplet(item.type(), v.toArray(new NElement[0]));
+                return NElement.ofTuple(item.type(), v.toArray(new NElement[0]));
             }
         }
         if (item instanceof CtrlNTxNodeImport) {
             List<NElement> v = ((CtrlNTxNodeImport) item).getCallArgs();
             if (v != null) {
-                return NElement.ofUplet(item.type(), v.toArray(new NElement[0]));
+                return NElement.ofTuple(item.type(), v.toArray(new NElement[0]));
             }
         }
         if (item instanceof CtrlNTxNodeIf) {
             CtrlNTxNodeIf i = (CtrlNTxNodeIf) item;
             NElement v = i.getCond();
-            return NElement.ofUplet(item.type(),
+            return NElement.ofTuple(item.type(),
                     v,
                     NElement.ofPair("whenTrue", NElement.ofObject(i.getTrueBloc().stream().map(x -> engine.nodeTypeParser(x.type()).get().toElement(x,semantic , engine)).toArray(NElement[]::new))),
                     NElement.ofPair("whenTrue", NElement.ofObject(i.getFalseBloc().stream().map(x -> engine.nodeTypeParser(x.type()).get().toElement(x, semantic, engine)).toArray(NElement[]::new)))

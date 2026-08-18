@@ -4,7 +4,7 @@ import net.thevpc.nuts.net.NWebCli;
 import net.thevpc.nuts.net.NWebResponse;
 import net.thevpc.nuts.text.NMsg;
 import net.thevpc.nuts.util.NBlankable;
-import net.thevpc.nuts.util.NExceptions;
+import net.thevpc.nuts.util.NException;
 import net.thevpc.nuts.util.NOptional;
 import org.bouncycastle.asn1.ASN1ObjectIdentifier;
 import org.bouncycastle.cert.X509CertificateHolder;
@@ -63,7 +63,7 @@ public class Rfc3161Helper {
                 lastException = e;
             }
         }
-        throw NExceptions.ofUncheckedException(new IOException("all TSA servers failed", lastException));
+        throw NException.ofUncheckedException(new IOException("all TSA servers failed", lastException));
     }
 
     private static byte[] doRequestRfc3161Token(byte[] hash, String digestAlgo, String tsaUrl) throws Exception {

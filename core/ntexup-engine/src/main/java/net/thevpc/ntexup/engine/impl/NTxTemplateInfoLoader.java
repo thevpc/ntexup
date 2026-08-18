@@ -60,13 +60,13 @@ public class NTxTemplateInfoLoader {
             for (NElement child : elem.asArray().get().children()) {
                 loadTemplateInfo(child, repoName, repoPath, allTemplates);
             }
-        }else if (elem.isNamedUplet("template")) {
+        }else if (elem.isNamedTuple("template")) {
             String name = null;
             List<String> binaries = new ArrayList<>();
             String layout = null;
             String version = null;
             boolean recommended = false;
-            for (NElement o : elem.asUplet().get().children()) {
+            for (NElement o : elem.asTuple().get().children()) {
                 if (o.isNamedPair()) {
                     NPairElement p = o.asNamedPair().get();
                     switch (p.key().asStringValue().get()) {
@@ -160,7 +160,7 @@ public class NTxTemplateInfoLoader {
     }
 
     private void loadTemplateInfoOwn(NElement elem, String repoName, NPath repoPath, List<NTxTemplateInfo> allTemplates,String version,String layout) {
-        if (elem.isNamedUplet("template")) {
+        if (elem.isNamedTuple("template")) {
             String name = null;
             List<String> binaries = new ArrayList<>();
             boolean recommended = false;

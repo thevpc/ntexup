@@ -28,7 +28,7 @@ public class CompoundStroke implements Stroke {
         Stroke base2 = null;
         for (NElement arg : o.args()) {
             if (
-                    arg.isAnyUplet()
+                    arg.isAnyTuple()
                             || arg.isAnyArray()
                             || arg.isAnyObject()
             ) {

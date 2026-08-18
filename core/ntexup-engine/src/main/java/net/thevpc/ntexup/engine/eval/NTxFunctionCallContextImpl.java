@@ -54,7 +54,7 @@ public class NTxFunctionCallContextImpl implements NTxFunctionCallContext {
     }
 
     public NElement callExpression() {
-        return NElement.ofUplet(name(),argExpressions());
+        return NElement.ofTuple(name(),argExpressions());
     }
 
     @Override

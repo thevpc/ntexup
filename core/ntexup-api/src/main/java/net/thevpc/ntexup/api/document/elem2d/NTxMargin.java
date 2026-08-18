@@ -59,7 +59,7 @@ public class NTxMargin implements NToElement {
 
     @Override
     public NElement toElement() {
-        return NElement.ofUplet(
+        return NElement.ofTuple(
                 NElement.ofDouble(getLeft()),
                 NElement.ofDouble(getTop()),
                 NElement.ofDouble(getRight()),

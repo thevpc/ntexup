@@ -103,7 +103,7 @@ public class NTxDocStreamParser {
                 ifInfo.base.cond = o.params().get();
                 ifInfo.base.trueBody = o.children();
                 cc = true;
-            } else if (c.isNamedUplet("if")) {
+            } else if (c.isNamedTuple("if")) {
                 if (ifInfo != null) {
                     res.add(ifInfo.toElement());
                 }
@@ -285,11 +285,11 @@ public class NTxDocStreamParser {
                 }
                 return p;
             }
-            case UPLET:
-            case NAMED_UPLET: {
-                NUpletElement p = child.asUplet().get();
+            case TUPLE:
+            case NAMED_TUPLE: {
+                NTupleElement p = child.asTuple().get();
                 List<NElement> i = p.params();
-                NUpletElementBuilder builder = p.builder();
+                NTupleElementBuilder builder = p.builder();
                 boolean anyChange = false;
                 if (i != null) {
                     NBooleanRef u = NRef.ofBoolean(false);

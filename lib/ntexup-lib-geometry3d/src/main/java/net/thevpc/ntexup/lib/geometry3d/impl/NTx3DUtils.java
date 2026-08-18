@@ -32,8 +32,8 @@ public class NTx3DUtils {
     }
 
     public static NTxNumberElement3 resolveSize3D(NElement e, NTxResolutionContext context) {
-        if (e.isUplet()) {
-            NUpletElement u = e.asUplet().get();
+        if (e.isTuple()) {
+            NTupleElement u = e.asTuple().get();
             if (u.size() == 3) {
                 NNumberElement p1 = NTxNumberUtils.asNumberElement(u.get(0).get(), context);
                 if (p1 == null) {
@@ -350,8 +350,8 @@ public class NTx3DUtils {
             }
             element= t.get();
         }
-        if (element instanceof NUpletElement) {
-            NUpletElement u = (NUpletElement) element;
+        if (element instanceof NTupleElement) {
+            NTupleElement u = (NTupleElement) element;
             if (u.children().size() == 3) {
                 List<NNumberElement> nn = new ArrayList<>();
                 for (int i = 0; i < 3; i++) {
@@ -385,8 +385,8 @@ public class NTx3DUtils {
         if (element instanceof NTxNumberElement2) {
             return NOptional.of((NTxNumberElement2) element);
         }
-        if (element instanceof NUpletElement) {
-            NUpletElement u = (NUpletElement) element;
+        if (element instanceof NTupleElement) {
+            NTupleElement u = (NTupleElement) element;
             if (u.children().size() == 2) {
                 List<NNumberElement> nn = new ArrayList<>();
                 for (int i = 0; i < 2; i++) {

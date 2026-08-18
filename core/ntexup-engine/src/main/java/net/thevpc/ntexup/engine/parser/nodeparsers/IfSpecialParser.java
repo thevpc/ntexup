@@ -12,7 +12,7 @@ import net.thevpc.ntexup.engine.parser.ctrlnodes.CtrlNTxNodeIf;
 import net.thevpc.nuts.concurrent.NScoredCallable;
 import net.thevpc.nuts.elem.NElement;
 import net.thevpc.nuts.elem.NObjectElement;
-import net.thevpc.nuts.elem.NUpletElement;
+import net.thevpc.nuts.elem.NTupleElement;
 import net.thevpc.nuts.text.NMsg;
 
 import java.util.ArrayList;
@@ -80,8 +80,8 @@ public class IfSpecialParser extends NTxNodeParserBase {
                 }
                 break;
             }
-            case NAMED_UPLET: {
-                NUpletElement obj = tsonElement.asUplet().get();
+            case NAMED_TUPLE: {
+                NTupleElement obj = tsonElement.asTuple().get();
                 if (obj.isNamed(id())) {
                     return NScoredCallable.ofValid( () -> {
                         _logError(NMsg.ofC("missing if body from %s", NTxUtils.snippet(tsonElement)), context);

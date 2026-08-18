@@ -41,13 +41,13 @@ public class NTxGridBuilder implements NTxNodeBuilder {
                             //just ignore
                         }
                         return true;
-                    } else if (p.isUplet() && p.asUplet().get().size() == 2 && p.asUplet().get().get(0).get().isInt() && p.asUplet().get().get(1).get().isInt()) {
+                    } else if (p.isTuple() && p.asTuple().get().size() == 2 && p.asTuple().get().get(0).get().isInt() && p.asTuple().get().get(1).get().isInt()) {
                         info.read();
                         if (info.node().getPropertyValue(NTxPropName.COLUMNS).isEmpty()) {
-                            info.node().setProperty(NTxProp.of(NTxPropName.COLUMNS, p.asUplet().get().get(0).get()));
+                            info.node().setProperty(NTxProp.of(NTxPropName.COLUMNS, p.asTuple().get().get(0).get()));
                         }
                         if (info.node().getPropertyValue(NTxPropName.ROWS).isEmpty()) {
-                            info.node().setProperty(NTxProp.of(NTxPropName.ROWS, p.asUplet().get().get(1).get()));
+                            info.node().setProperty(NTxProp.of(NTxPropName.ROWS, p.asTuple().get().get(1).get()));
                         }
                         return true;
                     } else {

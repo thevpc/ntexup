@@ -65,12 +65,12 @@ public class DefaultNTxDocumentItemParserFactory
             case ARRAY: {
                 return parseNodeAsNoNameBloc(context);
             }
-            case UPLET: {
+            case TUPLE: {
                 return parseNodeAsUplet(context);
             }
             case FULL_OBJECT:
             case NAMED_OBJECT:
-            case NAMED_UPLET:
+            case NAMED_TUPLE:
             case FULL_ARRAY:
             case NAMED_ARRAY: {
                 return parseNodeAsNamedListContainer(c,context);
@@ -164,7 +164,7 @@ public class DefaultNTxDocumentItemParserFactory
                 return p.parseNode(context);
             }
         }
-        if (c.isNamedUplet() || c.isAnyObject()) {
+        if (c.isNamedTuple() || c.isAnyObject()) {
             NElement finalC2 = c;
             return NScoredCallable.ofValid(() -> createCtrlNodeCall(finalC2, context));
         }
@@ -325,8 +325,8 @@ public class DefaultNTxDocumentItemParserFactory
         if (source != null && source.path().orNull() != null) {
             NPath sourcePath = source.path().orNull();
             c = NTxUtils.addCompilerDeclarationPath(c, sourcePath.toString());
-            if (c.isNamedUplet()) {
-                NUpletElementBuilder fb = (NUpletElementBuilder) c.builder();
+            if (c.isNamedTuple()) {
+                NTupleElementBuilder fb = (NTupleElementBuilder) c.builder();
                 for (int i = 0; i < fb.params().size(); i++) {
                     NElement u = NTxUtils.addCompilerDeclarationPath(fb.get(i).orNull(), sourcePath.toString());
                     fb.setAt(i, u);
@@ -349,8 +349,8 @@ public class DefaultNTxDocumentItemParserFactory
                 context.log(NMsg.ofC("unexpected call : %s (ignored)", c).asError(), context.source());
             }
         } else {
-            if (c.isNamedUplet()) {
-                NUpletElementBuilder fb = (NUpletElementBuilder) c.builder();
+            if (c.isNamedTuple()) {
+                NTupleElementBuilder fb = (NTupleElementBuilder) c.builder();
                 for (int i = 0; i < fb.params().size(); i++) {
                     __args.add(fb.get(i).orNull());
                 }

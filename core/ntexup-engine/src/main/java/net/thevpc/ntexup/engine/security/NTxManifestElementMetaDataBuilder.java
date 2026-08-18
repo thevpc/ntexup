@@ -191,7 +191,7 @@ public class NTxManifestElementMetaDataBuilder {
             return publishedInfo;
         } catch (Exception e) {
             throw new NIllegalArgumentException(NMsg.ofC("TSA timestamping failed : %s",
-                    NExceptions.ofUncheckedException(e)).asWarning(), NExceptions.ofUncheckedException(e));
+                    NException.ofUncheckedException(e)).asWarning(), NException.ofUncheckedException(e));
         }
     }
 

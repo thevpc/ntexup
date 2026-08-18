@@ -22,12 +22,11 @@ public class NTxHighlighterMapper {
         NTxGraphics g = ctx.graphics();
         NTxNodeRendererUtils.applyFont(g, ctx);
         //String[] allLines = code.trim().split("[\n]");
-        NTexts ttt = NTexts.of();
         NTextTransformConfig nTextTransformConfig = new NTextTransformConfig();
         nTextTransformConfig.flatten(true);
         nTextTransformConfig.normalize(true);
         nTextTransformConfig.processTitleNumbers(true);
-        processNTextRecursively(ttt.normalize(parsedText, nTextTransformConfig), result, ctx, new NTextStyle[0], cache);
+        processNTextRecursively(NText.normalize(parsedText, nTextTransformConfig), result, ctx, new NTextStyle[0], cache);
         result.computeBound(ctx);
     }
 

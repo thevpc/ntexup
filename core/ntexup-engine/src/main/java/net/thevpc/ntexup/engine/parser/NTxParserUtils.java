@@ -35,8 +35,8 @@ public class NTxParserUtils {
                 break;
             }
 
-            case UPLET:
-            case NAMED_UPLET:
+            case TUPLE:
+            case NAMED_TUPLE:
 
             case NULL:
                 return true;

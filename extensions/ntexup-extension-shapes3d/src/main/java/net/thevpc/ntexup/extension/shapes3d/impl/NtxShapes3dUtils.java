@@ -437,8 +437,8 @@ public class NtxShapes3dUtils {
                 return m;
             }
         }
-        if (e.isAnyUplet()) {
-            NUpletElement np = e.asUplet().get();
+        if (e.isAnyTuple()) {
+            NTupleElement np = e.asTuple().get();
             if (e.isNamed()) {
                 String name = np.name().orElse(null);
                 if (name != null) {

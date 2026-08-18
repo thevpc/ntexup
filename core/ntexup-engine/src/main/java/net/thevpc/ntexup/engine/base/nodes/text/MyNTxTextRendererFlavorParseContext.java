@@ -5,7 +5,7 @@ import net.thevpc.ntexup.api.renderer.text.NTxTextRendererFlavorParseContext;
 import net.thevpc.ntexup.api.renderer.text.NTxTextToken;
 import net.thevpc.ntexup.api.renderer.text.NTxTextTokenFlavored;
 import net.thevpc.nuts.collections.NCharQueue;
-import net.thevpc.nuts.util.NExceptions;
+import net.thevpc.nuts.util.NException;
 import net.thevpc.nuts.util.NAssert;
 import net.thevpc.nuts.text.NMsg;
 
@@ -71,7 +71,7 @@ class MyNTxTextRendererFlavorParseContext implements NTxTextRendererFlavorParseC
     public List<NTxTextToken> parseDefault(String[] flavorIds, String[] customStartStops, Function<String,String> converter) {
         NAssert.requireNamedNonNull(flavorIds, "flavorIds");
         if(customStartStops!=null && customStartStops.length%2!=0){
-            throw NExceptions.ofSafeAssertException(NMsg.ofC("customStartStops shoud be a series of start/stop tokens, hence it must be even"));
+            throw NException.ofSafeAssertException(NMsg.ofC("customStartStops shoud be a series of start/stop tokens, hence it must be even"));
         }
 
         String stop=null;

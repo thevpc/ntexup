@@ -43,7 +43,7 @@ public class NTxDouble4 implements NToElement {
 
     @Override
     public NElement toElement() {
-        return NElement.ofUplet(
+        return NElement.ofTuple(
                 NElement.ofDouble(getX1()),
                 NElement.ofDouble(getX2()),
                 NElement.ofDouble(getX3()),

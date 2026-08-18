@@ -320,14 +320,14 @@ public class NTxUtils {
             return (NElement) o;
         }
         if (o instanceof Point2D.Double) {
-            return NElement.ofUplet(
+            return NElement.ofTuple(
                     toElement(((Point2D.Double) o).getX()),
                     toElement(((Point2D.Double) o).getY())
             );
         }
         if (o instanceof NTxBounds2D) {
             NTxBounds2D oo = (NTxBounds2D) o;
-            return NElement.ofUplet(
+            return NElement.ofTuple(
                     NElement.ofDouble(oo.minX()),
                     NElement.ofDouble(oo.minY()),
                     NElement.ofDouble(oo.widthX()),

@@ -20,7 +20,7 @@ import net.thevpc.nuts.io.NCompress;
 import net.thevpc.nuts.io.NPath;
 import net.thevpc.nuts.io.NPathRenameOptions;
 import net.thevpc.nuts.text.NMsg;
-import net.thevpc.nuts.util.NExceptions;
+import net.thevpc.nuts.util.NException;
 import net.thevpc.nuts.util.NIllegalArgumentException;
 import net.thevpc.nuts.util.NStringUtils;
 
@@ -134,7 +134,7 @@ public class NTxHtmlDocumentRenderer extends NTxDocumentStreamRendererBase imple
                 ImageIO.write(bi, "png", imageFile.mkParentDirs().toFile().get());
                 engine.log().log(NMsg.ofC("rendered page %s to %s", pageIndex, imageFile));
             } catch (IOException ex) {
-                throw NExceptions.ofUncheckedException(ex);
+                throw NException.ofUncheckedException(ex);
             }
             pageIndex++;
         }

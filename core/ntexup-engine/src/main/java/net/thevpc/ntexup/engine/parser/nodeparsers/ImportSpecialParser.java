@@ -9,7 +9,7 @@ import net.thevpc.ntexup.engine.parser.NTxNodeParserBase;
 import net.thevpc.ntexup.engine.parser.ctrlnodes.CtrlNTxNodeImport;
 import net.thevpc.nuts.concurrent.NScoredCallable;
 import net.thevpc.nuts.elem.NElement;
-import net.thevpc.nuts.elem.NUpletElement;
+import net.thevpc.nuts.elem.NTupleElement;
 import net.thevpc.nuts.text.NMsg;
 
 public class ImportSpecialParser extends NTxNodeParserBase {
@@ -22,8 +22,8 @@ public class ImportSpecialParser extends NTxNodeParserBase {
     public NScoredCallable<NTxItem> parseNode(NTxResolutionContext context) {
         NElement tsonElement = context.element();
         switch (tsonElement.type()) {
-            case NAMED_UPLET: {
-                NUpletElement uplet = tsonElement.asUplet().get();
+            case NAMED_TUPLE: {
+                NTupleElement uplet = tsonElement.asTuple().get();
                 if (uplet.isNamed("import")) {
                     return NScoredCallable.ofValid( () -> new CtrlNTxNodeImport(context.source(),uplet.params()));
                 }

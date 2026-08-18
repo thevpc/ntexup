@@ -8,7 +8,7 @@ import net.thevpc.ntexup.api.document.node.NTxNodeType;
 import net.thevpc.ntexup.api.util.NTxUtils;
 import net.thevpc.ntexup.engine.parser.ctrlnodes.CtrlNTxNodeInclude;
 import net.thevpc.nuts.concurrent.NScoredCallable;
-import net.thevpc.nuts.elem.NUpletElement;
+import net.thevpc.nuts.elem.NTupleElement;
 import net.thevpc.nuts.text.NMsg;
 import net.thevpc.nuts.elem.NElement;
 
@@ -22,8 +22,8 @@ public class IncludeSpecialParser extends NTxNodeParserBase {
     public NScoredCallable<NTxItem> parseNode(NTxResolutionContext context) {
         NElement tsonElement = context.element();
         switch (tsonElement.type()) {
-            case NAMED_UPLET: {
-                NUpletElement uplet = tsonElement.asUplet().get();
+            case NAMED_TUPLE: {
+                NTupleElement uplet = tsonElement.asTuple().get();
                 if (uplet.isNamed("include")) {
                     return NScoredCallable.ofValid( () -> new CtrlNTxNodeInclude(context.source(),uplet.params()));
                 }

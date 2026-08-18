@@ -14,7 +14,7 @@ public class NTxItemListParser {
         NTxItemList pg = new NTxItemList();
 
         switch (ff.type()) {
-            case NAMED_UPLET:
+            case NAMED_TUPLE:
 
             case OBJECT:
             case FULL_OBJECT:

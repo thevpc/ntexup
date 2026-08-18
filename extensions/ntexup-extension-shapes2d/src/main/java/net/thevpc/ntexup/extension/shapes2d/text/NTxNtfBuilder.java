@@ -7,7 +7,7 @@ import net.thevpc.ntexup.api.extension.NTxNodeBuilder;
 import net.thevpc.ntexup.api.renderer.NTxRendererContext;
 import net.thevpc.ntexup.api.renderer.text.NTxTextOptions;
 import net.thevpc.ntexup.api.renderer.text.NTxTextRendererBuilder;
-import net.thevpc.nuts.text.NTexts;
+import net.thevpc.nuts.text.NText;
 
 public class NTxNtfBuilder implements NTxNodeBuilder {
 
@@ -22,7 +22,7 @@ public class NTxNtfBuilder implements NTxNodeBuilder {
     }
 
     private void renderTextBuildText(String text, NTxTextOptions options, NTxRendererContext rendererContext, NTxTextRendererBuilder builder) {
-        rendererContext.highlightNutsText("ntf", text, NTexts.of().of(text), builder);
+        rendererContext.highlightNutsText("ntf", text, NText.of(text), builder);
     }
 
 }

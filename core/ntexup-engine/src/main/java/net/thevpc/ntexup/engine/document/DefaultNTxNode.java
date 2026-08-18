@@ -910,7 +910,7 @@ public class DefaultNTxNode implements NTxNode, Cloneable{
             }
             return o.build();
         } else {
-            NUpletElementBuilder o = NElement.ofUpletBuilder().name(nodeType);
+            NTupleElementBuilder o = NElement.ofTupleBuilder().name(nodeType);
             if (styleClasses.length > 0) {
                 o.addAnnotation(null, Arrays.stream(styleClasses).map(x -> NElement.ofString(x)).toArray(NElement[]::new));
             }

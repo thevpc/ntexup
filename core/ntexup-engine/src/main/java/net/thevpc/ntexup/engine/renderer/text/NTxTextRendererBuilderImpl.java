@@ -17,11 +17,10 @@ import net.thevpc.ntexup.api.renderer.NTxGraphics;
 import net.thevpc.ntexup.api.renderer.NTxRendererContext;
 import net.thevpc.nuts.elem.NElement;
 import net.thevpc.nuts.elem.NPairElement;
-import net.thevpc.nuts.elem.NUpletElement;
+import net.thevpc.nuts.elem.NTupleElement;
 import net.thevpc.nuts.text.NText;
 import net.thevpc.nuts.text.NTextStyle;
 import net.thevpc.nuts.text.NTextStyles;
-import net.thevpc.nuts.text.NTexts;
 import net.thevpc.nuts.util.NOptional;
 import net.thevpc.nuts.util.NStringUtils;
 
@@ -65,7 +64,6 @@ public class NTxTextRendererBuilderImpl implements NTxTextRendererBuilder {
             appendPlain(rawText, ctx);
             return;
         }
-        NTexts nTexts = NTexts.of();
         List<NTextStyle> styles = new ArrayList<>();
         if (options.bold != null && options.bold) {
             styles.add(NTextStyle.bold());
@@ -91,7 +89,7 @@ public class NTxTextRendererBuilderImpl implements NTxTextRendererBuilder {
         if (options.backgroundColorIndex != null) {
             styles.add(NTextStyle.primary(options.backgroundColorIndex));
         }
-        NText nText = nTexts.ofStyled(rawText, NTextStyles.of(styles.toArray(new NTextStyle[0])));
+        NText nText = NText.ofStyled(rawText, NTextStyles.of(styles.toArray(new NTextStyle[0])));
         appendNText("", rawText, nText, ctx);
     }
 
@@ -413,7 +411,7 @@ public class NTxTextRendererBuilderImpl implements NTxTextRendererBuilder {
             return null;
         }
         List<NTxTextPathCurve> curvesOk = new ArrayList<>();
-        if (e.isNamedUplet()) {
+        if (e.isNamedTuple()) {
             NOptional<NTxTextPathCurve> cc = parseCurve(e);
             if (cc.isPresent()) {
                 curvesOk.add(cc.get());
@@ -466,8 +464,8 @@ public class NTxTextRendererBuilderImpl implements NTxTextRendererBuilder {
     }
 
     private static NOptional<NTxTextPathCurve> parseCurve(NElement child) {
-        if (child.isNamedUplet()) {
-            NUpletElement u = child.asUplet().get();
+        if (child.isNamedTuple()) {
+            NTupleElement u = child.asTuple().get();
             String name = u.name().get();
             switch (name) {
                 case "points":

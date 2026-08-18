@@ -61,7 +61,7 @@ public class NTxFunctionPlotInfoLoader {
     public java.util.List<NTxFunctionPlotInfo> loadBody(NElement element, NTxNodeBuilderContext buildContext) {
         NListContainerElement nListContainerElement = element.asListContainer().orNull();
         java.util.List<NTxFunctionPlotInfo> all = new ArrayList<>();
-        if (nListContainerElement != null && !nListContainerElement.isAnyUplet()) {
+        if (nListContainerElement != null && !nListContainerElement.isAnyTuple()) {
             List<NElement> c = nListContainerElement.children();
             for (NElement child : c) {
                 if (child.isNamedObject()) {
@@ -157,8 +157,8 @@ public class NTxFunctionPlotInfoLoader {
             } else if (e.isPair()) {
                 NPairElement p = e.asPair().get();
                 NElement k = p.key();
-                if (k.isNamedUplet("f")) {
-                    NUpletElement fk = k.asUplet().get();
+                if (k.isNamedTuple("f")) {
+                    NTupleElement fk = k.asTuple().get();
                     if (fk.params().size() == 1 && fk.params().get(0).isName()) {
                         i.fexpr = p.value();
                         i.var1 = fk.params().get(0).asNameValue().get();

@@ -7,7 +7,7 @@ package net.thevpc.ntexup.api.document.elem2d;
 import net.thevpc.nuts.elem.NElement;
 import net.thevpc.nuts.elem.NNumberElement;
 import net.thevpc.nuts.elem.NToElement;
-import net.thevpc.nuts.elem.NUpletElement;
+import net.thevpc.nuts.elem.NTupleElement;
 
 import java.util.Objects;
 
@@ -57,8 +57,8 @@ public class NTxSize implements NToElement {
                     return ofParent(n.doubleValue());
                 }
             }
-        } else if(b.isUplet()){
-            NUpletElement u = b.asUplet().get();
+        } else if(b.isTuple()){
+            NTupleElement u = b.asTuple().get();
             return ofBounds(
                     u.get(0).get().asNumberValue().get().doubleValue(),
                     u.get(1).get().asNumberValue().get().doubleValue()
@@ -148,7 +148,7 @@ public class NTxSize implements NToElement {
             case REM:
                 return NElement.ofNumber(value + "rem");
             case BOUNDS:
-                return NElement.ofUplet(NElement.ofDouble(value), NElement.ofDouble(value2));
+                return NElement.ofTuple(NElement.ofDouble(value), NElement.ofDouble(value2));
             case PX:
                 return NElement.ofDouble(value, "px");
         }

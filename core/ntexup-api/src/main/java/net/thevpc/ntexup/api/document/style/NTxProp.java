@@ -11,7 +11,6 @@ import net.thevpc.ntexup.api.source.NTxSource;
 import net.thevpc.ntexup.api.util.NTxUtils;
 import net.thevpc.nuts.elem.NElement;
 import net.thevpc.nuts.elem.NToElement;
-import net.thevpc.nuts.util.NNameFormat;
 
 import java.util.Arrays;
 import java.util.Objects;
@@ -50,11 +49,11 @@ public class NTxProp implements NTxItem, NToElement {
     }
 
     public static NTxProp ofDouble2(String name, double x, double y) {
-        return of(name, NElement.ofUplet(NElement.ofDouble(x), NElement.ofDouble(y)));
+        return of(name, NElement.ofTuple(NElement.ofDouble(x), NElement.ofDouble(y)));
     }
 
     public static NTxProp ofHPoint2D(String name, double x, double y) {
-        return of(name, NElement.ofUplet(NElement.ofDouble(x), NElement.ofDouble(y)));
+        return of(name, NElement.ofTuple(NElement.ofDouble(x), NElement.ofDouble(y)));
     }
 
     public static NTxProp ofDouble2(String name, NTxDouble2 d) {

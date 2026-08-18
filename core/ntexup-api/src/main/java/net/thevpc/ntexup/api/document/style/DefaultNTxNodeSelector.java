@@ -88,7 +88,7 @@ public class DefaultNTxNodeSelector implements NTxStyleRuleSelector {
 
     @Override
     public NElement toElement() {
-        return NElement.ofUplet(
+        return NElement.ofTuple(
                 items.stream().map(x -> NElement.ofNameOrString(x.toString())).toArray(NElement[]::new)
         );
     }

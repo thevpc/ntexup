@@ -132,8 +132,8 @@ public class NTxNodeEval implements NTxObjectEvalContext {
                 // not a variable, perhaps some enum value like red, south; etc...?
                 return elementExpr;
             }
-            case NAMED_UPLET: {
-                NUpletElement ff = ((NUpletElement) elementExpr);
+            case NAMED_TUPLE: {
+                NTupleElement ff = ((NTupleElement) elementExpr);
                 String functionName = ff.name().get();
                 NTxFunctionCallContext args = context.engine().createFunctionArgs(functionName, ff.params().toArray(new NElement[0]), context);
                 NOptional<NTxFunction> f = context.getFunction(functionName/*, args.args()*/);
@@ -170,11 +170,11 @@ public class NTxNodeEval implements NTxObjectEvalContext {
                 NUnaryOperatorElement ff1 = ((NUnaryOperatorElement) elementExpr);
                 return _evalUnaryOperator(ff1);
             }
-            case UPLET: {
-                NUpletElement ff = ((NUpletElement) elementExpr);
+            case TUPLE: {
+                NTupleElement ff = ((NTupleElement) elementExpr);
                 List<NElement> r = ff.params()
                         .stream().map(x -> eval(x)).collect(Collectors.toList());
-                NUpletElement o = ff.builder().setParams(r).build();
+                NTupleElement o = ff.builder().setParams(r).build();
                 if (o.params().size() == 1) {
                     NElement ee = o.params().get(0);
                     if (ee.isNumber()) {

@@ -78,8 +78,8 @@ public class NTxValue {
                         break;
                     }
 
-                    case UPLET:
-                    case NAMED_UPLET: {
+                    case TUPLE:
+                    case NAMED_TUPLE: {
                         NListContainerElement te = (NListContainerElement) element;
                         name = NTxUtils.uid(te.toNamed().flatMap(NNamedElement::name).orNull());
                         List<NElement> a = te.children();
@@ -203,8 +203,8 @@ public class NTxValue {
                 case INT: {
                     return NTxValue.of(te.asIntValue().get()).asPaint();
                 }
-                case UPLET:
-                case NAMED_UPLET: {
+                case TUPLE:
+                case NAMED_TUPLE: {
                     NOptional<int[]> ri = asIntArray();
                     if (ri.isPresent()) {
                         int[] ints = ri.get();
@@ -341,8 +341,8 @@ public class NTxValue {
                 case INT: {
                     return NTxValue.of(te.asIntValue().get()).asColor();
                 }
-                case UPLET:
-                case NAMED_UPLET: {
+                case TUPLE:
+                case NAMED_TUPLE: {
                     NOptional<int[]> ri = asIntArray();
                     if (ri.isPresent()) {
                         int[] ints = ri.get();
@@ -757,9 +757,9 @@ public class NTxValue {
                     }
                     return NOptional.of(te.asObject().get().children().toArray(new NElement[0]));
                 }
-                case UPLET:
-                case NAMED_UPLET: {
-                    return NOptional.of(te.asUplet().get().children().toArray(new NElement[0]));
+                case TUPLE:
+                case NAMED_TUPLE: {
+                    return NOptional.of(te.asTuple().get().children().toArray(new NElement[0]));
                 }
             }
         }
@@ -1223,8 +1223,8 @@ public class NTxValue {
         if (element instanceof NTxArrowType) {
             return NOptional.of(new NTxArrow((NTxArrowType) element));
         }
-        if (element instanceof NUpletElement && ((NUpletElement) element).isNamed()) {
-            NUpletElement f = (NUpletElement) element;
+        if (element instanceof NTupleElement && ((NTupleElement) element).isNamed()) {
+            NTupleElement f = (NTupleElement) element;
             NOptional<NTxArrowType> u = NTxValue.of(f.name().orNull()).asArrowType();
             Double width = null;
             Double height = null;
@@ -1360,7 +1360,7 @@ public class NTxValue {
     }
 
     public boolean isFunction() {
-        return element instanceof NUpletElement && ((NUpletElement) element).type() == NElementType.NAMED_UPLET;
+        return element instanceof NTupleElement && ((NTupleElement) element).type() == NElementType.NAMED_TUPLE;
     }
 
     public boolean hasName() {
@@ -1371,8 +1371,8 @@ public class NTxValue {
         if (element instanceof NElement) {
             NElement e = (NElement) element;
             e = simplifyContainer(e);
-            if(e.isUplet()){
-                NUpletElement u = e.asUplet().get();
+            if(e.isTuple()){
+                NTupleElement u = e.asTuple().get();
                 if(u.params().size()==2){
                     for (NElement param : u.params()) {
                         if(!NTxValue.of(param).isNumber()){
@@ -1411,8 +1411,8 @@ public class NTxValue {
     }
 
     public static NElement simplifyContainer(NElement e) {
-        if (e.isUplet()) {
-            NUpletElement u = e.asUplet().get();
+        if (e.isTuple()) {
+            NTupleElement u = e.asTuple().get();
             if (u.params().size() == 1) {
                 return simplifyContainer(u.params().get(0));
             }

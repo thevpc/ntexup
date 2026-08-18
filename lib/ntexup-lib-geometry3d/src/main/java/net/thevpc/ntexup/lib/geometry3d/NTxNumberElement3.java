@@ -141,7 +141,7 @@ public class NTxNumberElement3 implements NToElement {
 
     @Override
     public NElement toElement() {
-        return NElement.ofUplet(
+        return NElement.ofTuple(
                 getX(),
                 getY(),
                 getZ()
