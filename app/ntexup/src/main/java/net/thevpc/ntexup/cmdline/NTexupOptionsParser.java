@@ -4,7 +4,6 @@ import net.thevpc.ntexup.cmdline.options.*;
 import net.thevpc.ntexup.config.NTxViewerConfigManager;
 import net.thevpc.nuts.platform.NSysEditorFamily;
 import net.thevpc.nuts.core.NSession;
-import net.thevpc.nuts.cmdline.NArg;
 import net.thevpc.nuts.cmdline.NCmdLine;
 import net.thevpc.nuts.io.NPath;
 import net.thevpc.nuts.util.NStringUtils;
@@ -16,30 +15,30 @@ public class NTexupOptionsParser {
         while (!cmdLine.isEmpty()) {
             while (!cmdLine.isEmpty()) {
                 cmdLine.matcher()
-                        .with("show", "open").matchAny(a -> {
+                        .when("show", "open").asArg(a -> {
                             options.getOrCreate(ShowFrameActionOptions.class).ifNoProjectViewCurrentDirectory = true;
                             if (a.getStringValue().isPresent()) {
                                 options.getOrCreate(ShowActionOptions.class).addPath(NPath.of(a.stringValue()));
                             }
                             continueParsingShow(cmdLine, options);
                         })
-                        .with("show-html").matchAny(a -> {
+                        .when("show-html").asArg(a -> {
                             options.getOrCreate(ShowHtmlActionOptions.class).html = true;
                             if (a.getStringValue().isPresent()) {
                                 options.getOrCreate(ShowHtmlActionOptions.class).path=NPath.of(a.stringValue());
                             }
                             continueParsingShow(cmdLine, options);
                         })
-                        .with("show-doc").matchTrueFlag(a -> {
+                        .when("show-doc").asTrueFlag(a -> {
                             options.getOrCreate(ShowFrameActionOptions.class);
                             options.getOrCreate(ShowActionOptions.class).addPath(NPath.of("https://github.com/thevpc/ntexup-doc-slides.git"));
                             continueShowDoc(cmdLine, options);
                         })
-                        .with("generate-doc").matchTrueFlag(a -> {
+                        .when("generate-doc").asTrueFlag(a -> {
                             options.getOrCreate(GenerateActionOptions.class).addPath(NPath.of("https://github.com/thevpc/ntexup-doc-slides.git"));
                             continueParsingGeneratePdfDoc(cmdLine, options);
                         })
-                        .with("reopen").matchTrueFlag(a -> {
+                        .when("reopen").asTrueFlag(a -> {
                             NTxViewerConfigManager c = new NTxViewerConfigManager();
                             NPath p = c.getLatestProjectPath();
                             if (p != null) {
@@ -47,30 +46,30 @@ public class NTexupOptionsParser {
                             }
                             continueParsingReopen(cmdLine, options);
                         })
-                        .with("build-repo").matchAny(a -> {
+                        .when("build-repo").asArg(a -> {
                             options.getOrCreate(BuildRepoActionOptions.class);
                             if (a.getStringValue().isPresent()) {
                                 options.getOrCreate(BuildRepoActionOptions.class).addPath(NPath.of(a.stringValue()));
                             }
                             continueParsingBuildRepository(cmdLine, options);
                         })
-                        .with("list-templates").matchFlag(a -> {
+                        .when("list-templates").asFlag(a -> {
                             options.getOrCreate(ListTemplatesActionOptions.class);
                             continueParsingListTemplates(cmdLine, options);
                         })
-                        .with("generate", "pdf").matchFlag(a -> {
+                        .when("generate", "pdf").asFlag(a -> {
                             options.getOrCreate(GenerateActionOptions.class);
                             continueParsingGeneratePdf(cmdLine, options);
                         })
-                        .with("new").matchTrueFlag(a -> {
+                        .when("new").asTrueFlag(a -> {
                             options.getOrCreate(NewActionOptions.class);
                             continueParsingNew(cmdLine, options);
                         })
-                        .with("--gui").matchFlag(a -> {
+                        .when("--gui").asFlag(a -> {
                             options.getOrCreate(ShowFrameActionOptions.class);
                             NSession.of().gui(a.booleanValue());
                         })
-                        .with("install-editor-syntax").matchEntry(a -> {
+                        .when("install-editor-syntax").asEntry(a -> {
                             EditorActionOptions w = options.getOrCreate(EditorActionOptions.class);
                             String s = NStringUtils.firstNonBlank(a.getStringValue().orNull(), "all");
                             if (NStringUtils.strip(s).equalsIgnoreCase("all")) {
@@ -80,10 +79,10 @@ public class NTexupOptionsParser {
                             }
                             while (!cmdLine.isEmpty()) {
                                 cmdLine.matcher()
-                                        .with("--force","-f").matchFlag(aa -> {
+                                        .when("--force","-f").asFlag(aa -> {
                                             w.setForce(aa.booleanValue());
                                         })
-                                        .withNonOption().matchAny(aa -> {
+                                        .whenNonOption().asArg(aa -> {
                                             String ss = NStringUtils.strip(aa.asString().orNull());
                                             if (NStringUtils.strip(ss).equalsIgnoreCase("all")) {
                                                 w.getSyntaxInfo().addAll(Arrays.asList(NSysEditorFamily.values()));
@@ -91,14 +90,15 @@ public class NTexupOptionsParser {
                                                 w.getSyntaxInfo().addAll(NSysEditorFamily.parseSet(ss).get());
                                             }
                                         })
-                                        .requireDefaults();
+                                        .withDefaults()
+                                        .require()
+                                ;
                             }
                         })
-                        .with("dump").matchFlag(a -> {
+                        .when("dump").asFlag(a -> {
                             options.getOrCreate(DumpDocumentOptions.class);
                         })
-                        .withCondition(c -> {
-                            NArg u = c.peek().get();
+                        .whenArg(u -> {
                             if (!u.isOption() && u.isNonOption()) {
                                 String m = u.image();
                                 if (m.equals(".") || m.equals("..") || m.contains("/") || m.contains("\\")) {
@@ -106,10 +106,12 @@ public class NTexupOptionsParser {
                                 }
                             }
                             return false;
-                        }).matchAny(a -> {
+                        }).asArg(a -> {
                             options.getOrCreate(ShowActionOptions.class).addPath(NPath.of(a.image()));
                         })
-                        .requireDefaults();
+                        .withDefaults()
+                        .require()
+                ;
             }
         }
         if(options.isEmpty()){
@@ -135,60 +137,68 @@ public class NTexupOptionsParser {
     private void continueParsingNew(NCmdLine cmdLine, Options options) {
         while (!cmdLine.isEmpty()) {
             cmdLine.matcher()
-                    .with("--dump").matchFlag(a -> options.getOrCreate(DumpDocumentOptions.class))
-                    .with("--show").matchFlag(a -> {
+                    .when("--dump").asFlag(a -> options.getOrCreate(DumpDocumentOptions.class))
+                    .when("--show").asFlag(a -> {
                         options.getOrCreate(NewActionOptions.class).openViewer = true;
                     })
-                    .with("--show-doc").matchFlag(a -> {
+                    .when("--show-doc").asFlag(a -> {
                         options.getOrCreate(ShowFrameActionOptions.class);
                         options.getOrCreate(ShowActionOptions.class).addPath(NPath.of("https://github.com/thevpc/ntexup-doc-slides.git"));
                     })
-                    .with("--generate-pdf").matchFlag(a -> {
+                    .when("--generate-pdf").asFlag(a -> {
                         options.getOrCreate(NewActionOptions.class).generatePdf = true;
                         if (a.getStringValue().isPresent()) {
                             options.getOrCreate(NewActionOptions.class).generatePdfOutput = NPath.of(a.stringValue());
                         }
                     })
-                    .with("--generate-doc-pdf").matchFlag(a -> {
+                    .when("--generate-doc-pdf").asFlag(a -> {
                         options.getOrCreate(GenerateActionOptions.class).outputFormat = OutputFormat.PDF;
                         options.getOrCreate(GenerateActionOptions.class).addPath(NPath.of("https://github.com/thevpc/ntexup-doc-slides.git"));
                         if (a.getStringValue().isPresent()) {
                             options.getOrCreate(GenerateActionOptions.class).output = NPath.of(a.stringValue());
                         }
                     })
-                    .with("--template", "-t").matchEntry(a -> options.getOrCreate(NewActionOptions.class).templateUrl = a.stringValue())
-                    .withNonOption().matchAny(a -> options.getOrCreate(NewActionOptions.class).addPath(NPath.of(a.image())))
-                    .requireDefaults();
+                    .when("--template", "-t").asEntry(a -> options.getOrCreate(NewActionOptions.class).templateUrl = a.stringValue())
+                    .whenNonOption().asArg(a -> options.getOrCreate(NewActionOptions.class).addPath(NPath.of(a.image())))
+                    .withDefaults()
+                    .require()
+            ;
         }
     }
 
     private void continueParsingReopen(NCmdLine cmdLine, Options options) {
         while (!cmdLine.isEmpty()) {
             cmdLine.matcher()
-                    .with("--dump").matchFlag(a -> options.getOrCreate(DumpDocumentOptions.class))
-                    .with("--show-doc").matchFlag(a -> {
+                    .when("--dump").asFlag(a -> options.getOrCreate(DumpDocumentOptions.class))
+                    .when("--show-doc").asFlag(a -> {
                         options.getOrCreate(ShowFrameActionOptions.class);
                         options.getOrCreate(ShowActionOptions.class).addPath(NPath.of("https://github.com/thevpc/ntexup-doc-slides.git"));
                     })
-                    .withNonOption().matchAny(a -> options.getOrCreate(ShowActionOptions.class).addPath(NPath.of(a.image())))
-                    .requireDefaults();
+                    .whenNonOption().asArg(a -> options.getOrCreate(ShowActionOptions.class).addPath(NPath.of(a.image())))
+                    .withDefaults()
+                    .require()
+            ;
         }
     }
 
     private void continueParsingBuildRepository(NCmdLine cmdLine, Options options) {
         while (!cmdLine.isEmpty()) {
             cmdLine.matcher()
-                    .with("--dump").matchFlag(a -> options.getOrCreate(DumpDocumentOptions.class))
-                    .withNonOption().matchAny(a -> options.getOrCreate(BuildRepoActionOptions.class).addPath(NPath.of(a.image())))
-                    .requireDefaults();
+                    .when("--dump").asFlag(a -> options.getOrCreate(DumpDocumentOptions.class))
+                    .whenNonOption().asArg(a -> options.getOrCreate(BuildRepoActionOptions.class).addPath(NPath.of(a.image())))
+                    .withDefaults()
+                    .require()
+            ;
         }
     }
 
     private void continueParsingListTemplates(NCmdLine cmdLine, Options options) {
         while (!cmdLine.isEmpty()) {
             cmdLine.matcher()
-                    .with("--dump").matchFlag(a -> options.getOrCreate(DumpDocumentOptions.class))
-                    .requireDefaults();
+                    .when("--dump").asFlag(a -> options.getOrCreate(DumpDocumentOptions.class))
+                    .withDefaults()
+                    .require()
+            ;
         }
     }
 
@@ -200,18 +210,17 @@ public class NTexupOptionsParser {
     private void continueParsingGeneratePdf(NCmdLine cmdLine, Options options) {
         while (!cmdLine.isEmpty()) {
             cmdLine.matcher()
-                    .with("--output").matchEntry(a -> {
+                    .when("--output").asEntry(a -> {
                         options.getOrCreate(GenerateActionOptions.class).output = NPath.of(a.stringValue());
                     })
-                    .with("--dump").matchFlag(a -> options.getOrCreate(DumpDocumentOptions.class))
-                    .withCondition(c -> {
-                        NArg a = c.peek().get();
-                        return a.isOption() && a.key().startsWith("--var-");
-                    }).matchEntry(a -> {
+                    .when("--dump").asFlag(a -> options.getOrCreate(DumpDocumentOptions.class))
+                    .whenArg(a -> a.key().startsWith("--var-")).asEntry(a -> {
                         options.vars.put(a.key().substring("--var-".length()), a.stringValue());
                     })
-                    .withNonOption().matchAny(a -> options.getOrCreate(GenerateActionOptions.class).addPath(NPath.of(a.image())))
-                    .requireDefaults();
+                    .whenNonOption().asArg(a -> options.getOrCreate(GenerateActionOptions.class).addPath(NPath.of(a.image())))
+                    .withDefaults()
+                    .require()
+            ;
         }
         if (options.getOrCreate(GenerateActionOptions.class).paths.isEmpty()) {
             options.getOrCreate(GenerateActionOptions.class).addPath(NPath.ofUserDirectory());
@@ -227,8 +236,10 @@ public class NTexupOptionsParser {
 //                    }).matchEntry(a -> {
 //                        options.vars.put(a.key().substring("--var-".length()), a.stringValue());
 //                    })
-                    .withNonOption().matchAny(a -> options.getOrCreate(ShowActionOptions.class).addPath(NPath.of(a.image())))
-                    .requireDefaults();
+                    .whenNonOption().asArg(a -> options.getOrCreate(ShowActionOptions.class).addPath(NPath.of(a.image())))
+                    .withDefaults()
+                    .require()
+            ;
         }
         if (options.getOrCreate(ShowActionOptions.class).paths.isEmpty()) {
             options.getOrCreate(ShowActionOptions.class).addPath(NPath.ofUserDirectory());
