@@ -16,7 +16,6 @@ import net.thevpc.ntexup.api.log.NTxLogger;
 import net.thevpc.ntexup.api.parser.NTxItemParser;
 import net.thevpc.ntexup.api.renderer.NTxNodeRenderer;
 import net.thevpc.ntexup.api.renderer.text.NTxTextRendererBuilder;
-import net.thevpc.ntexup.api.source.NTxSource;
 import net.thevpc.ntexup.api.source.NTxSourceMonitor;
 import net.thevpc.ntexup.api.util.NTxUtils;
 import net.thevpc.ntexup.api.renderer.NTxGraphics;
@@ -348,7 +347,7 @@ public class DefaultNTxRendererContext extends NTxResolutionContextImpl implemen
         if (renderer.isPresent()) {
             renderer.get().render(this);
         } else {
-            engine().log().log(NMsg.ofC("%s for %s", renderer.getMessage().get(), NTxUtils.snippet(p)).asError(), NTxUtils.sourceOf(p));
+            engine().log().log(NMsg.ofC("%s for %s", renderer.message().get(), NTxUtils.snippet(p)).asError(), NTxUtils.sourceOf(p));
         }
     }
 
@@ -416,7 +415,7 @@ public class DefaultNTxRendererContext extends NTxResolutionContextImpl implemen
                     isSomeChange(), pageStartTime(), capabilities, imageObserver, repainter, null, false, buildContext, element, def, document, vars, definitions, functions, compiledDocument, compiledPage, parentContext, itemParser);
             renderer.get().render(d2);
         } else {
-            engine().log().log(NMsg.ofC("%s for %s", renderer.getMessage().get(), NTxUtils.snippet(childNode)).asError(), NTxUtils.sourceOf(node()));
+            engine().log().log(NMsg.ofC("%s for %s", renderer.message().get(), NTxUtils.snippet(childNode)).asError(), NTxUtils.sourceOf(node()));
         }
     }
 

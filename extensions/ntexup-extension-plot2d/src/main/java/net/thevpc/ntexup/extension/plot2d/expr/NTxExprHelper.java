@@ -6,8 +6,6 @@ import net.thevpc.nuts.expr.*;
 import net.thevpc.nuts.text.NMsg;
 import net.thevpc.nuts.util.NOptional;
 
-import java.util.List;
-
 public class NTxExprHelper {
     public static NExprMutableContext create(NTxRendererContext rendererContext){
         NExprMutableContext d = NExprContextBuilder.of()
@@ -23,7 +21,7 @@ public class NTxExprHelper {
 
     public static double asDouble(NOptional<Object>  any, NTxRendererContext rendererContext){
         if(any.isError()){
-            rendererContext.log(NMsg.ofC("evaluation error : %s",any.getMessage().get()));
+            rendererContext.log(NMsg.ofC("evaluation error : %s",any.message().get()));
         }
         return NTxValue.of(any.orNull()).asDoubleOrNumber().orElse(0.0);
     }

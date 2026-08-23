@@ -324,7 +324,7 @@ public class NTxStyleParser {
             NOptional<NTxProp[]> s = parseStyle(el, context);
             if (!s.isPresent()) {
                 s = parseStyle(el, context);
-                return NOptional.ofEmpty(s.getMessage());
+                return NOptional.ofEmpty(s.message());
             }
             styles.addAll(Arrays.asList(s.get()));
         }

@@ -146,7 +146,7 @@ public class NTxFunctionCallContextImpl implements NTxFunctionCallContext {
         if (!oc.isPresent()) {
             c = safeSupplier.get();
             context.log(NMsg.ofC("%s: arg at %s as %s could not be evaluated as %s : %s", NMsg.ofStyledKeyword(functionName), index, arg, convertName,
-                    oc.getMessage().get()).asError());
+                    oc.message().get()).asError());
         } else {
             c = oc.get();
         }

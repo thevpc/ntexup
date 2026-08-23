@@ -849,7 +849,7 @@ public class DefaultNTxEngine implements NTxEngine {
                 if (path.isRegularFile()) {
                     NOptional<NElement> f = new NTxDocStreamParser(this).parsePath(path, source);
                     if (!f.isPresent()) {
-                        log().log(f.getMessage().get().asSevere(), source);
+                        log().log(f.message().get().asSevere(), source);
                         return elementToDocument(null, source);
                     }
                     NElement d = f.get();
@@ -996,7 +996,7 @@ public class DefaultNTxEngine implements NTxEngine {
 
             NOptional<NElement> f = new NTxDocStreamParser(this).parseInputStream(is, source);
             if (!f.isPresent()) {
-                log().log(f.getMessage().get().asSevere());
+                log().log(f.message().get().asSevere());
             }
             NElement d = f.get();
             NTxCompiledDocument dd = elementToDocument(d, source);
@@ -1034,7 +1034,7 @@ public class DefaultNTxEngine implements NTxEngine {
         document.sourceMonitor().add(source);
         NOptional<NElement> u = new NTxDocStreamParser(this).parsePath(path, source);
         if (!u.isPresent()) {
-            return NOptional.ofEmpty(u.getMessage());
+            return NOptional.ofEmpty(u.message());
         }
         NElement c = u.get();
         if (bootNode) {

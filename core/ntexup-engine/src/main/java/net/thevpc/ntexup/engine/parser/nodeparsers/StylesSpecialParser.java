@@ -41,7 +41,7 @@ public class StylesSpecialParser extends NTxNodeParserBase {
                             NOptional<NTxStyleRule[]> u = NTxStyleParser.parseStyleRule(yy, f, context);
                             if (!u.isPresent()) {
                                 NTxStyleParser.parseStyleRule(yy, f, context).get();
-                                _logError(NMsg.ofC("[%s] invalid style rule  %s :: %s", NTxUtils.shortName(context.source()), NTxUtils.snippet(yy), u.getMessage().get()), context);
+                                _logError(NMsg.ofC("[%s] invalid style rule  %s :: %s", NTxUtils.shortName(context.source()), NTxUtils.snippet(yy), u.message().get()), context);
                             } else {
                                 for (NTxStyleRule r : u.get()) {
                                     styles.add(r);
@@ -61,7 +61,7 @@ public class StylesSpecialParser extends NTxNodeParserBase {
                         for (NElement yy : obj.children()) {
                             NOptional<NTxStyleRule[]> u = NTxStyleParser.parseStyleRule(yy, f, context);
                             if (!u.isPresent()) {
-                                _logError(NMsg.ofC("[%s] invalid style rule  %s :: %s", NTxUtils.shortName(context.source()), NTxUtils.snippet(yy), u.getMessage().get()), context);
+                                _logError(NMsg.ofC("[%s] invalid style rule  %s :: %s", NTxUtils.shortName(context.source()), NTxUtils.snippet(yy), u.message().get()), context);
                             } else {
                                 for (NTxStyleRule r : u.get()) {
                                     styles.add(r);
@@ -81,7 +81,7 @@ public class StylesSpecialParser extends NTxNodeParserBase {
                             for (NElement yy : obj.value().asObject().get().children()) {
                                 NOptional<NTxStyleRule[]> u = NTxStyleParser.parseStyleRule(yy, f, context);
                                 if (!u.isPresent()) {
-                                    _logError(NMsg.ofC("[%s] invalid style rule  %s :: %s", NTxUtils.shortName(context.source()), NTxUtils.snippet(yy), u.getMessage().get()), context);
+                                    _logError(NMsg.ofC("[%s] invalid style rule  %s :: %s", NTxUtils.shortName(context.source()), NTxUtils.snippet(yy), u.message().get()), context);
                                 } else {
                                     for (NTxStyleRule r : u.get()) {
                                         styles.add(r);
