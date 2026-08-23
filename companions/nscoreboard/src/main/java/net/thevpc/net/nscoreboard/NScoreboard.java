@@ -23,7 +23,7 @@ public class NScoreboard {
         List<String> lines = NStringUtils.split(NPath.of(NScoreboard.class.getResource("/names.csv")).readString(),"\n",true,true);
 
         new NScoreboardFrame(new net.thevpc.net.nscoreboard.model.NScoreboard()
-                .setTitle("<html>ENISo MIDNIGHT AI <br>2025</html>")
+                .setTitle("<html>ENISo IoT <br>Challenge</html>")
                 .setScores(
                         lines.stream().map(line->{
                             List<String> cols= NStringUtils.split(line,",",true,false);
