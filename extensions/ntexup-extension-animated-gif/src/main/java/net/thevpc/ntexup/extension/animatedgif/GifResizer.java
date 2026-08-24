@@ -33,7 +33,7 @@ import javax.imageio.stream.MemoryCacheImageOutputStream;
 import com.madgag.gif.fmsware.AnimatedGifEncoder;
 import com.madgag.gif.fmsware.GifDecoder;
 import net.thevpc.ntexup.api.engine.NTxEngine;
-import net.thevpc.nuts.app.NApp;
+import net.thevpc.nuts.app.NApplication;
 import net.thevpc.nuts.platform.NStoreType;
 import net.thevpc.nuts.io.NPath;
 import net.thevpc.nuts.util.NBlankable;
@@ -115,7 +115,7 @@ public class GifResizer {
             }
         }
 
-        NPath appFolder = NApp.of().getFolder(NStoreType.CACHE);
+        NPath appFolder = NApplication.of().getFolder(NStoreType.CACHE);
         if(appFolder==null){
             appFolder=NPath.ofUserHome().resolve(".cache/ntexup");
         }

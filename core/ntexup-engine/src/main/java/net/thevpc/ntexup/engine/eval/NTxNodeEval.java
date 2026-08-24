@@ -277,7 +277,7 @@ public class NTxNodeEval implements NTxObjectEvalContext {
                 if (nElementTypeGroup == NElementTypeGroup.NUMBER || nElementTypeGroup == NElementTypeGroup.NULL || nElementTypeGroup == NElementTypeGroup.STRING || nElementTypeGroup == NElementTypeGroup.BOOLEAN || nElementTypeGroup == NElementTypeGroup.CUSTOM) {
 
                 } else if (nElementTypeGroup == NElementTypeGroup.OPERATOR) {
-                    context.engine().log().log(NMsg.ofC("unsupported operator %s in %s", elementExpr.asOperator().get().position(), NTxUtils.snippet(elementExpr)).asWarning(), context.source());
+                    context.engine().log().log(NMsg.ofC("unsupported operator %s in %s", elementExpr.asOperator().get().fixity(), NTxUtils.snippet(elementExpr)).asWarning(), context.source());
                 } else {
                     context.engine().log().log(NMsg.ofC("unsupported expression %s", NTxUtils.snippet(elementExpr)).asWarning(), context.source());
                 }
@@ -296,7 +296,7 @@ public class NTxNodeEval implements NTxObjectEvalContext {
                 return eval(elem.operand());
             }
         }
-        context.engine().log().log(NMsg.ofC("unsupported operator %s in %s", elem.asOperator().get().position(), NTxUtils.snippet(elem)).asWarning(), NTxUtils.sourceOf(context.node()));
+        context.engine().log().log(NMsg.ofC("unsupported operator %s in %s", elem.asOperator().get().fixity(), NTxUtils.snippet(elem)).asWarning(), NTxUtils.sourceOf(context.node()));
         return NElement.ofNull();
     }
 
@@ -333,7 +333,7 @@ public class NTxNodeEval implements NTxObjectEvalContext {
                 return NTxEvalUtils.div(a, b, MathContext.DECIMAL128).orElse(elem);
             }
         }
-        context.engine().log().log(NMsg.ofC("unsupported operator %s in %s", elem.asOperator().get().position(), NTxUtils.snippet(elem)).asWarning(), NTxUtils.sourceOf(context.node()));
+        context.engine().log().log(NMsg.ofC("unsupported operator %s in %s", elem.asOperator().get().fixity(), NTxUtils.snippet(elem)).asWarning(), NTxUtils.sourceOf(context.node()));
         return NElement.ofNull();
     }
 

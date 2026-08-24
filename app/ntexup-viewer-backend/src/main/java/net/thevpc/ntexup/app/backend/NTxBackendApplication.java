@@ -1,11 +1,11 @@
 package net.thevpc.ntexup.app.backend;
 
-import net.thevpc.nuts.app.NAppDefinition;
-import net.thevpc.nuts.app.NAppRunner;
+import net.thevpc.nuts.app.NApp;
+import net.thevpc.nuts.app.NAppRun;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
-@NAppDefinition
+@NApp
 @SpringBootApplication
 public class NTxBackendApplication {
 
@@ -28,7 +28,7 @@ public class NTxBackendApplication {
 //		session.out().println("write your business logic that will be processed when the application is being uninstalled/removed here...");
 //	}
 
-	@NAppRunner
+	@NAppRun
 	public void run() {
 		//
 	}

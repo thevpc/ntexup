@@ -1,7 +1,7 @@
 package net.thevpc.ntexup.engine.eval;
 
 import net.thevpc.ntexup.api.log.NTxLogger;
-import net.thevpc.nuts.app.NApp;
+import net.thevpc.nuts.app.NApplication;
 import net.thevpc.nuts.artifact.NId;
 import net.thevpc.nuts.command.NExec;
 import net.thevpc.nuts.core.NSession;
@@ -30,7 +30,7 @@ public class NTxGitHelper {
 
     public static NPath resolveGithubPath(String githubPath, NTxLogger messages) {
         NPath userConfHome;
-        NPath appCacheFolder = NApp.of().cacheFolder();
+        NPath appCacheFolder = NApplication.of().cacheFolder();
         if (appCacheFolder == null) {
             userConfHome = NPath.of(NStoreKey.ofCache(NId.of("net.thevpc.ntexup:ntexup"))).resolve("github");
         } else {

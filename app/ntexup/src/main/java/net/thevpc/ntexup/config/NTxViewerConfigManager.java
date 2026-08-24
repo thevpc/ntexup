@@ -1,6 +1,6 @@
 package net.thevpc.ntexup.config;
 
-import net.thevpc.nuts.app.NApp;
+import net.thevpc.nuts.app.NApplication;
 import net.thevpc.nuts.artifact.NId;
 import net.thevpc.nuts.core.NStoreKey;
 import net.thevpc.nuts.elem.*;
@@ -20,7 +20,7 @@ public class NTxViewerConfigManager {
 
     public NTxViewerConfigManager(NPath viewerConfigFile) {
         String configName = "ntexup-config.tson";
-        NPath appCacheFolder = NApp.of().confFolder();
+        NPath appCacheFolder = NApplication.of().confFolder();
         if (viewerConfigFile == null) {
             if (appCacheFolder == null) {
                 viewerConfigFile = NPath.of(NStoreKey.ofCache(NId.of("net.thevpc.ntexup:ntexup"))).resolve(configName);

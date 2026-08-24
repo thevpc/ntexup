@@ -53,7 +53,7 @@ import net.thevpc.ntexup.engine.parser.*;
 import net.thevpc.ntexup.engine.parser.resources.NTxSourceFactory;
 import net.thevpc.ntexup.engine.renderer.NTxDocumentRendererFactoryContextImpl;
 import net.thevpc.ntexup.engine.renderer.NTxGraphicsImpl;
-import net.thevpc.nuts.app.NApp;
+import net.thevpc.nuts.app.NApplication;
 import net.thevpc.nuts.artifact.NDefinition;
 import net.thevpc.nuts.artifact.NDependency;
 import net.thevpc.nuts.artifact.NDependencyBuilder;
@@ -1234,7 +1234,7 @@ public class DefaultNTxEngine implements NTxEngine {
         NTxTemplateInfoLoader loader = new NTxTemplateInfoLoader();
         for (Repo repo : new Repo[]{
                 new Repo("dev", NPath.ofUserHome().resolve("xprojects/nuts-world/nuts-productivity/ntexup/ntexup-templates")),
-                new Repo("local", NApp.of().sharedConfFolder().resolve("templates")),
+                new Repo("local", NApplication.of().sharedConfFolder().resolve("templates")),
                 new Repo("user", NPath.of(NStoreKey.ofUser(NStoreType.CONF)).resolve("ntexup/templates")),
                 new Repo("system", NPath.of(NStoreKey.ofSystem(NStoreType.CONF)).resolve("ntexup/templates")),
                 new Repo("central-github", NPath.of("https://github.com/thevpc/ntexup-templates.git"))
