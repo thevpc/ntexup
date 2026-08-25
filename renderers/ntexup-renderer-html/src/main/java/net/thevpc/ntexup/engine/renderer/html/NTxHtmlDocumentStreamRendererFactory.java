@@ -20,7 +20,7 @@ public class NTxHtmlDocumentStreamRendererFactory implements NTxDocumentRenderer
             case "html":
                 return NScoredCallable.ofValid( () -> new NTxHtmlDocumentRenderer(context.engine()));
             default:
-                return NScoredCallable.ofInvalid(() -> NMsg.ofPlain("factory"));
+                return NScoredCallable.ofInvalid(() -> NMsg.ofP("factory"));
         }
     }
 

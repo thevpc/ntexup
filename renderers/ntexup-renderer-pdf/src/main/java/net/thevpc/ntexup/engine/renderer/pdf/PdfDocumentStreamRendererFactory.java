@@ -21,7 +21,7 @@ public class PdfDocumentStreamRendererFactory implements NTxDocumentRendererFact
                     return new PdfDocumentRenderer(context.engine(), config);
                 });
             default:
-                return NScoredCallable.ofInvalid(() -> NMsg.ofPlain("Invalid renderer type: " + context.rendererType()));
+                return NScoredCallable.ofInvalid(() -> NMsg.ofP("Invalid renderer type: " + context.rendererType()));
         }
     }
 }

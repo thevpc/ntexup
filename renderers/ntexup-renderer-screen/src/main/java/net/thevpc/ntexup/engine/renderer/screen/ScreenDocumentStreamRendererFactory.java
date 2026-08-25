@@ -21,7 +21,7 @@ public class ScreenDocumentStreamRendererFactory implements NTxDocumentRendererF
             case "screen":
                 return NScoredCallable.ofValid( () -> new ScreenDocumentRenderer(context.engine()));
             default:
-                return NScoredCallable.ofInvalid(() -> NMsg.ofPlain("factory"));
+                return NScoredCallable.ofInvalid(() -> NMsg.ofP("factory"));
         }
     }
 
