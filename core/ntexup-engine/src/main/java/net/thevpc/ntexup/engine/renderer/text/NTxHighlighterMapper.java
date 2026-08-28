@@ -26,7 +26,7 @@ public class NTxHighlighterMapper {
         nTextTransformConfig.flatten(true);
         nTextTransformConfig.normalize(true);
         nTextTransformConfig.processTitleNumbers(true);
-        processNTextRecursively(NText.normalize(parsedText, nTextTransformConfig), result, ctx, new NTextStyle[0], cache);
+        processNTextRecursively(parsedText.normalize(nTextTransformConfig), result, ctx, new NTextStyle[0], cache);
         result.computeBound(ctx);
     }
 
