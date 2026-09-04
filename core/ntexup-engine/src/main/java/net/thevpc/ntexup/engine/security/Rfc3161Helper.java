@@ -1,7 +1,7 @@
 package net.thevpc.ntexup.engine.security;
 
-import net.thevpc.nuts.net.NWebCli;
-import net.thevpc.nuts.net.NWebResponse;
+import net.thevpc.nuts.net.NHttpClient;
+import net.thevpc.nuts.net.NHttpResponse;
 import net.thevpc.nuts.text.NMsg;
 import net.thevpc.nuts.util.NBlankable;
 import net.thevpc.nuts.util.NException;
@@ -76,7 +76,7 @@ public class Rfc3161Helper {
         );
         byte[] requestBytes = request.getEncoded();
 
-        NWebResponse response = NWebCli.of()
+        NHttpResponse response = NHttpClient.of()
                 .POST(tsaUrl)
                 .addHeader("Content-Type", "application/timestamp-query")
                 .addHeader("Accept", "application/timestamp-reply")
