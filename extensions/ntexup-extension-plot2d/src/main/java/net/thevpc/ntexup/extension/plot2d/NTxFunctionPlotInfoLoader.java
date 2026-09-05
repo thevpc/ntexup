@@ -64,7 +64,7 @@ public class NTxFunctionPlotInfoLoader {
         if (nListContainerElement != null && !nListContainerElement.isAnyTuple()) {
             List<NElement> c = nListContainerElement.children();
             for (NElement child : c) {
-                if (child.isNamedObject()) {
+                if (child.asObject().isPresent() && child.asObject().get().name().isPresent()) {
                     NTxFunctionPlotInfo a = load(child.asObject().get(), buildContext);
                     if (a != null) {
                         all.add(a);

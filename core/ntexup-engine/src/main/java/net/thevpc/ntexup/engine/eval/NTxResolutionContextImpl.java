@@ -9,6 +9,8 @@ import net.thevpc.ntexup.api.engine.NTxCompiledPage;
 import net.thevpc.ntexup.api.engine.NTxEngine;
 import net.thevpc.ntexup.api.eval.NTxResolutionContext;
 import net.thevpc.ntexup.api.eval.NTxVar;
+import net.thevpc.ntexup.api.eval.NTxObj;
+import net.thevpc.ntexup.api.eval.NTxObjs;
 import net.thevpc.ntexup.api.extension.NTxFunction;
 import net.thevpc.ntexup.api.log.NTxLogger;
 import net.thevpc.ntexup.api.parser.NTxItemParser;
@@ -384,6 +386,47 @@ public class NTxResolutionContextImpl implements NTxResolutionContext {
         NTxVar value = vars.get(varName);
         if (value != null) {
             return NOptional.ofNamed(value, varName);
+        }
+        if (compiledDocument != null) {
+            NOptional<NTxObj> go = compiledDocument.getGlobalObject(varName);
+            if (go.isPresent()) {
+                return NTxVarImpl.ofOptional(varName, () -> go.get().toElement());
+            }
+            if (varName.contains(".")) {
+                String[] parts = varName.split("\\.");
+                for (int i = parts.length - 1; i >= 1; i--) {
+                    String prefix = String.join(".", Arrays.copyOfRange(parts, 0, i));
+                    NOptional<NTxObj> pgo = compiledDocument.getGlobalObject(prefix);
+                    if (pgo.isPresent()) {
+                        NTxObj curr = pgo.get();
+                        boolean ok = true;
+                        for (int j = i; j < parts.length; j++) {
+                            NTxObj next = curr.get(parts[j]).orNull();
+                            if (next != null) {
+                                curr = next;
+                            } else {
+                                NElement elem = curr.toElement();
+                                if (elem != null && elem.asListContainer().isPresent()) {
+                                    NOptional<NElement> ce = elem.asListContainer().get().get(parts[j]);
+                                    if (ce.isPresent()) {
+                                        curr = NTxObjs.elem(ce.get());
+                                    } else {
+                                        ok = false;
+                                        break;
+                                    }
+                                } else {
+                                    ok = false;
+                                    break;
+                                }
+                            }
+                        }
+                        if (ok && curr != null) {
+                            NTxObj finalObj = curr;
+                            return NTxVarImpl.ofOptional(varName, () -> finalObj.toElement());
+                        }
+                    }
+                }
+            }
         }
         switch (NStringUtils.strip(varName)) {
             case "HOME": {

@@ -332,6 +332,33 @@ public class NTxNodeEval implements NTxObjectEvalContext {
                 NElement b = eval(elem.secondOperand());
                 return NTxEvalUtils.div(a, b, MathContext.DECIMAL128).orElse(elem);
             }
+            case DOT: {
+                NElement a = eval(elem.firstOperand());
+                String propName = null;
+                NElement second = elem.secondOperand();
+                if (second.isName() || second.isAnyString()) {
+                    propName = second.asStringValue().get();
+                } else {
+                    NElement b = eval(second);
+                    if (b != null && (b.isName() || b.isAnyString())) {
+                        propName = b.asStringValue().get();
+                    }
+                }
+                if (a != null && propName != null && a.asListContainer().isPresent()) {
+                    NOptional<NElement> v = a.asListContainer().get().get(propName);
+                    if (v.isPresent()) {
+                        return v.get();
+                    }
+                }
+                if (propName != null) {
+                    String fullPath = NTxUtils.snippet(elem.firstOperand()) + "." + propName;
+                    NOptional<NTxVar> fv = context.getVar(fullPath);
+                    if (fv.isPresent()) {
+                        return fv.get().get();
+                    }
+                }
+                return NElement.ofNull();
+            }
         }
         context.engine().log().log(NMsg.ofC("unsupported operator %s in %s", elem.asOperator().get().fixity(), NTxUtils.snippet(elem)).asWarning(), NTxUtils.sourceOf(context.node()));
         return NElement.ofNull();

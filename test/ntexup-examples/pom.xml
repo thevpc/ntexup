@@ -55,6 +55,12 @@
 
     <dependencies>
         <dependency><groupId>net.thevpc.ntexup</groupId><artifactId>ntexup</artifactId><version>1.0.0.0</version></dependency>
+        <dependency><groupId>net.thevpc.ntexup</groupId><artifactId>ntexup-lib-geometry3d</artifactId><version>1.0.0.0</version></dependency>
+        <dependency><groupId>net.thevpc.ntexup</groupId><artifactId>ntexup-extension-shapes3d</artifactId><version>1.0.0.0</version></dependency>
+        <dependency><groupId>net.thevpc.ntexup</groupId><artifactId>ntexup-extension-hadruwaves</artifactId><version>1.0.0.0</version></dependency>
+        <dependency><groupId>net.thevpc.ntexup</groupId><artifactId>ntexup-extension-openems</artifactId><version>1.0.0.0</version></dependency>
+        <dependency><groupId>net.thevpc.ntexup</groupId><artifactId>ntexup-extension-mw-simulator</artifactId><version>1.0.0.0</version></dependency>
+        <dependency><groupId>net.thevpc.ntexup</groupId><artifactId>ntexup-extension-plot2d</artifactId><version>1.0.0.0</version></dependency>
     </dependencies>
     <build>
         <plugins>

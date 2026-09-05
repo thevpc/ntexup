@@ -51,7 +51,7 @@ class NTxDrawContextRenderCompiler {
                 pd.title = NTxValue.of(ev).asString().orNull();
             }
             if (pld.stroke != null) {
-                NElement ev = rendererContext.evalExpression(pld.color).orNull();
+                NElement ev = rendererContext.evalExpression(pld.stroke).orNull();
                 if (ev != null && !ev.isNull()) {
                     Stroke stroke = rendererContext.graphics().createStroke(ev);
                     if (stroke != null) {
@@ -60,17 +60,72 @@ class NTxDrawContextRenderCompiler {
                 }
             }
 
-            switch (pd.pld.source) {
-                case FUNCTION_X: {
-                    NDoubleFunction ff = NTxPlotNExprResolver.compileFunctionX(pld, rendererContext);
-                    if (ff != null) {
-                        NChronometer c = NChronometer.of();
-                        pd.prepareX(ff, xValues, minMaxY);
-                        c.stop();
-                        rendererContext.log(NMsg.ofC("FUNCTION_X : %s", c));
-                        drawContext.allData.add(pd);
+            if (pd.pld.source == null && pld.y != null) {
+                pd.pld.source = pld.x != null ? net.thevpc.ntexup.extension.plot2d.model.NTxPlotSource.VALUE_XY : net.thevpc.ntexup.extension.plot2d.model.NTxPlotSource.VALUE_X;
+            }
+
+            if (pd.pld.source != null) {
+                switch (pd.pld.source) {
+                    case FUNCTION_X: {
+                        NDoubleFunction ff = NTxPlotNExprResolver.compileFunctionX(pld, rendererContext);
+                        if (ff != null) {
+                            NChronometer c = NChronometer.of();
+                            pd.prepareX(ff, xValues, minMaxY);
+                            c.stop();
+                            rendererContext.log(NMsg.ofC("FUNCTION_X : %s", c));
+                            drawContext.allData.add(pd);
+                        }
+                        break;
                     }
-                    break;
+                    case VALUE_XY:
+                    case VALUE_X: {
+                        NElement yElem = rendererContext.evalExpression(pld.y).orNull();
+                        double[] yArr = NTxValue.of(yElem).asDoubleArray().orNull();
+                        if (yArr == null && yElem != null && yElem.isListContainer()) {
+                            java.util.List<Double> yList = new java.util.ArrayList<>();
+                            for (NElement c : yElem.asListContainer().get().children()) {
+                                net.thevpc.nuts.util.NOptional<Double> dv = NTxValue.of(c).asDouble();
+                                if (dv.isPresent()) {
+                                    yList.add(dv.get());
+                                } else if (c.isNumber()) {
+                                    yList.add(c.asDoubleValue().orElse(0.0));
+                                }
+                            }
+                            if (!yList.isEmpty()) {
+                                yArr = yList.stream().mapToDouble(Double::doubleValue).toArray();
+                            }
+                        }
+                        if (yArr != null && yArr.length > 0) {
+                            double[] xArr = xValues;
+                            if (pld.x != null) {
+                                NElement xElem = rendererContext.evalExpression(pld.x).orNull();
+                                double[] parsedX = NTxValue.of(xElem).asDoubleArray().orNull();
+                                if (parsedX != null && parsedX.length > 0) {
+                                    xArr = parsedX;
+                                }
+                            }
+                            if (xArr.length != yArr.length) {
+                                if (xArr.length == 1) {
+                                    double start = xArr[0];
+                                    xArr = new double[yArr.length];
+                                    for (int i = 0; i < yArr.length; i++) {
+                                        xArr[i] = start + i;
+                                    }
+                                } else {
+                                    xArr = NArrays.linear(xArr[0], xArr[xArr.length - 1], yArr.length);
+                                }
+                            }
+                            pd.xx = xArr;
+                            pd.yy = yArr;
+                            for (double yv : yArr) {
+                                if (Double.isFinite(yv)) {
+                                    minMaxY.add(yv);
+                                }
+                            }
+                            drawContext.allData.add(pd);
+                        }
+                        break;
+                    }
                 }
             }
         }

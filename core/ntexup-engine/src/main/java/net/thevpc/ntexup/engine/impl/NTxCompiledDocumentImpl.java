@@ -60,7 +60,9 @@ public class NTxCompiledDocumentImpl implements NTxCompiledDocument {
         private final List<byte[]> sourceFingerprintSources = new ArrayList<>();
 
         public FingerprintBuilder addLoadedDependency(NDefinition def) {
-            effectiveDependencies.put(def.id().shortName(), def);
+            if (def != null) {
+                effectiveDependencies.put(def.id().shortName(), def);
+            }
             return this;
         }
 

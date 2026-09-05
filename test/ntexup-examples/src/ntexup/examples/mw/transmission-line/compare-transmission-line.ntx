@@ -1,0 +1,125 @@
+import(
+    common-functions
+    plantuml
+    animated-gif
+    svg
+    shapes2d
+    shapes3d
+    plot2d
+    presenters
+    latex
+    hadruwaves
+    openems
+)
+
+f=2.4GHz   // Resonant Frequency (fr)
+εr=4.4     // Substrate Material
+h=1.6mm    // Substrate Height
+h0=0.035mm // Copper thickness
+w=3.1mm    // 50 Ohm Microstrip line width
+l=30mm     // Line length
+
+page{
+    styles:{
+        text:{ color:darkBlue }
+        line:{ color:black }
+        ".substrate":{ background:"#00468B", opacity:0.7 }
+        ".copper":{ background:"#cb6d51" }
+        ".source":{ background:yellow }
+    }
+    rectangle(background:Gray90)
+    scene3d(
+        name: "antenna-line"
+        draw-contour,
+        real-size:(60mm,60mm,10mm)
+        real-position:(-30mm,-30mm,-h - h0)
+        size:(100,100)
+        origin:(0,0)
+    ){
+        // Ground plane
+        @(ground) box(
+            size:(60mm,60mm,h0)
+            position:(-30mm,-30mm,-h - h0)
+        )
+        // Substrate
+        @(substrate) box(
+            size:(60mm,60mm,h)
+            position:(-30mm,-30mm,-h)
+        )
+        // Microstrip transmission line
+        @(antenna) box(
+            size:(w,l,h0)
+            position:(-w/2,-l/2,0mm)
+        )
+        // Source port at start of line
+        @(source) box(
+            size:(w,2mm,h0)
+            position:(-w/2,-l/2,0mm)
+        )
+    }
+}
+
+// --------------------------------------------------
+// Hadruwaves MoM Simulation
+// --------------------------------------------------
+page{
+    hadruwaves-mom-solver(
+        name:"hresult"
+        geometry:"antenna-line"
+        frequency:f
+        domain-padding:(15mm,15mm)
+        boundaries:{
+            lateral:EEEE
+            top:matchedLoad
+            bottom:short(material:(permittivity:εr))
+        }
+        modes:{
+            count:500
+        }
+        basis-functions:{
+            sine-functions(geometry:"antenna", count:6)
+        }
+        sources:{
+            planar(geometry:"source", value:5V, z:50Ω)
+        }
+        results:{
+            allS11:S11(frequency:{from:2.3GHz, to:2.5GHz, count:5})
+        }
+    )
+}
+
+// --------------------------------------------------
+// OpenEMS FDTD Simulation
+// --------------------------------------------------
+page{
+    open-ems-solver(
+        name:"oemsresult"
+        geometry:"antenna-line"
+        frequency:f
+        timesteps:30000
+        endcriteria:1e-4
+        results:{
+            allS11:S11(frequency:{from:2.3GHz, to:2.5GHz, count:5})
+        }
+    )
+}
+
+// --------------------------------------------------
+// Comparison: Hadruwaves (MoM) vs OpenEMS (FDTD)
+// --------------------------------------------------
+page{
+    plot2d{
+        curve{
+            x: hresult.allS11.x
+            y: hresult.allS11.y
+            title:"Hadruwaves MoM"
+            color:blue
+        }
+        curve{
+            x: oemsresult.allS11.x
+            y: oemsresult.allS11.y
+            title:"OpenEMS FDTD"
+            color:red
+        }
+    }
+}

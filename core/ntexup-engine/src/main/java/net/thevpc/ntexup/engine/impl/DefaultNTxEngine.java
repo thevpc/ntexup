@@ -543,7 +543,12 @@ public class DefaultNTxEngine implements NTxEngine {
                         }
                     }
                     if (NBlankable.isBlank(x.version())) {
-                        b.version(NTxEngine.CURRENT_VERSION);
+                        String art = b.artifactId();
+                        if (art != null && (art.endsWith("-hadruwaves") || art.endsWith("-openems") || art.endsWith("-mw-simulator"))) {
+                            b.version("0.8.9.0");
+                        } else {
+                            b.version(NTxEngine.CURRENT_VERSION);
+                        }
                     }
                     return Stream.of(b.build());
                 })

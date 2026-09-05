@@ -21,18 +21,7 @@ public class NTxPlot2DBuilder implements NTxNodeBuilder {
     public void build(NTxNodeBuilderContext builderContext) {
         builderContext.id(NTxNodeType.PLOT2D)
                 .parseParam()
-                .matchesNamedPair(
-                        "x",
-                        "majorGridSpacing",
-                        "showMajorGrid",
-                        "majorGridColor",
-                        "majorGridStroke",
-
-                        "minorGridSpacing",
-                        "showMinorGrid",
-                        "minorGridColor",
-                        "minorGridStroke"
-                ).end()
+                .matchesAny().end()
                 .processChildren(this::processChildren)
                 .renderComponent(this::renderMain)
         ;
