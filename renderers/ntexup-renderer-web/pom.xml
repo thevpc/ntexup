@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?><project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	<parent>
-		<groupId>org.springframework.boot</groupId>
-		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>3.3.1</version>
-		<relativePath/> <!-- lookup parent from repository -->
-	</parent>
+    <parent>
+        <groupId>net.thevpc.xprojects.builders</groupId>
+        <artifactId>ntexup-builder</artifactId>
+        <version>1.0.0.0</version>
+        <relativePath>../../pom.xml</relativePath>
+    </parent>
 	<groupId>net.thevpc.ntexup</groupId>
 	<artifactId>ntexup-renderer-web</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
@@ -26,9 +26,6 @@
 	<properties>
 		<java.version>17</java.version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<maven.compiler.source>17</maven.compiler.source>
-		<maven.compiler.target>17</maven.compiler.target>
-		<maven.compiler.release>17</maven.compiler.release>
 	</properties>
 	<dependencies>
 		<dependency><groupId>net.thevpc.ntexup</groupId><artifactId>ntexup-api</artifactId><version>1.0.0</version></dependency>
@@ -39,7 +36,7 @@
 		<dependency><groupId>net.thevpc.ntexup</groupId><artifactId>ntexup-renderer-html</artifactId><version>1.0.0.0</version></dependency>
 		<dependency><groupId>org.apache.pdfbox</groupId><artifactId>pdfbox</artifactId><version>2.0.27</version></dependency>
 
-		<dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-thymeleaf</artifactId></dependency>
+		<dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-thymeleaf</artifactId><version>${spring-boot.version}</version></dependency>
 
 		<dependency><groupId>net.thevpc.ntexup</groupId><artifactId>ntexup-extension-plantuml</artifactId><version>1.0.0.0</version></dependency>
 		<dependency><groupId>net.thevpc.ntexup</groupId><artifactId>ntexup-extension-animated-gif</artifactId><version>1.0.0.0</version></dependency>
@@ -49,48 +46,17 @@
 		<dependency><groupId>net.thevpc.ntexup</groupId><artifactId>ntexup-extension-latex</artifactId><version>1.0.0.0</version></dependency>
 		<dependency><groupId>net.thevpc.ntexup</groupId><artifactId>ntexup-renderer-pdf</artifactId><version>1.0.0.0</version></dependency>
 
-		<dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-web</artifactId><version>3.3.1 </version><!-- Replace with your Spring Boot version --></dependency>
+		<dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-web</artifactId><version>${spring-boot.version}</version></dependency>
 
-		<dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter</artifactId><version>3.3.1</version><!-- Replace with your Spring Boot version --></dependency>
+		<dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter</artifactId><version>${spring-boot.version}</version></dependency>
 	</dependencies>
 
 	<build>
 		<plugins>
 			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-compiler-plugin</artifactId>
-				<version>3.8.0</version>
-				<configuration>
-					<release>17</release>
-				</configuration>
-			</plugin>
-			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
 			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-toolchains-plugin</artifactId>
-				<version>1.1</version>
-				<executions>
-					<execution>
-						<goals>
-							<goal>toolchain</goal>
-						</goals>
-					</execution>
-				</executions>
-				<configuration>
-					<toolchains>
-						<jdk>
-							<version>17</version>
-							<vendor>openjdk</vendor>
-						</jdk>
-					</toolchains>
-				</configuration>
-			</plugin>
 		</plugins>
 	</build>
-	<repositories>
-		<repository><id>thevpc</id><url>https://maven.thevpc.net</url></repository>
-	</repositories>
 </project>

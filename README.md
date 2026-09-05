@@ -107,7 +107,7 @@ for(i: [1 -> 2]) {
 
 ## **Technology Stack**
 
-- **Language**: Java 8+ (supports java 24).
+- **Language**: Java 17 (the enforced build baseline).
 - **Package manager**: [Nuts](https://github.com/thevpc/nuts).
 - **Document syntax**: [TSON](https://github.com/thevpc/tson).
 - **Rendering**: Swing viewer, PDF generator, and web-based image rendering.
@@ -118,7 +118,8 @@ for(i: [1 -> 2]) {
 
 ### **Prerequisites**
 
-- Java 8 or later (supports java 24).
+- JDK 17 (for example, Temurin or OpenJDK).
+- Maven 3.9 or later.
 - [Nuts](https://github.com/thevpc/nuts) installed.
 
 ### **Setup**
@@ -133,6 +134,13 @@ Or clone the repository:
 git clone https://github.com/thevpc/ntexup.git
 cd ntexup
 mvn package
+```
+
+The build uses the repository settings committed in `.mvn/`; do not depend on
+a workstation-specific Maven mirror. To run the complete reactor locally:
+
+```bash
+mvn verify
 ```
 
 ---

@@ -1,17 +1,19 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?><project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>net.thevpc.xprojects.builders</groupId>
+        <artifactId>ntexup-builder</artifactId>
+        <version>1.0.0.0</version>
+        <relativePath>../../pom.xml</relativePath>
+    </parent>
     <groupId>net.thevpc.net</groupId>
     <artifactId>nscoreboard</artifactId>
     <version>1.0.0</version>
     <packaging>jar</packaging>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.release>17</maven.compiler.release>
         <exec.mainClass>net.thevpc.net.nscoreboard.NScoreboard</exec.mainClass>
     </properties>
-    <repositories>
-        <repository><id>thevpc</id><url>https://maven.thevpc.net</url></repository>
-    </repositories>
     <dependencies>
         <dependency><groupId>net.thevpc.nuts</groupId><artifactId>nuts</artifactId><version>1.0.0</version></dependency>
     </dependencies>
