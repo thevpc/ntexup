@@ -13,7 +13,10 @@ public class TestCompareAntennas {
         NTxEngine engine = new DefaultNTxEngine();
 
         NPath baseDir = NPath.of(".").toAbsolute().normalize();
-        NPath lineFile = baseDir.resolve("src/ntexup/examples/mw/transmission-line/compare-transmission-line.ntx");
+        NPath lineFile = NPath.of("/home/vpc/research/research-docs/publications/Articles-Journaux/2025-ntexup-article/ntx/transmission-line/compare-transmission-line.ntx");
+        if (!lineFile.exists()) {
+            lineFile = baseDir.resolve("src/ntexup/examples/mw/transmission-line/compare-transmission-line.ntx");
+        }
         if (!lineFile.exists()) {
             lineFile = baseDir.resolve("test/ntexup-examples/src/ntexup/examples/mw/transmission-line/compare-transmission-line.ntx");
         }
@@ -30,7 +33,10 @@ public class TestCompareAntennas {
         printComparison("Stage 1: Transmission Line", doc1);
 
         // Test Stage 2: antenna-patch
-        NPath patchFile = baseDir.resolve("src/ntexup/examples/mw/antenna-patch/compare-patch.ntx");
+        NPath patchFile = NPath.of("/home/vpc/research/research-docs/publications/Articles-Journaux/2025-ntexup-article/ntx/antenna-patch/compare-patch.ntx");
+        if (!patchFile.exists()) {
+            patchFile = baseDir.resolve("src/ntexup/examples/mw/antenna-patch/compare-patch.ntx");
+        }
         if (!patchFile.exists()) {
             patchFile = baseDir.resolve("test/ntexup-examples/src/ntexup/examples/mw/antenna-patch/compare-patch.ntx");
         }

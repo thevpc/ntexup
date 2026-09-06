@@ -100,6 +100,6 @@
         <module>renderers/ntexup-renderer-web</module>
         <module>app/ntexup</module>
         <module>app/ntexup-viewer-backend</module>
-        <module>ntexup-full</module>
+        <module>app/ntexup-full</module>
     </modules>
 </project>

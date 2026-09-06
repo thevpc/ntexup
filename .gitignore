@@ -37,7 +37,7 @@ extensions/ntexup-extension-presenters/target
 /app/ntexup-viewer-backend/target/
 /app/ntexup-viewer/target/
 /renderers/ntexup-renderer-web/target/
-/ntexup-full/target/
+/app/ntexup-full/target/
 
 /app/ntexup/target
 /tutorials/ntexup-extension-tutorial-myshape/target

@@ -4,7 +4,7 @@
         <groupId>net.thevpc.xprojects.builders</groupId>
         <artifactId>ntexup-builder</artifactId>
         <version>1.0.0.0</version>
-        <relativePath>../pom.xml</relativePath>
+        <relativePath>../../pom.xml</relativePath>
     </parent>
     <groupId>net.thevpc.ntexup</groupId>
     <artifactId>ntexup-full</artifactId>
@@ -70,11 +70,7 @@
     </dependencies>
     <build>
         <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-jar-plugin</artifactId>
-                <version>3.2.0</version>
-            </plugin>
+            <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-jar-plugin</artifactId><version>3.2.0</version></plugin>
         </plugins>
     </build>
 
