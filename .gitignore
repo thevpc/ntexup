@@ -46,3 +46,4 @@ extensions/ntexup-extension-presenters/target
 /lib/ntexup-lib-geometry3d/target/
 /.mvn/maven.config
 /.mvn/settings.xml
+/ntexup-full/target/
