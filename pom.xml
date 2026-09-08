@@ -11,7 +11,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.release>17</maven.compiler.release>
         <maven.compiler.parameters>true</maven.compiler.parameters>
-        <spring-boot.version>3.3.1</spring-boot.version>
+        <spring-boot.version>3.4.4</spring-boot.version>
     </properties>
     <build>
         <pluginManagement>
@@ -19,7 +19,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-compiler-plugin</artifactId>
-                    <version>3.13.0</version>
+                    <version>3.11.0</version>
                     <configuration>
                         <release>${maven.compiler.release}</release>
                         <parameters>${maven.compiler.parameters}</parameters>

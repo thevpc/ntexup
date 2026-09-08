@@ -8,7 +8,7 @@
     </parent>
     <groupId>net.thevpc.xprojects.test.ntexup</groupId>
     <artifactId>ntexup-examples</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.0.0</version>
     <packaging>jar</packaging>
     <name>ntexup :: Examples</name>
     <properties>
@@ -64,7 +64,7 @@
     </dependencies>
     <build>
         <plugins>
-            <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-jar-plugin</artifactId><version>3.2.0</version></plugin>
+            <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-jar-plugin</artifactId><version>3.4.2</version></plugin>
         </plugins>
     </build>
 </project>

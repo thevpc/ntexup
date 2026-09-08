@@ -19,7 +19,7 @@
 	</properties>
 
 	<dependencies>
-		<dependency><groupId>net.thevpc.ntexup</groupId><artifactId>ntexup-api</artifactId><version>1.0.0</version></dependency>
+		<dependency><groupId>net.thevpc.ntexup</groupId><artifactId>ntexup-api</artifactId><version>1.0.0.0</version></dependency>
 		<dependency><groupId>net.thevpc.nuts</groupId><artifactId>nuts-spring-boot</artifactId><version>1.0.0.0</version></dependency>
 		<dependency><groupId>net.thevpc.ntexup</groupId><artifactId>ntexup-engine</artifactId><version>1.0.0.0</version></dependency>
 		<dependency><groupId>net.thevpc.nuts</groupId><artifactId>nuts-runtime</artifactId><version>1.0.0.0</version></dependency>
