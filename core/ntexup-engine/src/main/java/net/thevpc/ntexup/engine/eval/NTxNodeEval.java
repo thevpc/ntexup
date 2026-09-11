@@ -139,6 +139,9 @@ public class NTxNodeEval implements NTxObjectEvalContext {
                 NOptional<NTxFunction> f = context.getFunction(functionName/*, args.args()*/);
                 if (f.isPresent()) {
                     NElement u = f.get().invoke(args);
+                    if (u == null) {
+                        return NElement.ofNull();
+                    }
                     if (u.equals(args.callExpression())) {
                         // function could not be evaluated in the current context
                         // perhaps needs some timeout or rendering context or....

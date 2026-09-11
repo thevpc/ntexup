@@ -108,6 +108,22 @@ public class NTxViewerConfigManager {
         }
     }
 
+    public void removeRecentProject(NPath path) {
+        NTxViewerConfig config = loadViewerConfig();
+        List<NTxProject> updated = new ArrayList<>();
+        if (config.getRecentProjects() != null) {
+            for (NTxProject a : config.getRecentProjects()) {
+                if (a != null && !NBlankable.isBlank(a.getPath())) {
+                    if (!NPath.of(a.getPath()).equals(path)) {
+                        updated.add(a);
+                    }
+                }
+            }
+        }
+        config.setRecentProjects(updated.toArray(new NTxProject[0]));
+        saveViewerConfig(config);
+    }
+
     public NPath[] getLastAccessedPaths() {
         NTxViewerConfig config = loadViewerConfig();
         return Arrays.stream(config.getRecentProjects()).map(x -> NPath.of(x.getPath())).toArray(NPath[]::new);

@@ -513,7 +513,12 @@ public class DefaultNTxEngine implements NTxEngine {
     }
 
     public <S> List<S> loadServices(Class<S> serviceClass) {
-        return NCollections.list(NServiceLoader.of(serviceClass, null, classLoader.asClassLoader()).loadAll(null));
+        try {
+            return NCollections.list(NServiceLoader.of(serviceClass, null, classLoader.asClassLoader()).loadAll(null));
+        } catch (Throwable ex) {
+            log().log(NMsg.ofC("Failed to load services for %s: %s", serviceClass.getName(), ex));
+            return Collections.emptyList();
+        }
     }
 
     public NMutableClassLoader getEngineClassLoader() {
@@ -625,6 +630,8 @@ public class DefaultNTxEngine implements NTxEngine {
     private NDependency[] defaultDependencies() {
         return Arrays.stream(
                 new String[]{
+                        "net.thevpc.ntexup:ntexup-lib-geometry2d:" + NTxEngine.CURRENT_VERSION,
+                        "net.thevpc.ntexup:ntexup-lib-geometry3d:" + NTxEngine.CURRENT_VERSION,
                         "net.thevpc.ntexup:ntexup-extension-plantuml:" + NTxEngine.CURRENT_VERSION,
                         "net.thevpc.ntexup:ntexup-extension-animated-gif:" + NTxEngine.CURRENT_VERSION,
                         "net.thevpc.ntexup:ntexup-extension-svg:" + NTxEngine.CURRENT_VERSION,

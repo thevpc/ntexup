@@ -191,10 +191,14 @@ public class PdfDocumentRenderer extends NTxDocumentStreamRendererBase implement
             }
 
         } catch (Exception ex) {
+            ex.printStackTrace();
             throw new NIOException(ex);
         } finally {
             if (pdfDocument.isOpen()) {
-                pdfDocument.close();
+                try {
+                    pdfDocument.close();
+                } catch (Exception ignored) {
+                }
             }
         }
     }
@@ -388,6 +392,7 @@ public class PdfDocumentRenderer extends NTxDocumentStreamRendererBase implement
     public void renderPagePart(NTxNode part, PrintStream out) {
         switch (part.type()) {
             case NTxNodeType.PAGE_GROUP:
+            case NTxNodeType.GROUP:
                 break;
             case NTxNodeType.PAGE:
                 break;

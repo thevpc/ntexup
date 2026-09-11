@@ -21,13 +21,18 @@ public class NTexupMain {
 
     @NAppRun
     public void run() {
-        NWorkspace.of().share();
-        Options options = new Options();
-        NCmdLine cmdLine = NApplication.of().cmdLine();
-        cmdLine.commandName("ntexup");
-        new NTexupOptionsParser().parse(cmdLine, options);
-        DefaultNTxEngine engine = new DefaultNTxEngine();
-        new NTexupOptionsProcessor().process(options, engine);
+        try {
+            NWorkspace.of().share();
+            Options options = new Options();
+            NCmdLine cmdLine = NApplication.of().cmdLine();
+            cmdLine.commandName("ntexup");
+            new NTexupOptionsParser().parse(cmdLine, options);
+            DefaultNTxEngine engine = new DefaultNTxEngine();
+            new NTexupOptionsProcessor().process(options, engine);
+        } catch (Throwable t) {
+            t.printStackTrace();
+            throw t;
+        }
     }
 
 

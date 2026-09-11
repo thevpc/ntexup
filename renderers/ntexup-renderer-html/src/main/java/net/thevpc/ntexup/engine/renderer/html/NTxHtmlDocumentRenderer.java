@@ -151,6 +151,7 @@ public class NTxHtmlDocumentRenderer extends NTxDocumentStreamRendererBase imple
     public NTxDocumentStreamRenderer renderNode(NTxNode part, OutputStream out) {
         switch (part.type()) {
             case NTxNodeType.PAGE_GROUP:
+            case NTxNodeType.GROUP:
                 break;
             case NTxNodeType.PAGE: {
                 PrintStream o = psOf(out);

@@ -198,7 +198,7 @@ public class NTxResolutionContextImpl implements NTxResolutionContext {
 
     @Override
     public NTxResolutionContext copy() {
-        return copyAs(path, element, def, isInPage, engine, document, vars, definitions, functions, compiledDocument,compiledPage, parentContext, itemParser);
+        return copyAs(path, element, def, isInPage, engine, document, vars, definitions, functions, compiledDocument, compiledPage, parentContext, itemParser);
     }
 
     @Override
@@ -308,7 +308,7 @@ public class NTxResolutionContextImpl implements NTxResolutionContext {
         if (this.isInPage == isInPage) {
             return this;
         }
-        return copyAs(path, element, def, isInPage, engine, document, vars, definitions, functions, compiledDocument,compiledPage, parentContext, itemParser);
+        return copyAs(path, element, def, isInPage, engine, document, vars, definitions, functions, compiledDocument, compiledPage, parentContext, itemParser);
     }
 
     @Override
@@ -318,7 +318,7 @@ public class NTxResolutionContextImpl implements NTxResolutionContext {
         }
         List<NTxNode> all = new ArrayList<>(Arrays.asList(path));
         all.add(NAssert.requireNamedNonNull(parent, "parent"));
-        return copyAs(all.toArray(new NTxNode[0]), element, null, isInPage, engine, document, vars, definitions, functions, compiledDocument,compiledPage, parentContext, itemParser);
+        return copyAs(all.toArray(new NTxNode[0]), element, null, isInPage, engine, document, vars, definitions, functions, compiledDocument, compiledPage, parentContext, itemParser);
     }
 
     @Override
@@ -326,7 +326,7 @@ public class NTxResolutionContextImpl implements NTxResolutionContext {
         if (def == null) {
             return this;
         }
-        return copyAs(path, element, null, isInPage, engine, document, vars, definitions, functions, compiledDocument,compiledPage, parentContext, itemParser);
+        return copyAs(path, element, null, isInPage, engine, document, vars, definitions, functions, compiledDocument, compiledPage, parentContext, itemParser);
     }
 
     @Override
@@ -340,7 +340,7 @@ public class NTxResolutionContextImpl implements NTxResolutionContext {
         if (def == this.def) {
             return this;
         }
-        return copyAs(path, element, def, isInPage, engine, document, vars, definitions, functions, compiledDocument,compiledPage, parentContext, itemParser);
+        return copyAs(path, element, def, isInPage, engine, document, vars, definitions, functions, compiledDocument, compiledPage, parentContext, itemParser);
     }
 
     @Override
@@ -374,7 +374,7 @@ public class NTxResolutionContextImpl implements NTxResolutionContext {
         } else {
             vars2.put(name, value);
         }
-        return copyAs(path, element, def, isInPage, engine, document, vars2, definitions, functions, compiledDocument,compiledPage, parentContext, itemParser);
+        return copyAs(path, element, def, isInPage, engine, document, vars2, definitions, functions, compiledDocument, compiledPage, parentContext, itemParser);
     }
 
     @Override
@@ -451,7 +451,7 @@ public class NTxResolutionContextImpl implements NTxResolutionContext {
         }
         Map<String, NTxNodeDef> def2 = new LinkedHashMap<>(definitions);
         def2.remove(name);
-        return copyAs(path, element, def, isInPage, engine, document, vars, def2, functions, compiledDocument,compiledPage, parentContext, itemParser);
+        return copyAs(path, element, def, isInPage, engine, document, vars, def2, functions, compiledDocument, compiledPage, parentContext, itemParser);
     }
 
     @Override
@@ -497,7 +497,7 @@ public class NTxResolutionContextImpl implements NTxResolutionContext {
         } else {
             def2.put(value.name(), value);
         }
-        return copyAs(path, element, def, isInPage, engine, document, vars, def2, functions, compiledDocument,compiledPage, parentContext, itemParser);
+        return copyAs(path, element, def, isInPage, engine, document, vars, def2, functions, compiledDocument, compiledPage, parentContext, itemParser);
     }
 
     @Override
@@ -507,7 +507,7 @@ public class NTxResolutionContextImpl implements NTxResolutionContext {
         }
         Map<String, NTxFunction> def2 = new LinkedHashMap<>(functions);
         def2.remove(name);
-        return copyAs(path, element, def, isInPage, engine, document, vars, definitions, def2, compiledDocument,compiledPage, parentContext, itemParser);
+        return copyAs(path, element, def, isInPage, engine, document, vars, definitions, def2, compiledDocument, compiledPage, parentContext, itemParser);
     }
 
 
@@ -565,7 +565,7 @@ public class NTxResolutionContextImpl implements NTxResolutionContext {
         } else {
             def2.put(value.name(), value);
         }
-        return copyAs(path, element, def, isInPage, engine, document, vars, definitions, def2, compiledDocument,compiledPage, parentContext, itemParser);
+        return copyAs(path, element, def, isInPage, engine, document, vars, definitions, def2, compiledDocument, compiledPage, parentContext, itemParser);
     }
 
     @Override
@@ -604,29 +604,45 @@ public class NTxResolutionContextImpl implements NTxResolutionContext {
             String pathStr = path.asStringValue().get();
             if (NTxGitHelper.isGithubFolder(pathStr)) {
                 NPath pp = NTxGitHelper.resolveGithubPath(pathStr, log());
-                if(pp.isRegularFile()){
-                    ((NTxCompiledDocumentImpl)compiledDocument).getFingerPrintBuilder()
-                            .addResource(pp,pathStr);
+                if (pp.isRegularFile()) {
+                    ((NTxCompiledDocumentImpl) compiledDocument).getFingerPrintBuilder()
+                            .addResource(pp, pathStr);
                 }
                 return pp;
             }
             NTxSource source = source();
-            NPath pp = NTxUtils.resolvePath(path, source);
-            ((NTxCompiledDocumentImpl)compiledDocument).getFingerPrintBuilder()
-                    .addResource(pp,pathStr);
+            NPath pp = resolveRealPath(NTxUtils.resolvePath(path, source));
+            ((NTxCompiledDocumentImpl) compiledDocument).getFingerPrintBuilder()
+                    .addResource(pp, pathStr);
             return pp;
         }
         throw new NIllegalArgumentException(NMsg.ofC("unsupported path type : %s", path));
     }
 
+    private NPath resolveRealPath(NPath pp) {
+        if(pp==null){
+            return null;
+        }
+        String e = NStringUtils.strip(pp.nameParts().extension());
+        if (e.isEmpty()) {
+            for (String s : new String[]{"png", "jpg", "gif"}) {
+                NPath p2 = pp.resolveSibling(pp.name() + "." + s);
+                if (p2.exists()) {
+                    return p2;
+                }
+            }
+        }
+        return pp;
+    }
+
     @Override
     public NTxResolutionContext pushContext() {
-        return copyAs(path, element, def, isInPage, engine, document, vars, definitions, functions, compiledDocument,compiledPage,this, itemParser);
+        return copyAs(path, element, def, isInPage, engine, document, vars, definitions, functions, compiledDocument, compiledPage, this, itemParser);
     }
 
     @Override
     public NTxResolutionContext withItemParser(NTxItemParser itemParser) {
-        return copyAs(path, element, def, isInPage, engine, document, vars, definitions, functions, compiledDocument,compiledPage, this, itemParser);
+        return copyAs(path, element, def, isInPage, engine, document, vars, definitions, functions, compiledDocument, compiledPage, this, itemParser);
     }
 
     @Override

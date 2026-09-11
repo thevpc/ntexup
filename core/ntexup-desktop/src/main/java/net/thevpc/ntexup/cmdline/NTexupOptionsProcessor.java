@@ -109,7 +109,7 @@ public class NTexupOptionsProcessor {
     private void runActionShowFrame(Info info) {
         if (info.mainFrame == null) {
             NSwingUtils.setSharedWorkspaceInstance();
-            FlatLightLaf.setup(new com.formdev.flatlaf.FlatDarculaLaf());
+            FlatLightLaf.setup();
             info.mainFrame = new MainFrame(info.engine);
         }
         ShowFrameActionOptions showFrameActionOptions = info.options.getOrCreate(ShowFrameActionOptions.class);

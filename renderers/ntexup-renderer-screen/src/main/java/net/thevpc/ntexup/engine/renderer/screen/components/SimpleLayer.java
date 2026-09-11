@@ -26,9 +26,10 @@ public abstract class SimpleLayer implements NTxDocumentLayer {
                 break;
             }
         }
-        g2d.setColor(Color.LIGHT_GRAY);
-        g2d.drawString(str, x + 2, y + 2);
-        g2d.setColor(Color.DARK_GRAY);
+        g2d.setFont(new Font("SansSerif", Font.PLAIN, 12));
+        g2d.setComposite(AlphaComposite.SrcOver.derive(0.5f));
+        g2d.setColor(new Color(0x334155));
         g2d.drawString(str, x, y);
+        g2d.setComposite(AlphaComposite.SrcOver.derive(1.0f));
     }
 }

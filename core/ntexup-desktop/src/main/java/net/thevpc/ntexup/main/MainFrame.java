@@ -36,7 +36,16 @@ public class MainFrame extends JFrame implements NTxDocumentViewManager {
         }
     };
 
+    public static void initLookAndFeel() {
+        try {
+            com.formdev.flatlaf.FlatLightLaf.setup();
+        } catch (Throwable ex) {
+            // fallback
+        }
+    }
+
     public MainFrame(NTxEngine engine) {
+        initLookAndFeel();
         serviceHelper = new NTxServiceHelper(this, engine == null ? new DefaultNTxEngine() : engine);
         setTitle("Ntexup Viewer");
         this.setIconImage(
@@ -47,7 +56,7 @@ public class MainFrame extends JFrame implements NTxDocumentViewManager {
         setContentPane(createCenter());
 
 //        setJMenuBar(jmb);
-        setPreferredSize(new Dimension(600, 400));
+        setPreferredSize(new Dimension(720, 480));
         pack();
         this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         addWindowListener(new WindowAdapter() {
@@ -139,6 +148,25 @@ public class MainFrame extends JFrame implements NTxDocumentViewManager {
     private JMenu createMenuView() {
         JMenu menu = new JMenu("View");
         menu.add(createMenuItemDebugPane());
+        menu.addSeparator();
+        JMenuItem lightTheme = new JMenuItem("Light Theme");
+        lightTheme.addActionListener(e -> {
+            try {
+                com.formdev.flatlaf.FlatLightLaf.setup();
+                SwingUtilities.updateComponentTreeUI(this);
+            } catch (Throwable ignored) {
+            }
+        });
+        menu.add(lightTheme);
+        JMenuItem darkTheme = new JMenuItem("Dark Theme");
+        darkTheme.addActionListener(e -> {
+            try {
+                com.formdev.flatlaf.FlatDarkLaf.setup();
+                SwingUtilities.updateComponentTreeUI(this);
+            } catch (Throwable ignored) {
+            }
+        });
+        menu.add(darkTheme);
         return menu;
     }
 

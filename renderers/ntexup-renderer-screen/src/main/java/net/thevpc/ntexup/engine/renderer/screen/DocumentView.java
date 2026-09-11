@@ -12,6 +12,10 @@ import net.thevpc.ntexup.engine.impl.NTxCompiledDocumentImpl;
 import net.thevpc.ntexup.engine.renderer.screen.components.RatioPanel;
 import net.thevpc.ntexup.api.util.NTxUtilsImages;
 
+import net.thevpc.ntexup.engine.renderer.screen.components.PresentationHud;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
@@ -34,7 +38,16 @@ public class DocumentView implements NTxDocumentView {
     PageView currentShowingPage;
     private Map<String, PageView> pagesMapById = new HashMap<>();
     private Map<Integer, PageView> pagesMapByIndex = new HashMap<>();
-    private Timer timer;
+    private Timer resourceMonitorTimer;
+    private javax.swing.Timer loadingAnimationTimer;
+    private PresentationHud hud;
+    private boolean isFullScreen = false;
+    private Rectangle windowedBounds;
+    private static final ExecutorService ASYNC_LOADER = Executors.newSingleThreadExecutor(r -> {
+        Thread t = new Thread(r, "DocumentView-AsyncLoader");
+        t.setDaemon(true);
+        return t;
+    });
     private boolean inCheckResourcesChanged;
     private boolean inLoadDocument;
     Throwable currentThrowable;
@@ -68,14 +81,8 @@ public class DocumentView implements NTxDocumentView {
         frame.setSize(PageView.REF_SIZE);
         frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         prepareContentPane();
-        timer = new Timer("DocumentViewResourcesMonitor", true);
-        timer.scheduleAtFixedRate(new TimerTask() {
-            @Override
-            public void run() {
-                animate();
-            }
-        }, 10, 10);
-        timer.scheduleAtFixedRate(new TimerTask() {
+        resourceMonitorTimer = new Timer("DocumentViewResourcesMonitor", true);
+        resourceMonitorTimer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
                 checkResourcesChanged();
@@ -85,7 +92,10 @@ public class DocumentView implements NTxDocumentView {
 
     @Override
     public void close() {
-        timer.cancel();
+        if (resourceMonitorTimer != null) {
+            resourceMonitorTimer.cancel();
+        }
+        stopLoadingAnimation();
         frame.setVisible(false);
         for (NTxDocumentViewListener nTxDocumentViewListener : listeners.toArray(new NTxDocumentViewListener[0])) {
             nTxDocumentViewListener.documentClosed(this);
@@ -114,9 +124,92 @@ public class DocumentView implements NTxDocumentView {
         return compiledDocument;
     }
 
-    private void animate() {
-        this.contentPane.invalidate();
-        this.contentPane.repaint();
+    public boolean isFullScreen() {
+        return isFullScreen;
+    }
+
+    public void toggleFullScreen() {
+        setFullScreen(!isFullScreen);
+    }
+
+    public void setFullScreen(boolean fullScreen) {
+        if (this.isFullScreen == fullScreen) {
+            return;
+        }
+        this.isFullScreen = fullScreen;
+        SwingUtilities.invokeLater(() -> {
+            frame.dispose();
+            if (isFullScreen) {
+                windowedBounds = frame.getBounds();
+                frame.setUndecorated(true);
+                GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+                GraphicsDevice gd = ge.getDefaultScreenDevice();
+                try {
+                    if (gd.isFullScreenSupported()) {
+                        gd.setFullScreenWindow(frame);
+                    } else {
+                        frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
+                        frame.setVisible(true);
+                    }
+                } catch (Exception ex) {
+                    frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
+                    frame.setVisible(true);
+                }
+            } else {
+                GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+                GraphicsDevice gd = ge.getDefaultScreenDevice();
+                if (gd.getFullScreenWindow() == frame) {
+                    gd.setFullScreenWindow(null);
+                }
+                frame.setUndecorated(false);
+                frame.setExtendedState(JFrame.NORMAL);
+                if (windowedBounds != null) {
+                    frame.setBounds(windowedBounds);
+                } else {
+                    frame.setSize(PageView.REF_SIZE);
+                    frame.setLocationRelativeTo(null);
+                }
+                frame.setVisible(true);
+            }
+            repositionHud();
+            contentPane.requestFocusInWindow();
+        });
+    }
+
+    public void repositionHud() {
+        if (hud != null) {
+            int hudW = Math.min(340, frame.getWidth() - 40);
+            int hudH = 38;
+            int hudX = (frame.getWidth() - hudW) / 2;
+            int hudY = frame.getHeight() - hudH - (isFullScreen ? 25 : 55);
+            hud.setBounds(hudX, hudY, hudW, hudH);
+        }
+    }
+
+    private void startLoadingAnimation() {
+        SwingUtilities.invokeLater(() -> {
+            if (loadingAnimationTimer == null) {
+                loadingAnimationTimer = new javax.swing.Timer(40, e -> {
+                    if (isPageLoading()) {
+                        contentPane.repaint();
+                    } else {
+                        stopLoadingAnimation();
+                    }
+                });
+            }
+            if (!loadingAnimationTimer.isRunning()) {
+                loadingAnimationTimer.start();
+            }
+        });
+    }
+
+    private void stopLoadingAnimation() {
+        SwingUtilities.invokeLater(() -> {
+            if (loadingAnimationTimer != null && loadingAnimationTimer.isRunning()) {
+                loadingAnimationTimer.stop();
+            }
+            contentPane.repaint();
+        });
     }
 
     private void checkResourcesChanged() {
@@ -184,13 +277,34 @@ public class DocumentView implements NTxDocumentView {
     }
 
     public void prepareContentPane() {
+        hud = new PresentationHud(this);
+        frame.getLayeredPane().add(hud, Integer.valueOf(JLayeredPane.POPUP_LAYER));
+        frame.addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentResized(ComponentEvent e) {
+                repositionHud();
+            }
+        });
+
         contentPane.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
                 if (SwingUtilities.isLeftMouseButton(e)) {
-                    new Thread(() -> nextPage()).start();
+                    nextPage();
+                    if (hud != null) {
+                        hud.ping();
+                    }
                 } else if (SwingUtilities.isRightMouseButton(e)) {
                     new DocumentPopupMenu(DocumentView.this).showPopupMenu(e);
+                }
+            }
+        });
+
+        contentPane.addMouseMotionListener(new MouseMotionAdapter() {
+            @Override
+            public void mouseMoved(MouseEvent e) {
+                if (hud != null) {
+                    hud.ping();
                 }
             }
         });
@@ -203,15 +317,40 @@ public class DocumentView implements NTxDocumentView {
             @Override
             public void keyPressed(KeyEvent e) {
                 switch (e.getKeyCode()) {
+                    case KeyEvent.VK_F11: {
+                        toggleFullScreen();
+                        break;
+                    }
+                    case KeyEvent.VK_ESCAPE: {
+                        if (isFullScreen) {
+                            setFullScreen(false);
+                        }
+                        break;
+                    }
+                    case KeyEvent.VK_HOME: {
+                        firstPage();
+                        break;
+                    }
+                    case KeyEvent.VK_END: {
+                        lastPage();
+                        break;
+                    }
+                    case KeyEvent.VK_PAGE_UP: {
+                        previousPage();
+                        break;
+                    }
+                    case KeyEvent.VK_PAGE_DOWN: {
+                        nextPage();
+                        break;
+                    }
                     case KeyEvent.VK_SPACE:
                     case KeyEvent.VK_RIGHT:
-                    case KeyEvent.VK_UP: {
+                    case KeyEvent.VK_DOWN: {
                         if (e.isControlDown()) {
                             lastPage();
                         } else {
                             nextPage();
                         }
-
                         break;
                     }
                     case KeyEvent.VK_F5: {
@@ -219,7 +358,7 @@ public class DocumentView implements NTxDocumentView {
                         break;
                     }
                     case KeyEvent.VK_LEFT:
-                    case KeyEvent.VK_DOWN: {
+                    case KeyEvent.VK_UP: {
                         if (e.isControlDown()) {
                             firstPage();
                         } else {
@@ -227,6 +366,9 @@ public class DocumentView implements NTxDocumentView {
                         }
                         break;
                     }
+                }
+                if (hud != null) {
+                    hud.ping();
                 }
             }
 
@@ -241,13 +383,13 @@ public class DocumentView implements NTxDocumentView {
         if (inLoadDocument) {
             return;
         }
-        new Thread(() -> {
+        ASYNC_LOADER.submit(() -> {
             reloadDocumentSync();
             if (!isShown && getPagesCount() > 0) {
                 isShown = true;
                 show();
             }
-        }).start();
+        });
     }
 
     private boolean reloadDocumentSync() {
@@ -255,6 +397,7 @@ public class DocumentView implements NTxDocumentView {
             return false;
         }
         listener.onStartLoadingDocument();
+        startLoadingAnimation();
         this.inLoadDocument = true;
         try {
             PageView oldPage = this.currentShowingPage;
@@ -311,6 +454,7 @@ public class DocumentView implements NTxDocumentView {
             }
         } finally {
             this.inLoadDocument = false;
+            stopLoadingAnimation();
             listener.onEndLoadingDocument();
         }
         return true;
@@ -353,6 +497,12 @@ public class DocumentView implements NTxDocumentView {
             } else {
                 listener.onChangedPage(null);
             }
+        }
+        if (hud != null) {
+            SwingUtilities.invokeLater(() -> {
+                hud.updateState(getPageUserIndex(), getPagesCount(), isFullScreen);
+                hud.ping();
+            });
         }
         SwingUtilities.invokeLater(() -> frame.setVisible(true));
     }

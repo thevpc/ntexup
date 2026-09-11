@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?><project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>net.thevpc.xprojects.builders</groupId>
+        <artifactId>ntexup-builder</artifactId>
+        <version>1.0.0.0</version>
+        <relativePath>../../pom.xml</relativePath>
+    </parent>
+    <groupId>net.thevpc.ntexup</groupId>
+    <artifactId>ntexup-engine-full</artifactId>
+    <version>1.0.0.0</version>
+    <packaging>jar</packaging>
+    <name>ntexup :: Core Full</name>
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <github.global.server>github</github.global.server>
+        <nuts.application>true</nuts.application>
+        <nuts.term>true</nuts.term>
+        <nuts.genericName>Document Generation Library</nuts.genericName>
+        <nuts.categories>
+            /Development
+            /Settings/PackageManager/Nuts
+        </nuts.categories>
+    </properties>
+
+    <organization>
+        <name>vpc open source initiative</name>
+        <url>https://thevpc.net</url>
+    </organization>
+
+    <developers>
+        <developer>
+            <id>vpc</id>
+            <name>Taha Ben Salah</name>
+            <email>taha.bensalah@gmail.com</email>
+            <url>https://tahabensalah.net</url>
+            <organization>thevpc open source initiative</organization>
+            <organizationUrl>https://thevpc.net</organizationUrl>
+            <roles>
+                <role>architect</role>
+                <role>developer</role>
+            </roles>
+            <timezone>Africa/Tunis</timezone>
+            <properties>
+                <picUrl>https://gravatar.com/avatar/977025550163b4a91397007f6ea9ee17</picUrl>
+            </properties>
+        </developer>
+    </developers>
+
+    <licenses>
+        <license>
+            <name>Apache License, Version 2.0</name>
+            <url>https://www.apache.org/licenses/LICENSE-2.0</url>
+        </license>
+    </licenses>
+
+    <dependencies>
+        <dependency><groupId>net.thevpc.ntexup</groupId><artifactId>ntexup-engine</artifactId><version>1.0.0.0</version></dependency>
+        <dependency><groupId>net.thevpc.ntexup</groupId><artifactId>ntexup-extension-plantuml</artifactId><version>1.0.0.0</version></dependency>
+        <dependency><groupId>net.thevpc.ntexup</groupId><artifactId>ntexup-extension-animated-gif</artifactId><version>1.0.0.0</version></dependency>
+        <dependency><groupId>net.thevpc.ntexup</groupId><artifactId>ntexup-extension-svg</artifactId><version>1.0.0.0</version></dependency>
+        <dependency><groupId>net.thevpc.ntexup</groupId><artifactId>ntexup-extension-shapes2d</artifactId><version>1.0.0.0</version></dependency>
+        <dependency><groupId>net.thevpc.ntexup</groupId><artifactId>ntexup-extension-shapes3d</artifactId><version>1.0.0.0</version></dependency>
+        <dependency><groupId>net.thevpc.ntexup</groupId><artifactId>ntexup-extension-plot2d</artifactId><version>1.0.0.0</version></dependency>
+        <dependency><groupId>net.thevpc.ntexup</groupId><artifactId>ntexup-extension-presenters</artifactId><version>1.0.0.0</version></dependency>
+        <dependency><groupId>net.thevpc.ntexup</groupId><artifactId>ntexup-extension-latex</artifactId><version>1.0.0.0</version></dependency>
+        <dependency><groupId>net.thevpc.ntexup</groupId><artifactId>ntexup-renderer-pdf</artifactId><version>1.0.0.0</version></dependency>
+        <dependency><groupId>net.thevpc.ntexup</groupId><artifactId>ntexup-renderer-screen</artifactId><version>1.0.0.0</version></dependency>
+        <dependency><groupId>net.thevpc.ntexup</groupId><artifactId>ntexup-renderer-html</artifactId><version>1.0.0.0</version></dependency>
+    </dependencies>
+    <build>
+        <plugins>
+            <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-jar-plugin</artifactId><version>3.4.2</version></plugin>
+        </plugins>
+    </build>
+</project>

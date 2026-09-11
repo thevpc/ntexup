@@ -1,4 +1,5 @@
 net.thevpc.ntexup.engine.parser.nodeparsers.NTxPageGroupParser
+net.thevpc.ntexup.engine.parser.nodeparsers.NTxGroupParser
 net.thevpc.ntexup.engine.parser.nodeparsers.NTxPageParser
 net.thevpc.ntexup.engine.parser.nodeparsers.ForSpecialParser
 net.thevpc.ntexup.engine.parser.nodeparsers.AssignSpecialParser

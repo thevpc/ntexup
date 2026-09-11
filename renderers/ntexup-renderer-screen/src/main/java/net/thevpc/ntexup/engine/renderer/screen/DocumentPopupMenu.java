@@ -33,6 +33,9 @@ public class DocumentPopupMenu {
                 documentView.documentViewManager.exit();
             });
         }
+        popupMenu.addMenuItem(documentView.isFullScreen() ? "Exit Fullscreen (F11 / Esc)" : "Fullscreen (F11)", ev -> {
+            documentView.toggleFullScreen();
+        });
         popupMenu.addMenuItem("Save as PDF", ev -> {
             PdfConfigDialog configDialog = new PdfConfigDialog((Frame) SwingUtilities.getWindowAncestor((Component) e.getSource()), documentView);
             configDialog.setVisible(true);

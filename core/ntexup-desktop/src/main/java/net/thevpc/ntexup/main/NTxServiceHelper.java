@@ -94,6 +94,10 @@ public class NTxServiceHelper {
         return usersConfigManager;
     }
 
+    public void removeRecentProject(NPath path) {
+        configManager.removeRecentProject(path);
+    }
+
     public void openProject(NPath path) {
         configManager.markAccessed(path);
         NTxDocumentScreenRenderer renderer = engine.newScreenRenderer().get();

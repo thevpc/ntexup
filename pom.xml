@@ -79,10 +79,9 @@
     </pluginRepositories>
     <modules>
         <module>core/ntexup-api</module>
-        <module>core/ntexup-engine</module>
-        <module>test/ntexup-examples</module>
         <module>lib/ntexup-lib-geometry2d</module>
         <module>lib/ntexup-lib-geometry3d</module>
+        <module>core/ntexup-engine</module>
         <module>extensions/ntexup-extension-plantuml</module>
         <module>extensions/ntexup-extension-animated-gif</module>
         <module>extensions/ntexup-extension-svg</module>
@@ -98,8 +97,15 @@
         <module>renderers/ntexup-renderer-html</module>
         <module>renderers/ntexup-renderer-screen</module>
         <module>renderers/ntexup-renderer-web</module>
+
+        <module>test/ntexup-examples</module>
+
+        <module>core/ntexup-engine-full</module>
+        <module>core/ntexup-desktop</module>
+
         <module>app/ntexup</module>
-        <module>app/ntexup-viewer-backend</module>
         <module>app/ntexup-full</module>
+        <module>app/ntexup-viewer-backend</module>
+
     </modules>
 </project>

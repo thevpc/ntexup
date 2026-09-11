@@ -50,6 +50,20 @@ public enum NTxAlign implements NToElement {
     public static NOptional<NTxAlign> parse(String e) {
         try {
             String u = NNameFormat.CONST_NAME.format(NStringUtils.strip(e));
+            switch (u) {
+                case "LEFT_CENTER":
+                case "CENTER_LEFT":
+                    return NOptional.of(LEFT);
+                case "RIGHT_CENTER":
+                case "CENTER_RIGHT":
+                    return NOptional.of(RIGHT);
+                case "TOP_CENTER":
+                case "CENTER_TOP":
+                    return NOptional.of(TOP);
+                case "BOTTOM_CENTER":
+                case "CENTER_BOTTOM":
+                    return NOptional.of(BOTTOM);
+            }
             NTxAlign p = valueOf(u);
             return NOptional.of(p);
         } catch (Exception ex) {

@@ -13,8 +13,10 @@ public class NTxFunctionEither implements NTxFunction {
 
     @Override
     public NElement invoke(NTxFunctionCallContext args) {
+        NElement last = null;
         for (int i = 0; i < args.size(); i++) {
             NElement u = args.evalArg(i);
+            last = u;
             if (i < args.size() - 1 && u.isName() && u.equals(args.arg(i).src())) {
                 // this is a var that could not be resolved, just skip
                 continue;
@@ -23,6 +25,6 @@ public class NTxFunctionEither implements NTxFunction {
                 return u;
             }
         }
-        return null;
+        return last != null ? last : NElement.ofString("");
     }
 }

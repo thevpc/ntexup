@@ -411,7 +411,8 @@ public class NTxCompiledDocumentImpl implements NTxCompiledDocument {
                     pendingInstr.add(part);
                     break;
                 }
-                case NTxNodeType.PAGE_GROUP: {
+                case NTxNodeType.PAGE_GROUP:
+                {
                     if (pendingAutoPage != null) {
                         safeAddPage(new NTxCompiledPageImpl(pendingAutoPage.newPage, this, compiledPages.size(), pendingAutoPage.context, pendingInstr, onCompile));
                         pendingInstr.clear();
