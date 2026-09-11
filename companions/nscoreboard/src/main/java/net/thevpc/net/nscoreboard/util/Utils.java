@@ -86,10 +86,6 @@ public class Utils {
         // Obtain the FontMetrics object
         FontMetrics fontMetrics = graphics.getFontMetrics();
 
-        // Use the FontMetrics object
-//        System.out.println("Ascent: " + fontMetrics.getAscent());
-//        System.out.println("Descent: " + fontMetrics.getDescent());
-//        System.out.println("Height: " + fontMetrics.getHeight());
         String refString = "AjWw";
         int stringWidth = 0;
         int height = 0;

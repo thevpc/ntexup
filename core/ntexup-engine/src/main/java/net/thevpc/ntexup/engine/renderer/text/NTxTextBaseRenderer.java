@@ -2,6 +2,7 @@ package net.thevpc.ntexup.engine.renderer.text;
 
 import net.thevpc.ntexup.api.document.elem2d.NTxBounds2D;
 import net.thevpc.ntexup.api.document.elem2d.NTxDouble2;
+import net.thevpc.ntexup.api.document.elem2d.NTxMargin;
 import net.thevpc.ntexup.api.document.node.*;
 import net.thevpc.ntexup.api.document.style.*;
 import net.thevpc.ntexup.api.document.NTxSizeRequirements;
@@ -45,7 +46,13 @@ public abstract class NTxTextBaseRenderer extends NTxNodeRendererBase {
 
     public NTxBounds2D selfBounds2D(NTxRendererContext ctx) {
         Cache0 renderInfo = renderInfo0(ctx);
-        return NTxValueByName.selfBounds2D(new NTxDouble2(renderInfo.computedBound.widthX(), renderInfo.computedBound.widthY()), null, ctx);
+        NTxMargin padding = NTxValueByName.getPadding(ctx);
+        double pw = padding == null ? 0 : (padding.getLeft() + padding.getRight());
+        double ph = padding == null ? 0 : (padding.getTop() + padding.getBottom());
+        // Shift origin by left/top padding so that background includes padding area
+        double x = renderInfo.computedBound.minX() - (padding == null ? 0 : padding.getLeft());
+        double y = renderInfo.computedBound.minY() - (padding == null ? 0 : padding.getTop());
+        return NTxValueByName.selfBounds2D(new NTxDouble2(renderInfo.computedBound.widthX() + pw, renderInfo.computedBound.widthY() + ph), null, ctx);
     }
 
     protected abstract NTxTextRendererBuilder createRichTextHelper(NTxRendererContext ctx);

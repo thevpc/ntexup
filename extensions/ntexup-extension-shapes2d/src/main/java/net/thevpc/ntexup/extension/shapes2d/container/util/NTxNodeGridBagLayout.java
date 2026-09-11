@@ -1189,20 +1189,6 @@ public class NTxNodeGridBagLayout {
         r.height = d.getHeight();
 
         /*
-         * DEBUG
-         *
-         * DumpLayoutInfo(info);
-         * for (compindex = 0 ; compindex < components.length ; compindex++) {
-         * comp = components[compindex];
-         * if (!comp.isVisible())
-         *      continue;
-         * constraints = lookupConstraints(comp);
-         * DumpConstraints(constraints);
-         * }
-         * System.out.println("minSize " + r.width + " " + r.height);
-         */
-
-        /*
          * If the current dimensions of the window don't match the desired
          * dimensions, then adjust the minWidth and minHeight arrays
          * according to the weights.
@@ -1249,13 +1235,6 @@ public class NTxNodeGridBagLayout {
         } else {
             diffh = 0;
         }
-
-        /*
-         * DEBUG
-         *
-         * System.out.println("Re-adjusted:");
-         * DumpLayoutInfo(info);
-         */
 
         /*
          * Now do the actual layout of the slaves using the layout information

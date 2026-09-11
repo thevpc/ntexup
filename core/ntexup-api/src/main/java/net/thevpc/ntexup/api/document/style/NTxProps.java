@@ -189,4 +189,20 @@ public class NTxProps {
         return NTxProp.of(NTxPropName.MAX_Y, NTxUtils.addCompilerDeclarationPathDummy(NElement.ofDouble(x)));
     }
 
+    public static NTxProp margin(double m) {
+        return NTxProp.of(NTxPropName.MARGIN, NTxUtils.addCompilerDeclarationPathDummy(NElement.ofDouble(m)));
+    }
+
+    public static NTxProp margin(double x, double y) {
+        return NTxProp.of(NTxPropName.MARGIN, NTxUtils.addCompilerDeclarationPathDummy(new NTxDouble2(x, y).toElement()));
+    }
+
+    public static NTxProp padding(double p) {
+        return NTxProp.of(NTxPropName.PADDING, NTxUtils.addCompilerDeclarationPathDummy(NElement.ofDouble(p)));
+    }
+
+    public static NTxProp padding(double x, double y) {
+        return NTxProp.of(NTxPropName.PADDING, NTxUtils.addCompilerDeclarationPathDummy(new NTxDouble2(x, y).toElement()));
+    }
+
 }

@@ -6,6 +6,7 @@ package net.thevpc.ntexup.extension.latex.eq;
 
 import net.thevpc.ntexup.api.document.elem2d.NTxBounds2D;
 import net.thevpc.ntexup.api.document.elem2d.NTxDouble2;
+import net.thevpc.ntexup.api.document.elem2d.NTxMargin;
 import net.thevpc.ntexup.api.document.node.NTxNode;
 import net.thevpc.ntexup.api.document.node.NTxNodeType;
 import net.thevpc.ntexup.api.document.style.NTxPropName;
@@ -108,8 +109,11 @@ public class NTxEquationBuilder implements NTxNodeBuilder {
                 // insert a border
                 icon.setInsets(new Insets(0, 0, 0, 0));
 
+                NTxMargin padding = NTxValueByName.getPadding(rendererContext);
+                double pw = padding == null ? 0 : (padding.getLeft() + padding.getRight());
+                double ph = padding == null ? 0 : (padding.getTop() + padding.getBottom());
                 u.selfBounds = rendererContext.selfBounds2D(
-                        new NTxDouble2(icon.getIconWidth(), icon.getIconHeight())
+                        new NTxDouble2(icon.getIconWidth() + pw, icon.getIconHeight() + ph)
                         , null
                 );
             }
@@ -159,8 +163,13 @@ public class NTxEquationBuilder implements NTxNodeBuilder {
             // insert a border
             icon.setInsets(new Insets(0, 0, 0, 0));
 
+            NTxMargin padding = NTxValueByName.getPadding(rendererContext);
+            double padLeft = padding == null ? 0 : padding.getLeft();
+            double padTop = padding == null ? 0 : padding.getTop();
+            double pw = padLeft + (padding == null ? 0 : padding.getRight());
+            double ph = padTop + (padding == null ? 0 : padding.getBottom());
             NTxBounds2D selfBounds = rendererContext.selfBounds2D(
-                    new NTxDouble2(icon.getIconWidth(), icon.getIconHeight())
+                    new NTxDouble2(icon.getIconWidth() + pw, icon.getIconHeight() + ph)
                     , null
             );
             double x = selfBounds.minX();
@@ -174,7 +183,7 @@ public class NTxEquationBuilder implements NTxNodeBuilder {
                 }
                 Paint fg = rendererContext.getForegroundColor(true);
                 icon.setForeground(rendererContext.colorFromPaint(fg).orElse(Color.BLACK));
-                icon.paintIcon(null, g.graphics2D(), (int) x, (int) y /*- icon.getIconHeight()*/);
+                icon.paintIcon(null, g.graphics2D(), (int) (x + padLeft), (int) (y + padTop) /*- icon.getIconHeight()*/);
 
                 rendererContext.paintBorderLine(selfBounds);
             }

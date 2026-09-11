@@ -9,11 +9,13 @@ public class NTxMargin implements NToElement {
     private Double bottom;
     private Double left;
 
+    public static final NTxMargin ZERO = new NTxMargin(0.0, 0.0, 0.0, 0.0);
+
     public NTxMargin(Double left, Double top, Double right, Double bottom) {
-        this.top = top;
-        this.right = right;
-        this.bottom = bottom;
-        this.left = left;
+        this.top = top == null ? 0.0 : top;
+        this.right = right == null ? 0.0 : right;
+        this.bottom = bottom == null ? 0.0 : bottom;
+        this.left = left == null ? 0.0 : left;
     }
 
     public static NTxMargin of(double v) {
@@ -33,19 +35,23 @@ public class NTxMargin implements NToElement {
     }
 
     public Double getTop() {
-        return top;
+        return top == null ? 0.0 : top;
     }
 
     public Double getRight() {
-        return right;
+        return right == null ? 0.0 : right;
     }
 
     public Double getBottom() {
-        return bottom;
+        return bottom == null ? 0.0 : bottom;
     }
 
     public Double getLeft() {
-        return left;
+        return left == null ? 0.0 : left;
+    }
+
+    public boolean isZero() {
+        return getLeft() == 0 && getTop() == 0 && getRight() == 0 && getBottom() == 0;
     }
 
     @Override

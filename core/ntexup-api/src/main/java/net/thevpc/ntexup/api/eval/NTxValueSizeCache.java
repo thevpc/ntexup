@@ -16,6 +16,7 @@ public class NTxValueSizeCache {
 //    public NTxDouble2 componentSize;
 //    public NTxBounds2D componentBounds;
     public NTxMargin margin;
+    public NTxMargin padding;
     public NTxSizeRef parentWithMarginRef;
     public NTxBounds2D parentBoundsWithMargin;
     public NTxBounds2D lastParentBounds;

@@ -223,10 +223,6 @@ public class GifResizer {
                     if (nodeItem.getNodeName().equals("ImageDescriptor")) {
                         Map<String, Integer> imageAttr = new HashMap<String, Integer>();
                         NamedNodeMap attr = nodeItem.getAttributes();
-//                        for (int index = 0; index < attr.getLength(); index++) {
-//                            Node node = attr.item(index);
-//                            System.out.println("----> " + node.getNodeName() + "=" + node.getNodeValue());
-//                        }
                         for (int k = 0; k < imageatt.length; k++) {
                             Node attnode = attr.getNamedItem(imageatt[k]);
                             imageAttr.put(imageatt[k], Integer.valueOf(attnode.getNodeValue()));

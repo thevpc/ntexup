@@ -101,15 +101,6 @@ public class GridMapOld<T> {
         return new ArrayList<>(items);
     }
 
-    public void dump() {
-        for (int y = 0; y < gridHeight; y++) {
-            StringBuilder sb = new StringBuilder();
-            for (int x = 0; x < gridWidth; x++) {
-                sb.append(occupied.get(idx(x, y)) ? 'X' : '.');
-            }
-            System.out.println(sb);
-        }
-    }
     /** Total number of columns currently in the grid */
     public int columns() {
         return gridWidth;

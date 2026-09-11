@@ -255,62 +255,8 @@ public class NTxValueByName {
         renderInfo.preserveRatio = NTxValue.of(ctx.computePropertyValue(NTxPropName.PRESERVE_ASPECT_RATIO).orNull()).asBoolean().orElse(false);
         {
 
-            NElement marginElement = ctx.computePropertyValue(NTxPropName.MARGIN).orNull();
-
-            NOptional<NElement[]> d = NTxValue.of(marginElement).asElementArray();
-            double left = 0;
-            double top = 0;
-            double right = 0;
-            double bottom = 0;
-            if (d.isPresent()) {
-                NElement[] dd = d.get();
-                switch (dd.length) {
-                    case 0: {
-                        break;
-                    }
-                    case 1: {
-                        double dv = sr.x(dd[0]).orElse(0.0);
-                        left = dv;
-                        top = dv;
-                        right = dv;
-                        bottom = dv;
-                        break;
-                    }
-                    case 2: {
-                        double dv1 = sr.x(dd[0]).orElse(0.0);
-                        double dv2 = sr.y(dd[1]).orElse(0.0);
-                        left = dv1;
-                        top = dv2;
-                        right = dv1;
-                        bottom = dv2;
-                        break;
-                    }
-                    case 3: {
-                        double dv1 = sr.x(dd[0]).orElse(0.0);
-                        double dv2 = sr.y(dd[1]).orElse(0.0);
-                        double dv3 = sr.x(dd[2]).orElse(0.0);
-                        left = dv1;
-                        top = dv2;
-                        right = dv3;
-                        bottom = dv2;
-                        break;
-                    }
-                    case 4: {
-                        left = sr.x(dd[0]).orElse(0.0);
-                        top = sr.y(dd[1]).orElse(0.0);
-                        right = sr.x(dd[2]).orElse(0.0);
-                        bottom = sr.y(dd[3]).orElse(0.0);
-                        break;
-                    }
-                }
-            } else {
-                double dv = sr.x(marginElement).orElse(0.0);
-                left = dv;
-                top = dv;
-                right = dv;
-                bottom = dv;
-            }
-            renderInfo.margin = new NTxMargin(left, top, right, bottom);
+            renderInfo.margin = parseMarginOrPadding(ctx.computePropertyValue(NTxPropName.MARGIN).orNull(), sr);
+            renderInfo.padding = parseMarginOrPadding(ctx.computePropertyValue(NTxPropName.PADDING, "pad").orNull(), sr);
             NTxBounds2D parentBounds = ctx.parentBounds2D();
             double pw = parentBounds.widthX();
             double ph = parentBounds.widthY();
@@ -424,6 +370,78 @@ public class NTxValueByName {
         fresh.lastParentBounds = pb;
         ctx.node().setRenderCache(NTxValueSizeCache.class.getName(), fresh);
         return fresh;
+    }
+
+    public static NTxMargin getMargin(NTxRendererContext ctx) {
+        NTxMargin m = getNodeSizeCache(ctx).margin;
+        return m == null ? NTxMargin.ZERO : m;
+    }
+
+    public static NTxMargin getPadding(NTxRendererContext ctx) {
+        NTxMargin p = getNodeSizeCache(ctx).padding;
+        return p == null ? NTxMargin.ZERO : p;
+    }
+
+    public static NTxMargin parseMarginOrPadding(NElement elem, NTxSizeRef sr) {
+        if (elem == null) {
+            return NTxMargin.ZERO;
+        }
+        NOptional<NElement[]> d = NTxValue.of(elem).asElementArray();
+        double left = 0;
+        double top = 0;
+        double right = 0;
+        double bottom = 0;
+        if (d.isPresent()) {
+            NElement[] dd = d.get();
+            switch (dd.length) {
+                case 0: {
+                    break;
+                }
+                case 1: {
+                    double dv1 = sr.x(dd[0]).orElse(0.0);
+                    double dv2 = sr.y(dd[0]).orElse(0.0);
+                    left = dv1;
+                    top = dv2;
+                    right = dv1;
+                    bottom = dv2;
+                    break;
+                }
+                case 2: {
+                    double dv1 = sr.x(dd[0]).orElse(0.0);
+                    double dv2 = sr.y(dd[1]).orElse(0.0);
+                    left = dv1;
+                    top = dv2;
+                    right = dv1;
+                    bottom = dv2;
+                    break;
+                }
+                case 3: {
+                    double dv1 = sr.x(dd[0]).orElse(0.0);
+                    double dv2 = sr.y(dd[1]).orElse(0.0);
+                    double dv3 = sr.x(dd[2]).orElse(0.0);
+                    left = dv1;
+                    top = dv2;
+                    right = dv3;
+                    bottom = dv2;
+                    break;
+                }
+                default: {
+                    left = sr.x(dd[0]).orElse(0.0);
+                    top = sr.y(dd[1]).orElse(0.0);
+                    right = sr.x(dd[2]).orElse(0.0);
+                    bottom = sr.y(dd[3]).orElse(0.0);
+                    break;
+                }
+            }
+        } else {
+            double dv1 = sr.x(elem).orElse(0.0);
+            double dv2 = sr.y(elem).orElse(0.0);
+            left = dv1;
+            top = dv2;
+            right = dv1;
+            bottom = dv2;
+        }
+        return new NTxMargin(left, top, right, bottom);
     }
 
     public static NTxValueFontCache getNodeFontCache(NTxRendererContext ctx) {

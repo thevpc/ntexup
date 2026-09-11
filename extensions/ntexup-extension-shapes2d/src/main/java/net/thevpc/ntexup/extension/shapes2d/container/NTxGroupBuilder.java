@@ -5,10 +5,12 @@
 package net.thevpc.ntexup.extension.shapes2d.container;
 
 import net.thevpc.ntexup.api.document.elem2d.NTxBounds2D;
+import net.thevpc.ntexup.api.document.elem2d.NTxMargin;
 import net.thevpc.ntexup.api.document.node.NTxNode;
 import net.thevpc.ntexup.api.document.node.NTxNodeType;
 import net.thevpc.ntexup.api.document.style.NTxProperties;
 import net.thevpc.ntexup.api.engine.NTxNodeBuilderContext;
+import net.thevpc.ntexup.api.eval.NTxValueByName;
 import net.thevpc.ntexup.api.extension.NTxNodeBuilder;
 import net.thevpc.ntexup.api.renderer.NTxRendererContext;
 
@@ -35,11 +37,24 @@ public class NTxGroupBuilder implements NTxNodeBuilder {
         if (!ctx.isDry()) {
             ctx.paintBackground(selfBounds);
         }
+        NTxMargin padding = NTxValueByName.getPadding(ctx);
+        double padLeft = padding == null ? 0 : padding.getLeft();
+        double padTop = padding == null ? 0 : padding.getTop();
+        double padRight = padding == null ? 0 : padding.getRight();
+        double padBottom = padding == null ? 0 : padding.getBottom();
+        NTxBounds2D innerBounds = (padLeft == 0 && padTop == 0 && padRight == 0 && padBottom == 0)
+                ? selfBounds
+                : NTxBounds2D.ofWidth(
+                        selfBounds.minX() + padLeft,
+                        selfBounds.minY() + padTop,
+                        Math.max(0, selfBounds.widthX() - padLeft - padRight),
+                        Math.max(0, selfBounds.widthY() - padTop - padBottom)
+                );
         NTxRendererContext finalCtx = ctx;
         List<NTxNode> texts = node.children()
-                .stream().filter(x -> finalCtx.resolveNode(x,finalCtx.parentBounds2D()).isVisible()).collect(Collectors.toList());
+                .stream().filter(x -> finalCtx.resolveNode(x, innerBounds).isVisible()).collect(Collectors.toList());
         for (NTxNode text : texts) {
-            NTxRendererContext ctx3 = ctx.resolveNode(text,selfBounds);
+            NTxRendererContext ctx3 = ctx.resolveNode(text, innerBounds);
             ctx3.render();
         }
         ctx.drawContour();

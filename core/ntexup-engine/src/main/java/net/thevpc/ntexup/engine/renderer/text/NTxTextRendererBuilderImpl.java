@@ -227,6 +227,9 @@ public class NTxTextRendererBuilderImpl implements NTxTextRendererBuilder {
         }
         textOptions.sr = rendererContext.sizeRef();
         NTxTextPath tp = parseNTxTextPath(rendererContext.computePropertyValue("text-path").orNull());
+        NTxMargin padding = NTxValueByName.getPadding(rendererContext);
+        double padLeft = padding == null ? 0 : padding.getLeft();
+        double padTop = padding == null ? 0 : padding.getTop();
         if (tp == null) {
             for (NTxRichTextRow row : this.rows) {
                 for (NTxRichTextToken col : row.tokens) {
@@ -241,8 +244,8 @@ public class NTxTextRendererBuilderImpl implements NTxTextRendererBuilder {
                             int ascent = g0.getFontMetrics(options2.getComputedFont()).getAscent();
                             g0.drawString(
                                     col.text
-                                    , x + col.xOffset
-                                    , (y + row.yOffset) + ascent,
+                                    , x + padLeft + col.xOffset
+                                    , (y + padTop + row.yOffset) + ascent,
                                     options2
                             );
                             break;
@@ -250,11 +253,11 @@ public class NTxTextRendererBuilderImpl implements NTxTextRendererBuilder {
                         case IMAGE_PAINTER: {
                             Rectangle2D b1 = col.bounds;
                             NTxDouble2 b2 = col.imagePainter.size();
-                            col.imagePainter.paint(g0, (x + col.xOffset), y + row.yOffset);
+                            col.imagePainter.paint(g0, (x + padLeft + col.xOffset), y + padTop + row.yOffset);
                             if (debug) {
                                 g0.drawRect(
-                                        x + col.xOffset,
-                                        y + row.yOffset,
+                                        x + padLeft + col.xOffset,
+                                        y + padTop + row.yOffset,
                                         col.bounds.getWidth(),
                                         col.bounds.getHeight()
                                 );

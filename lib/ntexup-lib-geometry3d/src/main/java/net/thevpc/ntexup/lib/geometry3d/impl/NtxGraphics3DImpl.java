@@ -406,14 +406,6 @@ public class NtxGraphics3DImpl implements NtxGraphics3D {
         if (!frontFacingEnabled) {
             isFrontFacing = true;
         }
-        // SKIP ENTIRE TRIANGLE IF BACK-FACING
-        // DEBUG: Print to see what's happening
-//        if (centroid.z < 0) { // Triangles below z=0
-//            System.out.println("Below-ground triangle: centroid=" + centroid +
-//                    ", dotProduct=" + dotProduct +
-//                    ", isFrontFacing=" + isFrontFacing +
-//                    ", normal=" + worldNormal);
-//        }
         if (!isFrontFacing) {
             return; // Don't draw at all
         }

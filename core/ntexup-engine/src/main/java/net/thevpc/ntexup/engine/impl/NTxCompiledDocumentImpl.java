@@ -547,7 +547,6 @@ public class NTxCompiledDocumentImpl implements NTxCompiledDocument {
     private void onAfterLoadingAllPages() {
         if (!allPagesLoaded) {
             allPagesLoaded = true;
-//            System.out.println(computeManifest().toPrettyString());
         }
     }
 
