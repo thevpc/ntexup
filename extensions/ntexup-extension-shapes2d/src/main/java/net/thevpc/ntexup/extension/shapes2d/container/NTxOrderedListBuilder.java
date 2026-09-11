@@ -53,8 +53,10 @@ public class NTxOrderedListBuilder implements NTxNodeBuilder {
         List<NTxListHelper.NodeWithIndent> all = NTxListHelper.build(rendererContext.node(),true, rendererContext);
         for (int i = 0; i < all.size(); i++) {
             NTxListHelper.NodeWithIndent a = all.get(i);
-            rendererContext.resolveNode(a.bullet,a.bulletBounds).render();
-            rendererContext.resolveNode(a.child,a.childBounds).render();
+            a.bullet.invalidateRenderCache();
+            a.child.invalidateRenderCache();
+            rendererContext.resolveNode(a.bullet, a.bulletBounds).render();
+            rendererContext.resolveNode(a.child, a.childBounds).render();
         }
     }
 

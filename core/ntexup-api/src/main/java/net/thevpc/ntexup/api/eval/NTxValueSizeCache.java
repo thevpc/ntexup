@@ -18,4 +18,5 @@ public class NTxValueSizeCache {
     public NTxMargin margin;
     public NTxSizeRef parentWithMarginRef;
     public NTxBounds2D parentBoundsWithMargin;
+    public NTxBounds2D lastParentBounds;
 }

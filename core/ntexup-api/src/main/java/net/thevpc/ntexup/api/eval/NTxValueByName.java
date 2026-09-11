@@ -15,6 +15,7 @@ import net.thevpc.nuts.util.NOptional;
 
 import java.awt.*;
 import java.util.Map;
+import java.util.Objects;
 
 public class NTxValueByName {
     public static final boolean AUTO_FORCE = false;
@@ -411,9 +412,18 @@ public class NTxValueByName {
     }
 
     public static NTxValueSizeCache getNodeSizeCache(NTxRendererContext ctx) {
-        return ctx.node().getAndSetRenderCache(NTxValueSizeCache.class, AUTO_FORCE,
-                () -> getNodeSizeNoCache(ctx)
-        ).get();
+        NTxBounds2D pb = ctx.parentBounds2D();
+        NOptional<Object> cached = ctx.node().getRenderCache(NTxValueSizeCache.class.getName());
+        if (cached.isPresent() && !AUTO_FORCE && !ctx.isSomeChange()) {
+            NTxValueSizeCache c = (NTxValueSizeCache) cached.get();
+            if (Objects.equals(c.lastParentBounds, pb)) {
+                return c;
+            }
+        }
+        NTxValueSizeCache fresh = getNodeSizeNoCache(ctx);
+        fresh.lastParentBounds = pb;
+        ctx.node().setRenderCache(NTxValueSizeCache.class.getName(), fresh);
+        return fresh;
     }
 
     public static NTxValueFontCache getNodeFontCache(NTxRendererContext ctx) {

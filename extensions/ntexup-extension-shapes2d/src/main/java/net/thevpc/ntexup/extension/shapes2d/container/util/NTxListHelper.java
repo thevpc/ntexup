@@ -71,25 +71,6 @@ public class NTxListHelper {
 
         double itemGap = Math.max(4, fontSize * 0.25);
         double y0 = sb.minY();
-        for (NodeWithIndent child : all) {
-            double indentWidth = indentFactor * child.indent;
-            double bulletX = sb.minX() + indentWidth;
-            double childX = bulletX + bulletWidth + marginWidth;
-            double childW = Math.max(10, sb.maxX() - childX);
-            child.bulletSelfBounds = ctx.resolveNode(child.bullet, NTxBounds2D.ofWidth(bulletX, y0, bulletWidth, fontSize * 1.5)).selfBounds2D();
-            child.childSelfBounds = ctx.resolveNode(child.child, NTxBounds2D.ofWidth(childX, y0, childW, fontSize * 1.5)).selfBounds2D();
-
-            double naturalChildH = child.childSelfBounds.widthY();
-            double naturalBulletH = child.bulletSelfBounds.widthY();
-            double lineH = Math.max(naturalChildH, naturalBulletH);
-            if (lineH <= 0) {
-                lineH = fontSize * 1.3;
-            }
-            child.height = lineH;
-            System.out.println("DEBUG: child=" + child.child.type() + " naturalChildH=" + naturalChildH + ", naturalBulletH=" + naturalBulletH + ", lineH=" + lineH + ", fontSize=" + fontSize + ", childSelfBounds=" + child.childSelfBounds);
-        }
-
-        y0 = sb.minY();
         for (int i = 0; i < all.size(); i++) {
             NodeWithIndent child = all.get(i);
             double indentWidth = indentFactor * child.indent;
@@ -97,9 +78,20 @@ public class NTxListHelper {
             double childX = bulletX + bulletWidth + marginWidth;
             double childW = Math.max(10, sb.maxX() - childX);
 
+            child.bullet.invalidateRenderCache();
+            child.child.invalidateRenderCache();
+
+            child.bulletSelfBounds = ctx.resolveNode(child.bullet, NTxBounds2D.ofWidth(bulletX, y0, bulletWidth, fontSize * 1.3)).selfBounds2D();
+            child.childSelfBounds = ctx.resolveNode(child.child, NTxBounds2D.ofWidth(childX, y0, childW, fontSize * 1.5)).selfBounds2D();
+
+            double naturalChildH = child.childSelfBounds.widthY();
+            double lineH = Math.max(naturalChildH, fontSize * 1.2);
+            child.height = lineH;
+
             child.bulletBounds = NTxBounds2D.ofWidth(bulletX, y0, bulletWidth, child.height);
             child.childBounds = NTxBounds2D.ofWidth(childX, y0, childW, child.height);
             child.rowBounds = child.bulletBounds.expand(child.childBounds);
+
             y0 += child.height;
             if (i < all.size() - 1) {
                 y0 += itemGap;
@@ -214,17 +206,6 @@ public class NTxListHelper {
                 if (allClasses.contains(clsPrefix + "-item-" + (indent + 1))) {
                     specialStyle = clsPrefix + "-item-" + (indent + 1);
                 } else {
-                    if (!allClasses.contains(clsPrefix + "-item")) {
-                        // add default style!
-                        NTxNode r = NTxUtils.findRootNode(p.parent());
-                        r.addRule(DefaultNTxStyleRule.ofClass(r, r.source(), clsPrefix + "-item"
-                                        , NTxProp.of("origin", NElement.ofString("left"))
-                                        , NTxProp.of("position", NElement.ofString("left"))
-                                        , NTxProp.of("size", NElement.ofDouble(3, "%P"))
-                                        , NTxProp.of("margin", NElement.ofDoubleArray(0, 0, 0, 0))
-                                )
-                        );
-                    }
                     specialStyle = clsPrefix + "-item";
                 }
                 g.child = p.addStyleClasses(specialStyle);

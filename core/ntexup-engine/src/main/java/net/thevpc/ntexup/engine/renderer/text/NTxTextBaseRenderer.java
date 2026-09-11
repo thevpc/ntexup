@@ -68,14 +68,20 @@ public abstract class NTxTextBaseRenderer extends NTxNodeRendererBase {
         }).get();
     }
     private Cache renderInfo(NTxNode p, NTxRendererContext ctx, NTxBounds2D selfBounds0){
-        return p.getAndSetRenderCache(Cache.class,ctx.isSomeChange(),()->{
-            Cache ri = new Cache();
-            ri.bgBounds0 = bgBounds(p, ctx);
-            ri.bgBounds = ri.bgBounds0;
-            ri.selfBounds = selfBounds0;
-            ri.bgBounds = ri.bgBounds.expand(ri.selfBounds);
-            return ri;
-        }).get();
+        net.thevpc.nuts.util.NOptional<Object> cached = p.getRenderCache(Cache.class.getName());
+        if (cached.isPresent() && !ctx.isSomeChange()) {
+            Cache ri = (Cache) cached.get();
+            if (Objects.equals(ri.selfBounds, selfBounds0)) {
+                return ri;
+            }
+        }
+        Cache ri = new Cache();
+        ri.bgBounds0 = bgBounds(p, ctx);
+        ri.bgBounds = ri.bgBounds0;
+        ri.selfBounds = selfBounds0;
+        ri.bgBounds = ri.bgBounds.expand(ri.selfBounds);
+        p.setRenderCache(Cache.class.getName(), ri);
+        return ri;
     }
 
     public void renderMain(NTxRendererContext ctx) {
