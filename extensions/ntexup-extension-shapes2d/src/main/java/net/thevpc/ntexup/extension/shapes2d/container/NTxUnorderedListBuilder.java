@@ -33,10 +33,17 @@ public class NTxUnorderedListBuilder implements NTxNodeBuilder {
     public NTxBounds2D selfBounds(NTxRendererContext rendererContext) {
         NTxNode node = rendererContext.node();
         rendererContext = rendererContext.withDefaultStyles(defaultStyles);
-        List<NTxListHelper.NodeWithIndent> all = NTxListHelper.build(node, false,rendererContext);
-        NTxBounds2D expectedBounds = rendererContext.defaultSelfBounds2D();
+        List<NTxListHelper.NodeWithIndent> all = NTxListHelper.build(node, false, rendererContext);
+        NTxBounds2D expectedBounds = null;
         for (NTxListHelper.NodeWithIndent a : all) {
-            expectedBounds.expand(a.rowBounds);
+            if (expectedBounds == null) {
+                expectedBounds = a.rowBounds;
+            } else {
+                expectedBounds = expectedBounds.expand(a.rowBounds);
+            }
+        }
+        if (expectedBounds == null) {
+            return rendererContext.defaultSelfBounds2D();
         }
         return expectedBounds;
     }
