@@ -197,7 +197,7 @@ public class NTxEquationBuilder implements NTxNodeBuilder {
             Font font = options.resolveFont(rendererContext.graphics());
             r.imagePainter = this.createLatex(text, font.getSize(), options, rendererContext);
             NTxDouble2 size = r.imagePainter.size();
-            r.bounds = new Rectangle2D.Double(0, 0, size.getX(), size.getX());
+            r.bounds = new Rectangle2D.Double(0, 0, size.getX(), size.getY());
             builder.currRow().addToken(r);
         }
     }
@@ -243,12 +243,8 @@ public class NTxEquationBuilder implements NTxNodeBuilder {
         return new NTxTextRendererBuilder.ImagePainter() {
             @Override
             public void paint(NTxGraphics g, double x, double y) {
-                FontMetrics fm = g.getFontMetrics(g.getFont());
-                int texDepth = icon.getIconDepth(); // depth below baseline
-                int texAscent = icon.getIconHeight() - texDepth;     // ascent above baseline
-                double baseline = y + fm.getAscent();
                 icon.setForeground(finalForegroundColor);
-                icon.paintIcon(null, g.graphics2D(), (int) x, (int) (baseline - texAscent));
+                icon.paintIcon(null, g.graphics2D(), (int) x, (int) y);
             }
 
             public NTxDouble2 size() {
