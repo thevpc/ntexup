@@ -70,6 +70,10 @@ public class NTxListHelper {
         }
 
         double itemGap = Math.max(4, fontSize * 0.25);
+        // Read bullet-align: "top" aligns bullet to first line, "center" is the default
+        String bulletAlign = net.thevpc.ntexup.api.eval.NTxValueByType.getStringOrName(ctx, "bullet-align").orElse("center");
+        boolean bulletAlignTop = "top".equalsIgnoreCase(bulletAlign);
+
         double y0 = sb.minY();
         for (int i = 0; i < all.size(); i++) {
             NodeWithIndent child = all.get(i);
@@ -88,11 +92,23 @@ public class NTxListHelper {
             double lineH = Math.max(naturalChildH, fontSize * 1.2);
             child.height = lineH;
 
-            child.bulletBounds = NTxBounds2D.ofWidth(bulletX, y0, bulletWidth, child.height);
+            double bulletH;
+            double bulletY;
+            if (bulletAlignTop) {
+                // Align bullet to first-line level with a small top padding
+                bulletY = y0 + fontSize * 0.15;
+                bulletH = child.bulletSelfBounds.widthY();
+            } else {
+                // Center bullet vertically within the row (default)
+                bulletH = child.height;
+                bulletY = y0;
+            }
+            child.bulletBounds = NTxBounds2D.ofWidth(bulletX, bulletY, bulletWidth, bulletH);
             child.childBounds = NTxBounds2D.ofWidth(childX, y0, childW, child.height);
-            child.rowBounds = child.bulletBounds.expand(child.childBounds);
+            child.rowBounds = NTxBounds2D.ofWidth(bulletX, y0, sb.maxX() - bulletX, child.height);
 
             y0 += child.height;
+
             if (i < all.size() - 1) {
                 y0 += itemGap;
             }
@@ -113,14 +129,24 @@ public class NTxListHelper {
                     double bulletX = sb.minX() + indentWidth;
                     double childX = bulletX + bulletWidth + marginWidth;
                     double childW = Math.max(10, sb.maxX() - childX);
-                    child.bulletBounds = NTxBounds2D.ofWidth(bulletX, y0, bulletWidth, child.height);
+                    double bulletH;
+                    double bulletY;
+                    if (bulletAlignTop) {
+                        bulletY = y0 + fontSize * 0.15;
+                        bulletH = child.bulletSelfBounds.widthY();
+                    } else {
+                        bulletH = child.height;
+                        bulletY = y0;
+                    }
+                    child.bulletBounds = NTxBounds2D.ofWidth(bulletX, bulletY, bulletWidth, bulletH);
                     child.childBounds = NTxBounds2D.ofWidth(childX, y0, childW, child.height);
-                    child.rowBounds = child.bulletBounds.expand(child.childBounds);
+                    child.rowBounds = NTxBounds2D.ofWidth(bulletX, y0, sb.maxX() - bulletX, child.height);
                     y0 += child.height + extra;
                 }
             }
         }
         return all;
+
     }
 
     private static boolean isList(NTxNode p) {

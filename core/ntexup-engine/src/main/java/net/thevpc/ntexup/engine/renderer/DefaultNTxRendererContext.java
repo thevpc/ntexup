@@ -224,7 +224,7 @@ public class DefaultNTxRendererContext extends NTxResolutionContextImpl implemen
         return copyAsRenderer(all.toArray(new NTxNode[0]), engine, g3,
                 null, parentBounds == null ? selfBounds2D() : parentBounds, globalBound2D, realBounds2D, realGlobalBounds2D,
                 selfBounds3D, parentBounds3D, globalBounds3D, realBounds3D, realGlobalBounds3D,
-                someChange, pageStartTime, capabilities, imageObserver, repainter, defaultStyles, dry, buildContext, element, def, document, vars, definitions, functions, compiledDocument, compiledPage, parentContext, itemParser);
+                someChange, pageStartTime, capabilities, imageObserver, repainter, defaultStyles, dry, buildContext, element, def, document, vars, definitions, functions, compiledDocument, compiledPage, this, itemParser);
     }
 
     @Override
