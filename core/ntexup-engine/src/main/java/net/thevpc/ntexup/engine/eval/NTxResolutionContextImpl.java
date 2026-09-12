@@ -625,8 +625,12 @@ public class NTxResolutionContextImpl implements NTxResolutionContext {
         }
         String e = NStringUtils.strip(pp.nameParts().extension());
         if (e.isEmpty()) {
-            for (String s : new String[]{"png", "jpg", "gif"}) {
+            for (String s : new String[]{"png", "jpg", "jpeg", "gif"}) {
                 NPath p2 = pp.resolveSibling(pp.name() + "." + s);
+                if (p2.exists()) {
+                    return p2;
+                }
+                p2 = pp.resolveSibling(pp.name() + "." + s.toUpperCase());
                 if (p2.exists()) {
                     return p2;
                 }

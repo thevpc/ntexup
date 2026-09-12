@@ -179,7 +179,13 @@ public class NTxDocStreamParser {
                 }
                 return child;
             }
-            case OPERATOR: {
+            case EXPR: {
+                if (child.isFlatExpression()) {
+                    child = child.asFlatExpression().get().reshape(NExprElementReshaperType.JAVA);
+                    if (!child.isAnyOperator()) {
+                        return child;
+                    }
+                }
                 NOperatorElement op = child.asOperator().get();
                 NOperatorElementBuilder opb = op.builder();
                 NElement first = opb.first().orNull();
@@ -210,6 +216,7 @@ public class NTxDocStreamParser {
                     return opb.build();
                 }
                 return op;
+
             }
         }
         switch (child.type()) {
@@ -332,7 +339,7 @@ public class NTxDocStreamParser {
             u = NTxUtils.addCompilerDeclarationPathAnnotations(u, source.path().map(NPath::toString).orNull());
         } catch (Exception ex) {
             NMsg msg = NMsg.ofC("error loading tson document %s", is).asError();
-            engine.log().log(msg,source);
+            engine.log().log(msg, source);
             return NOptional.ofNamedError(msg, ex);
         }
         return parseElements(u);
@@ -345,7 +352,7 @@ public class NTxDocStreamParser {
             u = NTxUtils.addCompilerDeclarationPathAnnotations(u, source.path().map(NPath::toString).orNull());
         } catch (Exception ex) {
             NMsg msg = NMsg.ofC("error loading tson document %s : %s", path, ex).asError();
-            engine.log().log(msg,source);
+            engine.log().log(msg, source);
             return NOptional.ofNamedError(msg, ex);
         }
         return parseElements(u);

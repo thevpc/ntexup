@@ -14,8 +14,6 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <github.global.server>github</github.global.server>
-        <nuts.application>true</nuts.application>
-        <nuts.term>true</nuts.term>
         <nuts.genericName>Document Generation Library</nuts.genericName>
         <nuts.categories>
             /Development

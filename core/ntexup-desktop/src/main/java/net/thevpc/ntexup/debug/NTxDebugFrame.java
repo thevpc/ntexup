@@ -7,6 +7,7 @@ import net.thevpc.ntexup.api.log.NTxLogger;
 import net.thevpc.ntexup.api.util.NTxUtilsImages;
 import net.thevpc.ntexup.api.renderer.NTxDocumentRendererListener;
 import net.thevpc.ntexup.api.renderer.NTxDocumentStreamRendererConfig;
+import net.thevpc.ntexup.engine.renderer.screen.PageView;
 import net.thevpc.ntexup.util.NTexupUtils;
 
 import javax.swing.*;
@@ -62,7 +63,7 @@ public class NTxDebugFrame extends JFrame {
         setMinimumSize(new Dimension(400, 600));
         this.setIconImage(
                 NTxUtilsImages.resizeImage(
-                        new ImageIcon(getClass().getResource("/net/thevpc/ntexup/ntexup-logo.png")).getImage(),
+                        new ImageIcon(PageView.class.getResource("/net/thevpc/ntexup/ntexup-logo.png")).getImage(),
                         16, 16)
         );
         addWindowListener(new WindowListener() {

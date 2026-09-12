@@ -14,8 +14,6 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <github.global.server>github</github.global.server>
-        <nuts.application>true</nuts.application>
-        <nuts.term>false</nuts.term>
         <nuts.genericName>H Document Viewer</nuts.genericName>
         <nuts.categories>
             /Development

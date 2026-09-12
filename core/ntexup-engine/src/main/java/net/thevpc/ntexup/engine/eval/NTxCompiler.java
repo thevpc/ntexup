@@ -553,14 +553,15 @@ public class NTxCompiler {
                             ((NTxCompiledDocumentImpl)context.compiledDocument()).addMonitoredSource(nPath);
                             new DispatchCompileNodeVisitor(visitor).visitItem(item, context);
                         } else {
+                            se = engine.loadNode(node, nPath, context.compiledDocument());
                             context.log(NMsg.ofC("invalid include. error loading : %s", nPath).asSevere(), NTxUtils.sourceOf(node));
                         }
                     } else {
-                        context.log(NMsg.ofC("invalid include. error loading : %s", nPath).asWarning(), NTxUtils.sourceOf(node));
+                        context.log(NMsg.ofC("invalid include. file not found : %s", nPath).asWarning(), NTxUtils.sourceOf(node));
                     }
                 }
             } else {
-                context.log(NMsg.ofC("invalid include. error loading : %s", path).asWarning(), NTxUtils.sourceOf(node));
+                context.log(NMsg.ofC("invalid include. path not found : %s (as %s)", path,r).asWarning(), NTxUtils.sourceOf(node));
             }
         }
     }

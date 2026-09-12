@@ -5,6 +5,7 @@ import net.thevpc.ntexup.api.renderer.NTxDocumentView;
 import net.thevpc.ntexup.api.renderer.NTxDocumentViewListener;
 import net.thevpc.ntexup.api.renderer.NTxDocumentViewManager;
 import net.thevpc.ntexup.engine.impl.DefaultNTxEngine;
+import net.thevpc.ntexup.engine.renderer.screen.PageView;
 import net.thevpc.ntexup.main.components.EntryComponent;
 import net.thevpc.ntexup.api.util.NTxUtilsImages;
 import net.thevpc.ntexup.util.NTexupUtils;
@@ -50,7 +51,7 @@ public class MainFrame extends JFrame implements NTxDocumentViewManager {
         setTitle("Ntexup Viewer");
         this.setIconImage(
                 NTxUtilsImages.resizeImage(
-                        new ImageIcon(getClass().getResource("/net/thevpc/ntexup/ntexup-logo.png")).getImage(),
+                        new ImageIcon(PageView.class.getResource("/net/thevpc/ntexup/ntexup-logo.png")).getImage(),
                         16, 16)
         );
         setContentPane(createCenter());

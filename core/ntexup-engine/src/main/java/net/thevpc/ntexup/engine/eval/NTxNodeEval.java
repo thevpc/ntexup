@@ -279,8 +279,12 @@ public class NTxNodeEval implements NTxObjectEvalContext {
                 NElementTypeGroup nElementTypeGroup = elementExpr.type().group();
                 if (nElementTypeGroup == NElementTypeGroup.NUMBER || nElementTypeGroup == NElementTypeGroup.NULL || nElementTypeGroup == NElementTypeGroup.STRING || nElementTypeGroup == NElementTypeGroup.BOOLEAN || nElementTypeGroup == NElementTypeGroup.CUSTOM) {
 
-                } else if (nElementTypeGroup == NElementTypeGroup.OPERATOR) {
-                    context.engine().log().log(NMsg.ofC("unsupported operator %s in %s", elementExpr.asOperator().get().fixity(), NTxUtils.snippet(elementExpr)).asWarning(), context.source());
+                } else if (nElementTypeGroup == NElementTypeGroup.EXPR) {
+                    if(elementExpr.asOperator().isPresent()) {
+                        context.engine().log().log(NMsg.ofC("unsupported operator %s in %s", elementExpr.asOperator().get().fixity(), NTxUtils.snippet(elementExpr)).asWarning(), context.source());
+                    }else if(elementExpr.asFlatExpression().isPresent()) {
+                        context.engine().log().log(NMsg.ofC("unsupported flat expression %s", NTxUtils.snippet(elementExpr)).asWarning(), context.source());
+                    }
                 } else {
                     context.engine().log().log(NMsg.ofC("unsupported expression %s", NTxUtils.snippet(elementExpr)).asWarning(), context.source());
                 }
