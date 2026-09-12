@@ -34,6 +34,8 @@ public class NTxTextRendererFlavorLatexEquation implements NTxTextRendererFlavor
             r.imagePainter = this.createLatex(text, fontSize, options, ctx);
             NTxDouble2 size = r.imagePainter.size();
             r.bounds = new Rectangle2D.Double(0, 0, size.getX(), size.getY());
+            r.ascent = r.imagePainter.baseline();
+            r.descent = Math.max(0, size.getY() - r.ascent);
             builder.currRow().addToken(r);
         }
     }
@@ -112,6 +114,11 @@ public class NTxTextRendererFlavorLatexEquation implements NTxTextRendererFlavor
 
             public NTxDouble2 size() {
                 return new NTxDouble2(icon.getIconWidth(), icon.getIconHeight());
+            }
+
+            @Override
+            public double baseline() {
+                return icon.getIconHeight() - icon.getIconDepth();
             }
         };
     }

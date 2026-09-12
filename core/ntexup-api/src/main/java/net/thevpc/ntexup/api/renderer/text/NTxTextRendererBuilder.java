@@ -30,6 +30,10 @@ public interface NTxTextRendererBuilder {
         void paint(NTxGraphics g, double x, double y);
 
         NTxDouble2 size();
+
+        default double baseline() {
+            return size().getY();
+        }
     }
 
     public void render(NTxNode p, NTxRendererContext ctx, NTxBounds2D bgBounds, NTxBounds2D selfBounds);

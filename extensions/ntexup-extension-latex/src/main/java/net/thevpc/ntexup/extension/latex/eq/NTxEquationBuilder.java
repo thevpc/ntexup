@@ -207,6 +207,8 @@ public class NTxEquationBuilder implements NTxNodeBuilder {
             r.imagePainter = this.createLatex(text, font.getSize(), options, rendererContext);
             NTxDouble2 size = r.imagePainter.size();
             r.bounds = new Rectangle2D.Double(0, 0, size.getX(), size.getY());
+            r.ascent = r.imagePainter.baseline();
+            r.descent = Math.max(0, size.getY() - r.ascent);
             builder.currRow().addToken(r);
         }
     }
@@ -258,6 +260,11 @@ public class NTxEquationBuilder implements NTxNodeBuilder {
 
             public NTxDouble2 size() {
                 return new NTxDouble2(icon.getIconWidth(), icon.getIconHeight());
+            }
+
+            @Override
+            public double baseline() {
+                return icon.getIconHeight() - icon.getIconDepth();
             }
         };
     }

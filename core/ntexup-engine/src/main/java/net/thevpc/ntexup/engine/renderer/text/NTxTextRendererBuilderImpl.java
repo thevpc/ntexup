@@ -153,29 +153,60 @@ public class NTxTextRendererBuilderImpl implements NTxTextRendererBuilder {
     public NTxBounds2D computeBound(NTxRendererContext ctx) {
         NTxGraphics g = ctx.graphics();
         Font oldFont = g.getFont();
+        NtxFontInfo fontInfo = defaultFont;
+        if (fontInfo == null) {
+            fontInfo = NTxValueByName.getFontInfo(ctx);
+        } else {
+            NtxFontInfo fi = NTxValueByName.getFontInfo(ctx);
+            if (fi != null) {
+                fontInfo = fi.copy().applyDefaults(defaultFont);
+            }
+        }
+        NTxTextOptions textOptions = new NTxTextOptions();
+        textOptions.sr = ctx.sizeRef();
+
         bounds = new Rectangle2D.Double(0, 0, 0, 0);
         double maxxY = 0;
         for (int i = 0; i < rows.size(); i++) {
             NTxRichTextRow row = rows.get(i);
             double minX = 0;
-            double minY = 0;
             double maxX = 0;
-            double maxY = 0;
+            double maxAscent = 0;
+            double maxDescent = 0;
             for (int j = 0; j < row.tokens.size(); j++) {
                 NTxRichTextToken c = row.tokens.get(j);
                 c.xOffset = maxX;
                 maxX += c.bounds.getWidth();
-                maxY = Math.max(maxY, c.bounds.getHeight());
+
+                if (c.type == NTxRichTextTokenType.IMAGE_PAINTER && c.imagePainter != null) {
+                    double bl = c.imagePainter.baseline();
+                    c.ascent = bl;
+                    c.descent = Math.max(0, c.imagePainter.size().getY() - bl);
+                } else {
+                    NTxTextOptions opt = textOptions.copy().copyNonNullFrom(c.textOptions);
+                    opt.defaultFont = fontInfo;
+                    opt.sr = ctx.sizeRef();
+                    Font f = opt.resolveFont(ctx.graphics(), true);
+                    FontMetrics fm = g.getFontMetrics(f);
+                    c.ascent = fm.getAscent();
+                    c.descent = fm.getDescent();
+                }
+                maxAscent = Math.max(maxAscent, c.ascent);
+                maxDescent = Math.max(maxDescent, c.descent);
             }
-            row.textBounds = new Rectangle2D.Double(minX, minY, maxX - minX, maxY - minY);
+            row.maxAscent = maxAscent;
+            row.maxDescent = maxDescent;
+            double rowHeight = maxAscent + maxDescent;
+            row.textBounds = new Rectangle2D.Double(minX, 0, maxX - minX, rowHeight);
             if (i == 0) {
-                row.yOffset = -row.textBounds.getMinY();
+                row.yOffset = 0;
             } else {
-                row.yOffset = rows.get(i - 1).yOffset + rows.get(i - 1).textBounds.getHeight();//+ textBounds[i].getMinY();
+                row.yOffset = rows.get(i - 1).yOffset + rows.get(i - 1).textBounds.getHeight();
             }
             Rectangle2D.Double.union(bounds, row.textBounds, bounds);
             maxxY = row.yOffset + row.textBounds.getHeight();
         }
+        g.setFont(oldFont);
         return NTxBounds2D.ofWidth(bounds.getMinX(), bounds.getMinY(), bounds.getWidth(), maxxY);
     }
 
@@ -232,6 +263,7 @@ public class NTxTextRendererBuilderImpl implements NTxTextRendererBuilder {
         double padTop = padding == null ? 0 : padding.getTop();
         if (tp == null) {
             for (NTxRichTextRow row : this.rows) {
+                double baselineY = (y + padTop + row.yOffset) + (row.maxAscent > 0 ? row.maxAscent : 0);
                 for (NTxRichTextToken col : row.tokens) {
                     switch (col.type) {
                         case PLAIN:
@@ -242,10 +274,11 @@ public class NTxTextRendererBuilderImpl implements NTxTextRendererBuilder {
                             options2.sr = textOptions.sr;
                             options2.resolveFont(rendererContext.graphics(), true);
                             int ascent = g0.getFontMetrics(options2.getComputedFont()).getAscent();
+                            double tokenBaseline = row.maxAscent > 0 ? baselineY : ((y + padTop + row.yOffset) + ascent);
                             g0.drawString(
                                     col.text
                                     , x + padLeft + col.xOffset
-                                    , (y + padTop + row.yOffset) + ascent,
+                                    , tokenBaseline,
                                     options2
                             );
                             break;
@@ -253,11 +286,12 @@ public class NTxTextRendererBuilderImpl implements NTxTextRendererBuilder {
                         case IMAGE_PAINTER: {
                             Rectangle2D b1 = col.bounds;
                             NTxDouble2 b2 = col.imagePainter.size();
-                            col.imagePainter.paint(g0, (x + padLeft + col.xOffset), y + padTop + row.yOffset);
+                            double imgY = row.maxAscent > 0 ? (baselineY - col.ascent) : (y + padTop + row.yOffset);
+                            col.imagePainter.paint(g0, (x + padLeft + col.xOffset), imgY);
                             if (debug) {
                                 g0.drawRect(
                                         x + padLeft + col.xOffset,
-                                        y + padTop + row.yOffset,
+                                        imgY,
                                         col.bounds.getWidth(),
                                         col.bounds.getHeight()
                                 );
@@ -336,7 +370,7 @@ public class NTxTextRendererBuilderImpl implements NTxTextRendererBuilder {
                 Graphics2D g2d = g.graphics2D();
                 AffineTransform old = g2d.getTransform();
                 g2d.transform(at);
-                token.imagePainter.paint(g, 0, 0);
+                token.imagePainter.paint(g, 0, -token.ascent);
                 g2d.setTransform(old);
             }
 
