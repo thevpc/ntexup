@@ -420,16 +420,26 @@ public class NTxCompiledDocumentImpl implements NTxCompiledDocument {
                     }
                     NTxResolutionContext c = engine.newContext(part.node, document, this, null, part.context);
                     List<NTxNode> children = part.node.children();
+                    Object callSource = part.node.getUserObject("callSource").orNull();
                     for (int i = children.size() - 1; i >= 0; i--) {
-                        unparsed.push(new NTxNodeAndContext(children.get(i), c));
+                        NTxNode child = children.get(i);
+                        if (callSource != null && !child.getUserObject("callSource").isPresent()) {
+                            child.setUserObject("callSource", callSource);
+                        }
+                        unparsed.push(new NTxNodeAndContext(child, c));
                     }
                     break;
                 }
                 case NTxNodeType.BLOCK: {
                     NTxResolutionContext c = engine.newContext(part.node, document, this, null, part.context);
                     List<NTxNode> children = part.node.children();
+                    Object callSource = part.node.getUserObject("callSource").orNull();
                     for (int i = children.size() - 1; i >= 0; i--) {
-                        unparsed.push(new NTxNodeAndContext(children.get(i), c));
+                        NTxNode child = children.get(i);
+                        if (callSource != null && !child.getUserObject("callSource").isPresent()) {
+                            child.setUserObject("callSource", callSource);
+                        }
+                        unparsed.push(new NTxNodeAndContext(child, c));
                     }
                     break;
                 }
@@ -463,6 +473,13 @@ public class NTxCompiledDocumentImpl implements NTxCompiledDocument {
                             engine.compileNode(cc, new CompileNodeVisitor() {
                                 @Override
                                 public void visitNode(NTxNode node, NTxResolutionContext context) {
+                                    Object cs = part.node.getUserObject("callSource").orNull();
+                                    if (cs == null) {
+                                        cs = part.node.source();
+                                    }
+                                    if (cs != null && !node.getUserObject("callSource").isPresent()) {
+                                        node.setUserObject("callSource", cs);
+                                    }
                                     pushMe.add(node);
                                 }
 

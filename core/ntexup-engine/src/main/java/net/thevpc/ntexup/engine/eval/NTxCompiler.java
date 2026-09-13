@@ -476,6 +476,18 @@ public class NTxCompiler {
                 });
             }
         });
+        Object callSource = c.getUserObject("callSource").orNull();
+        if (callSource == null) {
+            callSource = c.source();
+        }
+        if (callSource != null) {
+            block.setUserObject("callSource", callSource);
+            for (NTxNode child : block.children()) {
+                if (!child.getUserObject("callSource").isPresent()) {
+                    child.setUserObject("callSource", callSource);
+                }
+            }
+        }
         visitor.visitNode(block, context);
     }
 

@@ -233,7 +233,7 @@ public class NTxServiceHelper {
         JFileChooser f = new JFileChooser();
         f.setFileSelectionMode(JFileChooser.FILES_ONLY);
 
-        int r = f.showOpenDialog(mainFrame.getContentPane());
+        int r = f.showSaveDialog(mainFrame.getContentPane());
         if (r == JFileChooser.APPROVE_OPTION) {
             File sf = f.getSelectedFile();
             if (sf != null) {

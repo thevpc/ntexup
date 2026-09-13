@@ -387,6 +387,12 @@ public class NTxResolutionContextImpl implements NTxResolutionContext {
         if (value != null) {
             return NOptional.ofNamed(value, varName);
         }
+        if (parentContext != null) {
+            NOptional<NTxVar> pv = parentContext.getVar(varName);
+            if (pv.isPresent()) {
+                return pv;
+            }
+        }
         if (compiledDocument != null) {
             NOptional<NTxObj> go = compiledDocument.getGlobalObject(varName);
             if (go.isPresent()) {

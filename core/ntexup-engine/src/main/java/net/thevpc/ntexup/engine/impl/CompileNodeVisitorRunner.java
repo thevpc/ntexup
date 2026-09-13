@@ -38,5 +38,8 @@ public class CompileNodeVisitorRunner implements CompileNodeVisitor {
     @Override
     public void visitVar(String varName, NTxVar nTxVar, NTxResolutionContext context) {
         context.setVar(varName, nTxVar);
+        if (context.compiledDocument() != null && nTxVar != null) {
+            context.compiledDocument().setGlobalObject(varName, net.thevpc.ntexup.api.eval.NTxObjs.elem(nTxVar.get()));
+        }
     }
 }

@@ -13,8 +13,10 @@ import java.awt.event.MouseEvent;
 public class PresentationHud extends JPanel {
     private final DocumentView documentView;
     private final JLabel pageLabel = new JLabel("1 / 1");
+    private final JButton firstBtn = createHudButton("|◀", "First Slide (Home)");
     private final JButton prevBtn = createHudButton("◀", "Previous Slide (Left / Up / PageUp)");
     private final JButton nextBtn = createHudButton("▶", "Next Slide (Right / Down / Space / PageDown)");
+    private final JButton lastBtn = createHudButton("▶|", "Last Slide (End)");
     private final JButton fullscreenBtn = createHudButton("⛶", "Fullscreen (F11)");
     private final JButton pdfBtn = createHudButton("PDF", "Export to PDF");
     private final Timer autoHideTimer;
@@ -23,15 +25,23 @@ public class PresentationHud extends JPanel {
     public PresentationHud(DocumentView documentView) {
         this.documentView = documentView;
         setOpaque(false);
-        setLayout(new FlowLayout(FlowLayout.CENTER, 8, 4));
-        setBorder(new EmptyBorder(4, 12, 4, 12));
+        setLayout(new FlowLayout(FlowLayout.CENTER, 6, 4));
+        setBorder(new EmptyBorder(4, 10, 4, 10));
 
+        firstBtn.addActionListener(e -> {
+            documentView.firstPage();
+            ping();
+        });
         prevBtn.addActionListener(e -> {
             documentView.previousPage();
             ping();
         });
         nextBtn.addActionListener(e -> {
             documentView.nextPage();
+            ping();
+        });
+        lastBtn.addActionListener(e -> {
+            documentView.lastPage();
             ping();
         });
         fullscreenBtn.addActionListener(e -> {
@@ -61,9 +71,11 @@ public class PresentationHud extends JPanel {
             }
         });
 
+        add(firstBtn);
         add(prevBtn);
         add(pageLabel);
         add(nextBtn);
+        add(lastBtn);
         add(createSeparator());
         add(fullscreenBtn);
         add(pdfBtn);
@@ -114,12 +126,20 @@ public class PresentationHud extends JPanel {
         btn.setOpaque(false);
         btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
+        btn.addPropertyChangeListener("enabled", evt -> {
+            boolean enabled = (Boolean) evt.getNewValue();
+            btn.setForeground(enabled ? Color.WHITE : new Color(255, 255, 255, 90));
+            btn.setCursor(Cursor.getPredefinedCursor(enabled ? Cursor.HAND_CURSOR : Cursor.DEFAULT_CURSOR));
+        });
+
         btn.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseEntered(MouseEvent e) {
-                btn.setOpaque(true);
-                btn.setBackground(new Color(255, 255, 255, 45));
-                btn.repaint();
+                if (btn.isEnabled()) {
+                    btn.setOpaque(true);
+                    btn.setBackground(new Color(255, 255, 255, 45));
+                    btn.repaint();
+                }
             }
 
             @Override
@@ -141,8 +161,10 @@ public class PresentationHud extends JPanel {
         pageLabel.setText(currentPage + " / " + Math.max(totalPages, 1));
         fullscreenBtn.setText(isFullScreen ? "✕" : "⛶");
         fullscreenBtn.setToolTipText(isFullScreen ? "Exit Fullscreen (F11 / Esc)" : "Fullscreen (F11)");
+        firstBtn.setEnabled(currentPage > 1);
         prevBtn.setEnabled(currentPage > 1);
         nextBtn.setEnabled(currentPage < totalPages);
+        lastBtn.setEnabled(currentPage < totalPages);
     }
 
     @Override

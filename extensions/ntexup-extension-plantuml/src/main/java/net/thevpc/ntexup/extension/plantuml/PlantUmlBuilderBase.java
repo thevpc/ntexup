@@ -17,9 +17,11 @@ import net.thevpc.nuts.text.NMsg;
 import net.thevpc.nuts.util.NStringBuilder;
 
 import javax.imageio.ImageIO;
+import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import net.thevpc.nuts.elem.NElement;
 
 
 public abstract class PlantUmlBuilderBase implements NTxNodeBuilder {
@@ -89,7 +91,7 @@ public abstract class PlantUmlBuilderBase implements NTxNodeBuilder {
             case "chen":
             case "math":
             case "latex": {
-                plantUMLText = prepare(mode, txt, b);
+                plantUMLText = prepare(mode, txt, b, rendererContext);
                 break;
             }
             case "nwdiag": {
@@ -97,12 +99,12 @@ public abstract class PlantUmlBuilderBase implements NTxNodeBuilder {
                         "nwdiag {\n"
                                 + txt
                                 + "\n}"
-                        , b);
+                        , b, rendererContext);
                 break;
             }
             case "salt":
             case "wireframe": {
-                plantUMLText = prepare("salt", txt, b);
+                plantUMLText = prepare("salt", txt, b, rendererContext);
                 break;
             }
         }
@@ -140,7 +142,112 @@ public abstract class PlantUmlBuilderBase implements NTxNodeBuilder {
         }
     }
 
-    private String prepare(String type, String txt, NTxBounds2D b) {
+    private boolean isDarkTheme(NTxRendererContext rendererContext) {
+        if (rendererContext == null) {
+            return false;
+        }
+        NElement bgVal = rendererContext.getVarValue("documentBg").orNull();
+        if (bgVal != null && bgVal.isString()) {
+            String s = bgVal.asStringValue().get().trim();
+            if (s.startsWith("#") && (s.length() == 7 || s.length() == 4)) {
+                try {
+                    Color c = Color.decode(s);
+                    double lum = 0.299 * c.getRed() + 0.587 * c.getGreen() + 0.114 * c.getBlue();
+                    return lum < 128;
+                } catch (Exception ignore) {
+                }
+            }
+        }
+        NElement txtVal = rendererContext.getVarValue("documentTextPrimary").orNull();
+        if (txtVal != null && txtVal.isString()) {
+            String s = txtVal.asStringValue().get().trim();
+            if (s.startsWith("#") && (s.length() == 7 || s.length() == 4)) {
+                try {
+                    Color c = Color.decode(s);
+                    double lum = 0.299 * c.getRed() + 0.587 * c.getGreen() + 0.114 * c.getBlue();
+                    return lum > 128;
+                } catch (Exception ignore) {
+                }
+            }
+        }
+        return false;
+    }
+
+    private void appendDarkSkinparams(NStringBuilder out) {
+        out.println("skinparam defaultFontColor #e6edf3");
+        out.println("skinparam ArrowColor #8b949e");
+        out.println("skinparam ActivityBorderColor #8b949e");
+        out.println("skinparam ActivityBackgroundColor #21262d");
+        out.println("skinparam ActivityFontColor #e6edf3");
+        out.println("skinparam ActivityDiamondBorderColor #8b949e");
+        out.println("skinparam ActivityDiamondBackgroundColor #21262d");
+        out.println("skinparam ActivityDiamondFontColor #e6edf3");
+        out.println("skinparam UsecaseBorderColor #8b949e");
+        out.println("skinparam UsecaseBackgroundColor #21262d");
+        out.println("skinparam UsecaseFontColor #e6edf3");
+        out.println("skinparam ActorBorderColor #8b949e");
+        out.println("skinparam ActorBackgroundColor #21262d");
+        out.println("skinparam ActorFontColor #e6edf3");
+        out.println("skinparam ClassBorderColor #8b949e");
+        out.println("skinparam ClassBackgroundColor #21262d");
+        out.println("skinparam ClassFontColor #e6edf3");
+        out.println("skinparam ClassHeaderBackgroundColor #30363d");
+        out.println("skinparam ComponentBorderColor #8b949e");
+        out.println("skinparam ComponentBackgroundColor #21262d");
+        out.println("skinparam ComponentFontColor #e6edf3");
+        out.println("skinparam InterfaceBorderColor #8b949e");
+        out.println("skinparam InterfaceBackgroundColor #21262d");
+        out.println("skinparam InterfaceFontColor #e6edf3");
+        out.println("skinparam NodeBorderColor #8b949e");
+        out.println("skinparam NodeBackgroundColor #21262d");
+        out.println("skinparam NodeFontColor #e6edf3");
+        out.println("skinparam PackageBorderColor #8b949e");
+        out.println("skinparam PackageBackgroundColor #161b22");
+        out.println("skinparam PackageFontColor #e6edf3");
+        out.println("skinparam RectangleBorderColor #8b949e");
+        out.println("skinparam RectangleBackgroundColor #21262d");
+        out.println("skinparam RectangleFontColor #e6edf3");
+        out.println("skinparam SequenceLifeLineBorderColor #8b949e");
+        out.println("skinparam SequenceLifeLineBackgroundColor #21262d");
+        out.println("skinparam SequenceGroupBorderColor #8b949e");
+        out.println("skinparam SequenceGroupBackgroundColor #161b22");
+        out.println("skinparam SequenceGroupFontColor #e6edf3");
+        out.println("skinparam ParticipantBorderColor #8b949e");
+        out.println("skinparam ParticipantBackgroundColor #21262d");
+        out.println("skinparam ParticipantFontColor #e6edf3");
+        out.println("skinparam StateBorderColor #8b949e");
+        out.println("skinparam StateBackgroundColor #21262d");
+        out.println("skinparam StateFontColor #e6edf3");
+        out.println("skinparam ObjectBorderColor #8b949e");
+        out.println("skinparam ObjectBackgroundColor #21262d");
+        out.println("skinparam ObjectFontColor #e6edf3");
+        out.println("skinparam DatabaseBorderColor #8b949e");
+        out.println("skinparam DatabaseBackgroundColor #21262d");
+        out.println("skinparam DatabaseFontColor #e6edf3");
+        out.println("skinparam EntityBorderColor #8b949e");
+        out.println("skinparam EntityBackgroundColor #21262d");
+        out.println("skinparam EntityFontColor #e6edf3");
+        out.println("skinparam AgentBorderColor #8b949e");
+        out.println("skinparam AgentBackgroundColor #21262d");
+        out.println("skinparam AgentFontColor #e6edf3");
+        out.println("skinparam CardBorderColor #8b949e");
+        out.println("skinparam CardBackgroundColor #21262d");
+        out.println("skinparam CardFontColor #e6edf3");
+        out.println("skinparam FileBorderColor #8b949e");
+        out.println("skinparam FileBackgroundColor #21262d");
+        out.println("skinparam FileFontColor #e6edf3");
+        out.println("skinparam FolderBorderColor #8b949e");
+        out.println("skinparam FolderBackgroundColor #161b22");
+        out.println("skinparam FolderFontColor #e6edf3");
+        out.println("skinparam FrameBorderColor #8b949e");
+        out.println("skinparam FrameBackgroundColor #161b22");
+        out.println("skinparam FrameFontColor #e6edf3");
+        out.println("skinparam CloudBorderColor #8b949e");
+        out.println("skinparam CloudBackgroundColor #21262d");
+        out.println("skinparam CloudFontColor #e6edf3");
+    }
+
+    private String prepare(String type, String txt, NTxBounds2D b, NTxRendererContext rendererContext) {
         NStringBuilder out = NStringBuilder.of();
         out.println("@start" + type);
         if ("uml".equals(type)) {
@@ -148,6 +255,9 @@ public abstract class PlantUmlBuilderBase implements NTxNodeBuilder {
         }
         out.println("scale " + (b.widthX().intValue()) + "*" + (b.widthY().intValue()));
         out.println("skinparam backgroundcolor transparent");
+        if (isDarkTheme(rendererContext)) {
+            appendDarkSkinparams(out);
+        }
         out.println(txt);
         out.println("@end" + type);
         return out.build();

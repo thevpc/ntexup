@@ -86,16 +86,9 @@ public class PdfDocumentRenderer extends NTxDocumentStreamRendererBase implement
             float marginTop = config.getMarginTop() >= 0 ? config.getMarginTop() : 0;
             float marginBottom = config.getMarginBottom() >= 0 ? config.getMarginBottom() : 0;
 
-            float usableWidth;
-            float usableHeight;
-
-            if (config.getOrientation() == NTxPageOrientation.LANDSCAPE) {
-                usableWidth = PageSize.A4.getHeight() - marginLeft - marginRight - 10f;
-                usableHeight = PageSize.A4.getWidth() - marginTop - marginBottom - 10f;
-            } else {
-                usableWidth = PageSize.A4.getWidth() - marginLeft - marginRight - 10f;
-                usableHeight = PageSize.A4.getHeight() - marginTop - marginBottom - 10f;
-            }
+            com.lowagie.text.Rectangle pdfPageSize = resolvePageSize(config);
+            float usableWidth = pdfPageSize.getWidth() - marginLeft - marginRight - 10f;
+            float usableHeight = pdfPageSize.getHeight() - marginTop - marginBottom - 10f;
 
             float totalMarginWidth = (imagesPerRow - 1) * margin;
             float totalMarginHeight = (imagesPerColumn - 1) * margin;
@@ -203,13 +196,23 @@ public class PdfDocumentRenderer extends NTxDocumentStreamRendererBase implement
         }
     }
 
+    private com.lowagie.text.Rectangle resolvePageSize(NTxDocumentStreamRendererConfig config) {
+        com.lowagie.text.Rectangle base;
+        if (config.getPageWidth() > 0 && config.getPageHeight() > 0) {
+            base = new com.lowagie.text.Rectangle(config.getPageWidth(), config.getPageHeight());
+        } else {
+            base = PageSize.A4;
+        }
+        if (config.getOrientation() == NTxPageOrientation.LANDSCAPE) {
+            return base.getWidth() >= base.getHeight() ? base : base.rotate();
+        } else {
+            return base.getHeight() >= base.getWidth() ? base : base.rotate();
+        }
+    }
+
     private void applyConfigSettings(Document document, PdfWriter pdfWriter) throws DocumentException {
         NTxDocumentStreamRendererConfig config = engine.tools().validateDocumentStreamRendererConfig(this.config);
-        if (config.getOrientation() == NTxPageOrientation.LANDSCAPE) {
-            document.setPageSize(PageSize.A4.rotate());
-        } else {
-            document.setPageSize(PageSize.A4);
-        }
+        document.setPageSize(resolvePageSize(config));
         document.setMargins(config.getMarginLeft(), config.getMarginRight(), config.getMarginTop(), config.getMarginBottom());
         if (config.isShowPageNumber()) {
             PageNumberEvent pageNumberEvent = new PageNumberEvent();

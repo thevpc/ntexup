@@ -178,7 +178,7 @@ public class DocumentView implements NTxDocumentView {
 
     public void repositionHud() {
         if (hud != null) {
-            int hudW = Math.min(340, frame.getWidth() - 40);
+            int hudW = Math.min(410, frame.getWidth() - 40);
             int hudH = 38;
             int hudX = (frame.getWidth() - hudW) / 2;
             int hudY = frame.getHeight() - hudH - (isFullScreen ? 25 : 55);
@@ -482,11 +482,11 @@ public class DocumentView implements NTxDocumentView {
         }
     }
 
-    void lastPage() {
+    public void lastPage() {
         showPage(getPagesCount()-1);
     }
 
-    void firstPage() {
+    public void firstPage() {
         showPage(0);
     }
 

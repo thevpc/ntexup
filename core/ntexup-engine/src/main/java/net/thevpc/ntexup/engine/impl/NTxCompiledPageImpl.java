@@ -100,6 +100,10 @@ public class NTxCompiledPageImpl implements NTxCompiledPage {
 
     @Override
     public Object source() {
+        Object cs = rawPage.getUserObject("callSource").orNull();
+        if (cs != null) {
+            return cs;
+        }
         NTxItem p = rawPage;
         Object s = null;
         while (p != null && s == null) {
