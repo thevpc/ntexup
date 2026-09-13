@@ -77,6 +77,27 @@ public class NTxRectangleBuilder implements NTxNodeBuilder {
                 }
             }
         }
+        if (!node.children().isEmpty()) {
+            net.thevpc.ntexup.api.document.elem2d.NTxMargin padding = net.thevpc.ntexup.api.eval.NTxValueByName.getPadding(rendererContext);
+            double padLeft = padding == null ? 0 : padding.getLeft();
+            double padTop = padding == null ? 0 : padding.getTop();
+            double padRight = padding == null ? 0 : padding.getRight();
+            double padBottom = padding == null ? 0 : padding.getBottom();
+            NTxBounds2D innerBounds = (padLeft == 0 && padTop == 0 && padRight == 0 && padBottom == 0)
+                    ? b
+                    : NTxBounds2D.ofWidth(
+                            b.minX() + padLeft,
+                            b.minY() + padTop,
+                            Math.max(0, b.widthX() - padLeft - padRight),
+                            Math.max(0, b.widthY() - padTop - padBottom)
+                    );
+            for (NTxNode child : node.children()) {
+                NTxRendererContext ctx3 = rendererContext.resolveNode(child, innerBounds);
+                if (ctx3.isVisible()) {
+                    ctx3.render();
+                }
+            }
+        }
         rendererContext.drawContour();
     }
 }

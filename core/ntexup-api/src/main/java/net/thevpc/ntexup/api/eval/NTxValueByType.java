@@ -20,6 +20,10 @@ public class NTxValueByType {
         return NTxValue.of(ctx.computePropertyValue(propName, propNames).orNull()).asArrow();
     }
 
+    public static NOptional<Boolean> getBoolean(NTxRendererContext ctx, String propName) {
+        return NTxValue.of(ctx.computePropertyValue(propName).orNull()).asBoolean();
+    }
+
     public static NOptional<Boolean> getBoolean(NTxRendererContext ctx, String propName, String... propNames) {
         return NTxValue.of(ctx.computePropertyValue(propName, propNames).orNull()).asBoolean();
     }
@@ -28,8 +32,16 @@ public class NTxValueByType {
         return NTxValue.of(ctx.computePropertyValue(propName, propNames).orNull()).asIntOrBoolean();
     }
 
+    public static NOptional<Integer> getInt(NTxRendererContext ctx, String propName) {
+        return NTxValue.of(ctx.computePropertyValue(propName).orNull()).asInt();
+    }
+
     public static NOptional<Integer> getInt(NTxRendererContext ctx, String propName, String... propNames) {
         return NTxValue.of(ctx.computePropertyValue(propName, propNames).orNull()).asInt();
+    }
+
+    public static NOptional<String> getStringOrName(NTxRendererContext ctx, String propName) {
+        return NTxValue.of(ctx.computePropertyValue(propName).orNull()).asStringOrName();
     }
 
     public static NOptional<String> getStringOrName(NTxRendererContext ctx, String propName, String... synonyms) {
@@ -69,6 +81,10 @@ public class NTxValueByType {
         return NTxValue.of(ctx.computePropertyValue(s).orNull()).asDouble();
     }
 
+    public static NOptional<Double> getDouble(NTxRendererContext ctx, String s, String... synonyms) {
+        return NTxValue.of(ctx.computePropertyValue(s, synonyms).orNull()).asDouble();
+    }
+
     public static NOptional<NTxDouble2> getDouble2(NTxRendererContext ctx, String s) {
         return NTxValue.of(ctx.computePropertyValue(s).orNull()).asDouble2();
     }
@@ -79,6 +95,10 @@ public class NTxValueByType {
 
     public static NOptional<NTxDouble2> getDouble2OrHAlign(NTxRendererContext ctx, String s) {
         return NTxValue.of(ctx.computePropertyValue(s).orNull()).asDouble2OrHAlign();
+    }
+
+    public static NOptional<NTxElemNumber2> getNNumberElement2Or1OrHAlign(NTxRendererContext ctx, String s) {
+        return NTxValue.of(ctx.computePropertyValue(s).orNull()).asNNumberElement2Or1OrHAlign();
     }
 
     public static NOptional<NTxElemNumber2> getNNumberElement2Or1OrHAlign(NTxRendererContext ctx, String s,String... synonyms) {

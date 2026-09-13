@@ -83,7 +83,32 @@ public class NTxSquareBuilder implements NTxNodeBuilder {
                 }
             }
         }
+        if (!node.children().isEmpty()) {
+            net.thevpc.ntexup.api.document.elem2d.NTxMargin padding = net.thevpc.ntexup.api.eval.NTxValueByName.getPadding(rendererContext);
+            double padLeft = padding == null ? 0 : padding.getLeft();
+            double padTop = padding == null ? 0 : padding.getTop();
+            double padRight = padding == null ? 0 : padding.getRight();
+            double padBottom = padding == null ? 0 : padding.getBottom();
+            int ww = NTxUtils.intOf(b.widthX());
+            int hh = NTxUtils.intOf(b.widthY());
+            ww = Math.min(ww, hh);
+            hh = ww;
+            NTxBounds2D sqBounds = NTxBounds2D.ofWidth(x, y, ww, hh);
+            NTxBounds2D innerBounds = (padLeft == 0 && padTop == 0 && padRight == 0 && padBottom == 0)
+                    ? sqBounds
+                    : NTxBounds2D.ofWidth(
+                            sqBounds.minX() + padLeft,
+                            sqBounds.minY() + padTop,
+                            Math.max(0, sqBounds.widthX() - padLeft - padRight),
+                            Math.max(0, sqBounds.widthY() - padTop - padBottom)
+                    );
+            for (NTxNode child : node.children()) {
+                NTxRendererContext ctx3 = rendererContext.resolveNode(child, innerBounds);
+                if (ctx3.isVisible()) {
+                    ctx3.render();
+                }
+            }
+        }
         rendererContext.drawContour();
     }
-
 }

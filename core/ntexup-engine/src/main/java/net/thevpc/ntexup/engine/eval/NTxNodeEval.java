@@ -108,14 +108,18 @@ public class NTxNodeEval implements NTxObjectEvalContext {
                     b.setString(NMsg.ofV(u, new Function<String, Object>() {
                         @Override
                         public Object apply(String s) {
-                            NElement ss = evalVar(s);
-                            if (ss != null) {
-                                ss = NTxUtils.removeCompilerDeclarationPathAnnotations(ss);
+                            net.thevpc.nuts.util.NOptional<NTxVar> v = context.getVar(s);
+                            if (v.isPresent()) {
+                                NElement ss = v.get().get();
+                                if (ss != null) {
+                                    ss = NTxUtils.removeCompilerDeclarationPathAnnotations(ss);
+                                }
+                                if (ss != null && ss.isAnyString()) {
+                                    return ss.asStringValue().get();
+                                }
+                                return ss;
                             }
-                            if (ss != null && ss.isAnyString()) {
-                                return ss.asStringValue().get();
-                            }
-                            return ss;
+                            return "${" + s + "}";
                         }
                     }).toString());
                     return b.build();

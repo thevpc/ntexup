@@ -98,8 +98,12 @@ public class NTxPropName {
     public static final String ROUND_CORNER="round-corner";
     public static final String COLSPAN="colspan";
     public static final String ROWSPAN="rowspan";
+    public static final String COL_SPAN="col-span";
+    public static final String ROW_SPAN="row-span";
     public static final String COLWEIGHT="colweight";
     public static final String ROWWEIGHT="rowweight";
+    public static final String COL_WEIGHT="col-weight";
+    public static final String ROW_WEIGHT="row-weight";
     public static final String THEED="threed";
     public static final String RAISED="raised";
     public static final String COLUMNS="columns";

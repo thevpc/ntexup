@@ -477,7 +477,7 @@ public class NTxValueByName {
         return (int) ctx.node().getAndSetRenderCache("colspan", AUTO_FORCE,
                 () -> {
                     {
-                        Integer i = NTxValueByType.getInt(ctx, NTxPropName.COLSPAN).orElse(1);
+                        Integer i = NTxValueByType.getInt(ctx, NTxPropName.COLSPAN, "col-span", "colSpan").orElse(1);
                         if (i == null) {
                             return 1;
                         } else if (i <= 0) {
@@ -494,7 +494,7 @@ public class NTxValueByName {
         return (int) ctx.node().getAndSetRenderCache("rowspan", AUTO_FORCE,
                 () -> {
                     {
-                        Integer i = NTxValueByType.getInt(ctx, NTxPropName.ROWSPAN).orElse(1);
+                        Integer i = NTxValueByType.getInt(ctx, NTxPropName.ROWSPAN, "row-span", "rowSpan").orElse(1);
                         if (i == null) {
                             return 1;
                         } else if (i <= 0) {
@@ -511,7 +511,7 @@ public class NTxValueByName {
         return (double) ctx.node().getAndSetRenderCache(NTxPropName.COLWEIGHT, AUTO_FORCE,
                 () -> {
                     {
-                        Double i = NTxValueByType.getDouble(ctx, NTxPropName.COLWEIGHT).orElse(0.0);
+                        Double i = NTxValueByType.getDouble(ctx, NTxPropName.COLWEIGHT, "col-weight", "colWeight").orElse(0.0);
                         if (i == null || Double.isNaN(i) || Double.isInfinite(i)) {
                             return 0.0;
                         } else if (i <= 0) {
@@ -528,7 +528,7 @@ public class NTxValueByName {
         return (double) ctx.node().getAndSetRenderCache(NTxPropName.ROWWEIGHT, AUTO_FORCE,
                 () -> {
                     {
-                        Double i = NTxValueByType.getDouble(ctx, NTxPropName.ROWWEIGHT).orElse(0.0);
+                        Double i = NTxValueByType.getDouble(ctx, NTxPropName.ROWWEIGHT, "row-weight", "rowWeight").orElse(0.0);
                         if (i == null || Double.isNaN(i) || Double.isInfinite(i)) {
                             return 0.0;
                         } else if (i <= 0) {

@@ -441,19 +441,25 @@ public class NTxCompiler {
 
         List<NElement> callArgs = c.getCallArgs();
 
-        if (callArgs.stream().allMatch(NElement::isNamedPair)) {
-            for (NElement e : callArgs) {
+        int posIndex = 0;
+        java.util.Set<String> assignedNames = new java.util.HashSet<>();
+        for (NElement e : callArgs) {
+            if (e.isNamedPair()) {
                 NPairElement p = e.asPair().get();
                 String n = p.key().asStringValue().get();
                 assigns.add(DefaultNTxNode.ofAssign(n, NTxUtils.addCompilerDeclarationPath(p.value(), c.source()), context.source()));
+                assignedNames.add(n);
+            } else {
+                while (posIndex < expectedParams.length && assignedNames.contains(expectedParams[posIndex].name())) {
+                    posIndex++;
+                }
+                if (posIndex < expectedParams.length) {
+                    String paramName = expectedParams[posIndex].name();
+                    assigns.add(DefaultNTxNode.ofAssign(paramName, NTxUtils.addCompilerDeclarationPath(e, c.source()), context.source()));
+                    assignedNames.add(paramName);
+                    posIndex++;
+                }
             }
-        } else if (callArgs.stream().noneMatch(NElement::isNamedPair)) {
-            for (int i = 0; i < Math.min(expectedParams.length, callArgs.size()); i++) {
-                assigns.add(DefaultNTxNode.ofAssign(expectedParams[i].name(), NTxUtils.addCompilerDeclarationPath(callArgs.get(i), c.source()), context.source()));
-            }
-        } else {
-            NMsg errMsg = NMsg.ofC("cannot mix named and non named params in %s, all params ignored", callArgs.stream().map(x -> NTxUtils.snippet(x)).collect(Collectors.toList()));
-            engine.log().log(errMsg, c.source());
         }
         NTxNode[] oldBody = d.body();
         NTxResolutionContext newContext = context.pushContext();
