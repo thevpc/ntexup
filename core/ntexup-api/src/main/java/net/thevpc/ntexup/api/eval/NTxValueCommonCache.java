@@ -9,6 +9,7 @@ public class NTxValueCommonCache {
     public NElement stroke;
     public Paint foregroundColor;
     public Paint backgroundColor;
+    public Paint lineColor;
     public boolean drawContour;
     public boolean fillBackground;
     public int debugLevel;

@@ -9,6 +9,7 @@ import net.thevpc.ntexup.api.document.node.NTxNode;
 import net.thevpc.ntexup.api.document.node.NTxNodeType;
 import net.thevpc.ntexup.api.document.style.*;
 import net.thevpc.ntexup.api.engine.NTxNodeBuilderContext;
+import net.thevpc.ntexup.api.eval.NTxValueByName;
 import net.thevpc.ntexup.api.extension.NTxNodeBuilder;
 import net.thevpc.ntexup.api.renderer.NTxRendererContext;
 import net.thevpc.ntexup.extension.shapes2d.container.util.NTxListHelper;
@@ -43,14 +44,26 @@ public class NTxUnorderedListBuilder implements NTxNodeBuilder {
             }
         }
         if (expectedBounds == null) {
-            return rendererContext.defaultSelfBounds2D();
+            expectedBounds = rendererContext.defaultSelfBounds2D();
+        }
+        net.thevpc.ntexup.api.document.elem2d.NTxMargin padding = NTxValueByName.getPadding(rendererContext);
+        if (padding != null && !padding.isZero()) {
+            expectedBounds = NTxBounds2D.ofWidth(
+                    expectedBounds.minX() - padding.getLeft(),
+                    expectedBounds.minY() - padding.getTop(),
+                    expectedBounds.widthX() + padding.getLeft() + padding.getRight(),
+                    expectedBounds.widthY() + padding.getTop() + padding.getBottom()
+            );
         }
         return expectedBounds;
     }
 
     public void renderMain(NTxRendererContext rendererContext) {
         rendererContext = rendererContext.withDefaultStyles(defaultStyles);
-        //NTxBounds2 expectedBounds = ctx.selfBounds(p);
+        NTxBounds2D selfBounds = rendererContext.selfBounds2D();
+        if (!rendererContext.isDry()) {
+            rendererContext.paintBackground(selfBounds);
+        }
         List<NTxListHelper.NodeWithIndent> all = NTxListHelper.build(rendererContext.node(), false, rendererContext);
         for (int i = 0; i < all.size(); i++) {
             NTxListHelper.NodeWithIndent a = all.get(i);
@@ -58,6 +71,9 @@ public class NTxUnorderedListBuilder implements NTxNodeBuilder {
             a.child.invalidateRenderCache();
             rendererContext.resolveNode(a.bullet, a.bulletBounds).render();
             rendererContext.resolveNode(a.child, a.childBounds).render();
+        }
+        if (!rendererContext.isDry()) {
+            rendererContext.paintBorderLine(selfBounds);
         }
     }
 

@@ -7,6 +7,7 @@ import net.thevpc.ntexup.engine.util.NTxNodeRendererUtils;
 import net.thevpc.ntexup.api.eval.NTxValue;
 import net.thevpc.ntexup.api.renderer.NTxGraphics;
 import net.thevpc.ntexup.api.renderer.NTxRendererContext;
+import net.thevpc.ntexup.engine.renderer.elem2d.text.util.NTxTextUtils;
 import net.thevpc.nuts.text.*;
 import net.thevpc.nuts.util.NStringUtils;
 
@@ -27,7 +28,6 @@ public class NTxHighlighterMapper {
         nTextTransformConfig.normalize(true);
         nTextTransformConfig.processTitleNumbers(true);
         processNTextRecursively(parsedText.normalize(nTextTransformConfig), result, ctx, new NTextStyle[0], cache);
-        result.computeBound(ctx);
     }
 
     private static void applyOptions(NTxTextOptions to, NTextStyle nTextStyle, NTxRendererContext ctx, Map<String, NTxTextPartStyle> cache) {
@@ -134,23 +134,23 @@ public class NTxHighlighterMapper {
                 if (np.value().equals("\n")) {
                     result.nextLine();
                 } else {
-                    if (styles.length==0) {
+                    List<String> chunks = NTxTextUtils.splitWordsAndSpaces(np.value());
+                    for (String chunk : chunks) {
                         result.currRow();
-                        NTxRichTextToken col = new NTxRichTextToken(NTxRichTextTokenType.PLAIN, np.value());
-                        col.tok = nText;
-                        //g.setFont(col.textOptions.font);
-                        col.bounds = g.getStringBounds(col.text);
-                        result.addToken(col);
-                    } else {
-                        result.currRow();
-                        NTxRichTextToken col = new NTxRichTextToken(NTxRichTextTokenType.STYLED, np.value());
-                        col.tok = nText;
-                        //g.setFont(col.textOptions.font);
-                        col.bounds = g.getStringBounds(col.text);
-                        for (NTextStyle nTextStyle : styles) {
-                            applyOptions(col.textOptions, nTextStyle, ctx, cache);
+                        if (styles.length == 0) {
+                            NTxRichTextToken col = new NTxRichTextToken(NTxRichTextTokenType.PLAIN, chunk);
+                            col.tok = nText;
+                            col.bounds = g.getStringBounds(col.text);
+                            result.addToken(col);
+                        } else {
+                            NTxRichTextToken col = new NTxRichTextToken(NTxRichTextTokenType.STYLED, chunk);
+                            col.tok = nText;
+                            col.bounds = g.getStringBounds(col.text);
+                            for (NTextStyle nTextStyle : styles) {
+                                applyOptions(col.textOptions, nTextStyle, ctx, cache);
+                            }
+                            result.addToken(col);
                         }
-                        result.addToken(col);
                     }
                 }
                 break;

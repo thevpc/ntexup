@@ -46,8 +46,9 @@ class NTxTextTokenParseHelper {
     }
 
     List<NTxTextToken> readSpecial() {
+        String bcId = builderContext == null ? null : builderContext.id();
         for (NTxTextRendererFlavor flavor : flavors) {
-            if (!Objects.equals(flavor.type(), builderContext.id())) {
+            if (!Objects.equals(flavor.type(), bcId)) {
                 List<NTxTextToken> image = flavor.parseTokens(parseContext);
                 if (image != null) {
                     return image;

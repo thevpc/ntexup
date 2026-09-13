@@ -8,6 +8,7 @@ import net.thevpc.ntexup.api.eval.NTxValueByName;
 import net.thevpc.ntexup.api.renderer.NTxGraphics;
 import net.thevpc.ntexup.api.renderer.NTxRendererContext;
 import net.thevpc.ntexup.api.eval.NTxValue;
+import net.thevpc.ntexup.api.util.NTxUtils;
 import net.thevpc.nuts.elem.NElement;
 import net.thevpc.nuts.util.NOptional;
 
@@ -168,16 +169,35 @@ public class NTxNodeRendererUtils {
         return NOptional.ofNamedEmpty("color");
     }
 
+    public static boolean applyLineColor(NTxGraphics g, NTxRendererContext ctx, boolean force) {
+        if (ctx.isDry()) {
+            return false;
+        }
+        Paint color = NTxValueByName.resolveLineColor(ctx, force);
+        if (color != null) {
+            g.setPaint(color);
+            return true;
+        }
+        return false;
+    }
+
     public static void drawBorderLine(NTxRendererContext ctx, NTxGraphics g, NTxBounds2D a) {
         if (ctx.isDry()) {
             return;
         }
         drawDebugBox(ctx, g, a);
         if (NTxValueByName.isDrawContour(ctx)) {
-            if (applyForeground(g, ctx, true)) {
+            if (applyLineColor(g, ctx, true)) {
                 Stroke s = g.getStroke();
                 applyStroke(g, ctx);
-                g.drawRect(a);
+                NTxDouble2 roundCorners = ctx.getRoundCornerArcs();
+                if (roundCorners != null) {
+                    double cx = NTxUtils.doubleOf(roundCorners.getX()) / 100 * ctx.globalBounds2D().widthX();
+                    double cy = NTxUtils.doubleOf(roundCorners.getY()) / 100 * ctx.globalBounds2D().widthY();
+                    g.drawRoundRect(a.minX(), a.minY(), a.widthX(), a.widthY(), cx, cy);
+                } else {
+                    g.drawRect(a);
+                }
                 g.setStroke(s);
             }
         }
@@ -190,7 +210,14 @@ public class NTxNodeRendererUtils {
         }
 //        if (HPropValueByNameParser.requireFillBackground(t, ctx)) {
         if (applyBackgroundColor(g, ctx)) {
-            g.fillRect(a);
+            NTxDouble2 roundCorners = ctx.getRoundCornerArcs();
+            if (roundCorners != null) {
+                double cx = NTxUtils.doubleOf(roundCorners.getX()) / 100 * ctx.globalBounds2D().widthX();
+                double cy = NTxUtils.doubleOf(roundCorners.getY()) / 100 * ctx.globalBounds2D().widthY();
+                g.fillRoundRect(a.minX(), a.minY(), a.widthX(), a.widthY(), cx, cy);
+            } else {
+                g.fillRect(a);
+            }
         }
 //        }
     }

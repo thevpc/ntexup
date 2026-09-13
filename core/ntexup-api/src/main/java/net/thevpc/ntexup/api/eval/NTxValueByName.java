@@ -4,6 +4,8 @@ import net.thevpc.ntexup.api.document.elem2d.NTxBounds2D;
 import net.thevpc.ntexup.api.document.elem2d.NTxDouble2;
 import net.thevpc.ntexup.api.document.elem2d.*;
 import net.thevpc.ntexup.api.document.style.*;
+import net.thevpc.ntexup.api.renderer.text.NTxTextAlign;
+import net.thevpc.ntexup.api.renderer.text.NTxTextWrap;
 
 import net.thevpc.ntexup.api.renderer.NTxRendererContext;
 import net.thevpc.ntexup.api.util.NTxSizeRef;
@@ -233,6 +235,14 @@ public class NTxValueByName {
         return getNodeFontCache(ctx).fontItalic;
     }
 
+    public static NTxTextWrap getTextWrap(NTxRendererContext ctx) {
+        return NTxValueByType.getTextWrap(ctx).orElse(NTxTextWrap.VERBATIM);
+    }
+
+    public static NTxTextAlign getTextAlign(NTxRendererContext ctx) {
+        return NTxValueByType.getTextAlign(ctx).orElse(NTxTextAlign.LEFT);
+    }
+
     public static NTxValueCommonCache getNodeCommonNoCache(NTxRendererContext ctx) {
         NTxValueCommonCache renderInfo = new NTxValueCommonCache();
         NElement e = NTxValueByType.getElement(ctx, NTxPropName.FONT_SIZE).orNull();
@@ -242,6 +252,7 @@ public class NTxValueByName {
 
         renderInfo.foregroundColor = NTxValueByType.getPaint(ctx, NTxPropName.FOREGROUND_COLOR, "foreground", "color", "fg").orElse(null);
         renderInfo.backgroundColor = NTxValueByType.getPaint(ctx, NTxPropName.BACKGROUND_COLOR, "background", "bg").orNull();
+        renderInfo.lineColor = NTxValueByType.getPaint(ctx, NTxPropName.LINE_COLOR, "line-color", "lineColor", "stroke-color", "strokeColor").orNull();
         renderInfo.fillBackground = NTxValueByType.getBoolean(ctx, NTxPropName.FILL_BACKGROUND, "fill").orElse(false);
         renderInfo.debugLevel = NTxValueByType.getIntOrBoolean(ctx, NTxPropName.DEBUG).orElse(0);
         renderInfo.debugColor = (Color) NTxValueByType.getPaint(ctx, NTxPropName.DEBUG_COLOR).orElse(Color.GRAY);
@@ -530,6 +541,14 @@ public class NTxValueByName {
         ).get();
     }
 
+    public static double[] getColumnsWeight(NTxRendererContext ctx) {
+        return NTxValueByType.getDoubleArray(ctx, NTxPropName.COLUMNS_WEIGHT, "columns-weight", "columnsWeight", "colWeights", "col-weights", "columnWeights", "columnsWeights", "cols-weight", "colsWeight").orNull();
+    }
+
+    public static double[] getRowsWeight(NTxRendererContext ctx) {
+        return NTxValueByType.getDoubleArray(ctx, NTxPropName.ROWS_WEIGHT, "rows-weight", "rowsWeight", "rowWeights", "row-weights", "rowsWeights").orNull();
+    }
+
     public static Boolean get3D(NTxRendererContext ctx) {
         return NTxValueByType.getBoolean(ctx, NTxPropName.THEED).orElse(false);
     }
@@ -648,6 +667,14 @@ public class NTxValueByName {
 
     public static Paint resolveBackgroundColor(NTxRendererContext ctx) {
         return getNodeCommonCache(ctx).backgroundColor;
+    }
+
+    public static Paint resolveLineColor(NTxRendererContext ctx, boolean force) {
+        Paint c = getNodeCommonCache(ctx).lineColor;
+        if (c != null) {
+            return c;
+        }
+        return getForegroundColor(ctx, force);
     }
 
     public static boolean isDrawContour(NTxRendererContext ctx) {

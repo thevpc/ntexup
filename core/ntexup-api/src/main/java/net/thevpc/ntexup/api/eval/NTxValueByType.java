@@ -32,8 +32,27 @@ public class NTxValueByType {
         return NTxValue.of(ctx.computePropertyValue(propName, propNames).orNull()).asInt();
     }
 
-    public static NOptional<String> getStringOrName(NTxRendererContext ctx, String propName) {
-        return NTxValue.of(ctx.computePropertyValue(propName).orNull()).asStringOrName();
+    public static NOptional<String> getStringOrName(NTxRendererContext ctx, String propName, String... synonyms) {
+        return NTxValue.of(ctx.computePropertyValue(propName, synonyms).orNull()).asStringOrName();
+    }
+
+    public static NOptional<net.thevpc.ntexup.api.renderer.text.NTxTextWrap> getTextWrap(NTxRendererContext ctx) {
+        String s = getStringOrName(ctx, net.thevpc.ntexup.api.document.style.NTxPropName.TEXT_WRAP, net.thevpc.ntexup.api.document.style.NTxPropName.WRAP).orNull();
+        return net.thevpc.ntexup.api.renderer.text.NTxTextWrap.parse(s);
+    }
+
+    public static NOptional<net.thevpc.ntexup.api.renderer.text.NTxTextAlign> getTextAlign(NTxRendererContext ctx) {
+        String s = getStringOrName(ctx, net.thevpc.ntexup.api.document.style.NTxPropName.TEXT_ALIGN, net.thevpc.ntexup.api.document.style.NTxPropName.TEXT_HALIGN).orNull();
+        if (s == null) {
+            String a = getStringOrName(ctx, net.thevpc.ntexup.api.document.style.NTxPropName.ALIGN).orNull();
+            if (a != null) {
+                NOptional<net.thevpc.ntexup.api.renderer.text.NTxTextAlign> parsed = net.thevpc.ntexup.api.renderer.text.NTxTextAlign.parse(a);
+                if (parsed.isPresent()) {
+                    return parsed;
+                }
+            }
+        }
+        return net.thevpc.ntexup.api.renderer.text.NTxTextAlign.parse(s);
     }
 
     public static NOptional<Paint> getPaint(NTxRendererContext ctx, String propName, String... propNames) {
@@ -72,6 +91,10 @@ public class NTxValueByType {
 
     public static NOptional<double[]> getDoubleArray(NTxRendererContext ctx, String s) {
         return NTxValue.of(ctx.computePropertyValue(s).orNull()).asDoubleArray();
+    }
+
+    public static NOptional<double[]> getDoubleArray(NTxRendererContext ctx, String s, String... synonyms) {
+        return NTxValue.of(ctx.computePropertyValue(s, synonyms).orNull()).asDoubleArray();
     }
 
     public static NOptional<NTxMargin> getMargin(NTxRendererContext ctx, String s) {

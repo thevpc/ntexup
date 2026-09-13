@@ -30,4 +30,32 @@ public class NTxTextUtils {
             y = y + b.getHeight();
         }
     }
+
+    public static java.util.List<String> splitWordsAndSpaces(String text) {
+        java.util.List<String> result = new java.util.ArrayList<>();
+        if (text == null || text.isEmpty()) {
+            return result;
+        }
+        StringBuilder sb = new StringBuilder();
+        boolean inSpace = Character.isWhitespace(text.charAt(0)) && text.charAt(0) != '\u00A0';
+        for (int i = 0; i < text.length(); i++) {
+            char c = text.charAt(i);
+            boolean isSpace = Character.isWhitespace(c) && c != '\u00A0';
+            if (isSpace == inSpace) {
+                sb.append(c);
+            } else {
+                if (sb.length() > 0) {
+                    result.add(sb.toString());
+                    sb.setLength(0);
+                }
+                sb.append(c);
+                inSpace = isSpace;
+            }
+        }
+        if (sb.length() > 0) {
+            result.add(sb.toString());
+        }
+        return result;
+    }
 }
+

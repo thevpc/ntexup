@@ -152,9 +152,19 @@ public class NTxGridRendererHelper {
         if (minColWeights <= 0) {
             minColWeights = 1;
         }
+        double[] gridColWeights = NTxValueByName.getColumnsWeight(ctx);
+        double[] gridRowWeights = NTxValueByName.getRowsWeight(ctx);
+
         double sumColumnWeights = 0;
         for (int i = 0, columnWeightsLength = columnWeights.length; i < columnWeightsLength; i++) {
-            if (columnWeights[i] <= 0) {
+            if (gridColWeights != null && gridColWeights.length > 0) {
+                double w = gridColWeights[i % gridColWeights.length];
+                if (w > 0) {
+                    columnWeights[i] = w;
+                } else if (columnWeights[i] <= 0) {
+                    columnWeights[i] = 1;
+                }
+            } else if (columnWeights[i] <= 0) {
                 columnWeights[i] = 1;
             }
             sumColumnWeights += columnWeights[i];
@@ -162,7 +172,14 @@ public class NTxGridRendererHelper {
 
         double sumRowWeights = 0;
         for (int i = 0, rowWeightsLength = rowWeights.length; i < rowWeightsLength; i++) {
-            if (rowWeights[i] <= 0) {
+            if (gridRowWeights != null && gridRowWeights.length > 0) {
+                double w = gridRowWeights[i % gridRowWeights.length];
+                if (w > 0) {
+                    rowWeights[i] = w;
+                } else if (rowWeights[i] <= 0) {
+                    rowWeights[i] = 1;
+                }
+            } else if (rowWeights[i] <= 0) {
                 rowWeights[i] = 1;
             }
             sumRowWeights += rowWeights[i];

@@ -530,6 +530,11 @@ public class DefaultNTxRendererContext extends NTxResolutionContextImpl implemen
     }
 
     @Override
+    public Paint resolveLineColor(boolean force) {
+        return NTxValueByName.resolveLineColor(this, force);
+    }
+
+    @Override
     public boolean isDrawContour() {
         return NTxValueByName.isDrawContour(this);
     }
@@ -631,6 +636,11 @@ public class DefaultNTxRendererContext extends NTxResolutionContextImpl implemen
     public boolean applyGridColor(boolean force) {
         return NTxNodeRendererUtils.applyGridColor(graphics(), this, force);
 
+    }
+
+    @Override
+    public boolean applyLineColor(boolean force) {
+        return NTxNodeRendererUtils.applyLineColor(graphics(), this, force);
     }
 
     @Override

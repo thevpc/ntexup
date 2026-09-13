@@ -29,6 +29,11 @@ class CustomNTxTextRendererFlavorFromBuilder implements NTxTextRendererFlavor {
     }
 
     @Override
+    public List<String> aliases() {
+        return ctx.aliases == null ? Collections.emptyList() : Arrays.asList(ctx.aliases);
+    }
+
+    @Override
     public void buildText(String text, NTxTextOptions options, NTxRendererContext ctx, NTxTextRendererBuilder builder) {
         if (this.ctx.renderTextAction.buildAction != null) {
             this.ctx.renderTextAction.buildAction.buildText(text, options, ctx.withBuilderContext(this.ctx), builder);

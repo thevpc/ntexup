@@ -71,6 +71,12 @@ public class NTxPropName {
      */
     public static final String CONTENT_POSITION="content-position";
 
+    public static final String TEXT_WRAP="text-wrap";
+    public static final String WRAP="wrap";
+    public static final String TEXT_ALIGN="text-align";
+    public static final String TEXT_HALIGN="text-halign";
+    public static final String BULLET_ALIGN="bullet-align";
+
 
     public static final String FONT_FAMILY="font-family";
     public static final String FONT_SIZE="font-size";

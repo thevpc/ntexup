@@ -151,6 +151,8 @@ public interface NTxRendererContext extends NTxResolutionContext {
 
     Paint resolveBackgroundColor();
 
+    Paint resolveLineColor(boolean force);
+
     boolean isDrawContour();
 
     boolean requireDrawGrid();
@@ -188,6 +190,8 @@ public interface NTxRendererContext extends NTxResolutionContext {
     boolean applyBackgroundColor();
 
     boolean applyGridColor(boolean force);
+
+    boolean applyLineColor(boolean force);
 
     NOptional<Color> colorFromPaint(Paint p);
 

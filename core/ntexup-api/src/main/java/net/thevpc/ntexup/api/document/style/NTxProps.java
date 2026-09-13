@@ -45,17 +45,17 @@ public class NTxProps {
         return NTxProp.of(NTxPropName.BACKGROUND_COLOR, color == null ? null : NTxUtils.addCompilerDeclarationPathDummy(NElement.ofInt(color.getRGB())));
     }
 
-//    public static HProp lineColor(Paint color) {
-//        return new HProp(HPropName.LINE_COLOR, color);
-//    }
+    public static NTxProp lineColor(int rgb) {
+        return NTxProp.of(NTxPropName.LINE_COLOR, NTxUtils.addCompilerDeclarationPathDummy(NElement.ofInt(rgb)));
+    }
+
+    public static NTxProp lineColor(Color color) {
+        return NTxProp.of(NTxPropName.LINE_COLOR, color == null ? null : NTxUtils.addCompilerDeclarationPathDummy(NElement.ofInt(color.getRGB())));
+    }
 
     public static NTxProp gridColor(Color color) {
         return NTxProp.of(NTxPropName.GRID_COLOR, color == null ? null : NTxUtils.addCompilerDeclarationPathDummy(NElement.ofInt(color.getRGB())));
     }
-
-//    public static HProp lineColor(int color) {
-//        return new HProp(HPropName.LINE_COLOR, new Color(color));
-//    }
 
     public static NTxProp fontBold() {
         return fontBold(true);

@@ -2,6 +2,7 @@ package net.thevpc.ntexup.extension.shapes2d.container.util;
 
 import net.thevpc.ntexup.api.document.NTxDocumentFactory;
 import net.thevpc.ntexup.api.document.elem2d.NTxBounds2D;
+import net.thevpc.ntexup.api.document.elem2d.NTxMargin;
 import net.thevpc.ntexup.api.document.node.NTxNode;
 import net.thevpc.ntexup.api.document.node.NTxNodeType;
 import net.thevpc.ntexup.api.document.style.DefaultNTxStyleRule;
@@ -44,6 +45,15 @@ public class NTxListHelper {
         NTxSizeRef nTxSizeRef = ctx.sizeRef();
         double rw = nTxSizeRef.getRootWidth();
         NTxBounds2D sb = ctx.defaultSelfBounds2D();
+        NTxMargin padding = NTxValueByName.getPadding(ctx);
+        if (padding != null && !padding.isZero()) {
+            sb = NTxBounds2D.ofWidth(
+                    sb.minX() + padding.getLeft(),
+                    sb.minY() + padding.getTop(),
+                    Math.max(0, sb.widthX() - padding.getLeft() - padding.getRight()),
+                    Math.max(0, sb.widthY() - padding.getTop() - padding.getBottom())
+            );
+        }
 
         Font font = NTxValueByName.getFont(ctx);
         if (font == null && ctx.graphics() != null) {

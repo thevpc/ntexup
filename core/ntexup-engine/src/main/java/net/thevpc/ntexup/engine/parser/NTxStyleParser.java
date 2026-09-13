@@ -34,7 +34,7 @@ public class NTxStyleParser {
                 NTxPropName.COLWEIGHT,
                 NTxPropName.ROWWEIGHT,
                 NTxPropName.GRID_COLOR,
-//                HPropName.LINE_COLOR,
+                NTxPropName.LINE_COLOR,
                 NTxPropName.ROTATE,
                 NTxPropName.PADDING,
                 NTxPropName.MARGIN,
@@ -62,7 +62,14 @@ public class NTxStyleParser {
                 NTxPropName.COMPONENT_NAME,
                 NTxPropName.CONTENT_ORIGIN,
                 NTxPropName.CONTENT_POSITION,
-                NTxPropName.ALIGN
+                NTxPropName.ALIGN,
+                NTxPropName.WIDTH,
+                NTxPropName.HEIGHT,
+                NTxPropName.TEXT_WRAP,
+                NTxPropName.WRAP,
+                NTxPropName.TEXT_ALIGN,
+                NTxPropName.TEXT_HALIGN,
+                NTxPropName.BULLET_ALIGN
         ));
 
         COMMON_FLAG_STYLE_PROPS.addAll(Arrays.asList(
@@ -103,7 +110,9 @@ public class NTxStyleParser {
                         "show",
                         "visible",
                         "fill",
-                        "contour"
+                        "contour",
+                        "w",
+                        "h"
                 )
         );
         COMMON_FLAG_STYLE_PROPS.addAll(

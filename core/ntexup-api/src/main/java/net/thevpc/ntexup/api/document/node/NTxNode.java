@@ -126,7 +126,7 @@ public interface NTxNode extends NTxItem {
 
     NTxNode setBackgroundColor(String w);
 
-//    NTxNode setLineColor(String w);
+    NTxNode setLineColor(String w);
 
     NTxNode setGridColor(String w);
 

@@ -49,10 +49,28 @@ public abstract class NTxTextBaseRenderer extends NTxNodeRendererBase {
         NTxMargin padding = NTxValueByName.getPadding(ctx);
         double pw = padding == null ? 0 : (padding.getLeft() + padding.getRight());
         double ph = padding == null ? 0 : (padding.getTop() + padding.getBottom());
-        // Shift origin by left/top padding so that background includes padding area
-        double x = renderInfo.computedBound.minX() - (padding == null ? 0 : padding.getLeft());
-        double y = renderInfo.computedBound.minY() - (padding == null ? 0 : padding.getTop());
-        return NTxValueByName.selfBounds2D(new NTxDouble2(renderInfo.computedBound.widthX() + pw, renderInfo.computedBound.widthY() + ph), null, ctx);
+        double w = renderInfo.computedBound.widthX() + pw;
+        double h = renderInfo.computedBound.widthY() + ph;
+        NElement wElem = ctx.node().getPropertyValue(NTxPropName.WIDTH).orNull();
+        NElement hElem = ctx.node().getPropertyValue(NTxPropName.HEIGHT).orNull();
+        NElement sizeElem = ctx.node().getPropertyValue(NTxPropName.SIZE).orNull();
+        if (wElem != null) {
+            w = ctx.sizeRef().x(wElem).orElse(w);
+        } else if (sizeElem != null) {
+            net.thevpc.nuts.util.NOptional<net.thevpc.ntexup.api.document.elem2d.NTxElemNumber2> s2 = net.thevpc.ntexup.api.eval.NTxValue.of(sizeElem).asNNumberElement2Or1OrHAlign();
+            if (s2.isPresent()) {
+                w = ctx.sizeRef().x(s2.get().getX()).orElse(w);
+            }
+        }
+        if (hElem != null) {
+            h = ctx.sizeRef().y(hElem).orElse(h);
+        } else if (sizeElem != null) {
+            net.thevpc.nuts.util.NOptional<net.thevpc.ntexup.api.document.elem2d.NTxElemNumber2> s2 = net.thevpc.ntexup.api.eval.NTxValue.of(sizeElem).asNNumberElement2Or1OrHAlign();
+            if (s2.isPresent()) {
+                h = ctx.sizeRef().y(s2.get().getY()).orElse(h);
+            }
+        }
+        return NTxValueByName.selfBounds2D(new NTxDouble2(w, h), null, ctx);
     }
 
     protected abstract NTxTextRendererBuilder createRichTextHelper(NTxRendererContext ctx);

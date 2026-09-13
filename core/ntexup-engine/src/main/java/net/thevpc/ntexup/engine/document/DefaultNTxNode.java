@@ -651,11 +651,11 @@ public class DefaultNTxNode implements NTxNode, Cloneable{
         return this;
     }
 
-//    @Override
-//    public NTxNode setLineColor(String w) {
-//        setProperty(NTxPropName.LINE_COLOR, w);
-//        return this;
-//    }
+    @Override
+    public NTxNode setLineColor(String w) {
+        setProperty(NTxPropName.LINE_COLOR, NElement.ofString(w));
+        return this;
+    }
 
     @Override
     public NTxNode setGridColor(String w) {
