@@ -108,7 +108,22 @@ public class NtxShapes3dUtils {
     }
 
     public static NtxFace resolveFace(NElement element, NTxRendererContext rendererContext) {
-        if (element == null || !element.isAnyObject()) {
+        if (element == null) {
+            return null;
+        }
+        if (rendererContext != null) {
+            element = rendererContext.evalExpression(element).orElse(element);
+        }
+        NOptional<Paint> directPaint = NTxValue.of(element).asPaint();
+        if (directPaint.isPresent()) {
+            NtxFaceImpl f = new NtxFaceImpl();
+            f.setBackground(directPaint.get());
+            f.setVisible(true);
+            f.setFillBackground(true);
+            f.setDrawContour(true);
+            return f;
+        }
+        if (!element.isAnyObject()) {
             return null;
         }
         boolean visible = true;
@@ -128,6 +143,9 @@ public class NtxShapes3dUtils {
                     NPairElement p = c.asPair().get();
                     NElement k = p.key();
                     NElement v = p.value();
+                    if (rendererContext != null) {
+                        v = rendererContext.evalExpression(v).orElse(v);
+                    }
                     switch (NTxUtils.uid(k.asStringValue().get())) {
                         case "visible": {
                             visible = NTxValue.of(v).asBoolean().orElse(true);
@@ -147,6 +165,7 @@ public class NtxShapes3dUtils {
                         case NTxPropName.BACKGROUND_COLOR:
                         case "background":
                         case "color":
+                        case "fill":
                         case "bg": {
                             background = NTxValue.of(v).asPaint().orNull();
                             any = true;

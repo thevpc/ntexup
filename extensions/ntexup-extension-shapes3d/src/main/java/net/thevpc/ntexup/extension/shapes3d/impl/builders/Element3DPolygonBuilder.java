@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
 public class Element3DPolygonBuilder implements  NtxElement3DNodeParser {
     @Override
     public List<String> getId3d() {
-        return Arrays.asList(NTxNodeType.POLYGON);
+        return Arrays.asList(NTxNodeType.POLYGON, "polygon3d");
     }
 
     @Override

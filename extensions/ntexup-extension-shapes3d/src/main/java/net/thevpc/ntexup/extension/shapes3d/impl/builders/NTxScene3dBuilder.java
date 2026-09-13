@@ -190,7 +190,9 @@ public class NTxScene3dBuilder implements NTxNodeBuilder {
         NtxGraphics3DImpl g3 = new NtxGraphics3DImpl(rendererContext.graphics(), rendererContext);
         g3.setMesh(new DefaultNTx3DMesh().configureScene(node, rendererContext));
         g3.setCamera(camera);
-        g3.draw3D(g, new NTxPoint2D(bounds2D.minX(), bounds2D.minY()));
+        double originX = bounds2D.centerX() != null ? bounds2D.centerX() : bounds2D.minX();
+        double originY = bounds2D.centerY() != null ? bounds2D.centerY() : bounds2D.minY();
+        g3.draw3D(g, new NTxPoint2D(originX, originY));
     }
 
     private NtxElement3D toNtxElement3D(NTxRendererContext rendererContext, NTxBounds2D b, RealToRelativeMapper mapper, NtxElement3DNodeParserFactory parserFactory) {

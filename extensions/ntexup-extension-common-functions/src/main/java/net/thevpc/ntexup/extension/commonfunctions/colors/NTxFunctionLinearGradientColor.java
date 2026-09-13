@@ -1,11 +1,10 @@
 package net.thevpc.ntexup.extension.commonfunctions.colors;
 
-import net.thevpc.ntexup.api.document.elem2d.NTxBounds2D;
 import net.thevpc.ntexup.api.document.elem2d.NTxDouble2;
+import net.thevpc.ntexup.api.document.elem2d.NTxLinearGradientPaint;
 import net.thevpc.ntexup.api.eval.*;
 import net.thevpc.ntexup.api.extension.NTxFunction;
 import net.thevpc.ntexup.api.util.NTxElementUtils;
-import net.thevpc.ntexup.extension.commonfunctions.util.NTxColorUtils;
 import net.thevpc.nuts.elem.NElement;
 import net.thevpc.nuts.text.NMsg;
 import net.thevpc.nuts.util.NOptional;
@@ -26,29 +25,31 @@ public class NTxFunctionLinearGradientColor implements NTxFunction {
         boolean cyclic = false;
         NTxDouble2 start = null;
         NTxDouble2 end = null;
-        NTxBounds2D selfBounds = NTxValue.of(context.getVar("selfBounds").map(x->x.get()).orNull()).asBounds2().orNull();
+        Double angleDeg = null;
         java.util.List<Color> colors = new ArrayList<>();
         for (int i = 0; i < args.size(); i++) {
             NElement v = args.evalArg(i);
             NTxValue vv = NTxValue.of(v);
-            if(vv.isBoolean()) {
+            if (vv.isBoolean()) {
                 cyclic = v.asBooleanValue().get();
-            }else if(vv.isPoint2()){
-                if(start==null){
-                    start=vv.asDouble2().get();
-                }else  if(end==null){
-                    end=vv.asDouble2().get();
-                }else{
+            } else if (vv.isPoint2()) {
+                if (start == null) {
+                    start = vv.asDouble2().get();
+                } else if (end == null) {
+                    end = vv.asDouble2().get();
+                } else {
                     context.log(NMsg.ofC("%s: unexpected point arg %s", name(), v));
                 }
-            }else {
+            } else if (vv.isNumber() && colors.isEmpty() && start == null) {
+                angleDeg = vv.asDouble().get();
+            } else {
                 NOptional<Color[]> c = vv.asColorArrayOrColor();
-                if(c.isPresent()) {
+                if (c.isPresent()) {
                     for (Color color : c.get()) {
                         colors.add(color);
                     }
-                }else{
-                    context.log(NMsg.ofC("%s: unexpected point arg %s", name(), v));
+                } else {
+                    context.log(NMsg.ofC("%s: unexpected arg %s", name(), v));
                 }
             }
         }
@@ -59,29 +60,24 @@ public class NTxFunctionLinearGradientColor implements NTxFunction {
         if (colors.size() == 1) {
             return NTxElementUtils.toElement(colors.get(0));
         }
+        if (angleDeg != null && start == null) {
+            double rad = Math.toRadians(angleDeg);
+            double cos = Math.cos(rad);
+            double sin = Math.sin(rad);
+            start = new NTxDouble2(50 - 50 * cos, 50 - 50 * sin);
+            end = new NTxDouble2(50 + 50 * cos, 50 + 50 * sin);
+        }
         if (start == null) {
             start = new NTxDouble2(0, 50);
         }
         if (end == null) {
             end = new NTxDouble2(100 - start.getX(), 100 - start.getY());
         }
-        // should consider node size!!
-        Point2D start2;
-        Point2D end2;
-        if(selfBounds!=null){
-            start2=new Point2D.Double(
-                    start.getX()/100*selfBounds.widthX()+selfBounds.minX(),
-                    start.getY()/100*selfBounds.widthY()+selfBounds.minY()
-            );
-            end2=new Point2D.Double(
-                    end.getX()/100*selfBounds.widthX()+selfBounds.minX(),
-                    end.getY()/100*selfBounds.widthY()+selfBounds.minY()
-            );
-        }else{
-            start2 = new Point2D.Double(start.getX(), start.getY());
-            end2 = new Point2D.Double(end.getX(), end.getY());
-        }
 
-        return NTxElementUtils.toElement(NTxColorUtils.createLinearGradient(start2, end2, colors.toArray(new Color[0]), cyclic));
+        Point2D pStart = new Point2D.Double(start.getX(), start.getY());
+        Point2D pEnd = new Point2D.Double(end.getX(), end.getY());
+        MultipleGradientPaint.CycleMethod cycle = cyclic ? MultipleGradientPaint.CycleMethod.REPEAT : MultipleGradientPaint.CycleMethod.NO_CYCLE;
+
+        return NTxElementUtils.toElement(new NTxLinearGradientPaint(pStart, pEnd, null, colors.toArray(new Color[0]), cycle));
     }
 }

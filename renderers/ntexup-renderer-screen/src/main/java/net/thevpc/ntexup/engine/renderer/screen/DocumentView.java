@@ -246,12 +246,26 @@ public class DocumentView implements NTxDocumentView {
 
     public String getPageSourceName() {
         Object s = getPageSource();
+        if (s == null && currentShowingPage != null && currentShowingPage.page() != null) {
+            s = currentShowingPage.page().source();
+            if (s == null && currentShowingPage.page().rawPage() != null) {
+                s = net.thevpc.ntexup.api.util.NTxUtils.sourceOf(currentShowingPage.page().rawPage());
+            }
+        }
         if (s != null) {
             if (s instanceof NTxSource) {
-                NPath path = ((NTxSource) s).path().orNull();
+                NTxSource src = (NTxSource) s;
+                String sn = src.shortName();
+                if (sn != null && !sn.isEmpty()) {
+                    return sn;
+                }
+                NPath path = src.path().orNull();
                 if (path != null) {
                     return path.name();
                 }
+            }
+            if (s instanceof String) {
+                return (String) s;
             }
         }
         return null;

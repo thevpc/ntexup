@@ -18,7 +18,7 @@ import java.util.List;
 public class Element3DPolylineBuilder implements  NtxElement3DNodeParser {
     @Override
     public List<String> getId3d() {
-        return Arrays.asList(NTxNodeType.POLYLINE);
+        return Arrays.asList(NTxNodeType.POLYLINE, "polyline3d");
     }
 
     @Override

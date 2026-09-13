@@ -51,20 +51,17 @@ public class Element3DBoxPrimitiveBuilder implements NTxElement3DRenderer, NTxNo
         NTxPoint3D size = NtxShapes3dUtils.resolveDistance(node, NTxPropName.SIZE, rendererContext, b).orElse(NTxPoint3D.ofHundred());
         NtxElement3DBox r = (NtxElement3DBox) NTxElement3DFactory.box(position, size.x, size.y, size.z);
         NtxShapes3dUtils.apply3dProps(node, r, rendererContext, b, true);
-        NElement faces = rendererContext.computePropertyValue("faces").orNull();
-        if (faces == null) {
-            r.setTop(NtxShapes3dUtils.resolveFace(rendererContext.computePropertyValue("top").orNull(), rendererContext));
-            r.setBottom(NtxShapes3dUtils.resolveFace(rendererContext.computePropertyValue("bottom").orNull(), rendererContext));
-            r.setLeft(NtxShapes3dUtils.resolveFace(rendererContext.computePropertyValue("left").orNull(), rendererContext));
-            r.setRight(NtxShapes3dUtils.resolveFace(rendererContext.computePropertyValue("right").orNull(), rendererContext));
-            r.setFront(NtxShapes3dUtils.resolveFace(rendererContext.computePropertyValue("front").orNull(), rendererContext));
-            r.setBack(NtxShapes3dUtils.resolveFace(rendererContext.computePropertyValue("back").orNull(), rendererContext));
-
-            for (String s : new String[]{"top", "bottom", "left", "right", "front", "back"}) {
-                NtxFace f = NtxShapes3dUtils.resolveFace(rendererContext.computePropertyValue(s).orNull(), rendererContext);
-                setBoxFace(s, r, f);
+        for (String s : new String[]{"top", "bottom", "left", "right", "front", "back"}) {
+            NElement fElem = rendererContext.computePropertyValue(s).orNull();
+            if (fElem != null) {
+                NtxFace f = NtxShapes3dUtils.resolveFace(fElem, rendererContext);
+                if (f != null) {
+                    setBoxFace(s, r, f);
+                }
             }
-        } else if (faces.isAnyObject()) {
+        }
+        NElement faces = rendererContext.computePropertyValue("faces").orNull();
+        if (faces != null && faces.isAnyObject()) {
             NObjectElement o = faces.asObject().get();
             NArrayElement params = NElement.ofArray(o.params().orElse(new ArrayList<>()).toArray(new NElement[0]));
             for (String s : new String[]{"top", "bottom", "left", "right", "front", "back"}) {
@@ -72,7 +69,12 @@ public class Element3DBoxPrimitiveBuilder implements NTxElement3DRenderer, NTxNo
                 if (ee == null) {
                     ee = params.get(s).orNull();
                 }
-                setBoxFace(s, r, NtxShapes3dUtils.resolveFace(ee, rendererContext));
+                if (ee != null) {
+                    NtxFace f = NtxShapes3dUtils.resolveFace(ee, rendererContext);
+                    if (f != null) {
+                        setBoxFace(s, r, f);
+                    }
+                }
             }
         }
         return r;
@@ -132,31 +134,31 @@ public class Element3DBoxPrimitiveBuilder implements NTxElement3DRenderer, NTxNo
                 {0, 4}, {1, 5}, {2, 6}, {3, 7}  // connecting edges
         };
         int[][] surfaces = {
-                {0, 1, 2, 3}, //FRONT
-                {4, 5, 6, 7}, // BACK
-                {0, 4, 5, 1}, //TOP
-                {3, 2, 6, 7}, //BOTTOM
-                {1, 2, 6, 5}, //RIGHT
-                {0, 3, 7, 4}, //LEFT
+                {0, 1, 2, 3}, // BACK (z = origin.z)
+                {4, 5, 6, 7}, // FRONT (z = origin.z + sizeZ)
+                {0, 4, 5, 1}, // BOTTOM (y = origin.y)
+                {3, 2, 6, 7}, // TOP (y = origin.y + sizeY)
+                {1, 2, 6, 5}, // RIGHT (x = origin.x + sizeX)
+                {0, 3, 7, 4}, // LEFT (x = origin.x)
         };
         List<NtxElement3DPrimitive> elements = new ArrayList<>();
         for (int i = 0; i < surfaces.length; i++) {
             NtxFace face = null;
             switch (i) {
                 case 0: {
-                    face = ee.getBottom();
-                    break;
-                }
-                case 1: {
-                    face = ee.getTop();
-                    break;
-                }
-                case 2: {
                     face = ee.getBack();
                     break;
                 }
-                case 3: {
+                case 1: {
                     face = ee.getFront();
+                    break;
+                }
+                case 2: {
+                    face = ee.getBottom();
+                    break;
+                }
+                case 3: {
+                    face = ee.getTop();
                     break;
                 }
                 case 4: {

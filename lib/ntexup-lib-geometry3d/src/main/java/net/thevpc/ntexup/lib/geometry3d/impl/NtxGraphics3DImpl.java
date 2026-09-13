@@ -249,9 +249,9 @@ public class NtxGraphics3DImpl implements NtxGraphics3D {
 
         NTxPoint2D point1 = pts2d[0];
         NTxPoint2D point2 = pts2d[1];
-        double xmin = Math.min(point1.x + x, point2.x + x);
+        double xmin = Math.min(point1.x, point2.x);
         double w = Math.abs(point1.x - point2.x);
-        double ymin = Math.min(point1.y + y, point2.y + y);
+        double ymin = Math.min(point1.y, point2.y);
         double h = Math.abs(point1.y - point2.y);
         Paint oldPaint = graphics.graphics2D().getPaint();
         Graphics2D g = graphics.graphics2D();

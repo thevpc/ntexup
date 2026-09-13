@@ -5,6 +5,7 @@
 package net.thevpc.ntexup.api.util;
 
 import java.awt.Color;
+import java.awt.Paint;
 import java.util.Arrays;
 
 import net.thevpc.nuts.elem.NElement;
@@ -34,6 +35,12 @@ public class NTxElementUtils {
         }
         if (r.getClass().isEnum()) {
             return NElement.ofString(((Enum) r).name());
+        }
+        if (r instanceof Color) {
+            return toElement((Color) r);
+        }
+        if (r instanceof Paint) {
+            return NElement.ofCustom(r);
         }
         switch (r.getClass().getName()) {
             case "int":

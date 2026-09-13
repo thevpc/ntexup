@@ -15,10 +15,12 @@ public class NTxCamera3DImpl implements NTxCamera3D {
         double az = Math.toRadians(azimuthDeg);
         double el = Math.toRadians(elevationDeg);
 
-        // Camera looks toward origin (0,0,0)
-        double x = distance * Math.cos(el) * Math.cos(az);
-        double y = distance * Math.cos(el) * Math.sin(az);
-        double z = distance * Math.sin(el);
+        // In 3D space with worldUp = (0, 1, 0), elevation determines Y (upwards).
+        // Azimuth rotates on the X-Z ground plane.
+        double y = distance * Math.sin(el);
+        double horiz = distance * Math.cos(el);
+        double x = horiz * Math.sin(az);
+        double z = horiz * Math.cos(az);
 
         return new NTxCamera3DImpl(new NTxPoint3D(x, y, z), new NTxPoint3D(0, 0, 0));
     }
@@ -44,9 +46,9 @@ public class NTxCamera3DImpl implements NTxCamera3D {
         NTxMatrix3D viewMatrix = getViewMatrix();
         NTxPoint3D pCam = viewMatrix.multiplyPoint(worldPoint);
 
-
         double x2d = pCam.x;
-        double y2d = pCam.y;
+        // In screen coordinates Y increases downwards, so invert camera UP (+Y)
+        double y2d = -pCam.y;
 
         // 4. Offset by screen origin (e.g., top-left of the scene3d area on page)
         if (screenOrigin != null) {
@@ -63,7 +65,7 @@ public class NTxCamera3DImpl implements NTxCamera3D {
         for (int i = 0; i < worldPoint.length; i++) {
             NTxPoint3D pCam = viewMatrix.multiplyPoint(worldPoint[i]);
             double x2d = pCam.x;
-            double y2d = pCam.y;
+            double y2d = -pCam.y;
             // 4. Offset by screen origin (e.g., top-left of the scene3d area on page)
             if (screenOrigin != null) {
                 x2d += screenOrigin.x;
@@ -87,28 +89,31 @@ public class NTxCamera3DImpl implements NTxCamera3D {
         // Build matrix (column-major layout for column-vector multiplication)
         double[][] m = new double[4][4];
 
-        // Rotation part (inverse of camera orientation)
-        m[0][0] = r.x;
-        m[1][0] = r.y;
-        m[2][0] = r.z;
-        m[3][0] = 0;
-        m[0][1] = u.x;
-        m[1][1] = u.y;
-        m[2][1] = u.z;
-        m[3][1] = 0;
-        m[0][2] = -f.x;
-        m[1][2] = -f.y;
-        m[2][2] = -f.z;
-        m[3][2] = 0;
-
-        // Translation part: -R * eye
+        // Row 0: Camera Right axis (r) and translation tx
         double tx = -(r.x * position.x + r.y * position.y + r.z * position.z);
-        double ty = -(u.x * position.x + u.y * position.y + u.z * position.z);
-        double tz = -(-f.x * position.x - f.y * position.y - f.z * position.z);
-
+        m[0][0] = r.x;
+        m[0][1] = r.y;
+        m[0][2] = r.z;
         m[0][3] = tx;
+
+        // Row 1: Camera Up axis (u) and translation ty
+        double ty = -(u.x * position.x + u.y * position.y + u.z * position.z);
+        m[1][0] = u.x;
+        m[1][1] = u.y;
+        m[1][2] = u.z;
         m[1][3] = ty;
+
+        // Row 2: Camera Backward axis (-f) and translation tz
+        double tz = -(-f.x * position.x - f.y * position.y - f.z * position.z);
+        m[2][0] = -f.x;
+        m[2][1] = -f.y;
+        m[2][2] = -f.z;
         m[2][3] = tz;
+
+        // Row 3: Homogeneous coordinate
+        m[3][0] = 0;
+        m[3][1] = 0;
+        m[3][2] = 0;
         m[3][3] = 1.0;
 
         return new NTxMatrix3D(m);

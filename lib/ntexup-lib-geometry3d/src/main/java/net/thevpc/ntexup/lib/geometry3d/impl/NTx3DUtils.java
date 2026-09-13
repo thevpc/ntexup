@@ -343,29 +343,38 @@ public class NTx3DUtils {
         if (element instanceof NTxNumberElement3) {
             return NOptional.of((NTxNumberElement3) element);
         }
-        if(element instanceof NElement) {
+        if (element instanceof NElement) {
             NOptional<NElement> t = rendererContext.evalExpression((NElement) element);
-            if(!t.isPresent()) {
+            if (!t.isPresent()) {
                 return NOptional.ofNamedEmpty("NTxNumberElement3 from " + element);
             }
-            element= t.get();
+            element = t.get();
         }
-        if (element instanceof NTupleElement) {
-            NTupleElement u = (NTupleElement) element;
+        if (element instanceof NNumberElement) {
+            NNumberElement num = (NNumberElement) element;
+            return NOptional.of(new NTxNumberElement3(num, num, num));
+        }
+        if (element instanceof Number) {
+            NNumberElement num = (NNumberElement) NElement.ofNumber((Number) element);
+            return NOptional.of(new NTxNumberElement3(num, num, num));
+        }
+        if (element instanceof NListContainerElement) {
+            NListContainerElement u = (NListContainerElement) element;
             if (u.children().size() == 3) {
                 List<NNumberElement> nn = new ArrayList<>();
                 for (int i = 0; i < 3; i++) {
                     NElement t = u.children().get(i);
-                    NOptional<NElement> e=rendererContext.evalExpression((NElement) t);
-                    if(e.isPresent()) {
-                        if (t.isNull()) {
+                    NOptional<NElement> e = rendererContext.evalExpression((NElement) t);
+                    if (e.isPresent()) {
+                        NElement ev = e.get();
+                        if (ev.isNull()) {
                             nn.add(null);
-                        } else if (t.isNumber()) {
-                            nn.add(t.asNumber().get());
+                        } else if (ev.isNumber()) {
+                            nn.add(ev.asNumber().get());
                         } else {
                             return NOptional.ofNamedEmpty("NTxNumberElement3 from " + element);
                         }
-                    }else{
+                    } else {
                         return NOptional.ofNamedEmpty("NTxNumberElement3 from " + element);
                     }
                 }
@@ -376,6 +385,13 @@ public class NTx3DUtils {
                                 nn.get(2)
                         )
                 );
+            } else if (u.children().size() == 1) {
+                NElement t = u.children().get(0);
+                NOptional<NElement> e = rendererContext.evalExpression((NElement) t);
+                if (e.isPresent() && e.get().isNumber()) {
+                    NNumberElement num = e.get().asNumber().get();
+                    return NOptional.of(new NTxNumberElement3(num, num, num));
+                }
             }
         }
         return NOptional.ofNamedEmpty("NTxNumberElement3 from " + element);

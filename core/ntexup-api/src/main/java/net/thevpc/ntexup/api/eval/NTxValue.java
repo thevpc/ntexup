@@ -1076,8 +1076,8 @@ public class NTxValue {
                 case 3: {
                     return NOptional.of(new NTxRotation(
                             NElement.ofDouble(dd[0]),
-                            NElement.ofDouble(50),
-                            NElement.ofDouble(50)
+                            NElement.ofDouble(dd[1]),
+                            NElement.ofDouble(dd[2])
                     ));
                 }
             }

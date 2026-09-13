@@ -25,7 +25,7 @@ import java.util.List;
 public class Element3DTriangleBuilder implements NtxElement3DNodeParser {
     @Override
     public List<String> getId3d() {
-        return Collections.singletonList(NTxNodeType.LINE);
+        return Arrays.asList("triangle", "triangle3d");
     }
 
     @Override
