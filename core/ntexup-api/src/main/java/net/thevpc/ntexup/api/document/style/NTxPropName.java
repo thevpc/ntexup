@@ -85,10 +85,13 @@ public class NTxPropName {
     public static final String FONT_ITALIC="font-italic";
     public static final String FONT_UNDERLINED="font-underlined";
     public static final String FONT_STRIKE="font-strike";
+    public static final String LINE_COLOR="line-color";
+    public static final String MESH_COLOR="mesh-color";
+    public static final String CONTOUR_COLOR="contour-color";
     public static final String FOREGROUND_COLOR="foreground-color";
+    public static final String COLOR="color";
     public static final String BACKGROUND_COLOR="background-color";
     public static final String COLORS ="colors";
-    public static final String LINE_COLOR="line-color";
     public static final String GRID_COLOR="grid-color";
     public static final String DRAW_GRID="draw-grid";
     public static final String FILL_BACKGROUND="fill-background";

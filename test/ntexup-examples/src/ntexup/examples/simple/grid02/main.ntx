@@ -1,10 +1,10 @@
 page{
     grid(2,2,debug,draw-grid:true){
-//        rectangle(componentName:'green',fill,background:green,at:center,size:100)
+//        rectangle(componentName:'green',fill,background-color:green,at:center,size:100)
         void()
         void()
-        rectangle(componentName:'yellow',fill,background:black,at:center,size:100,colweight:0.5,rowweight:3,margin:25,rotate:45)
-//        rectangle(componentName:'blue',fill,background:blue,at:center,size:99)
-//        rectangle(componentName:'magenta',fill,background:magenta,at:center,size:99)
+        rectangle(componentName:'yellow',fill,background-color:black,at:center,size:100,colweight:0.5,rowweight:3,margin:25,rotate:45)
+//        rectangle(componentName:'blue',fill,background-color:blue,at:center,size:99)
+//        rectangle(componentName:'magenta',fill,background-color:magenta,at:center,size:99)
     }
 }

@@ -38,7 +38,7 @@ public class NTxArrowBuilder implements NTxNodeBuilder {
         double width = b.widthX();
         double height = b.widthY();
 
-        Paint color = rendererContext.getForegroundColor(true);
+        Paint color = rendererContext.getLineColor(true);
         NTxPoint2D base = NTxValue.of(node.getPropertyValue("base")).asPoint2D().orElse(null);
         if(base==null){
             Double base3 = NTxValue.of(node.getPropertyValue("base")).asDouble().orElse(null);

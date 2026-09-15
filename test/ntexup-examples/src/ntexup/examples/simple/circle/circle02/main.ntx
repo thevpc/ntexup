@@ -1,10 +1,10 @@
 styles{
     page{
-        background:blue
+        background-color:blue
     }
 }
 
-page(background:blue){
+page(background-color:blue){
     group{
         styles{
             "*":{

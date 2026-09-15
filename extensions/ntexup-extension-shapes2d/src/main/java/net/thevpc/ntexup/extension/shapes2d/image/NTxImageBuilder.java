@@ -91,7 +91,7 @@ public class NTxImageBuilder implements NTxNodeBuilder {
                 g.fillRect((int) x, (int) y, NTxUtils.intOf(b.widthX()), NTxUtils.intOf(b.widthY()));
             }
 
-            rendererContext.applyForeground(false);
+            rendererContext.applyContourColor(false);
             if (cache.img instanceof NPath) {
                 try {
                     g.drawImage(cache.img, x, y, cache.options);

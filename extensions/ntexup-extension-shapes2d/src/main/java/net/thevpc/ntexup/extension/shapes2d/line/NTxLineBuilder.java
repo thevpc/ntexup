@@ -44,7 +44,7 @@ public class NTxLineBuilder implements NTxNodeBuilder {
                 .plus(translation);
         NTxGraphics g = rendererContext.graphics();
         if (!rendererContext.isDry()) {
-            Paint fc = rendererContext.getForegroundColor(true);
+            Paint fc = rendererContext.getLineColor(true);
             NtxElement2DLine li0 = NTxElement2DFactory.line(from, to)
                     .setStartArrow(NTxValueByType.getArrow(rendererContext, NTxPropName.START_ARROW).orNull())
                     .setEndArrow(NTxValueByType.getArrow(rendererContext, NTxPropName.END_ARROW).orNull());

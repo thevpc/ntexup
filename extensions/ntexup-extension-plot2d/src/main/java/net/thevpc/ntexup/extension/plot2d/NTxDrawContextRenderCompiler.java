@@ -29,7 +29,7 @@ class NTxDrawContextRenderCompiler {
         boolean zoom = true;
         NDoubleRange minMaxY = NDoubleRange.of();
 
-        Paint color = rendererContext.getForegroundColor(true);
+        Paint color = rendererContext.getLineColor(true);
 
         NTxBounds2D bounds = rendererContext.parentBounds2D();
         NTxDrawContext drawContext = new NTxDrawContext(bounds, xValues, minY, maxY, zoom, minMaxY);

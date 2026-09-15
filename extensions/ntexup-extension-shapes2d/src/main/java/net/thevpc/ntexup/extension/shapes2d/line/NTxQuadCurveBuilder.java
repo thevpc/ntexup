@@ -45,7 +45,7 @@ public class NTxQuadCurveBuilder implements NTxNodeBuilder {
                 .plus(translation);
         NTxGraphics g = rendererContext.graphics();
         if (!rendererContext.isDry()) {
-            Paint fc = rendererContext.getForegroundColor(true);
+            Paint fc = rendererContext.getLineColor(true);
             NtxElement2DQuadCurve li = NTxElement2DFactory.quad(from, ctrl, to)
                     .setStartArrow(NTxValueByType.getArrow(rendererContext, NTxPropName.START_ARROW).orNull())
                     .setEndArrow(NTxValueByType.getArrow(rendererContext, NTxPropName.END_ARROW).orNull());

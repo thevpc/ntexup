@@ -250,10 +250,12 @@ public class NTxValueByName {
         NTxSizeRef sr = ctx.sizeRef();
         renderInfo.stroke = NTxValueByType.getElement(ctx, NTxPropName.STROKE).orNull();
 
-
-        renderInfo.foregroundColor = NTxValueByType.getPaint(ctx, NTxPropName.FOREGROUND_COLOR, "foreground", "color", "fg").orElse(null);
-        renderInfo.backgroundColor = NTxValueByType.getPaint(ctx, NTxPropName.BACKGROUND_COLOR, "background", "bg").orNull();
-        renderInfo.lineColor = NTxValueByType.getPaint(ctx, NTxPropName.LINE_COLOR, "line-color", "lineColor", "stroke-color", "strokeColor").orNull();
+        renderInfo.color = NTxValueByType.getPaint(ctx, NTxPropName.COLOR).orElse(null);
+        renderInfo.foregroundColor = NTxValueByType.getPaint(ctx, NTxPropName.FOREGROUND_COLOR, "fg").orElse(renderInfo.color);
+        renderInfo.lineColor = NTxValueByType.getPaint(ctx, NTxPropName.LINE_COLOR,   "stroke-color").orElse(renderInfo.foregroundColor);
+        renderInfo.contourColor = NTxValueByType.getPaint(ctx, NTxPropName.CONTOUR_COLOR).orElse(renderInfo.lineColor);
+        renderInfo.meshColor = NTxValueByType.getPaint(ctx,  NTxPropName.MESH_COLOR).orElse(renderInfo.contourColor);
+        renderInfo.backgroundColor = NTxValueByType.getPaint(ctx, NTxPropName.BACKGROUND_COLOR,"bg").orNull();
         renderInfo.fillBackground = NTxValueByType.getBoolean(ctx, NTxPropName.FILL_BACKGROUND, "fill").orElse(false);
         renderInfo.debugLevel = NTxValueByType.getIntOrBoolean(ctx, NTxPropName.DEBUG).orElse(0);
         renderInfo.debugColor = (Color) NTxValueByType.getPaint(ctx, NTxPropName.DEBUG_COLOR).orElse(Color.GRAY);
@@ -613,7 +615,7 @@ public class NTxValueByName {
                         }
                         break;
                     }
-                    case "color": {
+                    case NTxPropName.COLOR: {
                         NOptional<Color> d = e.getValue().asColor();
                         if (d.isPresent()) {
                             shadow.setColor(d.get());
@@ -662,6 +664,14 @@ public class NTxValueByName {
         return c;
     }
 
+    public static Paint getLineColor(NTxRendererContext ctx, boolean force) {
+        Paint c = getNodeCommonCache(ctx).lineColor;
+        if (force && c == null) {
+            return Color.BLACK;
+        }
+        return c;
+    }
+
     public static Paint resolveGridColor(NTxRendererContext ctx) {
         return NTxValueByType.getPaint(ctx, NTxPropName.GRID_COLOR).orElse(Color.BLACK);
     }
@@ -672,6 +682,14 @@ public class NTxValueByName {
 
     public static Paint resolveLineColor(NTxRendererContext ctx, boolean force) {
         Paint c = getNodeCommonCache(ctx).lineColor;
+        if (c != null) {
+            return c;
+        }
+        return getForegroundColor(ctx, force);
+    }
+
+    public static Paint resolveContourColor(NTxRendererContext ctx, boolean force) {
+        Paint c = getNodeCommonCache(ctx).contourColor;
         if (c != null) {
             return c;
         }

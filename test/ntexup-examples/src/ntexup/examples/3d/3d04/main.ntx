@@ -18,7 +18,7 @@ styles:{
         color:black
     }
     .dielectric:{
-        background:black
+        background-color:black
     }
     .dimLine:{
         start-arrow:simple()
@@ -58,7 +58,7 @@ page{
     fdtd_substrate_cells=4
     fdtd_boundary_conditions=[MUR MUR MUR MUR MUR MUR]
 
-    rectangle(background:white)
+    rectangle(background-color:white)
     grid(2,2){
         scene3d(
                 id:scene_canonical

@@ -10,6 +10,7 @@ import net.thevpc.ntexup.api.document.style.NTxStyleRule;
 import net.thevpc.ntexup.api.engine.*;
 import net.thevpc.ntexup.api.eval.NTxResolutionContext;
 import net.thevpc.ntexup.api.eval.NTxValueByName;
+import net.thevpc.ntexup.api.eval.NTxValueCommonCache;
 import net.thevpc.ntexup.api.eval.NTxVar;
 import net.thevpc.ntexup.api.extension.NTxFunction;
 import net.thevpc.ntexup.api.log.NTxLogger;
@@ -518,6 +519,10 @@ public class DefaultNTxRendererContext extends NTxResolutionContextImpl implemen
     public Paint getForegroundColor(boolean force) {
         return NTxValueByName.getForegroundColor(this, force);
     }
+    @Override
+    public Paint getLineColor(boolean force) {
+        return NTxValueByName.getLineColor(this, force);
+    }
 
     @Override
     public Paint resolveGridColor() {
@@ -646,7 +651,7 @@ public class DefaultNTxRendererContext extends NTxResolutionContextImpl implemen
     @Override
     public boolean applyContourColor(boolean force) {
         if (isDrawContour() || force) {
-            return applyLineColor(force);
+            return NTxNodeRendererUtils.applyContourColor(graphics(), this, force);
         }
         return false;
     }

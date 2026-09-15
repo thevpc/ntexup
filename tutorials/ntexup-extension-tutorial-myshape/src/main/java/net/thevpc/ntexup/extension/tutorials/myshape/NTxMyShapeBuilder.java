@@ -35,7 +35,7 @@ public class NTxMyShapeBuilder implements NTxNodeBuilder {
         double width = b.widthX();
         double height = b.widthY();
 
-        Paint color = rendererContext.getForegroundColor(true);
+        Paint color = rendererContext.getLineColor(true);
         NTxPoint2D base = NTxValue.of(node.getPropertyValue("base")).asPoint2DOrDouble().orNull();
         if (base == null) {
             base = new NTxPoint2D(80, 20);

@@ -47,7 +47,7 @@ public class NTxCircleBuilder implements NTxNodeBuilder {
             if (someBG = nodeRendererContext.applyBackgroundColor()) {
                 g.fillOval((int) x, (int) y, ww, hh);
             }
-            if (nodeRendererContext.applyForeground(!someBG)) {
+            if (nodeRendererContext.applyContourColor(!someBG)) {
                 int finalWw = ww;
                 int finalHh = hh;
                 nodeRendererContext.withStroke(() -> {

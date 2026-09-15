@@ -180,6 +180,17 @@ public class NTxNodeRendererUtils {
         }
         return false;
     }
+    public static boolean applyContourColor(NTxGraphics g, NTxRendererContext ctx, boolean force) {
+        if (ctx.isDry()) {
+            return false;
+        }
+        Paint color = NTxValueByName.resolveContourColor(ctx, force);
+        if (color != null) {
+            g.setPaint(color);
+            return true;
+        }
+        return false;
+    }
 
     public static void drawBorderLine(NTxRendererContext ctx, NTxGraphics g, NTxBounds2D a) {
         if (ctx.isDry()) {
@@ -187,7 +198,7 @@ public class NTxNodeRendererUtils {
         }
         drawDebugBox(ctx, g, a);
         if (NTxValueByName.isDrawContour(ctx)) {
-            if (applyLineColor(g, ctx, true)) {
+            if (applyContourColor(g, ctx, true)) {
                 Stroke s = g.getStroke();
                 applyStroke(g, ctx);
                 NTxDouble2 roundCorners = ctx.getRoundCornerArcs();

@@ -35,7 +35,7 @@ public class NTxArcBuilder implements NTxNodeBuilder {
         double endAngle = NTxValueByType.getDouble(rendererContext, NTxPropName.TO).orElse(0.0);
         NTxGraphics g = rendererContext.graphics();
         if (!rendererContext.isDry()) {
-            rendererContext.applyForeground(true);
+            rendererContext.applyLineColor(true);
             Stroke oldStroke=g.getStroke();
             Stroke stroke= rendererContext.resolveStroke();
             if(stroke!=null){

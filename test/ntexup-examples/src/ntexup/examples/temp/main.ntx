@@ -22,7 +22,7 @@ documentColors:=arrayLeftRotate(["#26355D","#AF47D2","#DE3163","#1d8147","#FF8F0
 //        styles{
 //            .H1:{
 //                color: documentColors[4],
-//                background: documentColors[1],
+//                background-color: documentColors[1],
 //                position : (50,10),
 //                origin : center,
 //                size : (100,20),
@@ -49,14 +49,14 @@ documentColors:=arrayLeftRotate(["#26355D","#AF47D2","#DE3163","#1d8147","#FF8F0
 //                    }
 //                }
 //                rectangle(
-//                    background: linearGradientColor(documentColors[1],lighterColor(documentColors[1]),(0,50)),
+//                    background-color: linearGradientColor(documentColors[1],lighterColor(documentColors[1]),(0,50)),
 //                    position:(0,0),
 //                    size:(100,100)
 //                    color: documentColors[1],
 //                    draw-contour:true,
 //                )
 //                rectangle(
-//                    background: linearGradientColor(rotateSinebowColor(documentColors[0],10),lighterColor(rotateSinebowColor(documentColors[0],10),0.1)),
+//                    background-color: linearGradientColor(rotateSinebowColor(documentColors[0],10),lighterColor(rotateSinebowColor(documentColors[0],10),0.1)),
 //                    position:(0,98),
 //                    size:(100,5)
 //                )
@@ -82,7 +82,7 @@ documentColors:=arrayLeftRotate(["#26355D","#AF47D2","#DE3163","#1d8147","#FF8F0
 //                    }
 //                }
 //                rectangle(
-//                    background: documentColors[3],
+//                    background-color: documentColors[3],
 //                    position:(0,0),
 //                    size:(100,100)
 //                    color: documentColors[3],
@@ -195,7 +195,7 @@ documentColors:=arrayLeftRotate(["#26355D","#AF47D2","#DE3163","#1d8147","#FF8F0
 //            }
 //        }
 //       rectangle(
-//           background: white,
+//           background-color: white,
 //       )
 //        header {
 //            text("${title}"),
@@ -205,20 +205,20 @@ documentColors:=arrayLeftRotate(["#26355D","#AF47D2","#DE3163","#1d8147","#FF8F0
 //}
 
 //@define miniPage{
-//    group(background:white,draw-contour,size:(50,50),at:center){
+//    group(background-color:white,draw-contour,size:(50,50),at:center){
 //        body
 //    }
 //}
 
 //
 //@define miniCode{
-//    group(background:Gray89,draw-contour,margin:5){
+//    group(background-color:Gray89,draw-contour,margin:5){
 //        body
 //    }
 //}
 
 //@define miniCodeNTexup(code){
-//    group(background:Gray89,draw-contour,margin:5){
+//    group(background-color:Gray89,draw-contour,margin:5){
 //        source(ntexup, code)
 //    }
 //}

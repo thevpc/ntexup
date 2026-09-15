@@ -111,7 +111,7 @@ public class NTxPolylineBuilder implements NTxNodeBuilder {
         NTxGraphics g = rendererContext.graphics();
         NTxPoint2D[] points = NTxValue.ofProp(node, NTxPropName.POINTS).asPoint2DArray().get();
         if (!rendererContext.isDry()) {
-            Paint fc = rendererContext.getForegroundColor(true);
+            Paint fc = rendererContext.getLineColor(true);
             g.draw2D(NTxElement2DFactory.polyline(points)
                     .setLineStroke(rendererContext.resolveStroke())
                     .setLinePaint(fc));

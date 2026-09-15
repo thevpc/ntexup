@@ -40,7 +40,7 @@ public final class NTxPolygonHelper {
         NTxNode node = rendererContext.node();
         if (!rendererContext.isDry()) {
             Paint bc = rendererContext.resolveBackgroundColor();
-            Paint fc = rendererContext.getForegroundColor(bc == null);
+            Paint fc = rendererContext.getLineColor(bc == null);
             NTxPoint2D[] points2 = Arrays.stream(points)
                     .map(p -> new NTxPoint2D(
                             p.x / 100 * b.widthX() + b.minX(),

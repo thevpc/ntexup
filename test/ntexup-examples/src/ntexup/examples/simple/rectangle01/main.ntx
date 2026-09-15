@@ -1,5 +1,5 @@
 page{
     group(size:50,at:center,contour,color:red,componentName:"group"){
-        rectangle(fill,background:green,size:50,at:left,contour,color:blue,componentName:"rectangle")
+        rectangle(fill,background-color:green,size:50,at:left,contour,color:blue,componentName:"rectangle")
     }
 }

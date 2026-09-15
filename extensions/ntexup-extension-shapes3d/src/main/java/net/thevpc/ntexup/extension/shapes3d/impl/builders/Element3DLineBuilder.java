@@ -87,12 +87,11 @@ public class Element3DLineBuilder implements NtxElement3DNodeParser {
                                 applyOffset(label, pv);
                                 break;
                             }
-                            case "color":
-                            case "foreground-color": {
+                            case NTxPropName.FOREGROUND_COLOR: {
                                 label.setForegroundColor(NTxValue.of(p.value()).asPaint().orNull());
                                 break;
                             }
-                            case "background-color": {
+                            case NTxPropName.BACKGROUND_COLOR: {
                                 label.setBackgroundColor(NTxValue.of(p.value()).asPaint().orNull());
                                 break;
                             }

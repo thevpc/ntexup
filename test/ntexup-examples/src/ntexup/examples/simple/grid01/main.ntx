@@ -1,8 +1,8 @@
 page{
     grid(2,2){
-        rectangle(componentName:'green',fill,background:green,at:center,size:100,margin:50)
-        rectangle(componentName:'yellow',fill,background:yellow,at:center,size:99)
-        rectangle(componentName:'blue',fill,background:blue,at:center,size:99)
-        rectangle(componentName:'magenta',fill,background:magenta,at:center,size:99)
+        rectangle(componentName:'green',fill,background-color:green,at:center,size:100,margin:50)
+        rectangle(componentName:'yellow',fill,background-color:yellow,at:center,size:99)
+        rectangle(componentName:'blue',fill,background-color:blue,at:center,size:99)
+        rectangle(componentName:'magenta',fill,background-color:magenta,at:center,size:99)
     }
 }

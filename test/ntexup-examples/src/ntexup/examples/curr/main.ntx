@@ -5,7 +5,7 @@ import(
 a=red
 styles:{
     "*":{
-        background:a
+        background-color:a
     }
 }
 page {

@@ -1,6 +1,6 @@
 page{
-    rectangle(componentName:'yellow',fill,background:yellow,size:50,margin:[10,5,5,15],at:left,debug)
+    rectangle(componentName:'yellow',fill,background-color:yellow,size:50,margin:[10,5,5,15],at:left,debug)
     group(size:50,margin:[10,5,5,15],at:left,debug){
-        rectangle(componentName:'blue',fill,background:blue,size:50,margin:[10,5,25,15],at:right,debug)
+        rectangle(componentName:'blue',fill,background-color:blue,size:50,margin:[10,5,25,15],at:right,debug)
     }
 }

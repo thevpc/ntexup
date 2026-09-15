@@ -130,7 +130,7 @@ public class NTxCylinderBuilder implements NTxNodeBuilder {
             }
 
 
-            if (rendererContext.applyForeground(!someBG)) {
+            if (rendererContext.applyContourColor(!someBG)) {
                 rendererContext.withStroke(() -> {
                     g.drawOval((int) x, (int) y, NTxUtils.doubleOf(width), NTxUtils.intOf(finalEllipse_height));
 

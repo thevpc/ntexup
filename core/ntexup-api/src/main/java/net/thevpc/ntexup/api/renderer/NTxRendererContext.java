@@ -144,6 +144,7 @@ public interface NTxRendererContext extends NTxResolutionContext {
     NOptional<NTxShadow> readStyleAsShadow(String s);
 
     Paint getForegroundColor(boolean force);
+    Paint getLineColor(boolean force);
 
     Paint resolveGridColor();
 

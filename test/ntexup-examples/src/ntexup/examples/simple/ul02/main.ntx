@@ -10,8 +10,8 @@ page{
             ####World####",
                 at:top-left,componentName:"t")
 //            ¶ Bye ####World####
-            rectangle(background:red)
-            rectangle(background:blue)
+            rectangle(background-color:red)
+            rectangle(background-color:blue)
         }
     }
 }

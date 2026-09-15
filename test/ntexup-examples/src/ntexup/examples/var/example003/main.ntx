@@ -20,7 +20,7 @@
         text("My Title2"),
         rectangle(
             size:(50,50),
-            background:documentColors[3],
+            background-color:documentColors[3],
             rotate:45,
             color:documentColors[1],
 //            stroke:basic(dash:[30],width:5)

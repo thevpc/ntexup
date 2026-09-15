@@ -17,7 +17,7 @@ page{
             origin:(50,50)
         }
     }
-        rectangle(background:white)
+        rectangle(background-color:white)
         scene3d(
             draw-contour,
                 transform:{
@@ -26,23 +26,23 @@ page{
                     scale:0.7
                 }
         ){
-            box(size:(100,100,1),position:(0,0,-5), background:"#cb6d51")
+            box(size:(100,100,1),position:(0,0,-5), background-color:"#cb6d51")
 
             box(size:(100,100,4),position:(0,0,-4)
-                , background:"#00468B"
+                , background-color:"#00468B"
                 , mesh-precision: 1000
 //                ,faces:{
-//                    top:{background:pink,visible:true} // back
-//                    bottom:{background:CadetBlue,visible:true} // front
-                    left:{background:dark-blue,visible:true} // left
-                    right:{background:dark-blue,visible:true} // right
-                    front:{background:dark-blue,visible:true} // bottom
-                    back:{background:dark-blue,visible:true} // top
+//                    top:{background-color:pink,visible:true} // back
+//                    bottom:{background-color:CadetBlue,visible:true} // front
+                    left:{background-color:dark-blue,visible:true} // left
+                    right:{background-color:dark-blue,visible:true} // right
+                    front:{background-color:dark-blue,visible:true} // bottom
+                    back:{background-color:dark-blue,visible:true} // top
 //                }
             ) // substrate
-            box(size:(30,10,2),position:(5,45,2), background:"#cb6d51") // line
-            box(size:(50,50,2),position:(35,25,2), background:"#cb6d51") // patch
-            box(size:(5,10,2),position:(0,45,2), background:yellow) // source
+            box(size:(30,10,2),position:(5,45,2), background-color:"#cb6d51") // line
+            box(size:(50,50,2),position:(35,25,2), background-color:"#cb6d51") // patch
+            box(size:(5,10,2),position:(0,45,2), background-color:yellow) // source
         }
 
 //        @dimLabel text("w", font-size:3%P , position:(16,31))
