@@ -44,6 +44,21 @@ public class NTxGraphicsImageDrawerByPath implements NTxGraphicsImageDrawer {
         if (image == null) {
             return;
         }
+        if (options != null && options.isPreserveAspectRatio() && options.getSize() != null) {
+            java.awt.Dimension targetSize = options.getSize();
+            int origW = image.getWidth();
+            int origH = image.getHeight();
+            if (origW > 0 && origH > 0 && targetSize.width > 0 && targetSize.height > 0) {
+                double scale = Math.min((double) targetSize.width / origW, (double) targetSize.height / origH);
+                int drawW = Math.max(1, (int) Math.round(origW * scale));
+                int drawH = Math.max(1, (int) Math.round(origH * scale));
+                double drawX = x + (targetSize.width - drawW) / 2.0;
+                double drawY = y + (targetSize.height - drawH) / 2.0;
+                BufferedImage resized = NTxUtilsImages.resizeImage(image, drawW, drawH);
+                g.drawImage(resized, drawX, drawY, options.getImageObserver());
+                return;
+            }
+        }
         image = NTxUtilsImages.resizeImage(image, options.getSize());
         g.drawImage(image, x, y, options.getImageObserver());
     }

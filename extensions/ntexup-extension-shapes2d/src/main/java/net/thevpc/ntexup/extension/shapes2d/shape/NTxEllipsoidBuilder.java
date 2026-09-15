@@ -36,7 +36,7 @@ public class NTxEllipsoidBuilder implements NTxNodeBuilder {
             if (someBG = rendererContext.applyBackgroundColor()) {
                 g.fillSphere((int) x, (int) y, NTxUtils.intOf(b.widthX()), NTxUtils.intOf(b.widthY()), 45, 50f);
             }
-            if (rendererContext.applyForeground(!someBG)) {
+            if (rendererContext.applyContourColor(!someBG)) {
                 rendererContext.withStroke(()->{
                     g.drawOval((int) x, (int) y, NTxUtils.intOf(b.widthX()), NTxUtils.intOf(b.widthY()));
                 });

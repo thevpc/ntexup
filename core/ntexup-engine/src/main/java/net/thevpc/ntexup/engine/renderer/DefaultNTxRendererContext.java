@@ -644,6 +644,14 @@ public class DefaultNTxRendererContext extends NTxResolutionContextImpl implemen
     }
 
     @Override
+    public boolean applyContourColor(boolean force) {
+        if (isDrawContour() || force) {
+            return applyLineColor(force);
+        }
+        return false;
+    }
+
+    @Override
     public NOptional<Color> colorFromPaint(Paint p) {
         return NTxNodeRendererUtils.colorFromPaint(p);
     }

@@ -9,6 +9,16 @@ public class NTxImageOptions {
     private ImageObserver imageObserver;
     private Runnable asyncLoad;
     private Dimension size;
+    private boolean preserveAspectRatio;
+
+    public boolean isPreserveAspectRatio() {
+        return preserveAspectRatio;
+    }
+
+    public NTxImageOptions setPreserveAspectRatio(boolean preserveAspectRatio) {
+        this.preserveAspectRatio = preserveAspectRatio;
+        return this;
+    }
 
     public Dimension getSize() {
         return size;

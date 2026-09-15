@@ -54,7 +54,7 @@ public class NTxSquareBuilder implements NTxNodeBuilder {
                 if (someBG = rendererContext.applyBackgroundColor()) {
                     g.fillRect((int) x, (int) y, ww, hh);
                 }
-                if (rendererContext.applyForeground(!someBG)) {
+                if (rendererContext.applyContourColor(!someBG)) {
                     rendererContext.withStroke(() -> {
                         g.drawRect((int) x, (int) y, finalWw, finalHh);
                     });
@@ -66,7 +66,7 @@ public class NTxSquareBuilder implements NTxNodeBuilder {
                 if (someBG = rendererContext.applyBackgroundColor()) {
                     g.fillRoundRect((int) x, (int) y, ww, hh, (int) cx, (int) cy);
                 }
-                if (rendererContext.applyForeground(!someBG)) {
+                if (rendererContext.applyContourColor(!someBG)) {
                     rendererContext.withStroke(() -> {
                         g.drawRoundRect((int) x, (int) y, finalWw, finalHh, (int) cx, (int) cy);
                     });
@@ -76,7 +76,7 @@ public class NTxSquareBuilder implements NTxNodeBuilder {
                 if (someBG = rendererContext.applyBackgroundColor()) {
                     g.fill3DRect((int) x, (int) y, ww, hh, raised != null && raised);
                 }
-                if (rendererContext.applyForeground(!someBG)) {
+                if (rendererContext.applyContourColor(!someBG)) {
                     rendererContext.withStroke(() -> {
                         g.draw3DRect((int) x, (int) y, finalWw, finalHh, raised != null && raised);
                     });

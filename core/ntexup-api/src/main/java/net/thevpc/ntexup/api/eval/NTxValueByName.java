@@ -3,6 +3,7 @@ package net.thevpc.ntexup.api.eval;
 import net.thevpc.ntexup.api.document.elem2d.NTxBounds2D;
 import net.thevpc.ntexup.api.document.elem2d.NTxDouble2;
 import net.thevpc.ntexup.api.document.elem2d.*;
+import net.thevpc.ntexup.api.document.node.NTxNodeType;
 import net.thevpc.ntexup.api.document.style.*;
 import net.thevpc.ntexup.api.renderer.text.NTxTextAlign;
 import net.thevpc.ntexup.api.renderer.text.NTxTextWrap;
@@ -310,7 +311,7 @@ public class NTxValueByName {
             //ratio depends on the smallest
             double sx = renderInfo.allowedComponentSize.getX();
             double sy = renderInfo.allowedComponentSize.getY();
-            if (renderInfo.preserveRatio) {
+            if (renderInfo.preserveRatio && !NTxNodeType.IMAGE.equals(ctx.node().type())) {
                 if (sx > sy) {
                     sx = sy;
                 }

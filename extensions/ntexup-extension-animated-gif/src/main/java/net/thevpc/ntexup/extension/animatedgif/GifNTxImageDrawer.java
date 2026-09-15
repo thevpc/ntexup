@@ -28,6 +28,21 @@ class GifNTxImageDrawer implements NTxGraphicsImageDrawer {
     public void drawImage(double x, double y, NTxImageOptions options, NTxGraphics g) {
         Color transparentColor = options.getTransparentColor();
         Dimension size = options.getSize();
+        if (options != null && options.isPreserveAspectRatio() && size != null) {
+            try {
+                BufferedImage tmp = ImageIO.read(new ByteArrayInputStream(ic));
+                if (tmp != null && tmp.getWidth() > 0 && tmp.getHeight() > 0 && size.width > 0 && size.height > 0) {
+                    double scale = Math.min((double) size.width / tmp.getWidth(), (double) size.height / tmp.getHeight());
+                    int drawW = Math.max(1, (int) Math.round(tmp.getWidth() * scale));
+                    int drawH = Math.max(1, (int) Math.round(tmp.getHeight() * scale));
+                    x = x + (size.width - drawW) / 2.0;
+                    y = y + (size.height - drawH) / 2.0;
+                    size = new Dimension(drawW, drawH);
+                }
+            } catch (Exception ignored) {
+            }
+        }
+        Dimension finalSize = size;
         FutureTask<NPath> location = GifResizer.transformWithCache(ic, null,
                 new GifResizer.GifFrameTransformer() {
                     @Override
@@ -42,7 +57,7 @@ class GifNTxImageDrawer implements NTxGraphicsImageDrawer {
 
                     @Override
                     public Dimension size() {
-                        return size;
+                        return finalSize;
                     }
                 }, pendingCache, g.engine());
         if (location.isDone() || options.isDisableAnimation()) {

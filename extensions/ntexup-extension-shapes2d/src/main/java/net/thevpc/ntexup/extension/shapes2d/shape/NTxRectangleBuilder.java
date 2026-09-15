@@ -48,7 +48,7 @@ public class NTxRectangleBuilder implements NTxNodeBuilder {
                 if (someBG = rendererContext.applyBackgroundColor()) {
                     g.fillRect((int) x, (int) y, NTxUtils.intOf(b.widthX()), NTxUtils.intOf(b.widthY()));
                 }
-                if (rendererContext.applyForeground(!someBG)) {
+                if (rendererContext.applyContourColor(!someBG)) {
                     rendererContext.withStroke(() -> {
                         g.drawRect((int) x, (int) y, NTxUtils.intOf(b.widthX()), NTxUtils.intOf(b.widthY()));
                     });
@@ -60,7 +60,7 @@ public class NTxRectangleBuilder implements NTxNodeBuilder {
                 if (someBG = rendererContext.applyBackgroundColor()) {
                     g.fillRoundRect((int) x, (int) y, NTxUtils.intOf(b.widthX()), NTxUtils.intOf(b.widthY()), (int) cx, (int) cy);
                 }
-                if (rendererContext.applyForeground(!someBG)) {
+                if (rendererContext.applyContourColor(!someBG)) {
                     rendererContext.withStroke(() -> {
                         g.drawRoundRect((int) x, (int) y, NTxUtils.intOf(b.widthX()), NTxUtils.intOf(b.widthY()), (int) cx, (int) cy);
                     });
@@ -70,7 +70,7 @@ public class NTxRectangleBuilder implements NTxNodeBuilder {
                 if (someBG = rendererContext.applyBackgroundColor()) {
                     g.fill3DRect((int) x, (int) y, NTxUtils.intOf(b.widthX()), NTxUtils.intOf(b.widthY()), raised != null && raised);
                 }
-                if (rendererContext.applyForeground(!someBG)) {
+                if (rendererContext.applyContourColor(!someBG)) {
                     rendererContext.withStroke(() -> {
                         g.draw3DRect((int) x, (int) y, NTxUtils.intOf(b.widthX()), NTxUtils.intOf(b.widthY()), raised != null && raised);
                     });

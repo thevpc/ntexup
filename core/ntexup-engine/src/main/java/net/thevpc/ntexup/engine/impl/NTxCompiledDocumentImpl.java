@@ -84,27 +84,36 @@ public class NTxCompiledDocumentImpl implements NTxCompiledDocument {
             for (NPath nPath : paths) {
                 String normalized = nPath.normalize().toString();
                 if (!contentFiles.containsKey(normalized)) {
-                    NPath s = source().path().orNull();
-                    if (s != null && nPath.startsWith(s)) {
-                        NOptional<String> r = nPath.stripParent(s);
-                        if (!r.isEmpty()) {
-                            if (!contentFiles.containsKey(normalized)) {
-                                contentFiles.put(normalized, new DefaultNTxDocument.NamedPart(
-                                        r.get(),
-                                        nPath.readBytes()
-                                ));
-                                return this;
+                    if (nPath.exists()) {
+                        if (nPath.isFile()) {
+                            NPath s = source().path().orNull();
+                            if (s != null && nPath.startsWith(s)) {
+                                NOptional<String> r = nPath.stripParent(s);
+                                if (!r.isEmpty()) {
+                                    if (!contentFiles.containsKey(normalized)) {
+                                        contentFiles.put(normalized, new DefaultNTxDocument.NamedPart(
+                                                r.get(),
+                                                nPath.readBytes()
+                                        ));
+                                        return this;
+                                    }
+                                }
+                            }
+                            contentFiles.put(normalized, new DefaultNTxDocument.NamedPart(
+                                    nPath.toString(),
+                                    nPath.readBytes()
+                            ));
+                        } else if (nPath.isDirectory()) {
+                            for (NPath pp : nPath.list()) {
+                                addContent(pp);
                             }
                         }
                     }
-                    contentFiles.put(normalized, new DefaultNTxDocument.NamedPart(
-                            nPath.toString(),
-                            nPath.readBytes()
-                    ));
                 }
             }
             return this;
         }
+
 
         public void addSource(byte[] bytes) {
             sourceFingerprintSources.add(bytes);
@@ -151,12 +160,14 @@ public class NTxCompiledDocumentImpl implements NTxCompiledDocument {
                 }
 
                 // 3. Register with Hash
-                effectiveResources.put(pathStr, new NTxManifestResource()
-                        .setFingerprint(NDigest.of().source(pp).computeString())
-                        .setType(t)
-                        .setLastVisited(Instant.now())
-                        .setValue(sval)
-                );
+                if(pp.exists()) {
+                    effectiveResources.put(pathStr, new NTxManifestResource()
+                            .setFingerprint(NDigest.of().source(pp).computeString())
+                            .setType(t)
+                            .setLastVisited(Instant.now())
+                            .setValue(sval)
+                    );
+                }
             }
         }
     }

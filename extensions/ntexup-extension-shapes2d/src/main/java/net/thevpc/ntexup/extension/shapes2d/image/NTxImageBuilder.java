@@ -40,7 +40,7 @@ public class NTxImageBuilder implements NTxNodeBuilder {
                 .id(NTxNodeType.IMAGE)
                 .parseParam().matchesNamedPair(NTxPropName.TRANSPARENT_COLOR).then()
                 .parseParam().matchesNamedPair(NTxPropName.VALUE, NTxPropName.FILE, "content", "src").storeName(NTxPropName.VALUE).then()
-                .parseParam().matchesStringOrName().storeName(NTxPropName.VALUE).ignoreDuplicates(true).then()
+                .parseParam().matchesNonCommonFlags().matchesStringOrName().storeName(NTxPropName.VALUE).ignoreDuplicates(true).then()
                 .renderComponent(this::renderMain)
         ;
     }
@@ -62,8 +62,10 @@ public class NTxImageBuilder implements NTxNodeBuilder {
         Cache cache = node.getAndSetRenderCache(Cache.class,rendererContext.isSomeChange(),()->{
             Cache cc=new Cache();
             Color transparentColor = NTxValueByType.getColor(finalCtx, NTxPropName.TRANSPARENT_COLOR).orNull();
+            boolean preserveRatio = NTxValueByType.getBoolean(finalCtx, NTxPropName.PRESERVE_ASPECT_RATIO).orElse(false);
             cc.options = new NTxImageOptions();
             cc.options.setTransparentColor(transparentColor);
+            cc.options.setPreserveAspectRatio(preserveRatio);
             cc.options.setDisableAnimation(!finalCtx.isAnimate());
             cc.options.setAsyncLoad(() -> finalCtx.repaint());
             cc.options.setImageObserver(finalCtx.imageObserver());

@@ -11,6 +11,7 @@ import net.thevpc.nuts.concurrent.NScoredCallable;
 import net.thevpc.nuts.io.NPath;
 import net.thevpc.nuts.text.NMsg;
 
+import java.awt.Dimension;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.URI;
@@ -86,7 +87,20 @@ public class NTxImageTypeRendererFactorySalamanderForSVG implements NTxImageType
             icon.setScaleToFit(true);
             icon.setSvgUniverse(svgUniverse);
             icon.setAntiAlias(true);
-            icon.setPreferredSize(options.getSize());
+            Dimension size = options.getSize();
+            if (options != null && options.isPreserveAspectRatio() && size != null && diagram != null) {
+                float dw = diagram.getWidth();
+                float dh = diagram.getHeight();
+                if (dw > 0 && dh > 0 && size.width > 0 && size.height > 0) {
+                    double scale = Math.min((double) size.width / dw, (double) size.height / dh);
+                    int drawW = Math.max(1, (int) Math.round(dw * scale));
+                    int drawH = Math.max(1, (int) Math.round(dh * scale));
+                    x = x + (size.width - drawW) / 2.0;
+                    y = y + (size.height - drawH) / 2.0;
+                    size = new Dimension(drawW, drawH);
+                }
+            }
+            icon.setPreferredSize(size);
             icon.paintIcon(null, g.graphics2D(), (int) x, (int) y);
         }
     }

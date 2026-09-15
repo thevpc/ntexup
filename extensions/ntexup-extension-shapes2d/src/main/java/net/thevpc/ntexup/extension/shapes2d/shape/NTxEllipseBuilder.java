@@ -18,7 +18,7 @@ public class NTxEllipseBuilder implements NTxNodeBuilder {
         builderContext
                 .id(NTxNodeType.ELLIPSE)
                 .renderComponent(this::renderMain)
-                ;
+        ;
     }
 
     public void renderMain(NTxRendererContext rendererContext) {
@@ -33,8 +33,8 @@ public class NTxEllipseBuilder implements NTxNodeBuilder {
             if (someBG = rendererContext.applyBackgroundColor()) {
                 g.fillOval((int) x, (int) y, NTxUtils.intOf(b.widthX()), NTxUtils.intOf(b.widthY()));
             }
-            if (rendererContext.applyForeground(!someBG)) {
-                rendererContext.withStroke(()->{
+            if (rendererContext.applyContourColor(!someBG)) {
+                rendererContext.withStroke(() -> {
                     g.drawOval((int) x, (int) y, NTxUtils.intOf(b.widthX()), NTxUtils.intOf(b.widthY()));
                 });
             }
