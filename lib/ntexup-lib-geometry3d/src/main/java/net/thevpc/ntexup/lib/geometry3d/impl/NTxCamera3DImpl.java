@@ -12,21 +12,47 @@ public class NTxCamera3DImpl implements NTxCamera3D {
     NTxVector3D worldUp = new NTxVector3D(0, 1, 0);
 
     public static NTxCamera3DImpl fromSpherical(double azimuthDeg, double elevationDeg, double distance) {
+        return fromSpherical(azimuthDeg, elevationDeg, distance, new NTxVector3D(0, 1, 0));
+    }
+
+    public static NTxCamera3DImpl fromSphericalZ(double azimuthDeg, double elevationDeg, double distance) {
+        return fromSpherical(azimuthDeg, elevationDeg, distance, new NTxVector3D(0, 0, 1));
+    }
+
+    public static NTxCamera3DImpl fromSpherical(double azimuthDeg, double elevationDeg, double distance, NTxVector3D up) {
         double az = Math.toRadians(azimuthDeg);
         double el = Math.toRadians(elevationDeg);
 
-        // In 3D space with worldUp = (0, 1, 0), elevation determines Y (upwards).
-        // Azimuth rotates on the X-Z ground plane.
-        double y = distance * Math.sin(el);
-        double horiz = distance * Math.cos(el);
-        double x = horiz * Math.sin(az);
-        double z = horiz * Math.cos(az);
-
-        return new NTxCamera3DImpl(new NTxPoint3D(x, y, z), new NTxPoint3D(0, 0, 0));
+        if (up != null && Math.abs(up.z) > 0.5) {
+            // Z-up: elevation determines Z, azimuth rotates in X-Y plane
+            double z = distance * Math.sin(el);
+            double horiz = distance * Math.cos(el);
+            double x = horiz * Math.cos(az);
+            double y = horiz * Math.sin(az);
+            NTxCamera3DImpl cam = new NTxCamera3DImpl(new NTxPoint3D(x, y, z), new NTxPoint3D(0, 0, 0));
+            cam.setUp(up);
+            return cam;
+        } else {
+            // In 3D space with worldUp = (0, 1, 0), elevation determines Y (upwards).
+            // Azimuth rotates on the X-Z ground plane.
+            double y = distance * Math.sin(el);
+            double horiz = distance * Math.cos(el);
+            double x = horiz * Math.sin(az);
+            double z = horiz * Math.cos(az);
+            NTxCamera3DImpl cam = new NTxCamera3DImpl(new NTxPoint3D(x, y, z), new NTxPoint3D(0, 0, 0));
+            if (up != null) {
+                cam.setUp(up);
+            }
+            return cam;
+        }
     }
 
     public static NTxCamera3DImpl isometric() {
-        return fromSpherical(-45, 35.264, 1000); // classic isometric
+        return fromSpherical(-45, 35.264, 1000); // classic isometric (Y-up)
+    }
+
+    public static NTxCamera3DImpl isometricZ() {
+        return fromSphericalZ(-60, 35.264, 1000); // isometric (Z-up: Z at 12 o'clock, X at ~3 o'clock, Y at ~1 o'clock)
     }
 
     public static NTxCamera3DImpl defaultCamera() {
@@ -39,6 +65,12 @@ public class NTxCamera3DImpl implements NTxCamera3D {
     public NTxCamera3DImpl(NTxPoint3D position, NTxPoint3D target) {
         this.position = position;
         this.target = target;
+    }
+
+    public void setUp(NTxVector3D up) {
+        if (up != null) {
+            this.worldUp = up;
+        }
     }
 
     public NTxPoint2D projectFromWorldToScreen(NTxPoint3D worldPoint, NTxPoint2D screenOrigin) {

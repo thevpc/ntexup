@@ -1,9 +1,12 @@
 package net.thevpc.ntexup.lib.geometry3d.impl;
 
 import net.thevpc.ntexup.api.document.elem2d.NTxPoint2D;
+import net.thevpc.ntexup.api.document.elem2d.NTxSize;
 import net.thevpc.ntexup.api.document.elem2d.primitives.NtxElement2DLine;
+import net.thevpc.ntexup.api.eval.NTxValueByName;
 import net.thevpc.ntexup.api.renderer.NTxGraphics;
 import net.thevpc.ntexup.api.renderer.NTxRendererContext;
+import net.thevpc.ntexup.api.renderer.text.NTxTextOptions;
 import net.thevpc.ntexup.api.util.NTxColors;
 
 import net.thevpc.ntexup.lib.geometry3d.*;
@@ -229,16 +232,90 @@ public class NtxGraphics3DImpl implements NtxGraphics3D {
     private void draw3DElement3DLine(NtxElement3DLine pr, NTxPoint2D origin, DrawCommand cmd) {
         NTxPoint3D[] pts3d = applyTransform(new NTxPoint3D[]{pr.getFrom(), pr.getTo()}, cmd);
         NTxPoint2D[] pts2d = camera.projectFromWorldToScreen(pts3d, origin);
+        Paint lp = NUtils.firstNonNull(pr.getLinePaint(), pr.getForegroundPaint(), Color.BLACK);
         graphics.draw2D(
                 new NtxElement2DLine(pts2d[0], pts2d[1])
                         .setStartArrow(pr.getStartArrow())
                         .setEndArrow(pr.getEndArrow())
                         .setComposite(pr.getComposite())
                         .setBackgroundPaint(pr.getBackgroundPaint())
-                        .setLinePaint(NUtils.firstNonNull(pr.getLinePaint(), pr.getForegroundPaint()))
+                        .setLinePaint(lp)
                         .setLineStroke(pr.getLineStroke())
-
         );
+        NtxElement3DLineLabel lbl = pr.getLabel();
+        if (lbl != null && lbl.getText() != null && !lbl.getText().trim().isEmpty()) {
+            draw3DLineLabel(lbl, pts2d[0], pts2d[1], lp);
+        }
+    }
+
+    private void draw3DLineLabel(NtxElement3DLineLabel lbl, NTxPoint2D p1, NTxPoint2D p2, Paint linePaint) {
+        double pos = lbl.getPosition();
+        double t = (pos <= 0 ? 50.0 : pos) / 100.0;
+        double lx = p1.x + (p2.x - p1.x) * t;
+        double ly = p1.y + (p2.y - p1.y) * t;
+
+        NTxTextOptions textOptions = new NTxTextOptions();
+        if (rendererContext != null) {
+            textOptions.defaultFont = NTxValueByName.getFontInfo(rendererContext);
+            textOptions.sr = rendererContext.sizeRef();
+        }
+        if (lbl.getFontSize() != null && lbl.getFontSize() > 0) {
+            double v = lbl.getFontSize();
+            textOptions.fontSize = v > 10 ? NTxSize.ofPx(v) : NTxSize.ofPage(v);
+        } else {
+            textOptions.fontSize = NTxSize.ofPage(2.0);
+        }
+        textOptions.bold = !Boolean.FALSE.equals(lbl.getFontBold());
+        if (Boolean.TRUE.equals(lbl.getFontItalic())) {
+            textOptions.italic = true;
+        }
+        if (lbl.getFontFamily() != null && !lbl.getFontFamily().isEmpty()) {
+            textOptions.fontFamily = lbl.getFontFamily();
+        }
+        Paint fg = lbl.getForegroundColor() != null ? lbl.getForegroundColor() : linePaint;
+        if (fg != null) {
+            textOptions.foregroundColor = fg;
+        }
+        if (lbl.getBackgroundColor() != null) {
+            textOptions.backgroundColor = lbl.getBackgroundColor();
+        }
+
+        Font f = textOptions.resolveFont(graphics, true);
+        if (f == null) {
+            f = new Font("SansSerif", Font.BOLD, 22);
+        }
+        graphics.setFont(f);
+        float fontSize = f.getSize2D();
+
+        if (lbl.getOffset() != null) {
+            lx += lbl.getOffset().x;
+            ly += lbl.getOffset().y;
+        } else {
+            // Perpendicular offset by default (fontSize * 0.7) so label doesn't overlap the line
+            double dx = p2.x - p1.x;
+            double dy = p2.y - p1.y;
+            double len = Math.sqrt(dx * dx + dy * dy);
+            if (len > 1e-4) {
+                double nx = -dy / len;
+                double ny = dx / len;
+                if (ny > 0) {
+                    nx = -nx;
+                    ny = -ny;
+                }
+                lx += nx * (fontSize * 0.7);
+                ly += ny * (fontSize * 0.7);
+            }
+        }
+
+        FontMetrics fm = graphics.getFontMetrics(f);
+        String text = lbl.getText();
+        java.awt.geom.Rectangle2D bounds = fm.getStringBounds(text, graphics.graphics2D());
+        double sw = bounds.getWidth();
+        double sh = bounds.getHeight();
+        double tx = lx - sw / 2.0;
+        double ty = ly + fm.getAscent() - sh / 2.0;
+
+        graphics.drawString(text, tx, ty, textOptions);
     }
 
     private void draw3DElement3DArc(NtxElement3DArc pr, NTxPoint2D origin, DrawCommand cmd) {
