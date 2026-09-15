@@ -11,10 +11,20 @@ public class NtxElement3DLine extends AbstractNTxElement3DPrimitive {
     private NTxPoint3D to;
     private NTxArrow startArrow = null;
     private NTxArrow endArrow = null;
+    private NtxElement3DLineLabel label = null;
 
     public NtxElement3DLine(NTxPoint3D from, NTxPoint3D to) {
         this.from = from;
         this.to = to;
+    }
+
+    public NtxElement3DLineLabel getLabel() {
+        return label;
+    }
+
+    public NtxElement3DLine setLabel(NtxElement3DLineLabel label) {
+        this.label = label;
+        return this;
     }
 
     public NTxArrow getStartArrow() {

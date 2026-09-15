@@ -6,6 +6,7 @@ import net.thevpc.ntexup.api.document.elem2d.NTxPoint2D;
 import net.thevpc.ntexup.api.document.node.NTxNode;
 import net.thevpc.ntexup.api.document.node.NTxNodeType;
 import net.thevpc.ntexup.api.document.style.NTxPropName;
+import net.thevpc.ntexup.api.eval.NTxValue;
 import net.thevpc.ntexup.api.eval.NTxValueByType;
 import net.thevpc.ntexup.api.renderer.NTxRendererContext;
 import net.thevpc.ntexup.api.util.NTxUtils;
@@ -47,41 +48,68 @@ public class Element3DLineBuilder implements NtxElement3DNodeParser {
         }
         NtxShapes3dUtils.apply3dProps(node, r, rendererContext, b,false);
         NElement labelElem = node.getPropertyValue("label").orNull();
-        boolean positionSet=false;
-        boolean orientationSet=false;
-        if(labelElem!=null){
-            NtxElement3DLineLabel label=new NtxElement3DLineLabel();
-            if(labelElem.isAnyString()){
+        if (labelElem == null) {
+            labelElem = node.getPropertyValue("text").orNull();
+        }
+        boolean positionSet = false;
+        boolean orientationSet = false;
+        if (labelElem != null) {
+            NtxElement3DLineLabel label = new NtxElement3DLineLabel();
+            if (labelElem.isAnyString()) {
                 label.setText(labelElem.asStringValue().orNull());
-            }else if(labelElem.isListOrParametrizedContainer()){
+            } else if (labelElem.isListOrParametrizedContainer()) {
                 for (NParamOrChild c : labelElem.asListOrParametrizedContainer().get().paramsOrChildren()) {
                     NElement ce = c.element();
-                    if(ce.isAnyString()){
+                    if (ce.isAnyString()) {
                         label.setText(ce.asStringValue().orNull());
-                    }else if(ce.isNamedPair()){
+                    } else if (ce.isNamedPair()) {
                         NPairElement p = ce.asNamedPair().get();
                         switch (NTxUtils.uid(p.key().asStringValue().orNull())) {
                             case "text":
-                            case "value":
-                            {
+                            case "value": {
                                 label.setText(p.value().asStringValue().orNull());
                                 break;
                             }
-                            case "position":{
+                            case "position": {
                                 NElement pv = p.value();
-                                applyPosition(label,pv);
-                                positionSet=true;
+                                applyPosition(label, pv);
+                                positionSet = true;
                                 break;
                             }
-                            case "orientation":{
+                            case "orientation": {
                                 NElement pv = p.value();
-                                applyOrientation(label,pv);
-                                orientationSet=true;
+                                applyOrientation(label, pv);
+                                orientationSet = true;
                                 break;
                             }
-                            case "offset":{
+                            case "offset": {
                                 NElement pv = p.value();
-                                applyOffset(label,pv);
+                                applyOffset(label, pv);
+                                break;
+                            }
+                            case "color":
+                            case "foreground-color": {
+                                label.setForegroundColor(NTxValue.of(p.value()).asPaint().orNull());
+                                break;
+                            }
+                            case "background-color": {
+                                label.setBackgroundColor(NTxValue.of(p.value()).asPaint().orNull());
+                                break;
+                            }
+                            case "font-size": {
+                                label.setFontSize(p.value().asDoubleValue().orNull());
+                                break;
+                            }
+                            case "font-family": {
+                                label.setFontFamily(p.value().asStringValue().orNull());
+                                break;
+                            }
+                            case "font-bold": {
+                                label.setFontBold(p.value().asBooleanValue().orNull());
+                                break;
+                            }
+                            case "font-italic": {
+                                label.setFontItalic(p.value().asBooleanValue().orNull());
                                 break;
                             }
                         }
@@ -89,25 +117,29 @@ public class Element3DLineBuilder implements NtxElement3DNodeParser {
                 }
             }
 
-            if(!positionSet){
-                applyPosition(label,rendererContext.computePropertyValue("label-position").orNull());
+            if (!positionSet) {
+                applyPosition(label, rendererContext.computePropertyValue("label-position").orNull());
             }
-            if(label.getOffset()==null){
-                applyOffset(label,rendererContext.computePropertyValue("label-offset").orNull());
+            if (label.getOffset() == null) {
+                applyOffset(label, rendererContext.computePropertyValue("label-offset").orNull());
             }
-            if(!orientationSet){
-                applyOrientation(label,rendererContext.computePropertyValue("label-orientation").orNull());
+            if (!orientationSet) {
+                applyOrientation(label, rendererContext.computePropertyValue("label-orientation").orNull());
             }
-
-//            public static final String FONT_FAMILY="font-family";
-//            public static final String FONT_SIZE="font-size";
-//            public static final String FONT_BOLD="font-bold";
-//            public static final String FONT_ITALIC="font-italic";
-//            public static final String FONT_UNDERLINED="font-underlined";
-//            public static final String FONT_STRIKE="font-strike";
-//            public static final String FOREGROUND_COLOR="foreground-color";
-//            public static final String BACKGROUND_COLOR="background-color";
-
+            if (label.getForegroundColor() == null) {
+                label.setForegroundColor(NTxValue.of(rendererContext.computePropertyValue("label-color").orNull()).asPaint().orNull());
+            }
+            if (label.getFontSize() == null) {
+                Double fs = NTxValueByType.getDouble(rendererContext, "label-font-size").orNull();
+                if (fs == null) {
+                    fs = NTxValueByType.getDouble(rendererContext, "font-size").orNull();
+                }
+                label.setFontSize(fs);
+            }
+            if (label.getFontFamily() == null) {
+                label.setFontFamily(NTxValueByType.getStringOrName(rendererContext, "label-font-family").orNull());
+            }
+            r.setLabel(label);
         }
         return r;
     }

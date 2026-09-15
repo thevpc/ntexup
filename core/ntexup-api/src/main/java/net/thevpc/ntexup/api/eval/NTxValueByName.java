@@ -551,7 +551,7 @@ public class NTxValueByName {
     }
 
     public static Boolean get3D(NTxRendererContext ctx) {
-        return NTxValueByType.getBoolean(ctx, NTxPropName.THEED).orElse(false);
+        return NTxValueByType.getBoolean(ctx, NTxPropName.THREED).orElse(false);
     }
 
     public static Boolean getRaised(NTxRendererContext ctx) {

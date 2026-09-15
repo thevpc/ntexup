@@ -38,7 +38,7 @@ public class ToElementHelper {
             NTxPropName.MARGIN,
             NTxPropName.PADDING,
             NTxPropName.RAISED,
-            NTxPropName.THEED,
+            NTxPropName.THREED,
             NTxPropName.ROUND_CORNER,
             NTxPropName.DRAW_CONTOUR,
             NTxPropName.FILL_BACKGROUND,

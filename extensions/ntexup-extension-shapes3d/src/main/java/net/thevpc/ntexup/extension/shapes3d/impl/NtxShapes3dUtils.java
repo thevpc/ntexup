@@ -36,12 +36,28 @@ public class NtxShapes3dUtils {
     public static NTxPoint3D convertPosition3D(NTxNumberElement3 pos, NTxBounds2D bounds, NTxBounds2D page, NTxBounds3D real3D) {
         if (pos == null) return new NTxPoint3D(0, 0, 0);
 
-        double nx = normalizePos(pos.x, real3D.minX(), real3D.widthX(), bounds.widthX(), page.widthX());
-        double ny = normalizePos(pos.y, real3D.minY(), real3D.widthY(), bounds.widthY(), page.widthY());
+        double centerX = real3D != null ? real3D.minX() + real3D.widthX() / 2.0 : 0.0;
+        double centerY = real3D != null ? real3D.minY() + real3D.widthY() / 2.0 : 0.0;
+        double centerZ = real3D != null ? real3D.minZ() + real3D.widthZ() / 2.0 : 0.0;
 
-        double localH = Math.max(bounds.widthX(), bounds.widthY());
-        double pageH = Math.max(page.widthX(), page.widthY());
-        double nz = normalizePos(pos.z, real3D.minZ(), real3D.widthZ(), localH, pageH);
+        double maxSpan = 1.0;
+        if (real3D != null) {
+            maxSpan = Math.max(real3D.widthX(), Math.max(real3D.widthY(), real3D.widthZ()));
+            if (maxSpan <= 0) {
+                maxSpan = 1.0;
+            }
+        }
+        double ref2D = Math.min(bounds.widthX(), bounds.widthY()) * 0.75;
+        if (ref2D <= 0) {
+            ref2D = Math.max(bounds.widthX(), bounds.widthY());
+        }
+        if (ref2D <= 0) {
+            ref2D = 300.0;
+        }
+
+        double nx = normalizePos(pos.x, centerX, maxSpan, ref2D, bounds.widthX(), page.widthX());
+        double ny = normalizePos(pos.y, centerY, maxSpan, ref2D, bounds.widthY(), page.widthY());
+        double nz = normalizePos(pos.z, centerZ, maxSpan, ref2D, ref2D, Math.max(page.widthX(), page.widthY()));
 
         return new NTxPoint3D(nx, ny, nz);
     }
@@ -49,49 +65,67 @@ public class NtxShapes3dUtils {
     public static NTxPoint3D convertDistance3D(NTxNumberElement3 dist, NTxBounds2D bounds, NTxBounds2D page, NTxBounds3D real3D) {
         if (dist == null) return new NTxPoint3D(0, 0, 0);
 
-        double nx = normalizeDist(dist.x, real3D.widthX(), bounds.widthX(), page.widthX());
-        double ny = normalizeDist(dist.y, real3D.widthY(), bounds.widthY(), page.widthY());
+        double maxSpan = 1.0;
+        if (real3D != null) {
+            maxSpan = Math.max(real3D.widthX(), Math.max(real3D.widthY(), real3D.widthZ()));
+            if (maxSpan <= 0) {
+                maxSpan = 1.0;
+            }
+        }
+        double ref2D = Math.min(bounds.widthX(), bounds.widthY()) * 0.75;
+        if (ref2D <= 0) {
+            ref2D = Math.max(bounds.widthX(), bounds.widthY());
+        }
+        if (ref2D <= 0) {
+            ref2D = 300.0;
+        }
 
-        double localH = Math.max(bounds.widthX(), bounds.widthY());
-        double pageH = Math.max(page.widthX(), page.widthY());
-        double nz = normalizeDist(dist.z, real3D.widthZ(), localH, pageH);
+        double nx = normalizeDist(dist.x, maxSpan, ref2D, bounds.widthX(), page.widthX());
+        double ny = normalizeDist(dist.y, maxSpan, ref2D, bounds.widthY(), page.widthY());
+        double nz = normalizeDist(dist.z, maxSpan, ref2D, ref2D, Math.max(page.widthX(), page.widthY()));
 
         return new NTxPoint3D(nx, ny, nz);
     }
 
     /**
-     * POSITION Logic: (Input - Origin) / Span
+     * POSITION Logic: Physical coordinates are centered around (centerX, centerY, centerZ)
+     * and scaled uniformly by ref2D / maxSpan.
      */
-    private static double normalizePos(NNumberElement el, Double minPhy, Double spanPhy, Double local2D, Double page2D) {
+    private static double normalizePos(NNumberElement el, double centerPhy, double maxSpanPhy, double ref2D, double local2D, double page2D) {
+        if (el == null) return 0.0;
         String s = NStringUtils.strip(el.numberSuffix()).toLowerCase();
-        double val = el.asDoubleValue().get();
+        double val = el.asDoubleValue().orElse(0.0);
 
-        if (s.equals("%p")) return (val / 100.0) * page2D;
-        if (s.isEmpty() || s.equals("%")) return (val / 100.0) * local2D;
+        if (s.equals("%p")) return ((val - 50.0) / 100.0) * page2D;
+        if (s.equals("%")) return ((val - 50.0) / 100.0) * local2D;
 
-        // Physical Unit Position: Must subtract the 3D origin
-        double meters = NTxNumberUtils.toMeter(el).get();
-        double span = (spanPhy == null || spanPhy == 0) ? 1.0 : spanPhy;
-        double min = (minPhy == null) ? 0.0 : minPhy;
-
-        return ((meters - min) / span) * local2D;
+        // Physical Unit Position: (meters - centerPhy) / maxSpanPhy * ref2D
+        NOptional<Double> meterOpt = NTxNumberUtils.toMeter(el);
+        if (meterOpt.isPresent() || s.isEmpty()) {
+            double meters = meterOpt.orElse(val == 0.0 ? 0.0 : ((val - 50.0) / 100.0 * maxSpanPhy + centerPhy));
+            return ((meters - centerPhy) / maxSpanPhy) * ref2D;
+        }
+        return ((val - 50.0) / 100.0) * local2D;
     }
 
     /**
-     * DISTANCE Logic: Input / Span (Ignoring Origin)
+     * DISTANCE Logic: Pure magnitude ratio scaled uniformly by ref2D / maxSpan.
      */
-    private static double normalizeDist(NNumberElement el, Double spanPhy, Double local2D, Double page2D) {
+    private static double normalizeDist(NNumberElement el, double maxSpanPhy, double ref2D, double local2D, double page2D) {
+        if (el == null) return 0.0;
         String s = NStringUtils.strip(el.numberSuffix()).toLowerCase();
-        double val = el.asDoubleValue().get();
+        double val = el.asDoubleValue().orElse(0.0);
 
         if (s.equals("%p")) return (val / 100.0) * page2D;
-        if (s.isEmpty() || s.equals("%")) return (val / 100.0) * local2D;
+        if (s.equals("%")) return (val / 100.0) * local2D;
 
         // Physical Unit Distance: Pure magnitude ratio
-        double meters = NTxNumberUtils.toMeter(el).get();
-        double span = (spanPhy == null || spanPhy == 0) ? 1.0 : spanPhy;
-
-        return (meters / span) * local2D;
+        NOptional<Double> meterOpt = NTxNumberUtils.toMeter(el);
+        if (meterOpt.isPresent() || s.isEmpty()) {
+            double meters = meterOpt.orElse(val == 0.0 ? 0.0 : (val / 100.0 * maxSpanPhy));
+            return (meters / maxSpanPhy) * ref2D;
+        }
+        return (val / 100.0) * local2D;
     }
 
 

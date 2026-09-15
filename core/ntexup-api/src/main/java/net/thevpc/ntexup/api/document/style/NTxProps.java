@@ -142,7 +142,7 @@ public class NTxProps {
     }
 
     public static NTxProp threeD(Boolean b) {
-        return NTxProp.of(NTxPropName.THEED, NTxUtils.addCompilerDeclarationPathDummy(NElement.ofBoolean(b)));
+        return NTxProp.of(NTxPropName.THREED, NTxUtils.addCompilerDeclarationPathDummy(NElement.ofBoolean(b)));
     }
 
     public static NTxProp raised(Boolean b) {

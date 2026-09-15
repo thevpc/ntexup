@@ -19,7 +19,7 @@ public class NTxRectangleBuilder implements NTxNodeBuilder {
     public void build(NTxNodeBuilderContext builderContext) {
         builderContext
                 .id(NTxNodeType.RECTANGLE)
-                .parseParam().matchesNamedPair(NTxPropName.ROUND_CORNER, NTxPropName.THEED, NTxPropName.RAISED).asFlags().then()
+                .parseParam().matchesNamedPair(NTxPropName.ROUND_CORNER, NTxPropName.THREED, NTxPropName.RAISED).asFlags().then()
                 .renderComponent(this::renderMain)
         ;
     }

@@ -13,6 +13,7 @@ import net.thevpc.ntexup.extension.shapes3d.impl.NtxShapes3dUtils;
 import net.thevpc.ntexup.extension.shapes3d.impl.RealToRelativeMapper;
 import net.thevpc.ntexup.lib.geometry3d.NTxNumberElement3;
 import net.thevpc.ntexup.lib.geometry3d.NTxPoint3D;
+import net.thevpc.ntexup.lib.geometry3d.NTxVector3D;
 import net.thevpc.ntexup.lib.geometry3d.NtxElement3D;
 import net.thevpc.ntexup.api.document.node.NTxNode;
 import net.thevpc.ntexup.api.document.node.NTxNodeType;
@@ -97,9 +98,9 @@ public class NTxScene3dBuilder implements NTxNodeBuilder {
         }
 
         NTxBounds3D realBounds = NTxBounds3D.ofWidth(
-                NTxNumberUtils.toMeter(realPosition.x).orElse(1.0),
-                NTxNumberUtils.toMeter(realPosition.y).orElse(1.0),
-                NTxNumberUtils.toMeter(realPosition.z).orElse(1.0),
+                NTxNumberUtils.toMeter(realPosition.x).orElse(0.0),
+                NTxNumberUtils.toMeter(realPosition.y).orElse(0.0),
+                NTxNumberUtils.toMeter(realPosition.z).orElse(0.0),
                 NTxNumberUtils.toMeter(realSize.x).orElse(1.0),
                 NTxNumberUtils.toMeter(realSize.y).orElse(1.0),
                 NTxNumberUtils.toMeter(realSize.z).orElse(1.0)
@@ -118,6 +119,10 @@ public class NTxScene3dBuilder implements NTxNodeBuilder {
                         camera = NTxCamera3DImpl.isometric();
                         break;
                     }
+                    case "isometric-z": {
+                        camera = NTxCamera3DImpl.isometricZ();
+                        break;
+                    }
                 }
             } else if (c.isAnyObject()) {
                 NObjectElement o = c.asObject().get();
@@ -126,6 +131,8 @@ public class NTxScene3dBuilder implements NTxNodeBuilder {
                 Double distance = null;
                 NTxPoint3D position = null;
                 NTxPoint3D target = null;
+                NTxVector3D upVector = null;
+                boolean zUp = false;
                 for (NElement child : o.children()) {
                     if (child.isNamedPair()) {
                         NPairElement p = child.asPair().get();
@@ -159,13 +166,34 @@ public class NTxScene3dBuilder implements NTxNodeBuilder {
                                 }
                                 break;
                             }
+                            case "up": {
+                                if (p.value().isAnyString()) {
+                                    String u = p.value().asStringValue().get().trim().toLowerCase();
+                                    if ("z".equals(u)) {
+                                        zUp = true;
+                                        upVector = new NTxVector3D(0, 0, 1);
+                                    } else if ("y".equals(u)) {
+                                        upVector = new NTxVector3D(0, 1, 0);
+                                    } else if ("x".equals(u)) {
+                                        upVector = new NTxVector3D(1, 0, 0);
+                                    }
+                                }
+                                break;
+                            }
                         }
                     }
                 }
-                if (azimuth != null || elevation != null || distance != null) {
-                    camera = NTxCamera3DImpl.fromSpherical(azimuth == null ? -45 : azimuth, elevation == null ? 35.264 : elevation, distance == null ? 1000 : distance);
+                if (azimuth != null || elevation != null || distance != null || zUp) {
+                    if (zUp) {
+                        camera = NTxCamera3DImpl.fromSphericalZ(azimuth == null ? -60 : azimuth, elevation == null ? 35.264 : elevation, distance == null ? 1000 : distance);
+                    } else {
+                        camera = NTxCamera3DImpl.fromSpherical(azimuth == null ? -45 : azimuth, elevation == null ? 35.264 : elevation, distance == null ? 1000 : distance, upVector);
+                    }
                 } else if (position != null || target != null) {
                     camera = new NTxCamera3DImpl(position == null ? new NTxPoint3D(0, 0, 1000) : position, target == null ? NTxPoint3D.ofZero() : target);
+                    if (upVector != null) {
+                        camera.setUp(upVector);
+                    }
                 }
             }
         }

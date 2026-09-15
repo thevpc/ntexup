@@ -104,7 +104,7 @@ public class NTxPropName {
     public static final String ROWWEIGHT="rowweight";
     public static final String COL_WEIGHT="col-weight";
     public static final String ROW_WEIGHT="row-weight";
-    public static final String THEED="threed";
+    public static final String THREED ="threed";
     public static final String RAISED="raised";
     public static final String COLUMNS="columns";
     public static final String POINTS="points";

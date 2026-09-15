@@ -59,7 +59,7 @@ public class NTxStyleParser {
                 NTxPropName.COLUMNS_WEIGHT,
                 NTxPropName.ROWS_WEIGHT,
                 NTxPropName.PRESERVE_ASPECT_RATIO,
-                NTxPropName.THEED,
+                NTxPropName.THREED,
                 NTxPropName.DRAW_CONTOUR,
                 NTxPropName.CLASS,
                 NTxPropName.AT,
@@ -88,7 +88,7 @@ public class NTxStyleParser {
                 NTxPropName.HIDE,
                 NTxPropName.DRAW_GRID,
                 NTxPropName.PRESERVE_ASPECT_RATIO,
-                NTxPropName.THEED,
+                NTxPropName.THREED,
                 NTxPropName.DRAW_CONTOUR
         ));
 
