@@ -99,6 +99,7 @@ documentColors:=arrayLeftRotate(["#26355D","#AF47D2","#DE3163","#1d8147","#FF8F0
                     "*" :{
                         color: documentColors[1],
                         foreground-color:white,
+                        line-color:white,
                         font-size:20,
                         font-bold
                     }
@@ -126,6 +127,7 @@ documentColors:=arrayLeftRotate(["#26355D","#AF47D2","#DE3163","#1d8147","#FF8F0
     //            "*" :{
     //                color: documentColors[1],
     //                foreground-color:white,
+    //                line-color:white,
     //                font-size:20,
     //                font-bold
     //            }
@@ -152,6 +154,7 @@ documentColors:=arrayLeftRotate(["#26355D","#AF47D2","#DE3163","#1d8147","#FF8F0
     //            "*" :{
     //                color: documentColors[1],
     //                foreground-color:white,
+    //                line-color:white,
     //                font-size:20,
     //                font-bold
     //            }
@@ -181,6 +184,7 @@ documentColors:=arrayLeftRotate(["#26355D","#AF47D2","#DE3163","#1d8147","#FF8F0
                 styles:{
                     "*" :{
                         foreground-color:dark-gray
+                        line-color:dark-gray
                     }
                 }
                 body
@@ -197,6 +201,7 @@ documentColors:=arrayLeftRotate(["#26355D","#AF47D2","#DE3163","#1d8147","#FF8F0
                 styles:{
                     "*" :{
                         foreground-color:dark-gray
+                        line-color:dark-gray
                     }
                 }
                 body
@@ -214,6 +219,7 @@ documentColors:=arrayLeftRotate(["#26355D","#AF47D2","#DE3163","#1d8147","#FF8F0
                 styles:{
                     "*" :{
                         foreground-color:dark-gray
+                        line-color:dark-gray
                     }
                 }
                 body
@@ -231,6 +237,7 @@ documentColors:=arrayLeftRotate(["#26355D","#AF47D2","#DE3163","#1d8147","#FF8F0
                 styles:{
                     "*" :{
                         foreground-color:dark-gray
+                        line-color:dark-gray
                     }
                 }
                 body
@@ -248,6 +255,7 @@ documentColors:=arrayLeftRotate(["#26355D","#AF47D2","#DE3163","#1d8147","#FF8F0
                 styles:{
                     "*" :{
                         foreground-color:dark-gray
+                        line-color:dark-gray
                     }
                 }
                 body
@@ -264,6 +272,7 @@ documentColors:=arrayLeftRotate(["#26355D","#AF47D2","#DE3163","#1d8147","#FF8F0
                 styles:{
                     "*" :{
                         foreground-color:dark-gray
+                        line-color:dark-gray
                     }
                 }
                 body
