@@ -12,5 +12,5 @@ generate-doc
 
 list-templates
 
-build-repo /home/vpc/xprojects/nuts-world/nuts-productivity/ntexup-templates/
+build-repo /home/vpc/xprojects/nuts-world/nuts-productivity/ntexup/ntexup-templates/
 

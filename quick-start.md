@@ -165,11 +165,11 @@ besides, you container should include git (for now git is not bundled with texup
 
 On your terminal, run:
 ```bash
-docker run -it --rm openjdk:8 bash -c "$(curl -sSL https://thevpc.net/nuts/bootstrap-container-latest.sh)"
+docker run -it --rm eclipse-temurin:17-jre bash -c "$(curl -sSL https://thevpc.net/nuts/bootstrap-container-latest.sh)"
 ```
 
 Notes:
-* This command pulls the OpenJDK 8 image (you can choose another version if needed) and bootstraps the container with Nuts.
+* This command pulls the OpenJDK 17 image (you can choose another version if needed) and bootstraps the container with Nuts.
 * The script will create a non-root user (nuts by default), detect Java, and install the latest version of Nuts inside the container.
 * After the script finishes, you’ll drop into an interactive bash shell inside the container, ready to run Nuts commands.
 
@@ -187,7 +187,7 @@ Any additional arguments you pass will be forwarded directly to NTexUp.
 To see detailed technical information during container bootstrap, you can set the TECH_ECHO environment variable when starting the container:
 
 ```bash
-docker run -it --rm -e NUTS_CONTAINER_VERBOSE=1 openjdk:8 bash -c "$(curl -sSL https://thevpc.net/nuts/bootstrap-container-latest.sh)"
+docker run -it --rm -e NUTS_CONTAINER_VERBOSE=1 eclipse-temurin:17-jre bash -c "$(curl -sSL https://thevpc.net/nuts/bootstrap-container-latest.sh)"
 ```
 
 ## Conclusion
