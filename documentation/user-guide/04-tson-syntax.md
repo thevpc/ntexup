@@ -45,6 +45,13 @@ World"                       // quoted strings may span several lines
 
 Quoted strings differ from `¶` in two ways: they can span **multiple lines**, and they support **escaping** — a character is written literally by **repeating the separator** (e.g. `""` for a literal quote inside `"..."`).
 
+For multi-line raw text, use the **`¶¶`** marker on every consecutive line (common indentation is stripped):
+
+```tson
+¶¶ Line 1 of a long text.
+¶¶ Line 2 of the same text.
+```
+
 Text that is **not wrapped into a component** (bare `¶` lines, bare quoted strings) is rendered as **plain text** — no formatting, no markers. To get rich-text formatting, wrap the string in a component such as `text()`:
 
 ```tson
@@ -52,6 +59,31 @@ Text that is **not wrapped into a component** (bare `¶` lines, bare quoted stri
 "Hello World"            // plain text (quoted, but still bare)
 text("Hello **World**")  // component -> markers are processed
 ```
+
+### Lists (bullet markers)
+
+TSON bullet markers denote list items; ntexup renders them as `ul`/`ol`. A run of markers is a list even **without** an explicit `ul`/`ol` component:
+
+```tson
+• Item one
+• Item two
+```
+
+| Markers | Semantic | Rendered as |
+|---------|----------|-------------|
+| `•` `●` (and `[.]` `[..]`) | unordered | `ul` |
+| `▪` `■` (and `[#]`) | ordered | `ol` |
+
+Nest lists by **repeating the marker**:
+
+```tson
+▪ Step 1
+▪▪ Sub-step A
+▪▪ Sub-step B
+▪ Step 2
+```
+
+Cross-prefix nesting is allowed (an ordered item can contain unordered sub-items and vice-versa).
 
 ### Numbers
 
@@ -389,7 +421,9 @@ A document (a tree of nodes) contains **nodes**, each with:
 - `:` (`color: red`) — property assignment in a node
 - `=` (`x = 42`) — variable definition or assignment
 - `:=` — assign-if-not-defined (default values, overridable before includes)
-- `%` — percentage of the parent compoennt (e.g., `size: 15%`) and is equivalent to no suffix because all sizes are relative
+- `%` — percentage of the parent component (e.g., `size: 15%`); equivalent to no suffix because all sizes are relative
 - `%P` — percentage of page (e.g., `font-size: 3%P`, `size: 15%P`)
-- `¶` — raw single-line string (to end of line; no escapes/markers)
-- `¶¶` — raw multi-line string aka paragraph (to end of line; no escapes/markers but spans next nexline starting with `¶¶`)
+- `¶` — raw single-line string (ends at end of line; no escapes/markers)
+- `¶¶` — raw multi-line paragraph (prefix each line with `¶¶`; no escapes/markers, common indentation stripped)
+- `•` / `●` — unordered list marker, rendered as `ul` (repeat for nesting: `••`, `•••`)
+- `▪` / `■` — ordered list marker, rendered as `ol` (repeat for nesting: `▪▪`, `▪▪▪`)

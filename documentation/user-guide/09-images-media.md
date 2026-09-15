@@ -2,47 +2,40 @@
 
 ## The `image` Element
 
-ntexup displays PNG, JPEG, GIF, SVG, AVIF, and WebP images.
+ntexup displays raster images (PNG, JPEG, GIF) and, with the matching image modules, vector formats like SVG:
 
 ```tson
 image("../../../images/image.png", size: (50, 50), at: center)
 ```
 
-## Supported Formats (from doc-slides)
+## Supported Formats
 
-| Format | Usage |
+| Format | Notes |
 |--------|-------|
-| PNG | `image("../images/image.png", size:(50,50), at:center)` |
-| JPEG | `image("../images/image.jpg", ...)` |
-| GIF | `image("../images/image.gif", ...)` |
-| SVG | `image("../images/image.svg", ...)` — requires `svg` extension |
-| AVIF | `image("../images/image.avif", ...)` |
-| WebP | `image("../images/image.webp", ...)` |
+| PNG | `image("../images/logo.png")` |
+| JPEG | `image("../images/logo.jpg")` |
+| GIF | animated on-screen; PDF renders a static frame |
+| SVG | `image("../images/logo.svg")` — requires the `svg` image module |
 
 ## Properties
 
 | Property | Description | Example |
 |----------|-------------|---------|
-| (positional) | path/URL | `image("images/logo.png")` |
+| (positional) | path/URL (`value`, `file`, `content`, `src`) | `image("images/logo.png")`, `image(file: "logo")` |
 | `size` | display size | `size: (50, 50)` |
 | `at` | anchor | `at: center` |
 | `position` | absolute position | `position: (10, 10)` |
-
-## Example: Grid of Formats
+| `preserve-aspect-ratio` | keep the picture ratio inside `size` (default `false`) | `size: (40, 40), preserve-aspect-ratio` |
+| `transparent-color` | treat a color as transparent | `transparent-color: white` |
 
 ```tson
-grid(4, 4, columns-weight: [1, 3]) {
-    image("../../../images/image.png", size: (50, 50), at: center)
-    image("../../../images/image.jpg", size: (50, 50), at: center)
-    image("../../../images/image.gif", size: (50, 50), at: center)
-    image("../../../images/image.svg", size: (50, 50), at: center)
-    image("../../../images/image.avif", size: (50, 50), at: center)
-    image("../../../images/image.webp", size: (50, 50), at: center)
-}
+image("photos.png", size: (40%P, 30%P), at: center, preserve-aspect-ratio)
+image("icon.*", size: (10, 10), transparent-color: white)
 ```
 
-## Notes
+## Path Resolution
 
 - Paths are relative to the current file (the doc-slides use `../../../images/...`).
+- **Extension auto-resolution**: a path without a known image extension is tried as `.png`, `.jpg`, `.gif`, `.jpeg`, `.svg` (upper and lower case), so `image("logo")` finds the first matching `logo.<ext>`.
+- A `.*` wildcard (`image("icon.*")`) resolves to the first matching format.
 - Animated GIFs animate on screen; PDF captures a static frame.
-- SVG/AVIF/WebP support requires the corresponding image extension modules (`svg` for SVG).

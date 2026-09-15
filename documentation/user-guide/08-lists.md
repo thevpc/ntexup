@@ -1,5 +1,38 @@
 # Lists
 
+Lists come from the **TSON bullet markers** and ntexup renders them as `ul`/`ol` nodes.
+
+A **bare list** needs no component — a run of bullet markers at any level is a list:
+
+```tson
+• Item one
+• Item two
+```
+
+Each item can be a raw `¶` line (`•¶ ...`), a quoted string (`• "..."`), or any node (`• text("...")`):
+
+```tson
+•¶ raw single-line item
+• "quoted item"
+• text("**markers work**")
+```
+
+The `ul { ... }` / `ol { ... }` wrapper makes the scope explicit — equivalent to the bare form:
+
+```tson
+ul {
+    • "Item one"
+    • "Item two"
+}
+```
+
+## Bullet Marker Characters
+
+| Markers | List | Rendered as |
+|---------|------|-------------|
+| `•`, `●` (also `[.]`, `[..]`, …) | unordered | `ul` |
+| `▪`, `■` (also `[#]`, `[##]`, …) | ordered | `ol` |
+
 ## Unordered Lists (`ul`)
 
 ```tson
@@ -19,18 +52,16 @@ ul {
 }
 ```
 
-### Prefixed Bullet Items
+### Nested Unordered Lists
 
-The bullet `•` prefixes items, and `•¶` prefix paragraph items:
+Nest by repeating the marker — `••` is a sub-item of `•` (in bare form), or nest `ul` inside `ul`:
 
 ```tson
-ul {
-    • "Item one"
-    • "Item two"
-}
+• Fruit
+•• Apple
+•• Banana
+• Vegetable
 ```
-
-### Nested Unordered Lists
 
 ```tson
 ul {
@@ -44,6 +75,17 @@ ul {
 ```
 
 ## Ordered Lists (`ol`)
+
+Ordered markers are `▪`/`■`; nesting repeats the marker (`▪▪`, `▪▪▪`):
+
+```tson
+▪ Step 1
+▪▪ Sub-step A
+▪▪ Sub-step B
+▪ Step 2
+```
+
+Or the `ol` wrapper — cross-nesting works, an ordered item may contain unordered sub-items and vice-versa:
 
 ```tson
 ol {

@@ -1,11 +1,44 @@
 # Text and Typography
 
+## Raw Line String (`¶`)
+
+`¶` introduces a **raw single-line string** that runs to the end of the line — no quoting, no escapes, no special characters, everything is literal:
+
+```tson
+¶ First paragraph
+¶ Second paragraph
+```
+
+A `¶` line is **equivalent to `text("...")`** — both render the same plain text:
+
+```tson
+¶ Hello World
+```
+
+renders exactly like `text("Hello World")`. Reach for quoted strings (escaping + multi-line), `¶¶` (multi-line raw paragraphs), or `text()` (rich-text markers) when you need more than a single plain line:
+
+```tson
+¶¶ Line 1 of a paragraph
+¶¶ Line 2 of the same paragraph
+
+text("Hello **World**")   // markers are processed here
+```
+
+Anything **not wrapped in a component** — bare `¶` lines and bare quoted strings alike — renders as plain text (no markers):
+
+```tson
+¶ Welcome to ntexup        // plain text
+"Welcome to ntexup"        // plain text (quoted, but bare)
+text("Welcome to ntexup")  // explicit component
+```
+
 ## The `text` Element
 
-The main content element for a string:
+The explicit text component — same plain content as a raw line, but it also processes rich-text markers (see below):
 
 ```tson
 text("Hello, World!")
+text("Hello, **World**!")
 ```
 
 A bare string child renders as text too:
@@ -50,22 +83,7 @@ ntf("""
 
 `##:p1##`..`##:p10##` use the theme palette colors; `##:/ italic##` applies italic.
 
-## Raw Line String (`¶`)
-
-`¶` is a **raw single-line string**: it starts at the mark and runs to the end of the line, with **no quoting, no escapes, and no special characters** — everything is literal:
-
-```tson
-¶ First paragraph
-¶ Second paragraph
-```
-
-Everything not wrapped in a component is plain text: bare `¶` lines and bare quoted strings alike render as plain text (no markers):
-
-```tson
-¶ Welcome to ntexup        // plain text
-"Welcome to ntexup"        // plain text (quoted, but bare)
-text("Welcome to **ntexup**")  // component -> rich formatting
-```
+The NTF markup is specified at <https://github.com/thevpc/nuts/blob/master/documentation/specifications/ntf.md>.
 
 ## Rich Text Markers
 
@@ -146,6 +164,19 @@ text("""
     or [[eq: a^2+b^2=c^2 ]] with smooth wrapping.
 """, text-wrap: wrap, text-align: justify)
 ```
+
+## Mixing Inline Flavors
+
+Inline `[[eq: ...]]` and `[[ntf: ...]]` renderers can be mixed freely with plain text and other markers in a **single string**:
+
+```tson
+text("expression [[eq: E = mc^2]] [[ntf: ##:p1: hello##]] world", text-wrap: wrap)
+```
+
+- `[[eq: ...]]` — inline LaTeX equation (JLaTeXmath)
+- `[[ntf: ...]]` — inline NTF markup (palette/`###` tokens, italic …)
+
+Both are processed by the text flavor, exactly like the other rich-text markers.
 
 ## Positioning Text
 

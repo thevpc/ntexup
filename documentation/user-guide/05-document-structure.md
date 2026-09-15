@@ -20,6 +20,35 @@ A standard ntexup project (classic templates) has:
 
 Folders/files use zero-padded numeric prefixes for ordering.
 
+## Single File vs Folder
+
+A document can be a **single file** (as long as it does **not** include other files):
+
+```tson
+# presentation.ntx
+page {
+    grid(1, 1) {
+        text("Hello World")
+    }
+}
+```
+
+Run it with `nuts ntexup show presentation.ntx`.
+
+When ntexup is run on a **folder**, it loads all `*.ntx` files found inside (recursively): **`main.ntx` is loaded first**, then every other file **sorted by name**. This entry behavior happens only at the root — when you run that folder directly.
+
+Later, `include(...)`ing a folder loads its files/folders in **lexicographic order** (no `main.ntx` special case). That is why zero-padded prefixes are recommended:
+
+```
+02-pages/
+├── 0001-intro/
+│   ├── 0001-cover.ntx
+│   └── 0010-plan.ntx
+└── 0010-chapter1/
+```
+
+`0010` sorts after `0001`, so chapters render in the intended order.
+
 ## The `main.ntx` File
 
 Real-world example (from doc-slides):
