@@ -7,6 +7,7 @@ import net.thevpc.ntexup.api.engine.NTxEngine;
 import net.thevpc.ntexup.api.renderer.*;
 import net.thevpc.nuts.io.NIOException;
 import net.thevpc.nuts.io.NPath;
+import net.thevpc.nuts.util.NLiteral;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -16,8 +17,10 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -80,16 +83,26 @@ public class ImageDocumentRenderer extends NTxDocumentStreamRendererBase impleme
         float pointsPerInch = 72f;
         int pixelWidth = (int) (resolvePageWidth(rt) * dpi / pointsPerInch);
         int pixelHeight = (int) (resolvePageHeight(rt) * dpi / pointsPerInch);
-        List<byte[]> all = new ArrayList<>();
+        NTxNodeRendererConfig renderConfig = new NTxNodeRendererConfig(pixelWidth, pixelHeight)
+                .withAnimate(false)
+                .withPrint(true);
+        Set<Integer> wanted = new HashSet<>();
+        int maxIndex = 0;
         for (NTxCompiledPage page : selectedPages) {
-            byte[] bytes = engine.renderImageBytes(
-                    page,
-                    new NTxNodeRendererConfig(pixelWidth, pixelHeight)
-                            .withAnimate(false)
-                            .withPrint(true)
-            );
-            bytes = toFormat(bytes, format);
-            all.add(bytes);
+            int idx = indexOf(allPages, page);
+            if (idx > 0) {
+                wanted.add(idx);
+                if (idx > maxIndex) {
+                    maxIndex = idx;
+                }
+            }
+        }
+        List<byte[]> all = new ArrayList<>();
+        for (int pi = 1; pi <= maxIndex; pi++) {
+            byte[] bytes = engine.renderImageBytes(allPages.get(pi - 1), renderConfig);
+            if (wanted.contains(pi)) {
+                all.add(toFormat(bytes, format));
+            }
         }
         return all;
     }
@@ -162,12 +175,18 @@ public class ImageDocumentRenderer extends NTxDocumentStreamRendererBase impleme
 
     private List<NTxCompiledPage> selectPages(List<NTxCompiledPage> allPages) {
         Object pagesProperty = getProperty(PROP_PAGES, Object.class).orNull();
+        int size = allPages.size();
         List<NTxCompiledPage> selected = new ArrayList<>();
+        Set<Integer> seen = new HashSet<>();
         boolean hasFilter = false;
         if (pagesProperty instanceof List) {
             for (Object o : (List<?>) pagesProperty) {
-                int idx = o instanceof Number ? ((Number) o).intValue() : Integer.parseInt(String.valueOf(o));
-                if (idx >= 1 && idx <= allPages.size()) {
+                int idx = o instanceof Number ? ((Number) o).intValue()
+                        : NLiteral.of(String.valueOf(o)).asInt().orElse(-1);
+                if (idx < 0) {
+                    idx = size + idx + 1;
+                }
+                if (idx >= 1 && idx <= size && seen.add(idx)) {
                     selected.add(allPages.get(idx - 1));
                     hasFilter = true;
                 }

@@ -6,9 +6,12 @@ import net.thevpc.nuts.platform.NSysEditorFamily;
 import net.thevpc.nuts.core.NSession;
 import net.thevpc.nuts.cmdline.NCmdLine;
 import net.thevpc.nuts.io.NPath;
+import net.thevpc.nuts.util.NLiteral;
+import net.thevpc.nuts.util.NOptional;
 import net.thevpc.nuts.util.NStringUtils;
 
 import java.util.Arrays;
+import java.util.Locale;
 
 public class NTexupOptionsParser {
     public void parse(NCmdLine cmdLine, Options options) {
@@ -224,7 +227,7 @@ public class NTexupOptionsParser {
                         parsePages(a.stringValue(), options.getOrCreate(GenerateActionOptions.class));
                     })
                     .when("--dpi").asEntry(a -> {
-                        options.getOrCreate(GenerateActionOptions.class).dpi = Integer.parseInt(a.stringValue());
+                        options.getOrCreate(GenerateActionOptions.class).dpi = parseIntEntry(a.stringValue(), "--dpi");
                     })
                     .when("--type", "--format").asEntry(a -> {
                         options.getOrCreate(GenerateActionOptions.class).imageFormat = a.stringValue();
@@ -233,32 +236,37 @@ public class NTexupOptionsParser {
                         String s = a.stringValue();
                         String[] w = s.split("[xX]");
                         if (w.length == 2) {
-                            options.getOrCreate(GenerateActionOptions.class).pageWidth = Integer.parseInt(w[0].trim());
-                            options.getOrCreate(GenerateActionOptions.class).pageHeight = Integer.parseInt(w[1].trim());
+                            options.getOrCreate(GenerateActionOptions.class).pageWidth = parseIntEntry(w[0], "--size");
+                            options.getOrCreate(GenerateActionOptions.class).pageHeight = parseIntEntry(w[1], "--size");
                         }
                     })
                     .when("--page-width").asEntry(a -> {
-                        options.getOrCreate(GenerateActionOptions.class).pageWidth = Integer.parseInt(a.stringValue());
+                        options.getOrCreate(GenerateActionOptions.class).pageWidth = parseIntEntry(a.stringValue(), "--page-width");
                     })
                     .when("--page-height").asEntry(a -> {
-                        options.getOrCreate(GenerateActionOptions.class).pageHeight = Integer.parseInt(a.stringValue());
+                        options.getOrCreate(GenerateActionOptions.class).pageHeight = parseIntEntry(a.stringValue(), "--page-height");
+                    })
+                    .when("--page-size").asEntry(a -> {
+                        int[] s = resolvePageSize(a.stringValue());
+                        options.getOrCreate(GenerateActionOptions.class).pageWidth = s[0];
+                        options.getOrCreate(GenerateActionOptions.class).pageHeight = s[1];
                     })
                     .when("--grid").asEntry(a -> {
                         String s = a.stringValue();
                         String[] w = s.split("[xX]");
                         if (w.length == 2) {
-                            options.getOrCreate(GenerateActionOptions.class).gridX = Integer.parseInt(w[0].trim());
-                            options.getOrCreate(GenerateActionOptions.class).gridY = Integer.parseInt(w[1].trim());
+                            options.getOrCreate(GenerateActionOptions.class).gridX = parseIntEntry(w[0], "--grid");
+                            options.getOrCreate(GenerateActionOptions.class).gridY = parseIntEntry(w[1], "--grid");
                         }
                     })
                     .when("--grid-x").asEntry(a -> {
-                        options.getOrCreate(GenerateActionOptions.class).gridX = Integer.parseInt(a.stringValue());
+                        options.getOrCreate(GenerateActionOptions.class).gridX = parseIntEntry(a.stringValue(), "--grid-x");
                     })
                     .when("--grid-y").asEntry(a -> {
-                        options.getOrCreate(GenerateActionOptions.class).gridY = Integer.parseInt(a.stringValue());
+                        options.getOrCreate(GenerateActionOptions.class).gridY = parseIntEntry(a.stringValue(), "--grid-y");
                     })
                     .when("--margin").asEntry(a -> {
-                        float f = Float.parseFloat(a.stringValue());
+                        float f = parseFloatEntry(a.stringValue(), "--margin");
                         GenerateActionOptions g = options.getOrCreate(GenerateActionOptions.class);
                         g.marginTop = f;
                         g.marginBottom = f;
@@ -266,16 +274,16 @@ public class NTexupOptionsParser {
                         g.marginRight = f;
                     })
                     .when("--margin-top").asEntry(a -> {
-                        options.getOrCreate(GenerateActionOptions.class).marginTop = Float.parseFloat(a.stringValue());
+                        options.getOrCreate(GenerateActionOptions.class).marginTop = parseFloatEntry(a.stringValue(), "--margin-top");
                     })
                     .when("--margin-bottom").asEntry(a -> {
-                        options.getOrCreate(GenerateActionOptions.class).marginBottom = Float.parseFloat(a.stringValue());
+                        options.getOrCreate(GenerateActionOptions.class).marginBottom = parseFloatEntry(a.stringValue(), "--margin-bottom");
                     })
                     .when("--margin-left").asEntry(a -> {
-                        options.getOrCreate(GenerateActionOptions.class).marginLeft = Float.parseFloat(a.stringValue());
+                        options.getOrCreate(GenerateActionOptions.class).marginLeft = parseFloatEntry(a.stringValue(), "--margin-left");
                     })
                     .when("--margin-right").asEntry(a -> {
-                        options.getOrCreate(GenerateActionOptions.class).marginRight = Float.parseFloat(a.stringValue());
+                        options.getOrCreate(GenerateActionOptions.class).marginRight = parseFloatEntry(a.stringValue(), "--margin-right");
                     })
                     .when("--landscape").asFlag(a -> {
                         options.getOrCreate(GenerateActionOptions.class).orientation = net.thevpc.ntexup.api.renderer.NTxPageOrientation.LANDSCAPE;
@@ -300,22 +308,71 @@ public class NTexupOptionsParser {
         }
     }
 
+    private int[] resolvePageSize(String value) {
+        String n = NStringUtils.strip(value).toLowerCase(Locale.ROOT);
+        switch (n) {
+            case "a0": return new int[]{2384, 3370};
+            case "a1": return new int[]{1684, 2384};
+            case "a2": return new int[]{1191, 1684};
+            case "a3": return new int[]{842, 1191};
+            case "a4": return new int[]{595, 842};
+            case "a5": return new int[]{420, 595};
+            case "a6": return new int[]{298, 420};
+            case "b0": return new int[]{2835, 4008};
+            case "b1": return new int[]{2004, 2835};
+            case "b2": return new int[]{1417, 2004};
+            case "b3": return new int[]{1001, 1417};
+            case "b4": return new int[]{709, 1001};
+            case "b5": return new int[]{499, 709};
+            case "b6": return new int[]{354, 499};
+            case "letter": return new int[]{612, 792};
+            case "legal": return new int[]{612, 1008};
+            case "ledger":
+            case "tabloid": return new int[]{792, 1224};
+            case "executive": return new int[]{522, 756};
+            case "statement":
+            case "halfletter": return new int[]{396, 612};
+            case "folio": return new int[]{612, 936};
+            default: {
+                String[] parts = n.split("[xX]");
+                if (parts.length == 2) {
+                    NOptional<Integer> w = NLiteral.of(parts[0]).asInt();
+                    NOptional<Integer> h = NLiteral.of(parts[1]).asInt();
+                    if (w.isPresent() && h.isPresent()) {
+                        return new int[]{w.get(), h.get()};
+                    }
+                }
+                throw new IllegalArgumentException("unknown page size: " + value + " (supported: A0-A6, B0-B6, Letter, Legal, Ledger/Tabloid, Executive, Statement, Folio or WxH in points)");
+            }
+        }
+    }
+
     private void parsePages(String value, GenerateActionOptions g) {
         for (String part : value.split(",")) {
             part = NStringUtils.strip(part);
             if (!part.isEmpty()) {
                 int dash = part.indexOf('-');
                 if (dash > 0) {
-                    int a = Integer.parseInt(NStringUtils.strip(part.substring(0, dash)));
-                    int b = Integer.parseInt(NStringUtils.strip(part.substring(dash + 1)));
+                    int a = parseIntEntry(part.substring(0, dash), "--pages");
+                    int b = parseIntEntry(part.substring(dash + 1), "--pages");
                     for (int i = a; i <= b; i++) {
                         g.pages.add(i);
                     }
                 } else {
-                    g.pages.add(Integer.parseInt(part));
+                    g.pages.add(parseIntEntry(part, "--pages"));
                 }
             }
         }
+    }
+
+    private int parseIntEntry(String value, String option) {
+        return NLiteral.of(NStringUtils.strip(value)).asInt()
+                .orElseThrow(() -> new IllegalArgumentException("invalid integer value for " + option + ": " + value));
+    }
+
+    private float parseFloatEntry(String value, String option) {
+        return NLiteral.of(NStringUtils.strip(value)).asFloat()
+                .orElseThrow(() -> new IllegalArgumentException("invalid number value for " + option + ": " + value));
     }
 
     private void continueParsingShow(NCmdLine cmdLine, Options options) {
