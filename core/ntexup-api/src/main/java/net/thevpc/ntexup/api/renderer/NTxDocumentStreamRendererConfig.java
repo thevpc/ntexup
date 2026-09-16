@@ -11,6 +11,7 @@ public class NTxDocumentStreamRendererConfig implements Serializable, Cloneable 
     private boolean showPageNumber;
     private boolean showFileName;
     private boolean showDate;
+    private int dpi;
     private float marginTop;
     private float marginBottom;
     private float marginLeft;
@@ -85,6 +86,15 @@ public class NTxDocumentStreamRendererConfig implements Serializable, Cloneable 
 
     public NTxDocumentStreamRendererConfig setShowDate(boolean showDate) {
         this.showDate = showDate;
+        return this;
+    }
+
+    public int getDpi() {
+        return dpi;
+    }
+
+    public NTxDocumentStreamRendererConfig setDpi(int dpi) {
+        this.dpi = dpi;
         return this;
     }
 

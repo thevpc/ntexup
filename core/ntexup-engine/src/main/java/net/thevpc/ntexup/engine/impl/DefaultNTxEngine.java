@@ -724,6 +724,11 @@ public class DefaultNTxEngine implements NTxEngine {
     }
 
     @Override
+    public NOptional<NTxDocumentStreamRenderer> newImageRenderer() {
+        return newStreamRenderer("image");
+    }
+
+    @Override
     public NOptional<NTxDocumentScreenRenderer> newScreenRenderer() {
         NOptional<NTxDocumentRenderer> u = newRenderer("screen");
         if (u.isPresent()) {

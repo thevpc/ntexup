@@ -9,6 +9,7 @@ import net.thevpc.ntexup.api.renderer.NTxDocumentStreamRenderer;
 import net.thevpc.ntexup.api.renderer.NTxDocumentStreamRendererConfig;
 import net.thevpc.ntexup.cmdline.options.*;
 import net.thevpc.ntexup.engine.repo.RepoBuilderTool;
+import net.thevpc.ntexup.engine.renderer.image.ImageDocumentRenderer;
 import net.thevpc.ntexup.main.MainFrame;
 import net.thevpc.nuts.artifact.NId;
 import net.thevpc.nuts.platform.NSysEditorFamily;
@@ -201,6 +202,9 @@ public class NTexupOptionsProcessor {
         if (expecteOutput == null) {
             expecteOutput = NPath.of(".");
         }
+        GenerateActionOptions ga = info.options.get(GenerateActionOptions.class);
+        boolean image = ga != null && ga.outputFormat == OutputFormat.IMAGE;
+        NTxDocumentStreamRendererConfig renderConfig = createStreamRendererConfig(ga);
         for (NPath path : paths) {
             NChronometer ch = NChronometer.of();
             NTxCompiledDocument doc = info.engine.loadDocument(path);
@@ -208,25 +212,72 @@ public class NTexupOptionsProcessor {
                 info.engine.log().log(NMsg.ofC("no pages to render : %s", path.normalize().toAbsolute()).asError());
                 return;
             }
-            NTxDocumentStreamRendererConfig renderConfig = new NTxDocumentStreamRendererConfig();
-            NTxDocumentStreamRenderer renderer = info.engine.newPdfRenderer().get();
+            NTxDocumentStreamRenderer renderer = image
+                    ? info.engine.newImageRenderer().get()
+                    : info.engine.newPdfRenderer().get();
             renderer.setStreamRendererConfig(renderConfig);
-            NPath output = null;
+            if (image) {
+                renderer.setProperty(ImageDocumentRenderer.PROP_PAGES, ga == null ? null : ga.pages);
+                renderer.setProperty(ImageDocumentRenderer.PROP_FORMAT, ga == null ? null : ga.imageFormat);
+            }
+            NPath output;
             if (paths.size() == 1) {
-                if (expecteOutput.isDirectory()) {
-                    output = expecteOutput.resolve(path.name()).resolveSibling(NPathRenameOptions.ofExtension("pdf"));
+                if (expecteOutput.isDirectory() || (image && ga != null && ga.outputDirectory)) {
+                    if (image) {
+                        output = expecteOutput.mkdirs();
+                    } else {
+                        output = expecteOutput.resolve(path.name()).resolveSibling(NPathRenameOptions.ofExtension("pdf"));
+                    }
                 } else {
-                    output = expecteOutput.resolveSibling(NPathRenameOptions.ofExtension("pdf"));
+                    if (image) {
+                        output = expecteOutput;
+                    } else {
+                        output = expecteOutput.resolveSibling(NPathRenameOptions.ofExtension("pdf"));
+                    }
                 }
             } else {
-                output = expecteOutput.resolve(path.name()).resolveSibling(NPathRenameOptions.ofExtension("pdf"));
+                if (image) {
+                    output = expecteOutput.resolve(path.name());
+                } else {
+                    output = expecteOutput.resolve(path.name()).resolveSibling(NPathRenameOptions.ofExtension("pdf"));
+                }
             }
             renderer.setOutput(output);
             renderer.render(doc);
             ch.stop();
-            info.engine.log().log(NMsg.ofC("generated : %s (%s) in %s", output.normalize().toAbsolute(), NMemoryFormat.DEFAULT.format(NMemorySize.ofBytes(output.contentLength()).normalize()), ch).asInfo().withDurationMillis(ch.durationMs()));
+            info.engine.log().log(NMsg.ofC("generated : %s in %s", output.normalize().toAbsolute(), ch).asInfo().withDurationMillis(ch.durationMs()));
 
         }
+    }
+
+    private NTxDocumentStreamRendererConfig createStreamRendererConfig(GenerateActionOptions ga) {
+        NTxDocumentStreamRendererConfig c = new NTxDocumentStreamRendererConfig();
+        if (ga != null) {
+            c.setDpi(ga.dpi);
+            c.setGridX(ga.gridX);
+            c.setGridY(ga.gridY);
+            if (ga.marginTop >= 0) {
+                c.setMarginTop(ga.marginTop);
+            }
+            if (ga.marginBottom >= 0) {
+                c.setMarginBottom(ga.marginBottom);
+            }
+            if (ga.marginLeft >= 0) {
+                c.setMarginLeft(ga.marginLeft);
+            }
+            if (ga.marginRight >= 0) {
+                c.setMarginRight(ga.marginRight);
+            }
+            if (ga.pageWidth != null) {
+                c.setPageWidth(ga.pageWidth);
+            }
+            if (ga.pageHeight != null) {
+                c.setPageHeight(ga.pageHeight);
+            }
+            c.setOrientation(ga.orientation);
+            c.setShowPageNumber(ga.showPageNumber);
+        }
+        return c;
     }
 
     private void runActionGenerate(Info info) {

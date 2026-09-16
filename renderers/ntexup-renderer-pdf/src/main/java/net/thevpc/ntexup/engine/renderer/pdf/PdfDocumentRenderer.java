@@ -96,7 +96,7 @@ public class PdfDocumentRenderer extends NTxDocumentStreamRendererBase implement
             float cellWidth = (usableWidth - totalMarginWidth) / imagesPerRow;
             float cellHeight = (usableHeight - totalMarginHeight) / imagesPerColumn;
 
-            int dpi = 200;
+            int dpi = config.getDpi() > 0 ? config.getDpi() : 200;
             float pointsPerInch = 72f;
             int pixelWidth = (int)(cellWidth * dpi / pointsPerInch);
             int pixelHeight = (int)(cellHeight * dpi / pointsPerInch);

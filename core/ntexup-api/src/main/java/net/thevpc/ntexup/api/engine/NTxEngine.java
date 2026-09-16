@@ -89,6 +89,8 @@ public interface NTxEngine {
 
     NOptional<NTxDocumentStreamRenderer> newHtmlRenderer();
 
+    NOptional<NTxDocumentStreamRenderer> newImageRenderer();
+
     NOptional<NTxDocumentScreenRenderer> newScreenRenderer();
 
     NOptional<NTxDocumentRenderer> newRenderer(String type);
