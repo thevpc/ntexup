@@ -244,24 +244,38 @@ public class NtxGraphics3DImpl implements NtxGraphics3D {
         );
         NtxElement3DLineLabel lbl = pr.getLabel();
         if (lbl != null && lbl.getText() != null && !lbl.getText().trim().isEmpty()) {
-            draw3DLineLabel(lbl, pts2d[0], pts2d[1], lp);
+            draw3DLineLabel(lbl, pts3d[0], pts3d[1], pts2d[0], pts2d[1], origin, cmd, lp);
         }
     }
 
-    private void draw3DLineLabel(NtxElement3DLineLabel lbl, NTxPoint2D p1, NTxPoint2D p2, Paint linePaint) {
+    private void draw3DLineLabel(NtxElement3DLineLabel lbl, NTxPoint3D p1_3d, NTxPoint3D p2_3d, NTxPoint2D p1, NTxPoint2D p2, NTxPoint2D origin, DrawCommand cmd, Paint linePaint) {
         double pos = lbl.getPosition();
         double t = (pos <= 0 ? 50.0 : pos) / 100.0;
-        double lx = p1.x + (p2.x - p1.x) * t;
-        double ly = p1.y + (p2.y - p1.y) * t;
+
+        double lx;
+        double ly;
+
+        if (lbl.getOffset3d() != null) {
+            double bx3d = p1_3d.x + (p2_3d.x - p1_3d.x) * t + lbl.getOffset3d().x;
+            double by3d = p1_3d.y + (p2_3d.y - p1_3d.y) * t + lbl.getOffset3d().y;
+            double bz3d = p1_3d.z + (p2_3d.z - p1_3d.z) * t + lbl.getOffset3d().z;
+            NTxPoint2D[] proj = camera.projectFromWorldToScreen(new NTxPoint3D[]{new NTxPoint3D(bx3d, by3d, bz3d)}, origin);
+            lx = proj[0].x;
+            ly = proj[0].y;
+        } else {
+            lx = p1.x + (p2.x - p1.x) * t;
+            ly = p1.y + (p2.y - p1.y) * t;
+        }
 
         NTxTextOptions textOptions = new NTxTextOptions();
         if (rendererContext != null) {
             textOptions.defaultFont = NTxValueByName.getFontInfo(rendererContext);
             textOptions.sr = rendererContext.sizeRef();
         }
-        if (lbl.getFontSize() != null && lbl.getFontSize() > 0) {
-            double v = lbl.getFontSize();
-            textOptions.fontSize = v > 10 ? NTxSize.ofPx(v) : NTxSize.ofPage(v);
+        if (lbl.getFontSize() != null) {
+            textOptions.fontSize = lbl.getFontSize();
+        } else if (textOptions.defaultFont != null && textOptions.defaultFont.size != null) {
+            textOptions.fontSize = textOptions.defaultFont.size;
         } else {
             textOptions.fontSize = NTxSize.ofPage(2.0);
         }
@@ -287,24 +301,138 @@ public class NtxGraphics3DImpl implements NtxGraphics3D {
         graphics.setFont(f);
         float fontSize = f.getSize2D();
 
-        if (lbl.getOffset() != null) {
-            lx += lbl.getOffset().x;
-            ly += lbl.getOffset().y;
-        } else {
-            // Perpendicular offset by default (fontSize * 0.7) so label doesn't overlap the line
-            double dx = p2.x - p1.x;
-            double dy = p2.y - p1.y;
-            double len = Math.sqrt(dx * dx + dy * dy);
-            if (len > 1e-4) {
-                double nx = -dy / len;
-                double ny = dx / len;
+        double dx = p2.x - p1.x;
+        double dy = p2.y - p1.y;
+        double len = Math.sqrt(dx * dx + dy * dy);
+        double tx_dir = 1.0;
+        double ty_dir = 0.0;
+        double nx = 0;
+        double ny = -1;
+        if (len > 1e-4) {
+            tx_dir = dx / len;
+            ty_dir = dy / len;
+            if (Math.abs(dx) < 1e-3) {
+                nx = -1.0;
+                ny = 0.0;
+            } else if (Math.abs(dy) < 1e-3) {
+                nx = 0.0;
+                ny = -1.0;
+            } else {
+                nx = -dy / len;
+                ny = dx / len;
                 if (ny > 0) {
                     nx = -nx;
                     ny = -ny;
                 }
-                lx += nx * (fontSize * 0.7);
-                ly += ny * (fontSize * 0.7);
             }
+        }
+
+        double dPerp = 0;
+        boolean hasOffsetPerp = false;
+        NTxSize perpSize = lbl.getOffsetPerpSize();
+        if (perpSize != null) {
+            hasOffsetPerp = true;
+            switch (perpSize.type()) {
+                case PARENT: {
+                    dPerp = (perpSize.value() / 100.0) * len;
+                    break;
+                }
+                case PAGE: {
+                    double pageSize = rendererContext != null ? rendererContext.globalBounds2D().widthX() : 800;
+                    dPerp = (perpSize.value() / 100.0) * pageSize;
+                    break;
+                }
+                case PX:
+                case REM: {
+                    dPerp = perpSize.size();
+                    break;
+                }
+                case BOUNDS: {
+                    dPerp = perpSize.width();
+                    break;
+                }
+            }
+        } else if (lbl.getOffsetPerp() != null) {
+            hasOffsetPerp = true;
+            dPerp = (lbl.getOffsetPerp() / 100.0) * len;
+        }
+
+        double dParallel = 0;
+        boolean hasOffsetParallel = false;
+        NTxSize parSize = lbl.getOffsetParallelSize();
+        if (parSize != null) {
+            hasOffsetParallel = true;
+            switch (parSize.type()) {
+                case PARENT: {
+                    dParallel = (parSize.value() / 100.0) * len;
+                    break;
+                }
+                case PAGE: {
+                    double pageSize = rendererContext != null ? rendererContext.globalBounds2D().widthX() : 800;
+                    dParallel = (parSize.value() / 100.0) * pageSize;
+                    break;
+                }
+                case PX:
+                case REM: {
+                    dParallel = parSize.size();
+                    break;
+                }
+                case BOUNDS: {
+                    dParallel = parSize.width();
+                    break;
+                }
+            }
+        } else if (lbl.getOffsetParallel() != null) {
+            hasOffsetParallel = true;
+            dParallel = (lbl.getOffsetParallel() / 100.0) * len;
+        }
+
+        double dUp = 0;
+        boolean hasOffsetUp = false;
+        NTxSize upSize = lbl.getOffsetUpSize();
+        if (upSize != null) {
+            hasOffsetUp = true;
+            switch (upSize.type()) {
+                case PARENT: {
+                    dUp = (upSize.value() / 100.0) * len;
+                    break;
+                }
+                case PAGE: {
+                    double pageSize = rendererContext != null ? rendererContext.globalBounds2D().widthY() : 600;
+                    dUp = (upSize.value() / 100.0) * pageSize;
+                    break;
+                }
+                case PX:
+                case REM: {
+                    dUp = upSize.size();
+                    break;
+                }
+                case BOUNDS: {
+                    dUp = upSize.height();
+                    break;
+                }
+            }
+        }
+
+        if (hasOffsetPerp) {
+            lx += nx * dPerp;
+            ly += ny * dPerp;
+        }
+        if (hasOffsetParallel) {
+            lx += tx_dir * dParallel;
+            ly += ty_dir * dParallel;
+        }
+        if (hasOffsetUp) {
+            ly -= dUp;
+        }
+        if (lbl.getOffset2d() != null) {
+            lx += lbl.getOffset2d().x;
+            ly += lbl.getOffset2d().y;
+        }
+        if (lbl.getOffset3d() == null && lbl.getOffset2d() == null && !hasOffsetPerp && !hasOffsetParallel && !hasOffsetUp) {
+            // Default perp offset so label doesn't overlap the line
+            lx += nx * (fontSize * 0.7);
+            ly += ny * (fontSize * 0.7);
         }
 
         FontMetrics fm = graphics.getFontMetrics(f);
@@ -391,14 +519,19 @@ public class NtxGraphics3DImpl implements NtxGraphics3D {
         }
         if (contour) {
             Paint oldPaint = g.getPaint();
+            Composite oldComposite = g.getComposite();
             Stroke oldStroke = g.getStroke();
             Paint cc = NUtils.firstNonNull(pr.getLinePaint(), pr.getContourPaint(), Color.BLACK);
             _graphicsSetPaint(cc);
+            if (pr.getComposite() != null) {
+                graphics.setComposite(pr.getComposite());
+            }
             if (pr.getContourStroke() != null) {
                 graphics.setStroke(pr.getContourStroke());
             }
             graphics.drawPolygon(xx, yy, xx.length);
             graphics.setPaint(oldPaint);
+            graphics.setComposite(oldComposite);
             graphics.setStroke(oldStroke);
         }
         mesh = oldMesh;

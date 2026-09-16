@@ -36,13 +36,9 @@ public class NTxQuadCurveBuilder implements NTxNodeBuilder {
         NTxNode node = rendererContext.node();
         rendererContext = rendererContext.withDefaultStyles(defaultStyles);
         NTxBounds2D b = rendererContext.selfBounds2D();
-        NTxPoint2D translation = new NTxPoint2D(b.minX(), b.minY());
-        NTxPoint2D from = NTxPoint.ofParent(NTxValue.ofProp(node, NTxPropName.FROM).asPoint2D().get()).valueHPoint2D(b, rendererContext.globalBounds2D())
-                .plus(translation);
-        NTxPoint2D to = NTxPoint.ofParent(NTxValue.ofProp(node, NTxPropName.TO).asPoint2D().get()).valueHPoint2D(b, rendererContext.globalBounds2D())
-                .plus(translation);
-        NTxPoint2D ctrl = NTxPoint.ofParent(NTxValue.ofProp(node, NTxPropName.CTRL).asPoint2D().get()).valueHPoint2D(b, rendererContext.globalBounds2D())
-                .plus(translation);
+        NTxPoint2D from = NTxLineBuilder.resolvePoint2D(node.getPropertyValue(NTxPropName.FROM).orNull(), rendererContext, b);
+        NTxPoint2D to = NTxLineBuilder.resolvePoint2D(node.getPropertyValue(NTxPropName.TO).orNull(), rendererContext, b);
+        NTxPoint2D ctrl = NTxLineBuilder.resolvePoint2D(node.getPropertyValue(NTxPropName.CTRL).orNull(), rendererContext, b);
         NTxGraphics g = rendererContext.graphics();
         if (!rendererContext.isDry()) {
             Paint fc = rendererContext.getLineColor(true);

@@ -24,11 +24,6 @@ public class NTxValue {
     private String name;
     private List<NElement> args = new ArrayList<>();
     private List<NElement> children = new ArrayList<>();
-
-    private static NOptional<Color> getRegisteredColor(String name) {
-        return NColor.ofName(name).map(x->new Color(x.rgb())).withMessage(() -> NMsg.ofC("color %s", name));
-    }
-
     private boolean parsedChildren;
 
     public static NTxValue ofProp(NTxNode n, String name) {
@@ -302,10 +297,6 @@ public class NTxValue {
                         return NOptional.of(DefaultNTxColorPalette.INSTANCE.getColor(u.get()));
                     }
                 }
-                NOptional<Color> color = getRegisteredColor(s);
-                if (color.isPresent()) {
-                    return NOptional.of(color.get());
-                }
                 NOptional<NColor> nc = NColor.ofName(s);
                 if(nc.isPresent()) {
                     return NOptional.of(new Color(nc.get().rgb()));
@@ -439,10 +430,6 @@ public class NTxValue {
                     if (u.isPresent()) {
                         return NOptional.of(DefaultNTxColorPalette.INSTANCE.getColor(u.get()));
                     }
-                }
-                NOptional<Color> color = getRegisteredColor(s);
-                if (color.isPresent()) {
-                    return color;
                 }
                 NOptional<NColor> nc = NColor.ofName(s);
                 if(nc.isPresent()) {

@@ -40,6 +40,10 @@ public class NtxShapes3dUtils {
         double centerY = real3D != null ? real3D.minY() + real3D.widthY() / 2.0 : 0.0;
         double centerZ = real3D != null ? real3D.minZ() + real3D.widthZ() / 2.0 : 0.0;
 
+        double spanX = real3D != null && real3D.widthX() > 0 ? real3D.widthX() : 1.0;
+        double spanY = real3D != null && real3D.widthY() > 0 ? real3D.widthY() : 1.0;
+        double spanZ = real3D != null && real3D.widthZ() > 0 ? real3D.widthZ() : 1.0;
+
         double maxSpan = 1.0;
         if (real3D != null) {
             maxSpan = Math.max(real3D.widthX(), Math.max(real3D.widthY(), real3D.widthZ()));
@@ -55,9 +59,13 @@ public class NtxShapes3dUtils {
             ref2D = 300.0;
         }
 
-        double nx = normalizePos(pos.x, centerX, maxSpan, ref2D, bounds.widthX(), page.widthX());
-        double ny = normalizePos(pos.y, centerY, maxSpan, ref2D, bounds.widthY(), page.widthY());
-        double nz = normalizePos(pos.z, centerZ, maxSpan, ref2D, ref2D, Math.max(page.widthX(), page.widthY()));
+        double sceneSpanX = (spanX / maxSpan) * ref2D;
+        double sceneSpanY = (spanY / maxSpan) * ref2D;
+        double sceneSpanZ = (spanZ / maxSpan) * ref2D;
+
+        double nx = normalizePos(pos.x, centerX, maxSpan, ref2D, bounds.widthX(), sceneSpanX);
+        double ny = normalizePos(pos.y, centerY, maxSpan, ref2D, bounds.widthY(), sceneSpanY);
+        double nz = normalizePos(pos.z, centerZ, maxSpan, ref2D, ref2D, sceneSpanZ);
 
         return new NTxPoint3D(nx, ny, nz);
     }
@@ -65,6 +73,10 @@ public class NtxShapes3dUtils {
     public static NTxPoint3D convertDistance3D(NTxNumberElement3 dist, NTxBounds2D bounds, NTxBounds2D page, NTxBounds3D real3D) {
         if (dist == null) return new NTxPoint3D(0, 0, 0);
 
+        double spanX = real3D != null && real3D.widthX() > 0 ? real3D.widthX() : 1.0;
+        double spanY = real3D != null && real3D.widthY() > 0 ? real3D.widthY() : 1.0;
+        double spanZ = real3D != null && real3D.widthZ() > 0 ? real3D.widthZ() : 1.0;
+
         double maxSpan = 1.0;
         if (real3D != null) {
             maxSpan = Math.max(real3D.widthX(), Math.max(real3D.widthY(), real3D.widthZ()));
@@ -80,9 +92,13 @@ public class NtxShapes3dUtils {
             ref2D = 300.0;
         }
 
-        double nx = normalizeDist(dist.x, maxSpan, ref2D, bounds.widthX(), page.widthX());
-        double ny = normalizeDist(dist.y, maxSpan, ref2D, bounds.widthY(), page.widthY());
-        double nz = normalizeDist(dist.z, maxSpan, ref2D, ref2D, Math.max(page.widthX(), page.widthY()));
+        double sceneSpanX = (spanX / maxSpan) * ref2D;
+        double sceneSpanY = (spanY / maxSpan) * ref2D;
+        double sceneSpanZ = (spanZ / maxSpan) * ref2D;
+
+        double nx = normalizeDist(dist.x, maxSpan, ref2D, bounds.widthX(), sceneSpanX);
+        double ny = normalizeDist(dist.y, maxSpan, ref2D, bounds.widthY(), sceneSpanY);
+        double nz = normalizeDist(dist.z, maxSpan, ref2D, ref2D, sceneSpanZ);
 
         return new NTxPoint3D(nx, ny, nz);
     }
@@ -407,9 +423,20 @@ public class NtxShapes3dUtils {
 
         g.setMeshVisible(_showMesh);
         g.setMeshPrecision(_maxEdge);
-        g.setMeshPaint(NTxValueByType.getPaint(rendererContext, "mesh-color", "color").orElse(null));
-        g.setMeshStroke(rendererContext.graphics().createStroke(NTxValueByType.getElement(rendererContext, "mesh-stroke").orNull()));
-//        g.setComposite(NTxValueByType.getComposite(node, rendererContext, "composite").orElse(null));
+        Double _opacity = NTxValueByType.getDouble(rendererContext, "opacity", "alpha").orNull();
+        if (_opacity != null) {
+            float alpha = (float) (_opacity > 1.0 ? _opacity / 100.0 : _opacity);
+            alpha = Math.max(0f, Math.min(1f, alpha));
+            g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
+        }
+        Boolean _visible = NTxValueByType.getBoolean(rendererContext, "visible").orNull();
+        if (Boolean.FALSE.equals(_visible)) {
+            g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0f));
+        }
+        Boolean _hidden = NTxValueByType.getBoolean(rendererContext, "hidden", "disabled").orNull();
+        if (Boolean.TRUE.equals(_hidden)) {
+            g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0f));
+        }
         g.setTransform(resolveTransform(node, b));
     }
 

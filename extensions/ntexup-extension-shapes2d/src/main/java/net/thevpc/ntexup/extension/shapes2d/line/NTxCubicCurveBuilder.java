@@ -35,15 +35,10 @@ public class NTxCubicCurveBuilder implements NTxNodeBuilder {
         NTxNode node = rendererContext.node();
         rendererContext = rendererContext.withDefaultStyles(defaultStyles);
         NTxBounds2D b = rendererContext.selfBounds2D();
-        NTxPoint2D translation = new NTxPoint2D(b.minX(), b.minY());
-        NTxPoint2D from = NTxPoint.ofParent(NTxValue.ofProp(node, NTxPropName.FROM).asPoint2D().get()).valueHPoint2D(b, rendererContext.globalBounds2D())
-                .plus(translation);
-        NTxPoint2D to = NTxPoint.ofParent(NTxValue.ofProp(node, NTxPropName.TO).asPoint2D().get()).valueHPoint2D(b, rendererContext.globalBounds2D())
-                .plus(translation);
-        NTxPoint2D ctrl1 = NTxPoint.ofParent(NTxValue.ofProp(node, NTxPropName.CTRL1).asPoint2D().get()).valueHPoint2D(b, rendererContext.globalBounds2D())
-                .plus(translation);
-        NTxPoint2D ctrl2 = NTxPoint.ofParent(NTxValue.ofProp(node, NTxPropName.CTRL2).asPoint2D().get()).valueHPoint2D(b, rendererContext.globalBounds2D())
-                .plus(translation);
+        NTxPoint2D from = NTxLineBuilder.resolvePoint2D(node.getPropertyValue(NTxPropName.FROM).orNull(), rendererContext, b);
+        NTxPoint2D to = NTxLineBuilder.resolvePoint2D(node.getPropertyValue(NTxPropName.TO).orNull(), rendererContext, b);
+        NTxPoint2D ctrl1 = NTxLineBuilder.resolvePoint2D(node.getPropertyValue(NTxPropName.CTRL1).orNull(), rendererContext, b);
+        NTxPoint2D ctrl2 = NTxLineBuilder.resolvePoint2D(node.getPropertyValue(NTxPropName.CTRL2).orNull(), rendererContext, b);
         NTxGraphics g = rendererContext.graphics();
         if (!rendererContext.isDry()) {
             Paint fc = rendererContext.getLineColor(true);

@@ -1,18 +1,26 @@
 package net.thevpc.ntexup.lib.geometry3d.impl.primitives;
 
 import net.thevpc.ntexup.api.document.elem2d.NTxPoint2D;
-import net.thevpc.nuts.util.NColor;
+import net.thevpc.ntexup.api.document.elem2d.NTxSize;
+import net.thevpc.ntexup.lib.geometry3d.NTxPoint3D;
 
 import java.awt.*;
 
 public class NtxElement3DLineLabel {
     private String text;
-    private double position;
+    private double position = 50.0;
     private double orientationAngle;
     private boolean orientation3d;
-    private NTxPoint2D offset;
+    private NTxPoint2D offset2d;
+    private NTxPoint3D offset3d;
+    private NTxPoint3D offsetRel3d;
+    private NTxSize offsetPerpSize;
+    private NTxSize offsetParallelSize;
+    private NTxSize offsetUpSize;
+    private Double offsetPerp;
+    private Double offsetParallel;
     private String fontFamily;
-    private Double fontSize;
+    private NTxSize fontSize;
     private Boolean fontBold;
     private Boolean fontItalic;
     private Boolean fontUnderline;
@@ -20,6 +28,83 @@ public class NtxElement3DLineLabel {
     private Paint foregroundColor;
     private Paint backgroundColor;
 
+    public NTxPoint2D getOffset2d() {
+        return offset2d;
+    }
+
+    public NtxElement3DLineLabel setOffset2d(NTxPoint2D offset2d) {
+        this.offset2d = offset2d;
+        return this;
+    }
+
+    public NTxPoint3D getOffset3d() {
+        return offset3d;
+    }
+
+    public NtxElement3DLineLabel setOffset3d(NTxPoint3D offset3d) {
+        this.offset3d = offset3d;
+        return this;
+    }
+
+    public NTxPoint3D getOffsetRel3d() {
+        return offsetRel3d;
+    }
+
+    public NtxElement3DLineLabel setOffsetRel3d(NTxPoint3D offsetRel3d) {
+        this.offsetRel3d = offsetRel3d;
+        return this;
+    }
+
+    public NTxSize getOffsetPerpSize() {
+        return offsetPerpSize;
+    }
+
+    public NtxElement3DLineLabel setOffsetPerpSize(NTxSize offsetPerpSize) {
+        this.offsetPerpSize = offsetPerpSize;
+        return this;
+    }
+
+    public NTxSize getOffsetParallelSize() {
+        return offsetParallelSize;
+    }
+
+    public NtxElement3DLineLabel setOffsetParallelSize(NTxSize offsetParallelSize) {
+        this.offsetParallelSize = offsetParallelSize;
+        return this;
+    }
+
+    public NTxSize getOffsetUpSize() {
+        return offsetUpSize;
+    }
+
+    public NtxElement3DLineLabel setOffsetUpSize(NTxSize offsetUpSize) {
+        this.offsetUpSize = offsetUpSize;
+        return this;
+    }
+
+    public Double getOffsetPerp() {
+        return offsetPerp;
+    }
+
+    public NtxElement3DLineLabel setOffsetPerp(Double offsetPerp) {
+        this.offsetPerp = offsetPerp;
+        if (offsetPerp != null) {
+            this.offsetPerpSize = NTxSize.ofParent(offsetPerp);
+        }
+        return this;
+    }
+
+    public Double getOffsetParallel() {
+        return offsetParallel;
+    }
+
+    public NtxElement3DLineLabel setOffsetParallel(Double offsetParallel) {
+        this.offsetParallel = offsetParallel;
+        if (offsetParallel != null) {
+            this.offsetParallelSize = NTxSize.ofParent(offsetParallel);
+        }
+        return this;
+    }
 
     public String getFontFamily() {
         return fontFamily;
@@ -30,12 +115,21 @@ public class NtxElement3DLineLabel {
         return this;
     }
 
-    public Double getFontSize() {
+    public NTxSize getFontSize() {
         return fontSize;
     }
 
-    public NtxElement3DLineLabel setFontSize(Double fontSize) {
+    public NtxElement3DLineLabel setFontSize(NTxSize fontSize) {
         this.fontSize = fontSize;
+        return this;
+    }
+
+    public NtxElement3DLineLabel setFontSize(Double fontSize) {
+        if (fontSize != null) {
+            this.fontSize = fontSize > 10 ? NTxSize.ofPx(fontSize) : NTxSize.ofPage(fontSize);
+        } else {
+            this.fontSize = null;
+        }
         return this;
     }
 
@@ -130,11 +224,11 @@ public class NtxElement3DLineLabel {
     }
 
     public NTxPoint2D getOffset() {
-        return offset;
+        return offset2d;
     }
 
     public NtxElement3DLineLabel setOffset(NTxPoint2D offset) {
-        this.offset = offset;
+        this.offset2d = offset;
         return this;
     }
 }

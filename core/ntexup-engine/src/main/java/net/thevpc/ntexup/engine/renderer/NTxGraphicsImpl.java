@@ -690,6 +690,28 @@ public class NTxGraphicsImpl implements NTxGraphics {
         g.shear(shx, shy);
     }
 
+    private NTxArrow scaleArrow(NTxArrow arrow, double len, double maxRatio) {
+        if (arrow == null || arrow.getType() == null) {
+            return arrow;
+        }
+        double nominalW = arrow.getWidth();
+        double nominalH = arrow.getHeight();
+        if (nominalW <= 0 && nominalH <= 0) {
+            nominalW = 10;
+            nominalH = 10;
+        } else if (nominalW <= 0) {
+            nominalW = nominalH;
+        } else if (nominalH <= 0) {
+            nominalH = nominalW;
+        }
+        double maxW = len * maxRatio;
+        if (nominalW > maxW && maxW > 0) {
+            double scale = maxW / nominalW;
+            return new NTxArrow(arrow.getType(), maxW, nominalH * scale);
+        }
+        return arrow;
+    }
+
     private void draw2DHElement2DLine(NtxElement2DLine pr) {
         NTxPoint2D a = pr.getFrom();
         NTxPoint2D b = pr.getTo();
@@ -699,16 +721,30 @@ public class NTxGraphicsImpl implements NTxGraphics {
         double dy = b.y - a.y;
         double len = Math.sqrt(dx * dx + dy * dy);
 
+        NTxArrow startArrow = pr.getStartArrow();
+        NTxArrow endArrow   = pr.getEndArrow();
+
         // Adjusted endpoints: pull each end back by the arrow's setback distance
         NTxPoint2D lineStart = a;
         NTxPoint2D lineEnd   = b;
 
         if (len > 1e-9) {
+            boolean hasStart = (startArrow != null && startArrow.getType() != null);
+            boolean hasEnd   = (endArrow != null && endArrow.getType() != null);
+            if (hasStart && hasEnd) {
+                startArrow = scaleArrow(startArrow, len, 0.3);
+                endArrow   = scaleArrow(endArrow, len, 0.3);
+            } else if (hasStart) {
+                startArrow = scaleArrow(startArrow, len, 0.45);
+            } else if (hasEnd) {
+                endArrow   = scaleArrow(endArrow, len, 0.45);
+            }
+
             double ux = dx / len; // unit vector a→b
             double uy = dy / len;
 
-            double setbackA = computeArrowSetback(pr.getStartArrow());
-            double setbackB = computeArrowSetback(pr.getEndArrow());
+            double setbackA = computeArrowSetback(startArrow);
+            double setbackB = computeArrowSetback(endArrow);
 
             // Clamp so the two setbacks don't cross each other
             double totalSetback = setbackA + setbackB;
@@ -737,8 +773,8 @@ public class NTxGraphicsImpl implements NTxGraphics {
 
         // Arrow directions: start arrow points from b toward a (into point a)
         //                   end   arrow points from a toward b (into point b)
-        drawArrayHead(a, a.minus(b).asVector(), pr.getStartArrow());
-        drawArrayHead(b, b.minus(a).asVector(), pr.getEndArrow());
+        drawArrayHead(a, a.minus(b).asVector(), startArrow);
+        drawArrayHead(b, b.minus(a).asVector(), endArrow);
 
         setPaint(oldPaint);
         setStroke(oldStroke);
