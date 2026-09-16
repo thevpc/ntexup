@@ -119,7 +119,7 @@ public class ImageDocumentRenderer extends NTxDocumentStreamRendererBase impleme
         }
         for (int i = 0; i < selectedPages.size(); i++) {
             int pageIndex = indexOf(document.pages(), selectedPages.get(i));
-            NPath target = resolveOutput(output, pageIndex, selectedPages.size(), format, ext, width, dirMode);
+            NPath target = resolveOutput(output, pageIndex, selectedPages.size(), format, ext, width, dirMode).mkParentDirs();
             NPath parent = target.parent();
             if (parent != null && !parent.exists()) {
                 parent.mkdirs();
@@ -136,7 +136,7 @@ public class ImageDocumentRenderer extends NTxDocumentStreamRendererBase impleme
         if (dirMode) {
             return output.resolve(String.format("page-%0" + width + "d" + ext, pageIndex));
         }
-        String name = output.toString();
+        String name = output.name();
         Matcher m = IMAGE_EXTENSION.matcher(name);
         boolean hasImageExtension = m.find();
         if (totalSelected == 1 && hasImageExtension) {
