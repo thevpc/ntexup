@@ -42,4 +42,14 @@ public interface NTxCompiledDocument {
     NOptional<NTxObj> getGlobalObject(String name);
 
     NTxCompiledDocument setGlobalObject(String name, NTxObj obj);
+
+    NTxDependencyGraph dependencyGraph();
+
+    void registerFuture(Object future);
+
+    boolean hasPendingFutures();
+
+    void awaitFutures();
+
+    void awaitFutures(long timeout, java.util.concurrent.TimeUnit unit);
 }

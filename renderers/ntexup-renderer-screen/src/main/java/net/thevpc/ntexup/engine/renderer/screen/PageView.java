@@ -25,6 +25,7 @@ public class PageView extends JComponent {
     private NTxCompiledDocument document;
     private final NRef<Dimension> lastSize = NRef.ofNull();
     private final double ratio = 16.0 / 9.0;
+    private volatile boolean dirty = false;
 
     public PageView(
             NTxCompiledDocument document,
@@ -35,6 +36,38 @@ public class PageView extends JComponent {
         this.page = page;
         this.uuid = UUID.randomUUID().toString();
         this.engine = engine;
+        if (document != null && document.dependencyGraph() != null) {
+            document.dependencyGraph().addPageInvalidationListener(pageIndex -> {
+                if (pageIndex == this.page.index() || pageIndex < 0) {
+                    repaintDirty();
+                }
+            });
+        }
+    }
+
+    public void repaintDirty() {
+        this.dirty = true;
+        if (this.page.isCompiled()) {
+            NTxNode p = this.page.compiledPage();
+            if (p != null) {
+                p.invalidateRenderCache();
+            }
+        }
+        SwingUtilities.invokeLater(() -> {
+            this.revalidate();
+            this.repaint();
+            Component c = this;
+            while (c != null) {
+                c.revalidate();
+                c.repaint();
+                if (c instanceof Window) {
+                    ((Window) c).validate();
+                    ((Window) c).repaint();
+                    break;
+                }
+                c = c.getParent();
+            }
+        });
     }
 
     public NTxEngine engine() {
@@ -84,6 +117,10 @@ public class PageView extends JComponent {
                 someChange = !size.equals(lastSize);
                 if (someChange) {
                     this.lastSize.set(size);
+                }
+                if (dirty) {
+                    dirty = false;
+                    someChange = true;
                 }
             }
             Graphics2D g2d = (Graphics2D) g;
@@ -137,7 +174,7 @@ public class PageView extends JComponent {
         config.setCapabilities(NMaps.of(NTxRendererContext.CAPABILITY_ANIMATE, true));
         config.setStartTime(pageStartTime);
         config.setUseCache(!someChange);
-        engine.renderPage(page, config,g2d,this,this::repaint);
+        engine.renderPage(page, config, g2d, this, this::repaintDirty);
         NTxNode p = page.compiledPage();
         pageNode.set(p);
     }

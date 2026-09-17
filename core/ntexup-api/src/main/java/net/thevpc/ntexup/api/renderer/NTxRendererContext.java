@@ -117,6 +117,8 @@ public interface NTxRendererContext extends NTxResolutionContext {
 
     boolean isVisible();
 
+    boolean isLayoutNone();
+
     double getFontSize();
 
     String getFontFamily();

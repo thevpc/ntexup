@@ -2,6 +2,7 @@ package net.thevpc.ntexup.engine.renderer;
 
 import net.thevpc.ntexup.api.document.elem2d.*;
 import net.thevpc.ntexup.api.document.node.*;
+import net.thevpc.ntexup.api.document.style.NTxProp;
 import net.thevpc.ntexup.api.document.style.NTxPropName;
 import net.thevpc.ntexup.api.eval.NTxValueByName;
 import net.thevpc.ntexup.api.document.NTxSizeRequirements;
@@ -11,8 +12,12 @@ import net.thevpc.ntexup.api.renderer.NTxNodeRenderer;
 import net.thevpc.ntexup.api.renderer.NTxRendererContext;
 import net.thevpc.ntexup.engine.util.NTx2DUtils0;
 import net.thevpc.ntexup.engine.util.NTxNodeRendererUtils;
+import net.thevpc.nuts.elem.NElement;
 import net.thevpc.nuts.text.NMsg;
 import net.thevpc.nuts.util.NOptional;
+
+import java.awt.Color;
+import java.awt.Font;
 
 public abstract class NTxNodeRendererBase implements NTxNodeRenderer {
 
@@ -24,6 +29,9 @@ public abstract class NTxNodeRendererBase implements NTxNodeRenderer {
 
     @Override
     public NTxSizeRequirements sizeRequirements(NTxRendererContext ctx) {
+        if (ctx.isLayoutNone()) {
+            return new NTxSizeRequirements(0, 0, 0, 0, 0, 0);
+        }
         NTxBounds2D bounds = ctx.selfBounds2D();
         return new NTxSizeRequirements(
                 0,
@@ -78,6 +86,15 @@ public abstract class NTxNodeRendererBase implements NTxNodeRenderer {
                     }
                 }
 
+                NOptional<NTxProp> pendingProp = node.getProperty(NTxPropName.PENDING);
+                if (pendingProp.isPresent() && !pendingProp.get().getValue().isNull()) {
+                    NElement pe = pendingProp.get().getValue();
+                    if ((pe.isBoolean() && pe.asBooleanValue().orElse(false)) || !pe.isBoolean()) {
+                        renderPending(rendererContext);
+                        return;
+                    }
+                }
+
                 NOptional<NTxShadow> shadowOptional = NTxValueByName.readStyleAsShadow(NTxPropName.SHADOW, rendererContext);
                 if (shadowOptional.isPresent() && !shadowOptional.get().isBlank()) {
                     NTxShadow shadow = shadowOptional.get();
@@ -98,6 +115,38 @@ public abstract class NTxNodeRendererBase implements NTxNodeRenderer {
                 nv.dispose();
             }
         }
+    }
+
+    public void renderPending(NTxRendererContext rendererContext) {
+        NTxNode node = rendererContext.node();
+        NOptional<NTxProp> pendingProp = node.getProperty(NTxPropName.PENDING);
+        if (pendingProp.isPresent() && !pendingProp.get().getValue().isNull()) {
+            NElement pe = pendingProp.get().getValue();
+            if (pe.isString()) {
+                NTxBounds2D bounds = rendererContext.selfBounds2D();
+                NTxGraphics g = rendererContext.graphics();
+                g.setColor(new Color(245, 247, 250));
+                g.fillRect(bounds);
+                g.setColor(new Color(200, 210, 220));
+                g.drawRect(bounds);
+                g.setColor(new Color(100, 115, 130));
+                g.setFont(new Font("SansSerif", Font.PLAIN, 12));
+                g.drawString(pe.asStringValue().get(), bounds.centerX() - 30, bounds.centerY());
+                return;
+            } else if (pe.isObject()) {
+                rendererContext.renderDetachedNode(pe, rendererContext.selfBounds2D());
+                return;
+            }
+        }
+        NTxBounds2D bounds = rendererContext.selfBounds2D();
+        NTxGraphics g = rendererContext.graphics();
+        g.setColor(new Color(245, 247, 250, 200));
+        g.fillRect(bounds);
+        g.setColor(new Color(200, 210, 220));
+        g.drawRect(bounds);
+        g.setColor(new Color(120, 130, 140));
+        g.setFont(new Font("SansSerif", Font.PLAIN, 12));
+        g.drawString("Loading...", bounds.centerX() - 25, bounds.centerY());
     }
 
     public abstract void renderMain(NTxRendererContext ctx);

@@ -1361,10 +1361,23 @@ public class DefaultNTxEngine implements NTxEngine {
 
     @Override
     public BufferedImage renderImage(NTxCompiledPage page, NTxNodeRendererConfig config) {
+        if (!config.isAnimate() && page.document().hasPendingFutures()) {
+            page.document().awaitFutures();
+            page.compiledPage().invalidateRenderCache();
+        }
         BufferedImage newImage = new BufferedImage((int) config.getWidth(), (int) config.getHeight(), BufferedImage.TYPE_INT_ARGB);
         Graphics2D g = newImage.createGraphics();
         renderPage(page, config, g, null, null);
         g.dispose();
+
+        if (!config.isAnimate() && page.document().hasPendingFutures()) {
+            page.document().awaitFutures();
+            page.compiledPage().invalidateRenderCache();
+            newImage = new BufferedImage((int) config.getWidth(), (int) config.getHeight(), BufferedImage.TYPE_INT_ARGB);
+            g = newImage.createGraphics();
+            renderPage(page, config, g, null, null);
+            g.dispose();
+        }
         return newImage;
     }
 

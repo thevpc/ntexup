@@ -16,8 +16,12 @@ public abstract class NTxSourceWithState implements NTxSource {
 
     @Override
     public boolean changed() {
+        if (state == null) {
+            state = state();
+            return false;
+        }
         Object ns = state();
-        return  !Objects.equals(ns, state);
+        return !Objects.equals(ns, state);
     }
 
     @Override

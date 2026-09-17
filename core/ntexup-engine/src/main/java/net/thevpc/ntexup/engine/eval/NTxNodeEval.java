@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import net.thevpc.ntexup.api.document.node.NTxNode;
 import net.thevpc.ntexup.api.eval.*;
 import net.thevpc.ntexup.api.extension.NTxFunction;
 import net.thevpc.ntexup.api.util.NTxUtils;
@@ -30,6 +31,14 @@ public class NTxNodeEval implements NTxObjectEvalContext {
     }
 
     public NElement evalVar(String varName) {
+        if (context.compiledDocument() != null && varName != null && !varName.isEmpty()) {
+            int pageIndex = context.compiledPage() != null ? context.compiledPage().index() : (context.parentContext() != null && context.parentContext().compiledPage() != null ? context.parentContext().compiledPage().index() : -1);
+            context.compiledDocument().dependencyGraph().addDependency(
+                    varName,
+                    context.node() instanceof NTxNode ? (NTxNode) context.node() : null,
+                    pageIndex
+            );
+        }
         NOptional<NTxVar> v = context.getVar(varName);
         if (!v.isPresent()) {
             context.engine().log().log(NMsg.ofC("var not found %s", varName).asWarning(), context.parent().source());
@@ -129,6 +138,14 @@ public class NTxNodeEval implements NTxObjectEvalContext {
             }
             case NAME: {
                 String u = elementExpr.asStringValue().get();
+                if (context.compiledDocument() != null && u != null && !u.isEmpty()) {
+                    int pageIndex = context.compiledPage() != null ? context.compiledPage().index() : (context.parentContext() != null && context.parentContext().compiledPage() != null ? context.parentContext().compiledPage().index() : -1);
+                    context.compiledDocument().dependencyGraph().addDependency(
+                            u,
+                            context.node() instanceof NTxNode ? (NTxNode) context.node() : null,
+                            pageIndex
+                    );
+                }
                 NOptional<NTxVar> vv = context.getVar(u);
                 if (vv.isPresent()) {
                     return vv.get().get();
@@ -361,8 +378,61 @@ public class NTxNodeEval implements NTxObjectEvalContext {
                         return v.get();
                     }
                 }
+                if (a != null && propName != null && NTxFutureUtils.isFuture(a)) {
+                    if (a.isCustom() && a.asCustom().get().value() instanceof NTxFutureObj) {
+                        NTxFutureObj fo = (NTxFutureObj) a.asCustom().get().value();
+                        if (context.compiledDocument() != null) {
+                            context.compiledDocument().dependencyGraph().addDependency(
+                                    fo.name(),
+                                    context.node() instanceof NTxNode ? (NTxNode) context.node() : null,
+                                    context.compiledPage() != null ? context.compiledPage().index() : -1
+                            );
+                        }
+                        NOptional<NTxObj> childObj = fo.get(propName);
+                        if (childObj.isPresent()) {
+                            return childObj.get().toElement();
+                        }
+                    }
+                    if (a.asListContainer().isPresent()) {
+                        NOptional<NElement> refOpt = a.asListContainer().get().get("ref");
+                        if (refOpt.isPresent() && refOpt.get().isCustom()) {
+                            Object refObj = refOpt.get().asCustom().get().value();
+                            if (refObj instanceof NTxFutureObj) {
+                                NTxFutureObj fo = (NTxFutureObj) refObj;
+                                if (context.compiledDocument() != null) {
+                                    context.compiledDocument().dependencyGraph().addDependency(
+                                            fo.name(),
+                                            context.node() instanceof NTxNode ? (NTxNode) context.node() : null,
+                                            context.compiledPage() != null ? context.compiledPage().index() : -1
+                                    );
+                                }
+                                NOptional<NTxObj> childObj = fo.get(propName);
+                                if (childObj.isPresent()) {
+                                    return childObj.get().toElement();
+                                }
+                            }
+                        }
+                        NOptional<NElement> nameOpt = a.asListContainer().get().get("name");
+                        if (nameOpt.isPresent() && nameOpt.get().isAnyStringOrName()) {
+                            String parentPath = nameOpt.get().asStringValue().get();
+                            String fullPath = parentPath + "." + propName;
+                            NOptional<NTxVar> fv = context.getVar(fullPath);
+                            if (fv.isPresent()) {
+                                return fv.get().get();
+                            }
+                        }
+                    }
+                }
                 if (propName != null) {
                     String fullPath = NTxUtils.snippet(elem.firstOperand()) + "." + propName;
+                    if (context.compiledDocument() != null) {
+                        int pageIndex = context.compiledPage() != null ? context.compiledPage().index() : (context.parentContext() != null && context.parentContext().compiledPage() != null ? context.parentContext().compiledPage().index() : -1);
+                        context.compiledDocument().dependencyGraph().addDependency(
+                                fullPath,
+                                context.node() instanceof NTxNode ? (NTxNode) context.node() : null,
+                                pageIndex
+                        );
+                    }
                     NOptional<NTxVar> fv = context.getVar(fullPath);
                     if (fv.isPresent()) {
                         return fv.get().get();

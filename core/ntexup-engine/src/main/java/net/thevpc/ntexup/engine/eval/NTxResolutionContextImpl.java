@@ -383,6 +383,14 @@ public class NTxResolutionContextImpl implements NTxResolutionContext {
     }
 
     public NOptional<NTxVar> getVar(String varName) {
+        if (compiledDocument != null && varName != null && !varName.isEmpty()) {
+            int pageIndex = compiledPage != null ? compiledPage.index() : (parentContext != null && parentContext.compiledPage() != null ? parentContext.compiledPage().index() : -1);
+            compiledDocument.dependencyGraph().addDependency(
+                    varName,
+                    node() instanceof NTxNode ? (NTxNode) node() : null,
+                    pageIndex
+            );
+        }
         NTxVar value = vars.get(varName);
         if (value != null) {
             return NOptional.ofNamed(value, varName);

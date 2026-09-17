@@ -97,12 +97,18 @@ public class ImageDocumentRenderer extends NTxDocumentStreamRendererBase impleme
                 }
             }
         }
+        if (document.hasPendingFutures()) {
+            document.awaitFutures();
+        }
         List<byte[]> all = new ArrayList<>();
         for (int pi = 1; pi <= maxIndex; pi++) {
             byte[] bytes = engine.renderImageBytes(allPages.get(pi - 1), renderConfig);
             if (wanted.contains(pi)) {
                 all.add(toFormat(bytes, format));
             }
+        }
+        if (document.hasPendingFutures()) {
+            document.awaitFutures();
         }
         return all;
     }
@@ -124,7 +130,7 @@ public class ImageDocumentRenderer extends NTxDocumentStreamRendererBase impleme
             if (parent != null && !parent.exists()) {
                 parent.mkdirs();
             }
-            try (OutputStream os = target.outputStream()) {
+            try (OutputStream os = target.mkParentDirs().outputStream()) {
                 os.write(images.get(i));
             } catch (IOException ex) {
                 throw new NIOException(ex);

@@ -19,14 +19,16 @@ import java.awt.geom.Rectangle2D;
 
 public class NTxJFreeChartHelper {
     static void drawCurves(NTxNode p, NTxRendererContext rendererContext, NTxDrawContext drawContext){
-        NTxBounds2D bounds = rendererContext.parentBounds2D();
+        NTxBounds2D bounds = rendererContext.selfBounds2D();
         XYSeriesCollection dataset = new XYSeriesCollection();
         for (int j = 0; j < drawContext.allData.size(); j++) {
             NTxPlot2DData pd = drawContext.allData.get(j);
             XYSeries series = new XYSeries(NStringUtils.firstNonBlankStripped(pd.title, "Curve " + (j+1)));
-            double[] yy2 = pd.animatedYY(rendererContext);
-            for (int i = 0; i < pd.xx.length; i++) {
-                series.add(pd.xx[i], yy2[i]);
+            if (!pd.pending && pd.xx != null) {
+                double[] yy2 = pd.animatedYY(rendererContext);
+                for (int i = 0; i < pd.xx.length; i++) {
+                    series.add(pd.xx[i], yy2[i]);
+                }
             }
             dataset.addSeries(series);
         }
@@ -54,9 +56,11 @@ public class NTxJFreeChartHelper {
             if(pd.pld.plotType== NTxPlotType.CURVE) {
                 XYSeriesCollection dataset2 = new XYSeriesCollection();
                 XYSeries series = new XYSeries(NStringUtils.firstNonBlankStripped(pd.title, "Curve " + (i+1)));
-                double[] yy2 = pd.animatedYY(rendererContext);
-                for (int jx = 0; jx < pd.xx.length; jx++) {
-                    series.add(pd.xx[jx], yy2[jx]);
+                if (!pd.pending && pd.xx != null) {
+                    double[] yy2 = pd.animatedYY(rendererContext);
+                    for (int jx = 0; jx < pd.xx.length; jx++) {
+                        series.add(pd.xx[jx], yy2[jx]);
+                    }
                 }
                 dataset2.addSeries(series);
                 plot.setDataset(i, dataset2);
@@ -67,9 +71,11 @@ public class NTxJFreeChartHelper {
             }else if(pd.pld.plotType== NTxPlotType.BAR){
                 XYSeriesCollection dataset2 = new XYSeriesCollection();
                 XYSeries series = new XYSeries(NStringUtils.firstNonBlankStripped(pd.title, "Bar " + (i+1)));
-                double[] yy2 = pd.animatedYY(rendererContext);
-                for (int jx = 0; jx < pd.xx.length; jx++) {
-                    series.add(pd.xx[jx], yy2[jx]);
+                if (!pd.pending && pd.xx != null) {
+                    double[] yy2 = pd.animatedYY(rendererContext);
+                    for (int jx = 0; jx < pd.xx.length; jx++) {
+                        series.add(pd.xx[jx], yy2[jx]);
+                    }
                 }
                 dataset2.addSeries(series);
                 plot.setDataset(i, dataset2);

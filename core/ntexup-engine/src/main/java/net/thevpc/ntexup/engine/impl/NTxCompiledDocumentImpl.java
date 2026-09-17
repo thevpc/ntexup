@@ -30,6 +30,7 @@ import net.thevpc.nuts.util.*;
 
 import java.time.Instant;
 import java.util.*;
+import java.util.concurrent.*;
 
 import net.thevpc.ntexup.api.document.security.NTxManifestResource;
 import net.thevpc.nuts.collections.NCollections;
@@ -52,6 +53,8 @@ public class NTxCompiledDocumentImpl implements NTxCompiledDocument {
     private boolean successfullyLoaded = true;
     private final FingerprintBuilder fingerPrintBuilder = new FingerprintBuilder();
     private final Map<String, NTxObj> globalObjects = new HashMap<>();
+    private final NTxDependencyGraph dependencyGraph = new net.thevpc.ntexup.engine.eval.DefaultNTxDependencyGraph();
+    private final Set<Object> registeredFutures = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
     public class FingerprintBuilder {
         private final Map<String, NDefinition> effectiveDependencies = new HashMap<>();
@@ -200,12 +203,90 @@ public class NTxCompiledDocumentImpl implements NTxCompiledDocument {
 
     @Override
     public NTxCompiledDocument setGlobalObject(String name, NTxObj obj) {
+        System.out.println("DEBUG [setGlobalObject] name=" + name + " obj=" + obj + " in doc@" + Integer.toHexString(System.identityHashCode(this)));
+        NTxObj previous = globalObjects.get(name);
         if (obj == null) {
             globalObjects.remove(name);
         } else {
             globalObjects.put(name, obj);
+            if (net.thevpc.ntexup.api.eval.NTxFutureUtils.isFuture(obj)) {
+                registerFuture(obj);
+            }
+            if (obj instanceof net.thevpc.ntexup.api.eval.NTxFutureObj) {
+                ((net.thevpc.ntexup.api.eval.NTxFutureObj) obj).addListener(() -> {
+                    dependencyGraph.notifyBindingUpdated(name);
+                });
+            }
         }
+        if (previous instanceof net.thevpc.ntexup.api.eval.NTxFutureObj) {
+            ((net.thevpc.ntexup.api.eval.NTxFutureObj) previous).triggerListeners();
+        }
+        dependencyGraph.notifyBindingUpdated(name);
         return this;
+    }
+
+    @Override
+    public void registerFuture(Object future) {
+        if (future != null) {
+            registeredFutures.add(future);
+        }
+    }
+
+    @Override
+    public boolean hasPendingFutures() {
+        for (Object f : registeredFutures) {
+            if (net.thevpc.ntexup.api.eval.NTxFutureUtils.isFuture(f) && !net.thevpc.ntexup.api.eval.NTxFutureUtils.isReady(f)) {
+                return true;
+            }
+        }
+        for (NTxObj obj : globalObjects.values()) {
+            if (net.thevpc.ntexup.api.eval.NTxFutureUtils.isFuture(obj) && !net.thevpc.ntexup.api.eval.NTxFutureUtils.isReady(obj)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @Override
+    public void awaitFutures() {
+        awaitFutures(1, TimeUnit.HOURS);
+    }
+
+    @Override
+    public void awaitFutures(long timeout, TimeUnit unit) {
+        long endNanos = System.nanoTime() + unit.toNanos(timeout);
+        boolean anyPending = true;
+        while (anyPending) {
+            anyPending = false;
+            for (Object f : new ArrayList<>(registeredFutures)) {
+                if (net.thevpc.ntexup.api.eval.NTxFutureUtils.isFuture(f) && !net.thevpc.ntexup.api.eval.NTxFutureUtils.isReady(f)) {
+                    anyPending = true;
+                    long remainingMs = Math.max(1, TimeUnit.NANOSECONDS.toMillis(endNanos - System.nanoTime()));
+                    try {
+                        net.thevpc.ntexup.api.eval.NTxFutureUtils.await(f, remainingMs, TimeUnit.MILLISECONDS);
+                    } catch (Throwable ignored) {
+                    }
+                }
+            }
+            for (NTxObj obj : new ArrayList<>(globalObjects.values())) {
+                if (net.thevpc.ntexup.api.eval.NTxFutureUtils.isFuture(obj) && !net.thevpc.ntexup.api.eval.NTxFutureUtils.isReady(obj)) {
+                    anyPending = true;
+                    long remainingMs = Math.max(1, TimeUnit.NANOSECONDS.toMillis(endNanos - System.nanoTime()));
+                    try {
+                        net.thevpc.ntexup.api.eval.NTxFutureUtils.await(obj, remainingMs, TimeUnit.MILLISECONDS);
+                    } catch (Throwable ignored) {
+                    }
+                }
+            }
+            if (System.nanoTime() >= endNanos) {
+                break;
+            }
+        }
+    }
+
+    @Override
+    public NTxDependencyGraph dependencyGraph() {
+        return dependencyGraph;
     }
 
     public boolean isSuccessfullyLoaded() {
@@ -580,6 +661,11 @@ public class NTxCompiledDocumentImpl implements NTxCompiledDocument {
 
     private boolean safeAddPage(NTxCompiledPageImpl a) {
         compiledPages.add(a);
+        try {
+            scanPageDependencies(a.rawPage(), a.index());
+        } catch (Exception e) {
+            this.engine.log().log(NMsg.ofC("unexpected error : %s", e).asWarning(e));
+        }
 // soft limit — warn but continue
         if (compiledPages.size() > warnPageCount) {
             this.engine.log().log(NMsg.ofC("page count %d exceeds warning threshold", compiledPages.size()).asWarning());
@@ -591,6 +677,94 @@ public class NTxCompiledDocumentImpl implements NTxCompiledDocument {
             return false; // in readMore()
         }
         return true;
+    }
+
+    private void scanPageDependencies(NTxNode node, int pageIndex) {
+        if (node == null) return;
+        scanElementDependencies(node.getRaw(), pageIndex);
+        for (NTxProp prop : node.getProperties()) {
+            if (prop != null) {
+                scanElementDependencies(prop.getValue(), pageIndex);
+            }
+        }
+        for (NTxNode child : node.children()) {
+            scanPageDependencies(child, pageIndex);
+        }
+    }
+
+    private void scanElementDependencies(NElement elem, int pageIndex) {
+        if (elem == null) return;
+        if (elem.isName() || elem.type() == NElementType.NAME) {
+            String name = elem.asStringValue().orElse(null);
+            if (name != null && !name.isEmpty()) {
+                dependencyGraph.addDependency(name, null, pageIndex);
+            }
+        }
+        if (elem.type() == NElementType.FLAT_EXPR) {
+            NFlatExprElement flat = (NFlatExprElement) elem;
+            try {
+                NElement reshaped = flat.reshape();
+                scanElementDependencies(reshaped, pageIndex);
+            } catch (Exception ex) {
+                for (NElement child : flat.children()) {
+                    scanElementDependencies(child, pageIndex);
+                }
+            }
+        }
+        if (elem.type() == NElementType.BINARY_OPERATOR) {
+            NBinaryOperatorElement bin = (NBinaryOperatorElement) elem;
+            if (bin.operatorSymbol() == NOperatorSymbol.DOT) {
+                String dotted = toDottedString(bin);
+                if (dotted != null && !dotted.isEmpty()) {
+                    dependencyGraph.addDependency(dotted, null, pageIndex);
+                }
+            }
+            scanElementDependencies(bin.firstOperand(), pageIndex);
+            scanElementDependencies(bin.secondOperand(), pageIndex);
+        }
+        if (elem.isPair() || elem.type() == NElementType.PAIR) {
+            NPairElement p = (NPairElement) elem;
+            scanElementDependencies(p.key(), pageIndex);
+            scanElementDependencies(p.value(), pageIndex);
+        }
+        if (elem.asParametrizedContainer().isPresent()) {
+            for (NElement param : elem.asParametrizedContainer().get().params().orElse(Collections.emptyList())) {
+                scanElementDependencies(param, pageIndex);
+            }
+        }
+        if (elem.asObject().isPresent()) {
+            for (NElement child : elem.asObject().get().children()) {
+                scanElementDependencies(child, pageIndex);
+            }
+        }
+        if (elem.asArray().isPresent()) {
+            for (NElement child : elem.asArray().get().children()) {
+                scanElementDependencies(child, pageIndex);
+            }
+        }
+    }
+
+    private String toDottedString(NElement elem) {
+        if (elem == null) return null;
+        if (elem.isName() || elem.isAnyString()) {
+            return elem.asStringValue().orElse(null);
+        }
+        if (elem.type() == NElementType.FLAT_EXPR) {
+            try {
+                return toDottedString(((NFlatExprElement) elem).reshape());
+            } catch (Exception ignored) {}
+        }
+        if (elem.type() == NElementType.BINARY_OPERATOR) {
+            NBinaryOperatorElement bin = (NBinaryOperatorElement) elem;
+            if (bin.operatorSymbol() == NOperatorSymbol.DOT) {
+                String left = toDottedString(bin.firstOperand());
+                String right = toDottedString(bin.secondOperand());
+                if (left != null && right != null) {
+                    return left + "." + right;
+                }
+            }
+        }
+        return null;
     }
 
     public void onBeforeCompileImpl(NTxCompiledPage a) {

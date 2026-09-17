@@ -88,6 +88,7 @@ public class DocumentView implements NTxDocumentView {
                 checkResourcesChanged();
             }
         }, 3000, 1000);
+        SwingUtilities.invokeLater(() -> frame.setVisible(true));
     }
 
     @Override

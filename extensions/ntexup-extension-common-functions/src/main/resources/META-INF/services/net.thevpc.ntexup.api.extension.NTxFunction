@@ -1,5 +1,9 @@
 net.thevpc.ntexup.extension.commonfunctions.general.NTxFunctionArrayRightRotate
 net.thevpc.ntexup.extension.commonfunctions.general.NTxFunctionArrayLeftRotate
+net.thevpc.ntexup.extension.commonfunctions.general.NTxFunctionIsFuture
+net.thevpc.ntexup.extension.commonfunctions.general.NTxFunctionIsReady
+net.thevpc.ntexup.extension.commonfunctions.general.NTxFunctionAwait
+net.thevpc.ntexup.extension.commonfunctions.general.NTxFunctionProgress
 
 
 net.thevpc.ntexup.extension.commonfunctions.colors.NTxFunctionInvertColor
