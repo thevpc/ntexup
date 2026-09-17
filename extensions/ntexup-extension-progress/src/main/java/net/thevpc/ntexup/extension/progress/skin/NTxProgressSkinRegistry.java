@@ -51,8 +51,8 @@ public class NTxProgressSkinRegistry {
         load();
         NTxProgressSkin skin = skins.get(NTxUtils.uid(skinId));
         if (skin == null) {
-            // fallback to progressbar
-            skin = skins.get(NTxUtils.uid("progressbar"));
+            // fallback to bar
+            skin = skins.get(NTxUtils.uid("bar"));
         }
         return skin;
     }

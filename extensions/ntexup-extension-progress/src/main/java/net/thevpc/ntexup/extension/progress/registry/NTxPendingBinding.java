@@ -44,6 +44,8 @@ public class NTxPendingBinding {
 
     /**
      * Compute the current progress snapshot for this binding.
+     * When the underlying future only reports binary progress (0.0 vs 1.0),
+     * treat 0.0+not-done as indeterminate so the skin shows animation.
      */
     public NTxProgress currentProgress() {
         Instant now = Instant.now();
@@ -57,7 +59,10 @@ public class NTxPendingBinding {
             return new NTxProgress(1.0, false, NDuration.ZERO, elapsed);
         }
 
-        if (Double.isNaN(value)) {
+        // Binary futures return 0.0 when not done — treat as indeterminate
+        boolean indeterminate = Double.isNaN(value) || value <= 0.0;
+
+        if (indeterminate) {
             return new NTxProgress(Double.NaN, true, null, elapsed);
         }
 

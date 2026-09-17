@@ -4,6 +4,7 @@ net.thevpc.ntexup.extension.commonfunctions.general.NTxFunctionIsFuture
 net.thevpc.ntexup.extension.commonfunctions.general.NTxFunctionIsReady
 net.thevpc.ntexup.extension.commonfunctions.general.NTxFunctionAwait
 net.thevpc.ntexup.extension.commonfunctions.general.NTxFunctionProgress
+net.thevpc.ntexup.extension.commonfunctions.general.NTxFunctionRelativeError
 
 
 net.thevpc.ntexup.extension.commonfunctions.colors.NTxFunctionInvertColor

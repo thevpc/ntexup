@@ -9,9 +9,9 @@ import net.thevpc.nuts.spi.NComponent;
 /**
  * Skin contract for rendering a progress indicator.
  * <p>
- * Built-in skins: "progressbar", "knob", "sandglass", "text".
+ * Built-in skins: "bar", "knob", "sandglass", "text".
  * Custom skins can be registered via the SPI:
- * {@code META-INF/services/net.thevpc.ntexup.api.extension.NTxProgressSkin}
+ * {@code META-INF/services/net.thevpc.ntexup.extension.progress.NTxProgressSkin}
  *
  * @see NTxProgressSkinRegistry
  */

@@ -42,7 +42,7 @@ public class NTxProgressMonitorBuilder implements NTxNodeBuilder {
         builderContext
                 .id("progress-monitor")
                 .parseParam()
-                    .matchesNamedPair("select", "aggregate", "on-complete", "on-empty", "weights")
+                    .matchesNamedPair("select", "aggregate", "on-complete", "on-empty", "weights", "skin")
                     .matchesMissingProperties("value", "indeterminate", "eta", "elapsed", "skin", "position")
                     .end()
                 .renderComponent(this::render);
@@ -158,7 +158,7 @@ public class NTxProgressMonitorBuilder implements NTxNodeBuilder {
 
     private void renderAsSkin(NTxRendererContext rendererContext, NTxBounds2D bounds,
                               NTxProgress progress, NTxNode sourceNode) {
-        String skinId = readString(sourceNode, "skin", "progressbar");
+        String skinId = readString(sourceNode, "skin", "bar");
         NTxProgressSkin skin = NTxProgressSkinRegistry.getInstance().get(skinId);
         if (skin != null) {
             skin.render(rendererContext.graphics(), bounds, progress, true);

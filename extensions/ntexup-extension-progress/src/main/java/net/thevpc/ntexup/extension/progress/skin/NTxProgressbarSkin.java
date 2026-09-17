@@ -15,7 +15,7 @@ public class NTxProgressbarSkin implements NTxProgressSkin {
 
     @Override
     public String id() {
-        return "progressbar";
+        return "bar";
     }
 
     @Override

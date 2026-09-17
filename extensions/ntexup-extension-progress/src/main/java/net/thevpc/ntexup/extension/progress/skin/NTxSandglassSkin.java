@@ -12,8 +12,11 @@ import java.awt.geom.Rectangle2D;
 
 /**
  * Sandglass skin: sand level reflects value; shimmer/glow overlay when indeterminate.
+ * When bounds are too thin, degrades to a horizontal bar indicator.
  */
 public class NTxSandglassSkin implements NTxProgressSkin {
+
+    private static final double MIN_SIZE = 40;
 
     @Override
     public String id() {
@@ -22,45 +25,76 @@ public class NTxSandglassSkin implements NTxProgressSkin {
 
     @Override
     public void render(NTxGraphics g, NTxBounds2D bounds, NTxProgress progress, boolean animating) {
-        double x = bounds.minX();
-        double y = bounds.minY();
         double w = bounds.widthX();
         double h = bounds.widthY();
+
+        if (w < MIN_SIZE || h < MIN_SIZE) {
+            renderLinear(g, bounds, progress);
+            return;
+        }
+
+        double x = bounds.minX();
+        double y = bounds.minY();
         double cx = x + w / 2.0;
         double cy = y + h / 2.0;
         double bulbR = Math.min(w, h) * 0.35;
 
-        // Glass outline — two bulbs connected by a narrow waist
         drawGlassOutline(g, cx, cy, bulbR);
 
-        // Sand fill in bottom bulb
         double value = progress.value();
         if (!Double.isNaN(value)) {
             drawSandLevel(g, cx, cy, bulbR, value);
         }
 
-        // Indeterminate shimmer
         if (progress.indeterminate()) {
             drawShimmer(g, cx, cy, bulbR);
         }
 
-        // Label
         renderLabel(g, cx, y + h - bulbR * 0.3, progress);
     }
 
+    private void renderLinear(NTxGraphics g, NTxBounds2D bounds, NTxProgress progress) {
+        double x = bounds.minX();
+        double y = bounds.minY();
+        double w = bounds.widthX();
+        double h = bounds.widthY();
+
+        g.setColor(new Color(0x374151));
+        g.fillRoundRect((int) x, (int) y, (int) w, (int) h, (int) h, (int) h);
+
+        double value = progress.value();
+        boolean indet = progress.indeterminate();
+
+        if (!Double.isNaN(value)) {
+            double fillW = Math.max(h, w * value);
+            g.setColor(new Color(0xd97706));
+            g.fillRoundRect((int) x, (int) y, (int) fillW, (int) h, (int) h, (int) h);
+        }
+
+        if (indet) {
+            long t = System.currentTimeMillis();
+            double phase = (t % 3000) / 3000.0;
+            double segW = w * 0.3;
+            double segX = x + (w + segW) * phase - segW;
+            segX = Math.max(x, Math.min(segX, x + w - segW));
+            g.setColor(new Color(0xfbbf24));
+            g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.7f));
+            g.fillRoundRect((int) segX, (int) y, (int) segW, (int) h, (int) h, (int) h);
+            g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.0f));
+        }
+
+        renderCaption(g, bounds, progress);
+    }
+
     private void drawGlassOutline(NTxGraphics g, double cx, double cy, double r) {
-        g.setColor(new Color(0x9ca3af)); // gray-400
+        g.setColor(new Color(0x9ca3af));
         g.setStroke(new BasicStroke(2.0f));
-        // Top bulb
         g.draw(new Ellipse2D.Double(cx - r, cy - r * 2.2, r * 2, r * 2));
-        // Bottom bulb
         g.draw(new Ellipse2D.Double(cx - r, cy + r * 0.2, r * 2, r * 2));
-        // Waist
         g.drawLine((int) cx, (int) (cy - r * 0.2), (int) cx, (int) (cy + r * 0.2));
     }
 
     private void drawSandLevel(NTxGraphics g, double cx, double cy, double r, double value) {
-        // Sand fills the bottom bulb from bottom up
         double sandHeight = r * 1.8 * value;
         double sandBottom = cy + r * 2.0;
         double sandTop = sandBottom - sandHeight;
@@ -70,10 +104,9 @@ public class NTxSandglassSkin implements NTxProgressSkin {
         Area sand = new Area(new Rectangle2D.Double(cx - r, sandTop, r * 2, sandHeight + 1));
         sand.intersect(new Area(bottomBulb));
 
-        // Sand gradient
         GradientPaint gp = new GradientPaint(
-                (float) cx, (float) sandTop, new Color(0xd97706), // amber-600
-                (float) cx, (float) sandBottom, new Color(0x92400e)); // amber-800
+                (float) cx, (float) sandTop, new Color(0xd97706),
+                (float) cx, (float) sandBottom, new Color(0x92400e));
         g.setPaint(gp);
         g.fill(sand);
         g.setPaint(null);
@@ -83,7 +116,7 @@ public class NTxSandglassSkin implements NTxProgressSkin {
         long t = System.currentTimeMillis();
         double phase = (t % 2000) / 2000.0;
         float alpha = (float) (0.3 + 0.3 * Math.sin(phase * Math.PI * 2));
-        g.setColor(new Color(0xfbbf24)); // amber-400
+        g.setColor(new Color(0xfbbf24));
         g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
         g.fill(new Ellipse2D.Double(cx - r * 0.6, cy - r * 0.6, r * 1.2, r * 1.2));
         g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.0f));
@@ -103,6 +136,40 @@ public class NTxSandglassSkin implements NTxProgressSkin {
         FontMetrics fm = g.getFontMetrics();
         int tw = fm.stringWidth(text);
         g.drawString(text, (int) (cx - tw / 2.0), (int) cy);
+    }
+
+    private void renderCaption(NTxGraphics g, NTxBounds2D bounds, NTxProgress progress) {
+        String caption = buildCaption(progress);
+        if (caption == null) return;
+
+        double x = bounds.minX();
+        double y = bounds.minY();
+        double w = bounds.widthX();
+        double h = bounds.widthY();
+
+        g.setColor(Color.WHITE);
+        g.setFont(new Font("SansSerif", Font.PLAIN, (int) Math.max(10, h * 0.6)));
+        FontMetrics fm = g.getFontMetrics();
+        int textW = fm.stringWidth(caption);
+        int textH = fm.getAscent();
+        double tx = x + (w - textW) / 2.0;
+        double ty = y + (h + textH) / 2.0 - fm.getDescent();
+        g.drawString(caption, (int) tx, (int) ty);
+    }
+
+    private String buildCaption(NTxProgress progress) {
+        StringBuilder sb = new StringBuilder();
+        if (!Double.isNaN(progress.value())) {
+            sb.append(String.format("%.0f%%", progress.value() * 100));
+        }
+        if (progress.elapsed() != null) {
+            if (sb.length() > 0) sb.append(" ");
+            sb.append(formatDuration(progress.elapsed()));
+        }
+        if (!Double.isNaN(progress.value()) && progress.eta() != null) {
+            sb.append(" ~").append(formatDuration(progress.eta()));
+        }
+        return sb.length() > 0 ? sb.toString() : null;
     }
 
     private String formatDuration(net.thevpc.nuts.time.NDuration d) {
