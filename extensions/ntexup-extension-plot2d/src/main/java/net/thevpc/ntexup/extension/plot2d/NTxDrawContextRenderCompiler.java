@@ -31,7 +31,7 @@ class NTxDrawContextRenderCompiler {
 
         Paint color = rendererContext.getLineColor(true);
 
-        NTxBounds2D bounds = rendererContext.parentBounds2D();
+        NTxBounds2D bounds = rendererContext.selfBounds2D();
         NTxDrawContext drawContext = new NTxDrawContext(bounds, xValues, minY, maxY, zoom, minMaxY);
         java.util.List<NTxFunctionPlotInfo> plotDefinitions = (List<NTxFunctionPlotInfo>) rendererContext.node().getUserObject("def").orNull();
 
@@ -80,6 +80,54 @@ class NTxDrawContextRenderCompiler {
                     case VALUE_XY:
                     case VALUE_X: {
                         NElement yElem = rendererContext.evalExpression(pld.y).orNull();
+                        if (net.thevpc.ntexup.api.eval.NTxFutureUtils.isFuture(yElem)) {
+                            if (!rendererContext.isAnimate() || net.thevpc.ntexup.api.eval.NTxFutureUtils.isReady(yElem)) {
+                                Object awaited = net.thevpc.ntexup.api.eval.NTxFutureUtils.await(yElem);
+                                if (awaited instanceof NElement) {
+                                    yElem = (NElement) awaited;
+                                }
+                            }
+                        }
+                        boolean isYPending = net.thevpc.ntexup.api.eval.NTxFutureUtils.isFuture(yElem) && !net.thevpc.ntexup.api.eval.NTxFutureUtils.isReady(yElem);
+
+                        NElement xElem = null;
+                        if (pld.x != null) {
+                            xElem = rendererContext.evalExpression(pld.x).orNull();
+                            if (net.thevpc.ntexup.api.eval.NTxFutureUtils.isFuture(xElem)) {
+                                if (!rendererContext.isAnimate() || net.thevpc.ntexup.api.eval.NTxFutureUtils.isReady(xElem)) {
+                                    Object awaited = net.thevpc.ntexup.api.eval.NTxFutureUtils.await(xElem);
+                                    if (awaited instanceof NElement) {
+                                        xElem = (NElement) awaited;
+                                    }
+                                }
+                            }
+                        }
+                        boolean isXPending = pld.x != null && net.thevpc.ntexup.api.eval.NTxFutureUtils.isFuture(xElem) && !net.thevpc.ntexup.api.eval.NTxFutureUtils.isReady(xElem);
+
+                        if (isYPending || isXPending) {
+                            pd.pending = true;
+                            pd.xx = new double[0];
+                            pd.yy = new double[0];
+                            if (pd.title == null || pd.title.trim().isEmpty()) {
+                                pd.title = "pending...";
+                            } else {
+                                pd.title = pd.title + " (pending...)";
+                            }
+                            drawContext.allData.add(pd);
+
+                            Runnable repaintOnReady = () -> {
+                                rendererContext.node().invalidateRenderCache();
+                                rendererContext.repaint();
+                            };
+                            if (isYPending) {
+                                net.thevpc.ntexup.api.eval.NTxFutureUtils.addListener(yElem, repaintOnReady);
+                            }
+                            if (isXPending) {
+                                net.thevpc.ntexup.api.eval.NTxFutureUtils.addListener(xElem, repaintOnReady);
+                            }
+                            continue;
+                        }
+
                         double[] yArr = NTxValue.of(yElem).asDoubleArray().orNull();
                         if (yArr == null && yElem != null && yElem.isListContainer()) {
                             java.util.List<Double> yList = new java.util.ArrayList<>();
@@ -98,8 +146,21 @@ class NTxDrawContextRenderCompiler {
                         if (yArr != null && yArr.length > 0) {
                             double[] xArr = xValues;
                             if (pld.x != null) {
-                                NElement xElem = rendererContext.evalExpression(pld.x).orNull();
                                 double[] parsedX = NTxValue.of(xElem).asDoubleArray().orNull();
+                                if (parsedX == null && xElem != null && xElem.isListContainer()) {
+                                    java.util.List<Double> xList = new java.util.ArrayList<>();
+                                    for (NElement c : xElem.asListContainer().get().children()) {
+                                        net.thevpc.nuts.util.NOptional<Double> dv = NTxValue.of(c).asDouble();
+                                        if (dv.isPresent()) {
+                                            xList.add(dv.get());
+                                        } else if (c.isNumber()) {
+                                            xList.add(c.asDoubleValue().orElse(0.0));
+                                        }
+                                    }
+                                    if (!xList.isEmpty()) {
+                                        parsedX = xList.stream().mapToDouble(Double::doubleValue).toArray();
+                                    }
+                                }
                                 if (parsedX != null && parsedX.length > 0) {
                                     xArr = parsedX;
                                 }

@@ -64,7 +64,15 @@ public class NTxFlowContainerBuilder implements NTxNodeBuilder {
         NTxRendererContext ctx2 = ctx.withParentBounds(NTxBounds2D.ofWidth(0, 0, expectedWidth, expectedHeight));
         for (int i = 0; i < texts.size(); i++) {
             NTxNode text = texts.get(i);
-            NTxSizeRequirements ee = ctx2.sizeRequirementsOf();
+            NTxRendererContext childCtx = ctx2.resolveNode(text, NTxBounds2D.ZERO);
+            if (childCtx.isLayoutNone()) {
+                Elem zz = new Elem();
+                e.elems[i] = zz;
+                zz.node = text;
+                zz.bounds = NTxBounds2D.ZERO;
+                continue;
+            }
+            NTxSizeRequirements ee = childCtx.sizeRequirementsOf();
             double w = ee.minX;
             if (w <= 0) {
                 w = 10;

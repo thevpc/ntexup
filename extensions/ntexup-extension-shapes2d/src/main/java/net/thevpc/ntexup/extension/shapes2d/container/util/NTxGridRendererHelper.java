@@ -12,6 +12,7 @@ import net.thevpc.ntexup.api.renderer.NTxRendererContext;
 import net.thevpc.ntexup.api.eval.NTxValue;
 
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.List;
 
 public class NTxGridRendererHelper {
@@ -44,6 +45,7 @@ public class NTxGridRendererHelper {
         double yOffset;
         double childrenWidth;
         double childrenHeight;
+        public List<NTxNode> noneNodes;
     }
 
     public void render(NTxRendererContext ctx, NTxBounds2D expectedBounds) {
@@ -59,17 +61,27 @@ public class NTxGridRendererHelper {
         }
 
         NTxGridRendererHelper.ComputePositionsResult r = computePositions(p, expectedBounds, ctx);
+        java.util.Map<NTxNode, HPagePartExtInfo> boundsMap = new java.util.IdentityHashMap<>();
         for (ItemWithPosition<HPagePartExtInfo> eee : r.effPositions.items()) {
             HPagePartExtInfo ee = eee.getUserObject();
-            NTxRendererContext ctx3 = ctx.withParentBounds(ee.bounds);
-            if (!ctx.isDry()) {
-                if (ctx.isDebug()) {
-                    g.setColor(ctx.getDebugColor());
-                    g.setFont(new Font("Verdana", Font.PLAIN, 8));
-                    g.drawString(String.valueOf(ee.index), ee.bounds.centerX(), ee.bounds.centerY());
+            boundsMap.put(ee.node, ee);
+        }
+        for (NTxNode child : children) {
+            HPagePartExtInfo ee = boundsMap.get(child);
+            if (ee != null) {
+                NTxRendererContext ctx3 = ctx.withParentBounds(ee.bounds);
+                if (!ctx.isDry()) {
+                    if (ctx.isDebug()) {
+                        g.setColor(ctx.getDebugColor());
+                        g.setFont(new Font("Verdana", Font.PLAIN, 8));
+                        g.drawString(String.valueOf(ee.index), ee.bounds.centerX(), ee.bounds.centerY());
+                    }
                 }
+                ctx3.withNode(ee.node).render();
+            } else {
+                NTxRendererContext ctx3 = ctx.resolveNode(child, NTxBounds2D.ZERO);
+                ctx3.render();
             }
-            ctx3.withNode(ee.node).render();
         }
         drawGrid(p, r, ctx);
         ctx.paintBorderLine(expectedBounds);
@@ -85,14 +97,25 @@ public class NTxGridRendererHelper {
         if (rows < 0) {
             rows = -1;
         }
+        List<NTxNode> layoutChildren = new ArrayList<>();
+        List<NTxNode> noneChildren = new ArrayList<>();
+        for (NTxNode cc : children) {
+            NTxRendererContext chctx = ctx.resolveNode(cc, ctx.defaultSelfBounds2D());
+            if (chctx.isLayoutNone()) {
+                noneChildren.add(cc);
+            } else {
+                layoutChildren.add(cc);
+            }
+        }
+
         if (cols <= 0 && rows <= 0) {
-            int cc = (int) Math.floor(Math.sqrt(children.size()));
+            int cc = (int) Math.floor(Math.sqrt(layoutChildren.size()));
             cols = cc;
             rows = cc;
         } else if (cols < 0 && rows > 0) {
-            cols = (int) Math.floor(children.size() / rows);
+            cols = (int) Math.floor((double) layoutChildren.size() / rows);
         } else if (cols > 0 && rows < 0) {
-            rows = (int) Math.floor(children.size() / cols);
+            rows = (int) Math.floor((double) layoutChildren.size() / cols);
         }
         if (cols <= 0 && rows <= 0) {
             cols=1;
@@ -100,8 +123,8 @@ public class NTxGridRendererHelper {
         }
 
         GridMap<HPagePartExtInfo> effPositions = new GridMap<>(cols, rows);
-        for (int i = 0; i < children.size(); i++) {
-            NTxNode cc = children.get(i);
+        for (int i = 0; i < layoutChildren.size(); i++) {
+            NTxNode cc = layoutChildren.get(i);
             HPagePartExtInfo e = new HPagePartExtInfo();
             e.node = cc;
             NTxRendererContext chctx = ctx.resolveNode(cc, ctx.defaultSelfBounds2D());
@@ -290,6 +313,7 @@ public class NTxGridRendererHelper {
             }
         }
         ComputePositionsResult r = new ComputePositionsResult();
+        r.noneNodes = noneChildren;
         r.effPositions = effPositions;
         r.xOffset = xOffset;
         r.yOffset = yOffset;

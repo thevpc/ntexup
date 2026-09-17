@@ -3,6 +3,7 @@ package net.thevpc.ntexup.api.eval;
 import net.thevpc.ntexup.api.document.elem2d.NTxBounds2D;
 import net.thevpc.ntexup.api.document.elem2d.NTxDouble2;
 import net.thevpc.ntexup.api.document.elem2d.*;
+import net.thevpc.ntexup.api.document.node.NTxNode;
 import net.thevpc.ntexup.api.document.node.NTxNodeType;
 import net.thevpc.ntexup.api.document.style.*;
 import net.thevpc.ntexup.api.renderer.text.NTxTextAlign;
@@ -209,6 +210,31 @@ public class NTxValueByName {
                     }
                 }
         ).get();
+    }
+
+    public static boolean isLayoutNone(NTxRendererContext ctx) {
+        if (ctx == null) {
+            return false;
+        }
+        return (boolean) ctx.node().getAndSetRenderCache("layout-none", AUTO_FORCE,
+                () -> NTxValueByType.getStringOrName(ctx, NTxPropName.LAYOUT)
+                        .map(x -> "none".equalsIgnoreCase(x.trim())).orElse(false)
+        ).get();
+    }
+
+    public static boolean isLayoutNone(NTxNode node, NTxRendererContext ctx) {
+        if (node == null) {
+            return false;
+        }
+        if (ctx != null) {
+            return isLayoutNone(ctx.resolveNode(node, ctx.selfBounds2D()));
+        }
+        NOptional<NTxProp> p = node.getProperty(NTxPropName.LAYOUT);
+        if (p.isPresent()) {
+            String s = p.get().getValue().asStringValue().orNull();
+            return "none".equalsIgnoreCase(s);
+        }
+        return false;
     }
 
     public static double getFontSize(NTxRendererContext ctx) {

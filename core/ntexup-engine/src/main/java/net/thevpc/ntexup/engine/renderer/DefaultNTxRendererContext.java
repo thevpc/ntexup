@@ -451,6 +451,11 @@ public class DefaultNTxRendererContext extends NTxResolutionContextImpl implemen
     }
 
     @Override
+    public boolean isLayoutNone() {
+        return NTxValueByName.isLayoutNone(this);
+    }
+
+    @Override
     public double getFontSize() {
         return NTxValueByName.getFontSize(this);
     }

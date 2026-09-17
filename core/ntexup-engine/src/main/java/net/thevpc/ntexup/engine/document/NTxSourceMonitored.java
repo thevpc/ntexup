@@ -67,6 +67,7 @@ public class NTxSourceMonitored implements NTxSource, NTxSourceMonitor {
 
     public void add(NTxSource r) {
         if (r != null) {
+            r.save();
             resources.add(r);
         }
     }
