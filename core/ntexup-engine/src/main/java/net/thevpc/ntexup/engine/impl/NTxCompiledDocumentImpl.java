@@ -203,8 +203,15 @@ public class NTxCompiledDocumentImpl implements NTxCompiledDocument {
 
     @Override
     public NTxCompiledDocument setGlobalObject(String name, NTxObj obj) {
-        System.out.println("DEBUG [setGlobalObject] name=" + name + " obj=" + obj + " in doc@" + Integer.toHexString(System.identityHashCode(this)));
         NTxObj previous = globalObjects.get(name);
+        if (java.util.Objects.equals(previous, obj)) {
+            return this;
+        }
+        if (previous instanceof net.thevpc.ntexup.api.eval.NTxFutureObj && obj instanceof net.thevpc.ntexup.api.eval.NTxFutureObj) {
+            if (java.util.Objects.equals(((net.thevpc.ntexup.api.eval.NTxFutureObj) previous).rawFuture(), ((net.thevpc.ntexup.api.eval.NTxFutureObj) obj).rawFuture())) {
+                return this;
+            }
+        }
         if (obj == null) {
             globalObjects.remove(name);
         } else {
@@ -228,12 +235,15 @@ public class NTxCompiledDocumentImpl implements NTxCompiledDocument {
     @Override
     public void registerFuture(Object future) {
         if (future != null) {
-            registeredFutures.add(future);
+            if (!net.thevpc.ntexup.api.eval.NTxFutureUtils.isReady(future)) {
+                registeredFutures.add(future);
+            }
         }
     }
 
     @Override
     public boolean hasPendingFutures() {
+        registeredFutures.removeIf(net.thevpc.ntexup.api.eval.NTxFutureUtils::isReady);
         for (Object f : registeredFutures) {
             if (net.thevpc.ntexup.api.eval.NTxFutureUtils.isFuture(f) && !net.thevpc.ntexup.api.eval.NTxFutureUtils.isReady(f)) {
                 return true;

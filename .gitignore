@@ -50,3 +50,4 @@ extensions/ntexup-extension-presenters/target
 /ntexup-full/target/
 /core/ntexup-desktop/target/
 /renderers/ntexup-renderer-image/target/
+/extensions/ntexup-extension-progress/target/

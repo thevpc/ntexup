@@ -32,6 +32,23 @@ public class NTxFutureObj implements NTxObj, NTxFuture<NTxObj> {
         return future;
     }
 
+    public Future<?> future() {
+        return future;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        NTxFutureObj that = (NTxFutureObj) o;
+        return java.util.Objects.equals(name, that.name) && java.util.Objects.equals(future, that.future);
+    }
+
+    @Override
+    public int hashCode() {
+        return java.util.Objects.hash(name, future);
+    }
+
     @Override
     public boolean isDone() {
         if (cachedResolved != null) {

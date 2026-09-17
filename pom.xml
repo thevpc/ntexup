@@ -90,6 +90,7 @@
         <module>extensions/ntexup-extension-plot2d</module>
         <module>extensions/ntexup-extension-latex</module>
         <module>extensions/ntexup-extension-presenters</module>
+        <module>extensions/ntexup-extension-progress</module>
         <module>extensions/ntexup-extension-common-functions</module>
         <module>tutorials/ntexup-extension-tutorial-myshape</module>
         <module>companions/nscoreboard</module>
