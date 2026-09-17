@@ -19,6 +19,8 @@ public class NTxBounds2D {
     public static NTxBounds2D of(Number x1, Number x2, Number y1, Number y2) {
         return new NTxBounds2D(x1, y1, NTxUtils.distanceDouble(x1,x2), NTxUtils.distanceDouble(y1,y2));
     }
+    public static final NTxBounds2D ZERO = ofEmpty();
+
     public static NTxBounds2D ofEmpty() {
         return new NTxBounds2D(0.0, 0.0, 0.0, 0.0);
     }

@@ -153,4 +153,6 @@ public class NTxPropName {
 
     public static final String TRANSPARENT_COLOR = "transparent-color";
     public static final String ARGS = "args";
+    public static final String LAYOUT = "layout";
+    public static final String PENDING = "pending";
 }

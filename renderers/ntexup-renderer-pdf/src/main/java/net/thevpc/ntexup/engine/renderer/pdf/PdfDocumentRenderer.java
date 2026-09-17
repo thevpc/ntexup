@@ -54,7 +54,7 @@ public class PdfDocumentRenderer extends NTxDocumentStreamRendererBase implement
             outputTarget = NPath.of("document.pdf");
         }
         if (outputTarget instanceof NPath) {
-            try (OutputStream os = ((NPath) outputTarget).outputStream()) {
+            try (OutputStream os = ((NPath) outputTarget).mkParentDirs().outputStream()) {
                 renderStream(document, os);
             } catch (IOException ex) {
                 throw new NIOException(ex);
@@ -103,6 +103,10 @@ public class PdfDocumentRenderer extends NTxDocumentStreamRendererBase implement
 
             PdfPTable table = null;
 
+            if (document.hasPendingFutures()) {
+                document.awaitFutures();
+            }
+
             for (NTxCompiledPage page0 : pages) {
                 if (imageCount % imagesPerPage == 0) {
                     if (table != null) {
@@ -144,6 +148,10 @@ public class PdfDocumentRenderer extends NTxDocumentStreamRendererBase implement
 
                 table.addCell(cell);
                 imageCount++;
+            }
+
+            if (document.hasPendingFutures()) {
+                document.awaitFutures();
             }
 
             if (table != null) {
