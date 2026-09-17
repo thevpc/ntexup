@@ -10,4 +10,8 @@ public class NTxObjs {
     public static NTxObjFromMap map(){
         return new NTxObjFromMap();
     }
+
+    public static NTxFutureObj future(String name, java.util.concurrent.Future<?> future, java.util.function.Supplier<NTxObj> resolver) {
+        return new NTxFutureObj(name, future, resolver);
+    }
 }

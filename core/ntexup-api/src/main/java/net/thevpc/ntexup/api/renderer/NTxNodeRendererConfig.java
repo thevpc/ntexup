@@ -100,7 +100,27 @@ public class NTxNodeRendererConfig {
         return setCapability(NTxRendererContext.CAPABILITY_ANIMATE, value);
     }
 
+    public boolean isAnimate() {
+        if (capabilities != null) {
+            Object v = capabilities.get(NTxRendererContext.CAPABILITY_ANIMATE);
+            if (v instanceof Boolean) {
+                return (Boolean) v;
+            }
+        }
+        return false;
+    }
+
     public NTxNodeRendererConfig withPrint(boolean value) {
         return setCapability(NTxRendererContext.CAPABILITY_PRINT, value);
+    }
+
+    public boolean isPrint() {
+        if (capabilities != null) {
+            Object v = capabilities.get(NTxRendererContext.CAPABILITY_PRINT);
+            if (v instanceof Boolean) {
+                return (Boolean) v;
+            }
+        }
+        return false;
     }
 }

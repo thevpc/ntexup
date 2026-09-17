@@ -14,6 +14,7 @@ public class NTxPlot2DData {
     public Stroke stroke = new BasicStroke(2.0f);
     public NTxFunctionPlotInfo pld;
     public boolean lineShapes=false;
+    public boolean pending = false;
 
     public NTxPlot2DData(NTxFunctionPlotInfo pld) {
         this.pld = pld;
