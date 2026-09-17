@@ -55,6 +55,8 @@ public class NTxCompiledDocumentImpl implements NTxCompiledDocument {
     private final Map<String, NTxObj> globalObjects = new HashMap<>();
     private final NTxDependencyGraph dependencyGraph = new net.thevpc.ntexup.engine.eval.DefaultNTxDependencyGraph();
     private final Set<Object> registeredFutures = Collections.newSetFromMap(new ConcurrentHashMap<>());
+    private NTxProgressBindingHandler progressBindingHandler;
+    private boolean progressBindingHandlerResolved = false;
 
     public class FingerprintBuilder {
         private final Map<String, NDefinition> effectiveDependencies = new HashMap<>();
@@ -239,6 +241,33 @@ public class NTxCompiledDocumentImpl implements NTxCompiledDocument {
                 registeredFutures.add(future);
             }
         }
+    }
+
+    @Override
+    public void registerProgressBinding(String name, net.thevpc.ntexup.api.eval.NTxFuture<?> future) {
+        if (name == null || future == null) return;
+        NTxProgressBindingHandler handler = resolveProgressBindingHandler();
+        if (handler != null) {
+            handler.register(this, name, future);
+        }
+    }
+
+    private NTxProgressBindingHandler resolveProgressBindingHandler() {
+        if (progressBindingHandlerResolved) {
+            return progressBindingHandler;
+        }
+        progressBindingHandlerResolved = true;
+        try {
+            ClassLoader cl = engine.getEngineClassLoader().asClassLoader();
+            java.util.ServiceLoader<NTxProgressBindingHandler> loader =
+                    java.util.ServiceLoader.load(NTxProgressBindingHandler.class, cl);
+            for (NTxProgressBindingHandler h : loader) {
+                progressBindingHandler = h;
+                break;
+            }
+        } catch (Exception ignored) {
+        }
+        return progressBindingHandler;
     }
 
     @Override

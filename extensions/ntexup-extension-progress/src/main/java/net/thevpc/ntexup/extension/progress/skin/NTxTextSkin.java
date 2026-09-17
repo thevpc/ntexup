@@ -2,6 +2,7 @@ package net.thevpc.ntexup.extension.progress.skin;
 
 import net.thevpc.ntexup.api.document.elem2d.NTxBounds2D;
 import net.thevpc.ntexup.api.renderer.NTxGraphics;
+import net.thevpc.ntexup.extension.progress.NTxProgressSkin;
 import net.thevpc.ntexup.extension.progress.model.NTxProgress;
 
 import java.awt.*;

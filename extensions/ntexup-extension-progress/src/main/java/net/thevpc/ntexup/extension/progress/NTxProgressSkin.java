@@ -1,8 +1,9 @@
-package net.thevpc.ntexup.extension.progress.skin;
+package net.thevpc.ntexup.extension.progress;
 
 import net.thevpc.ntexup.api.document.elem2d.NTxBounds2D;
 import net.thevpc.ntexup.api.renderer.NTxGraphics;
 import net.thevpc.ntexup.extension.progress.model.NTxProgress;
+import net.thevpc.ntexup.extension.progress.skin.NTxProgressSkinRegistry;
 import net.thevpc.nuts.spi.NComponent;
 
 /**

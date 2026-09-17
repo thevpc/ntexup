@@ -6,14 +6,19 @@ import net.thevpc.ntexup.api.engine.NTxNodeBuilderContext;
 import net.thevpc.ntexup.api.eval.NTxValue;
 import net.thevpc.ntexup.api.extension.NTxNodeBuilder;
 import net.thevpc.ntexup.api.renderer.NTxRendererContext;
+import net.thevpc.ntexup.api.util.NTxUtils;
+import net.thevpc.nuts.elem.NElement;
+import net.thevpc.nuts.util.NOptional;
 import net.thevpc.ntexup.extension.progress.model.NTxProgress;
 import net.thevpc.ntexup.extension.progress.registry.NTxPendingBinding;
-import net.thevpc.ntexup.extension.progress.registry.NTxProgressRegistry;
+import net.thevpc.ntexup.extension.progress.NTxProgressRegistry;
 import net.thevpc.ntexup.extension.progress.registry.NTxProgressRegistryHolder;
 import net.thevpc.ntexup.extension.progress.registry.NTxProgressSelect;
-import net.thevpc.ntexup.extension.progress.view.NTxProgressViewBuilder;
+import net.thevpc.ntexup.extension.progress.NTxProgressSkin;
+import net.thevpc.ntexup.extension.progress.skin.NTxProgressSkinRegistry;
 
-import java.util.ArrayList;
+import javax.swing.*;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -21,25 +26,24 @@ import java.util.Map;
 /**
  * progress-monitor: task-aware layer built on top of progress-view.
  * Computes Progress values from the registry/selection and delegates
- * each visual unit to progress-view.
+ * each visual unit to a progress skin.
  *
  * Additional parameters (beyond progress-view):
  *   select: all | names([...]) | pattern("...")
  *   aggregate: true | false
+ *   on-complete: hide | hold | fade-out
  *   on-empty: hide | idle
  *   weights: {name: number, ...}
  */
 public class NTxProgressMonitorBuilder implements NTxNodeBuilder {
-
-    private final NTxProgressViewBuilder viewBuilder = new NTxProgressViewBuilder();
 
     @Override
     public void build(NTxNodeBuilderContext builderContext) {
         builderContext
                 .id("progress-monitor")
                 .parseParam()
-                    .matchesNamedPair("select", "aggregate", "on-empty", "weights")
-                    .matchesMissingProperties("value", "indeterminate", "eta", "elapsed", "skin", "on-complete", "position")
+                    .matchesNamedPair("select", "aggregate", "on-complete", "on-empty", "weights")
+                    .matchesMissingProperties("value", "indeterminate", "eta", "elapsed", "skin", "position")
                     .end()
                 .renderComponent(this::render);
     }
@@ -59,10 +63,7 @@ public class NTxProgressMonitorBuilder implements NTxNodeBuilder {
         NTxProgressRegistry registry = NTxProgressRegistryHolder.get(doc);
         if (registry == null) {
             // No registry — treat as empty
-            String onEmpty = readString(node, "on-empty", "hide");
-            if ("idle".equals(onEmpty)) {
-                renderIdle(rendererContext, bounds);
-            }
+            handleEmpty(rendererContext, bounds, node);
             return;
         }
 
@@ -72,22 +73,47 @@ public class NTxProgressMonitorBuilder implements NTxNodeBuilder {
 
         // on-empty handling
         if (bindings.isEmpty()) {
-            String onEmpty = readString(node, "on-empty", "hide");
-            if ("idle".equals(onEmpty)) {
-                renderIdle(rendererContext, bounds);
-            }
+            handleEmpty(rendererContext, bounds, node);
             return;
+        }
+
+        // Check if all bindings are done
+        boolean allDone = true;
+        for (NTxPendingBinding b : bindings) {
+            if (!b.isDone()) {
+                allDone = false;
+                break;
+            }
+        }
+
+        // on-complete handling: hide when done
+        if (allDone) {
+            String onComplete = readString(node, "on-complete", "hold");
+            if ("hide".equals(onComplete)) {
+                return;
+            }
         }
 
         // Read weights
         Map<String, Double> weights = readWeights(node);
-
         boolean aggregate = readBoolean(node, "aggregate");
 
         if (aggregate) {
             renderAggregate(rendererContext, bounds, bindings, weights, node);
         } else {
             renderPerUnit(rendererContext, bounds, bindings, weights, node);
+        }
+
+        // Start repaint timer if any binding is still pending
+        if (!allDone) {
+            startRepaintTick(rendererContext);
+        }
+    }
+
+    private void handleEmpty(NTxRendererContext rendererContext, NTxBounds2D bounds, NTxNode node) {
+        String onEmpty = readString(node, "on-empty", "hide");
+        if ("idle".equals(onEmpty)) {
+            renderIdle(rendererContext, bounds);
         }
     }
 
@@ -96,10 +122,7 @@ public class NTxProgressMonitorBuilder implements NTxNodeBuilder {
                                  NTxNode node) {
         NTxProgress aggregated = NTxProgressAggregator.aggregate(bindings, weights);
         if (aggregated == null) return;
-
-        // Create a progress-view rendering with the aggregated progress
-        // We render directly using the skin, passing through view params
-        renderAsProgressView(rendererContext, bounds, aggregated, node);
+        renderAsSkin(rendererContext, bounds, aggregated, node);
     }
 
     private void renderPerUnit(NTxRendererContext rendererContext, NTxBounds2D bounds,
@@ -108,7 +131,6 @@ public class NTxProgressMonitorBuilder implements NTxNodeBuilder {
         int count = bindings.size();
         if (count == 0) return;
 
-        // Layout: vertical list, evenly spaced
         double totalWeight = 0;
         for (NTxPendingBinding b : bindings) {
             double w = (weights != null && weights.containsKey(b.name())) ? weights.get(b.name()) : 1.0;
@@ -129,64 +151,120 @@ public class NTxProgressMonitorBuilder implements NTxNodeBuilder {
                     bounds.minX(), y,
                     bounds.widthX(), unitHeight);
 
-            renderAsProgressView(rendererContext, unitBounds, progress, node);
+            renderAsSkin(rendererContext, unitBounds, progress, node);
             y += unitHeight + spacing;
         }
     }
 
-    private void renderAsProgressView(NTxRendererContext rendererContext, NTxBounds2D bounds,
-                                      NTxProgress progress, NTxNode sourceNode) {
-        // Delegate to the skin directly with inherited view params
+    private void renderAsSkin(NTxRendererContext rendererContext, NTxBounds2D bounds,
+                              NTxProgress progress, NTxNode sourceNode) {
         String skinId = readString(sourceNode, "skin", "progressbar");
-        net.thevpc.ntexup.extension.progress.skin.NTxProgressSkin skin =
-                net.thevpc.ntexup.extension.progress.skin.NTxProgressSkinRegistry.getInstance().get(skinId);
+        NTxProgressSkin skin = NTxProgressSkinRegistry.getInstance().get(skinId);
         if (skin != null) {
-            skin.render(rendererContext.graphics(), bounds, progress, !rendererContext.isPrint());
+            skin.render(rendererContext.graphics(), bounds, progress, true);
         }
     }
 
     private void renderIdle(NTxRendererContext rendererContext, NTxBounds2D bounds) {
-        // Render an indeterminate indicator when empty + idle
         NTxProgress idle = NTxProgress.INDETERMINATE;
-        renderAsProgressView(rendererContext, bounds, idle, rendererContext.node());
+        renderAsSkin(rendererContext, bounds, idle, rendererContext.node());
+    }
+
+    private void startRepaintTick(NTxRendererContext rendererContext) {
+        Timer timer = new Timer(40, e -> rendererContext.repaint());
+        timer.setCoalesce(true);
+        timer.start();
     }
 
     // --- Property readers ---
 
     private NTxProgressSelect readSelect(NTxNode node) {
-        Object raw = node.getPropertyValue("select");
+        Object raw = node.getPropertyValue("select").orNull();
         if (raw == null) {
             return NTxProgressSelect.all();
         }
-        String selectStr = NTxValue.of(raw).asStringOrName().orElse("all");
-        switch (selectStr) {
-            case "all":
+        NTxValue val = NTxValue.of(raw);
+
+        // Try as simple string first (e.g., select: all)
+        NOptional<String> single = val.asStringOrName();
+        if (single.isPresent()) {
+            String s = single.get();
+            if ("all".equals(s)) {
                 return NTxProgressSelect.all();
-            default:
-                // Check if it's a names([...]) or pattern("...") form
-                // For now, treat as all — the parser should have resolved this
-                return NTxProgressSelect.all();
+            }
         }
+
+        // Try as simple string array (e.g., select: ["hresult"])
+        NOptional<String[]> arr = val.asStringArrayOrString();
+        if (arr.isPresent()) {
+            String[] a = arr.get();
+            if (a.length == 1 && "all".equals(a[0])) {
+                return NTxProgressSelect.all();
+            }
+            return NTxProgressSelect.names(Arrays.asList(a));
+        }
+
+        // Try as named function form: names(["hresult"]) or pattern("...")
+        // The property is parsed as a NAMED_TUPLE/ARRAY with name and body/args
+        String name = val.name();
+        if (val.asElement().isPresent()) {
+            NElement elem = val.asElement().get();
+
+            if (elem.isNamedTuple()) {
+                switch (NTxUtils.uid(elem.asNamed().get().name().get())) {
+                    case "all":
+                        return NTxProgressSelect.all();
+                    case "names": {
+                        // Extract the inner array from body/args
+                        List<NElement> body = elem.asTuple().get().params();
+                        if (body.isEmpty()) body = val.args();
+                        if (!body.isEmpty()) {
+                            NOptional<String[]> names = NTxValue.of(body.get(0)).asStringArrayOrString();
+                            if (names.isPresent()) {
+                                return NTxProgressSelect.names(Arrays.asList(names.get()));
+                            }
+                        }
+                        break;
+                    }
+                    case "pattern": {
+                        List<NElement> body = elem.asTuple().get().params();
+                        if (body.isEmpty()) body = val.args();
+                        if (!body.isEmpty()) {
+                            NOptional<String> pat = NTxValue.of(body.get(0)).asStringOrName();
+                            if (pat.isPresent()) {
+                                return NTxProgressSelect.pattern(pat.get());
+                            }
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+        return NTxProgressSelect.all();
     }
 
     private Map<String, Double> readWeights(NTxNode node) {
-        Object raw = node.getPropertyValue("weights");
+        Object raw = node.getPropertyValue("weights").orNull();
         if (raw == null) return null;
         Map<String, Double> result = new LinkedHashMap<>();
         NTxValue val = NTxValue.of(raw);
-        // Weights are parsed as a map by the engine's property system
-        // For now, return null (equal weighting)
+        NOptional<String[]> keys = val.asStringArrayOrString();
+        if (keys.isPresent()) {
+            for (String k : keys.get()) {
+                result.put(k, 1.0);
+            }
+        }
         return result.isEmpty() ? null : result;
     }
 
     private boolean readBoolean(NTxNode node, String name) {
-        Object raw = node.getPropertyValue(name);
+        Object raw = node.getPropertyValue(name).orNull();
         if (raw == null) return false;
         return NTxValue.of(raw).asBoolean().orElse(false);
     }
 
     private String readString(NTxNode node, String name, String defaultValue) {
-        Object raw = node.getPropertyValue(name);
+        Object raw = node.getPropertyValue(name).orNull();
         if (raw == null) return defaultValue;
         return NTxValue.of(raw).asStringOrName().orElse(defaultValue);
     }

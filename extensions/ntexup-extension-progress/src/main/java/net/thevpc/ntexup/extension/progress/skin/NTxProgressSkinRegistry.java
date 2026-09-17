@@ -1,6 +1,7 @@
 package net.thevpc.ntexup.extension.progress.skin;
 
-import net.thevpc.ntexup.extension.progress.model.NTxProgress;
+import net.thevpc.ntexup.api.util.NTxUtils;
+import net.thevpc.ntexup.extension.progress.NTxProgressSkin;
 import net.thevpc.nuts.ext.NServiceLoader;
 
 import java.util.LinkedHashMap;
@@ -29,8 +30,8 @@ public class NTxProgressSkinRegistry {
     public synchronized void load() {
         if (loaded) return;
         loaded = true;
-        for (NTxProgressSkin skin : NServiceLoader.of(NTxProgressSkin.class, null, null).loadAll(null)) {
-            skins.put(skin.id(), skin);
+        for (NTxProgressSkin skin : NServiceLoader.of(NTxProgressSkin.class, null, NTxProgressSkinRegistry.class.getClassLoader()).loadAll(null)) {
+            skins.put(NTxUtils.uid(skin.id()), skin);
         }
     }
 
@@ -40,7 +41,7 @@ public class NTxProgressSkinRegistry {
      */
     public void register(NTxProgressSkin skin) {
         load();
-        skins.put(skin.id(), skin);
+        skins.put(NTxUtils.uid(skin.id()), skin);
     }
 
     /**
@@ -48,10 +49,10 @@ public class NTxProgressSkinRegistry {
      */
     public NTxProgressSkin get(String skinId) {
         load();
-        NTxProgressSkin skin = skins.get(skinId);
+        NTxProgressSkin skin = skins.get(NTxUtils.uid(skinId));
         if (skin == null) {
             // fallback to progressbar
-            skin = skins.get("progressbar");
+            skin = skins.get(NTxUtils.uid("progressbar"));
         }
         return skin;
     }
@@ -61,6 +62,6 @@ public class NTxProgressSkinRegistry {
      */
     public boolean contains(String skinId) {
         load();
-        return skins.containsKey(skinId);
+        return skins.containsKey(NTxUtils.uid(skinId));
     }
 }

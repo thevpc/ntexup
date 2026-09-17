@@ -899,8 +899,10 @@ public class NTxValue {
         }
         if (element instanceof NElement) {
             NElement te = (NElement) element;
-            if (te.isListContainer()) {
-                return NOptional.of(te.asListContainer().get().children().stream().map(x -> x.asStringValue().get()).toArray(String[]::new));
+            if (te.isListContainer() && !te.isNamed()) {
+                if(te.asListContainer().get().children().stream().allMatch(NElement::isAnyString)) {
+                    return NOptional.of(te.asListContainer().get().children().stream().map(x -> x.asStringValue().get()).toArray(String[]::new));
+                }
             }
         }
         return NOptional.ofNamedEmpty("String[] from " + element);

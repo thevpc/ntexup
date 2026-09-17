@@ -1,5 +1,7 @@
 package net.thevpc.ntexup.extension.progress.registry;
 
+import net.thevpc.ntexup.extension.progress.NTxProgressRegistry;
+
 import java.util.Map;
 import java.util.WeakHashMap;
 

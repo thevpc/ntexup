@@ -1,4 +1,7 @@
-package net.thevpc.ntexup.extension.progress.registry;
+package net.thevpc.ntexup.extension.progress;
+
+import net.thevpc.ntexup.extension.progress.registry.NTxPendingBinding;
+import net.thevpc.ntexup.extension.progress.registry.NTxProgressSelect;
 
 import java.util.List;
 

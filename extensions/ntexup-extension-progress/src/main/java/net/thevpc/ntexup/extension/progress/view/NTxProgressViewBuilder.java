@@ -5,10 +5,9 @@ import net.thevpc.ntexup.api.document.node.NTxNode;
 import net.thevpc.ntexup.api.engine.NTxNodeBuilderContext;
 import net.thevpc.ntexup.api.eval.NTxValue;
 import net.thevpc.ntexup.api.extension.NTxNodeBuilder;
-import net.thevpc.ntexup.api.renderer.NTxGraphics;
 import net.thevpc.ntexup.api.renderer.NTxRendererContext;
 import net.thevpc.ntexup.extension.progress.model.NTxProgress;
-import net.thevpc.ntexup.extension.progress.skin.NTxProgressSkin;
+import net.thevpc.ntexup.extension.progress.NTxProgressSkin;
 import net.thevpc.ntexup.extension.progress.skin.NTxProgressSkinRegistry;
 import net.thevpc.nuts.time.NDuration;
 
