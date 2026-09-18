@@ -132,7 +132,7 @@ To regenerate goldens after an intentional change, flip a system property (`-Dgo
 The CLI already does the same work:
 
 ```bash
-nuts ntexup generate tests/deck-a          # → deck-a.pdf (PDF sign-off build)
+nuts ntexup pdf tests/deck-a          # → deck-a.pdf (PDF sign-off build)
 nuts ntexup show tests/deck-a              # needs a display (manual)
 ```
 
@@ -160,7 +160,7 @@ docker run --rm eclipse-temurin:17-jre \
   bash -c "$(curl -sSL https://thevpc.net/nuts/bootstrap-container-latest.sh)
   && nuts -y install ntexup
   && git clone https://github.com/you/your-decks.git
-  && cd your-decks && for d in tests/*; do nuts ntexup generate \"\$d\" || exit 1; done"
+  && cd your-decks && for d in tests/*; do nuts ntexup pdf \"\$d\" || exit 1; done"
 ```
 
 ---

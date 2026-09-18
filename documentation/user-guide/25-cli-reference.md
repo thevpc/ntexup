@@ -15,14 +15,21 @@ nuts ntexup <command> [options]
 | Command | Description |
 |---------|-------------|
 | `new` | Create a new project from a template |
-| `show` | Render a document/folder in the Swing viewer |
-| `show-doc` | Render the bundled documentation deck |
-| `view-doc` | Interactive documentation browser |
+| `show` (alias `open`) | Render a document/folder in the Swing viewer |
+| `html` | Render a document/folder to HTML in the browser |
+| `documentation` | Render the bundled documentation deck |
+| `documentation-pdf` | Generate the bundled documentation deck to PDF/images |
+| `reopen` | Re-open the last viewed project in the viewer |
+| `build-repo` | Build a local template repository |
 | `list-templates` | List available templates |
 | `pdf` | Render to PDF |
-| `html` | Render to HTML |
-| `--install-syntax=<editor>` | Install syntax highlighting (vim, kate, intellij, gedit, vscode, jedit, notepad-plus-plus) |
+| `images` | Render to a set of images (PNG per page by default) |
+| `dump` | Dump the parsed document model to the console |
+| `install-editor-syntax` | Install syntax highlighting for editors |
+| `--gui` | Force GUI mode |
 | `--help` | Show help |
+
+With no command at all, ntexup opens the viewer on the current directory.
 
 ## `new`
 
@@ -30,7 +37,7 @@ nuts ntexup <command> [options]
 nuts ntexup new -t=classic-medium
 nuts ntexup new --template=classic
 nuts ntexup new --template=classic-small --show
-nuts ntexup new --template=classic --show-doc
+nuts ntexup new --template=classic --documentation
 ```
 
 Supported `-t/--template` values (theme-size):
@@ -38,6 +45,13 @@ Supported `-t/--template` values (theme-size):
 - `classic-small`, `classic-medium`, `classic-large`
 - `ibtihel-small`, `ibtihel-medium`, `ibtihel-large`
 - `eniso-*` (if available)
+
+Additional options:
+
+- `--show` — open the viewer after creation
+- `documentation` — open the documentation deck after creation
+- `pdf[=<out>]` — render the new project to PDF
+- `documentation-pdf[=<out>]` — render the documentation deck to PDF
 
 ## `show`
 
@@ -49,48 +63,97 @@ nuts ntexup show slides.ntx            # single file
 
 Opens the live rendering viewer that refreshes on file change.
 
-## `show-doc` / `view-doc`
+## `html`
 
 ```bash
-nuts ntexup show-doc
-nuts ntexup view-doc
+nuts ntexup html .                # open current folder in the browser
+nuts ntexup html path/to/slides.ntx
+```
+
+## `documentation`
+
+```bash
+nuts ntexup documentation
 ```
 
 Shows the full documentation slides prepared by the project authors.
 
-## `pdf`
+## `documentation-pdf`
 
 ```bash
-nuts ntexup pdf . -o out.pdf
+nuts ntexup documentation-pdf -o out.pdf
 ```
 
-## `html`
+Generates the documentation deck (same options as `pdf`/`image`).
+
+## `reopen`
 
 ```bash
-nuts ntexup html . -o out/
+nuts ntexup reopen
 ```
 
-## `list-templates`
+Re-opens the most recently viewed project in the viewer.
+
+## `build-repo`
 
 ```bash
-nuts ntexup list-templates
+nuts ntexup build-repo path/to/templates
 ```
 
-Prints template IDs and their source URLs.
+Builds a local template repository from a folder of templates.
 
-## Editor syntax
+## `pdf` / `html` / `images`
 
 ```bash
-nuts ntexup --install-syntax=vim
-nuts ntexup --install-syntax=kate
-nuts ntexup --install-syntax=intellij
-nuts ntexup --install-syntax=gedit
-nuts ntexup --install-syntax=vscode
-nuts ntexup --install-syntax=jedit
-nuts ntexup --install-syntax=notepad-plus-plus
+nuts ntexup pdf . -o out.pdf            # render to PDF
+nuts ntexup images . -o target/img       # render every page to an image
+nuts ntexup images . -o page.png --pages=2-5   # render a page range
+nuts ntexup pdf . -o out.pdf --page-size=a4
 ```
 
-Editor support files live under the main project at `documentation/integration/ntx-support/<editor>/`.
+Common options:
+
+| Option | Effect |
+|--------|--------|
+| `-o` / `--output <out>` | Output file (or folder if it ends with `/`) |
+| `-p` / `--pages <range>` | Page range, e.g. `2-5`, `3,5,8-10`, `all` |
+| `--dpi <n>` | Image resolution |
+| `--type` / `--format <fmt>` | Image format (png, jpg, ...) |
+| `--size <WxH>` | Page size in pixels |
+| `--page-size <name>` | Named page size: `a0..a6`, `letter`, `legal`, `ledger`, `executive`, `folio`, `statement` |
+| `--page-width` / `--page-height <n>` | Page size per dimension |
+| `--grid <colsxrows>` | Split one page into a grid of images |
+| `--margin[-top|bottom|left|right] <n>` | Page margins |
+| `--landscape` / `--portrait` | Page orientation |
+| `--show-page-number` | Draw page numbers |
+| `--var-<name>=<value>` | Override a document variable |
+| `--dump` | Dump the parsed model instead of rendering |
+
+## `dump`
+
+```bash
+nuts ntexup dump .                     # dump the document model
+```
+
+Prints the parsed document structure (useful for debugging).
+
+## `install-editor-syntax`
+
+```bash
+nuts ntexup install-editor-syntax=all
+nuts ntexup install-editor-syntax=vim
+nuts ntexup install-editor-syntax=vscode,jedit
+nuts ntexup install-editor-syntax all
+```
+
+> Note: this is a **subcommand**, the old `--install-syntax=` option no longer
+> exists.
+
+Supported editors: `vim`, `kate`, `intellij`, `gedit`, `vscode`, `jedit`,
+`notepad-plus-plus` (`all` installs every family).
+
+Editor support files live under the main project at
+`documentation/integration/ntx-support/<editor>/`.
 
 ## Environment Variables
 

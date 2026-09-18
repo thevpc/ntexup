@@ -49,7 +49,7 @@ curl -s https://thevpc.net/nuts/install-latest.sh | bash
 nuts -y install ntexup
 
 # 3. Verify installation + show built-in documentation slides
-nuts ntexup show-doc
+nuts ntexup documentation
 
 # 4. (Optional) Install editor syntax highlighting for ntx files
 nuts ntexup --install-editor-syntax vim kate intellij gedit vscode notepad++
@@ -843,7 +843,7 @@ ML  --> DB : write predictions
 |---------|-------------|
 | `nuts ntexup show .` | Open interactive Swing viewer with hot-reload (use during editing) |
 | `nuts ntexup pdf` | Render to `output.pdf` in project root (for distribution / print) |
-| `nuts ntexup show-doc` | Open the official example/reference slide deck |
+| `nuts ntexup documentation` | Open the official example/reference slide deck |
 | `nuts ntexup --install-editor-syntax vscode` | Install syntax highlighting for `.ntx` in supported editors (vim, kate, intellij, gedit, vscode, notepad++) |
 
 Typical edit loop:

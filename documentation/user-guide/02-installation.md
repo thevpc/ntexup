@@ -32,7 +32,7 @@ This downloads and installs the latest stable version of ntexup and its dependen
 Render the built-in documentation to confirm everything works:
 
 ```bash
-nuts ntexup show-doc
+nuts ntexup documentation
 ```
 
 This compiles and displays the full ntexup documentation slide deck.
@@ -76,10 +76,10 @@ Common extension names: `common-functions` (color functions), `shapes2d`, `shape
 For syntax highlighting in your editor, run:
 
 ```bash
-nuts ntexup --install-syntax=vim
-nuts ntexup --install-syntax=vscode
-nuts ntexup --install-syntax=kate
-nuts ntexup --install-syntax=intellij
+nuts ntexup install-editor-syntax=vim
+nuts ntexup install-editor-syntax=vscode
+nuts ntexup install-editor-syntax=kate
+nuts ntexup install-editor-syntax=intellij
 ```
 
 You can select only the editors you use. Supported editors: `vim`, `vscode`, `gedit`, `kate`, `intellij`, `jedit`, `notepad-plus-plus`.
@@ -109,6 +109,7 @@ Only PDF generation works in a headless container — the Swing viewer needs a d
 | `nuts ntexup new -t=classic` | Create a new project from the classic template |
 | `nuts ntexup list-templates` | List all available templates |
 | `nuts ntexup show .` | Open the current folder in the viewer |
-| `nuts ntexup show-doc` | Render the documentation slide deck |
-| `nuts ntexup view-doc` | Interactive documentation browser |
-| `nuts ntexup --install-syntax=<editor>` | Install editor syntax highlighting |
+| `nuts ntexup documentation` | Render the documentation slide deck |
+| `nuts ntexup documentation-pdf -o out.pdf` | Generate the documentation deck |
+| `nuts ntexup html .` | Render the current folder to HTML in a browser |
+| `nuts ntexup install-editor-syntax=<editor>` | Install editor syntax highlighting |

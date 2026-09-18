@@ -1,7 +1,7 @@
 # auto install
 
 ```bash
-nuts ntexup --install-syntax=gedit
+nuts ntexup install-editor-syntax=gedit
 ```
 
 # manual install

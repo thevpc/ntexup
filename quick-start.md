@@ -137,7 +137,7 @@ You can adjust styles, layouts, and page content to fully customize your documen
 ## Advanced command
 
 ```bash
-nuts ntexup new -t=classic --show --show-doc
+nuts ntexup new -t=classic --show --documentation
 ```
 
 ## Viewing Documentation

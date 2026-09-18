@@ -1,4 +1,4 @@
-show-doc
+documentation
 new /home/vpc/meriem
 
 show /home/vpc/xprojects/nuts-world/nuts-productivity/ntexup-doc-slides/
@@ -6,9 +6,9 @@ show /home/vpc/xprojects/nuts-world/nuts-productivity/ntexup/test/ntexup-example
 show /home/vpc/xprojects/nuts-world/nuts-productivity/ntexup/test/ntexup-examples/src/ntexup/simple-presentation-ibtihel/
 show /home/vpc/education-world/education/modules/antenna-and-propagation/2024/tbensalah-antenna-and-propagation-course/
 
-generate /home/vpc/xprojects/nuts-world/nuts-productivity/ntexup-doc-slides/
+pdf /home/vpc/xprojects/nuts-world/nuts-productivity/ntexup-doc-slides/
 
-generate-doc
+documentation-pdf
 
 list-templates
 

@@ -26,11 +26,11 @@ Language name: **NTexUp** — files `*.ntx`.
 From the main ntexup project directory:
 
 ```bash
-nuts ntexup --install-syntax=vim
-nuts ntexup --install-syntax=vscode
-nuts ntexup --install-syntax=gedit
-nuts ntexup --install-syntax=kate
-nuts ntexup --install-syntax=intellij
+nuts ntexup install-editor-syntax=vim
+nuts ntexup install-editor-syntax=vscode
+nuts ntexup install-editor-syntax=gedit
+nuts ntexup install-editor-syntax=kate
+nuts ntexup install-editor-syntax=intellij
 ```
 
 Run only for the editor(s) you use.
@@ -46,7 +46,7 @@ put under $HOME/.vim/ftdetect/ntexup.vim
 
 ### VS Code
 
-Manual install is awkward — prefer `--install-syntax=vscode`.
+Manual install is awkward — prefer `install-editor-syntax=vscode`.
 
 ### Other editors
 
@@ -61,7 +61,7 @@ TSON keywords, strings, numbers, comments, and structure of `.ntx` files.
 Works in Gitpod / GitHub Codespaces — run the install command inside the workspace:
 
 ```bash
-nuts ntexup --install-syntax=vscode
+nuts ntexup install-editor-syntax=vscode
 ```
 
 ## Related

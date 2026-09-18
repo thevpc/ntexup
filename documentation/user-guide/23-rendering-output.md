@@ -10,7 +10,7 @@ ntexup can render documents to multiple output formats.
 | PDF | `pdf` | `nuts ntexup pdf ...` |
 | HTML | `html` | `nuts ntexup html ...` |
 | Web (browser) | `web` | `ntexup-viewer-backend` |
-| Image (PNG) | image renderer | rendered internally for stubs |
+| Image (PNG, JPG, ...) | image renderer | `nuts ntexup image ...` |
 
 ## The Screen Viewer
 
@@ -45,27 +45,33 @@ nuts ntexup pdf . -o output.pdf
 |--------|--------|
 | `-o FILE` | output file |
 | `--page-size` | `A4`, `A3`, `LETTER`, ... |
-| `--orientation` | `landscape` / `portrait` |
+| `--landscape` / `--portrait` | page orientation |
 | `--margin` | page margins |
-| `--n-up` | pages per sheet (`1`, `2`, `4`, ...) |
+| `--grid` | pages per sheet (`colsxrows`) |
 
 > In a headless container, only PDF rendering works (no viewer).
 
 ## HTML Generation
 
 ```bash
-nuts ntexup html . -o out/
+nuts ntexup html .           # writes pages into ./dist/html (default)
+nuts ntexup html path/to/slides.ntx
 ```
 
 The HTML renderer:
 
-- Emits `.html` files into a directory or a single zip
+- Emits `.html` files into the target directory (default `./dist/html`)
 - Embeds rendered page images
 - Suitable for static hosting
 
 ## Image Outputs
 
-Each page can be rendered to an image. This is used internally for PDF/HTML, and can also be invoked programmatically:
+Each page can be rendered to an image, either via the CLI, or programmatically:
+
+```bash
+nuts ntexup image . -o target/img       # one PNG per page
+nuts ntexup image . -o pages.png -p 2-5 # only pages 2 to 5
+```
 
 ```java
 BufferedImage img = engine.renderImage(compiledPage, config);
@@ -98,15 +104,15 @@ nuts ntexup new --template=classic --show
 ### Open documentation
 
 ```bash
-nuts ntexup show-doc
-nuts ntexup view-doc
+nuts ntexup documentation
+nuts ntexup documentation-pdf -o out.pdf
 ```
 
 ### Install editor syntax
 
 ```bash
-nuts ntexup --install-syntax=vim
-nuts ntexup --install-syntax=vscode
+nuts ntexup install-editor-syntax=vim
+nuts ntexup install-editor-syntax=vscode
 ```
 
 ## References

@@ -1,6 +1,6 @@
 # auto install
 ```bash
-nuts ntexup --install-syntax=vscode
+nuts ntexup install-editor-syntax=vscode
 ```
 
 # manual install

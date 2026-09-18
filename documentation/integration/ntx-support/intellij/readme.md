@@ -1,7 +1,7 @@
 # auto install
 
 ```bash
-nuts ntexup --install-syntax=intellij
+nuts ntexup install-editor-syntax=intellij
 ```
 
 # manual install

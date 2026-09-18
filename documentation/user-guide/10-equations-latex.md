@@ -10,11 +10,20 @@ ntexup renders LaTeX-style math equations with the **eq** element (alias `equati
 eq("X^2=\sin(\pi x)")
 ```
 
-Note: in ordinary strings you **may** write `\s`, `\p` etc. directly; in some contexts double backslashes `\\frac` are required (e.g., `\frac`, `\sqrt`). When in doubt, escape backslashes.
+TSON strings are **literal-first**: backslashes are passed verbatim to the
+LaTeX renderer. Write regular LaTeX commands with **single** backslashes:
 
 ```tson
-eq("x \\frac{-b \\pm \\sqrt{b^2-4ac}}{2a}")
+eq("x \frac{-b \pm \sqrt{b^2-4ac}}{2a}")
 ```
+
+Do **not** double-escape. `\\frac` makes the renderer see a `\\` (line-break)
+command at the start of the math and fails with `Problem with command \ at
+position 0:1`. The only legitimate use of `\\` is as a row separator inside a
+matrix/array environment (`\begin{array}`, `\begin{pmatrix}`, `\begin{bmatrix}`).
+
+When in doubt, start from `eq("x^2")` and build up (see the troubleshooting
+guide).
 
 ## Unicode-friendly math
 

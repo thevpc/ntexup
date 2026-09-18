@@ -1,6 +1,6 @@
 # auto install
 ```bash
-nuts ntexup --install-syntax=kate
+nuts ntexup install-editor-syntax=kate
 ```
 
 # manual install

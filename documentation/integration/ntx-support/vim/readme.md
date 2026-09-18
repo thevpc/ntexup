@@ -1,6 +1,6 @@
 # auto install
 ```bash
-nuts ntexup --install-syntax=vim
+nuts ntexup install-editor-syntax=vim
 ```
 
 # manual install

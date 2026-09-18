@@ -26,7 +26,7 @@
 
 ### Viewer opens blank / nothing renders
 
-- Run `nuts ntexup show-doc` first — if that works, your project has an error. Check the console output for a stack trace.
+- Run `nuts ntexup documentation` first — if that works, your project has an error. Check the console output for a stack trace.
 - Look for unmatched braces `{}`, missing comma/term.
 
 ### PDF generated but blank pages
@@ -85,7 +85,7 @@
 
 ### Syntax highlighting not applied
 
-- Re-run `nuts ntexup --install-syntax=vscode` and restart the editor.
+- Re-run `nuts ntexup install-editor-syntax=vscode` and restart the editor.
 - Confirm `.ntx` file type is recognized (see [Editor Integration](24-editor-integration.md)).
 
 ## Performance
@@ -94,7 +94,7 @@
 
 - Reduce `segment-count` on 3D solids.
 - Lower `surface` `grid-size`.
-- Reduce `n-up` pages per sheet.
+- Reduce `grid`/`n-up` pages per sheet.
 - Cache remote includes by pinning branch URLs.
 
 ## Common Error Messages

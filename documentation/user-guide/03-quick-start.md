@@ -110,7 +110,7 @@ nuts ntexup pdf . -o output.pdf
 ## Render to HTML
 
 ```bash
-nuts ntexup html . -o output/
+nuts ntexup html .        # writes pages into ./dist/html
 ```
 
 The above commands assume your CLI build supports them; if not, use the on-screen viewer:

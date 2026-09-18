@@ -19,7 +19,7 @@ cd myproject
 nuts ntexup show
 
 # Generate a PDF from current directory
-nuts ntexup generate
+nuts ntexup pdf
 ```
 
 ---
@@ -56,11 +56,11 @@ Reopen the last opened file or folder from your history.
 nuts ntexup reopen
 ```
 
-####) ```sh show-doc```
+####) ```sh documentation```
 Open the official NTexUp documentation and tutorial slides.
 
 ```sh
-nuts ntexup show-doc
+nuts ntexup documentation
 ```
 
 ---
@@ -81,24 +81,24 @@ nuts ntexup new myproject --template slides-basic
 nuts ntexup new myproject --show
 
 # Create and generate PDF
-nuts ntexup new myproject --generate-pdf
+nuts ntexup new myproject --pdf
 
 # Create and generate PDF with custom output
-nuts ntexup new myproject --generate-pdf=output.pdf
+nuts ntexup new myproject --pdf=output.pdf
 ```
 
 ###Options:###
 - ```sh --template=<url> | -t <url>``` : Specify template URL or ID
 - ```sh --show``` : Open the project in the viewer after creation
-- ```sh --generate-pdf[=path]``` : Generate PDF immediately after creation
-- ```sh --generate-doc-pdf[=path]``` : Generate documentation PDF
-- ```sh --show-doc``` : Open documentation in viewer
+- ```sh --pdf[=path]``` : Generate PDF immediately after creation
+- ```sh --documentation-pdf[=path]``` : Generate documentation PDF
+- ```sh --documentation``` : Open documentation in viewer
 
 ---
 
 ###) PDF Generation
 
-####) ```sh generate | pdf [path] [options]```
+####) ```sh pdf [path] [options]```
 Create a new NTexUp project from a template. If no template is specified, presents an interactive menu of available templates.
 
 ```sh
@@ -118,10 +118,10 @@ nuts ntexup new myproject --template https://github.com/user/template.git
 nuts ntexup new myproject --show
 
 # Create and generate PDF
-nuts ntexup new myproject --generate-pdf
+nuts ntexup new myproject --pdf
 
 # Create and generate PDF with custom output
-nuts ntexup new myproject --generate-pdf=output.pdf
+nuts ntexup new myproject --pdf=output.pdf
 ```
 
 Interactive Template Selection:
@@ -158,29 +158,29 @@ myproject/
 ###Options:###
 - ```sh --template=<url> | -t <url>``` : Specify template URL, ID, or number
 - ```sh --show``` : Open the project in the viewer after creation
-- ```sh --generate-pdf[=path]``` : Generate PDF immediately after creation
-- ```sh --generate-doc-pdf[=path]``` : Generate documentation PDF
-- ```sh --show-doc``` : Open documentation in viewer
+- ```sh --pdf[=path]``` : Generate PDF immediately after creation
+- ```sh --documentation-pdf[=path]``` : Generate documentation PDF
+- ```sh --documentation``` : Open documentation in viewer
 
 
-####) ```sh generate-doc|pdf [options]```
+####) ```sh documentation-pdf|pdf [options]```
 Generate PDF from the official NTexUp documentation.
 
 ```sh
 # Generate PDF from current directory
-nuts ntexup generate
+nuts ntexup pdf
 
 # Generate PDF from specific document
-nuts ntexup generate document.ntx
+nuts ntexup pdf document.ntx
 
 # Generate PDF from specific project
-nuts ntexup generate myproject/
+nuts ntexup pdf myproject/
 
 # Generate with custom output path
-nuts ntexup generate document.ntx --output=output.pdf
+nuts ntexup pdf document.ntx --output=output.pdf
 
 # Generate from multiple documents
-nuts ntexup generate doc1.ntx doc2.ntx --output=./pdfs/
+nuts ntexup pdf doc1.ntx doc2.ntx --output=./pdfs/
 ```
 
 Output Behavior:
@@ -265,7 +265,7 @@ Display detailed debug information about the current operation or document struc
 
 ```sh
 # Show debug info for any command
-nuts ntexup generate document.ntx --dump
+nuts ntexup pdf document.ntx --dump
 nuts ntexup new project --dump
 nuts ntexup build-repo --dump
 ```
@@ -278,7 +278,7 @@ Force GUI mode on or off, overriding the default behavior.
 nuts ntexup show document.ntx --gui
 
 # Force terminal mode
-nuts ntexup generate document.ntx --no-gui
+nuts ntexup pdf document.ntx --no-gui
 ```
 
 ---
@@ -304,7 +304,7 @@ cd my-presentation
 nuts ntexup show
 
 # Generate PDF when ready (uses current directory)
-nuts ntexup generate --output=presentation.pdf
+nuts ntexup pdf --output=presentation.pdf
 ```
 
 
@@ -325,7 +325,7 @@ nuts ntexup reopen
 
 # Generate PDF from current directory
 cd myproject
-nuts ntexup generate
+nuts ntexup pdf
 ```
 
 ###) Creating and Viewing a Presentation
@@ -338,17 +338,17 @@ nuts ntexup new lecture01 --template slides-modern
 nuts ntexup show lecture01
 
 # Generate PDF when ready
-nuts ntexup generate lecture01 --output=lecture01.pdf
+nuts ntexup pdf lecture01 --output=lecture01.pdf
 ```
 
 ###) Batch PDF Generation
 
 ```sh
 # Generate PDFs for all documents in a folder
-nuts ntexup generate ./lectures/ --output=./pdfs/
+nuts ntexup pdf ./lectures/ --output=./pdfs/
 
 # Generate with custom variables
-nuts ntexup generate course.ntx \
+nuts ntexup pdf course.ntx \
   --var-semester="Spring 2025" \
   --var-instructor="Dr. Smith" \
   --output=course-spring-2025.pdf
@@ -367,7 +367,7 @@ nuts ntexup install-editor-syntax vscode
 nuts ntexup install-editor-syntax all --force
 
 # View documentation
-nuts ntexup show-doc
+nuts ntexup documentation
 ```
 
 ###) Template Repository Management
@@ -413,18 +413,18 @@ These options can be used with any command:
 nuts ntexup new thesis --template academic-paper
 nuts ntexup show thesis
 # (edit your document)
-nuts ntexup generate thesis --output=thesis-final.pdf
+nuts ntexup pdf thesis --output=thesis-final.pdf
 
 # Example 2: Quick PDF generation
-nuts ntexup generate presentation.ntx --output=slides.pdf
+nuts ntexup pdf presentation.ntx --output=slides.pdf
 
 # Example 3: Working with templates
 nuts ntexup list-templates
 nuts ntexup new project --template slides-minimal --show
 
 # Example 4: Documentation workflow
-nuts ntexup show-doc
-nuts ntexup generate-doc --output=ntexup-manual.pdf
+nuts ntexup documentation
+nuts ntexup documentation-pdf --output=ntexup-manual.pdf
 
 # Example 5: Editor setup
 nuts ntexup install-editor-syntax vscode vim --force
@@ -438,7 +438,7 @@ nuts ntexup build-repo
 
 ##) GETTING HELP
 
-- ##:bold Documentation## : Run `nuts ntexup show-doc` to view the full tutorial
+- ##:bold Documentation## : Run `nuts ntexup documentation` to view the full tutorial
 - ##:bold Templates## : Run `nuts ntexup list-templates` to see all available templates
 - ##:bold Debug## : Add `--dump` to any command for detailed diagnostic output
 - ##:bold Source## : Visit https://github.com/thevpc/ntexup for source code and issues
