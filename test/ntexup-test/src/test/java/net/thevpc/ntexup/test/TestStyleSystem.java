@@ -72,6 +72,8 @@ public class TestStyleSystem {
             testLegacyDotDoesNotLeak();
             testAndSelectors();
             testTableHeaderAndKeyedFactories();
+            testStructuralContentInheritance();
+            testNestedTableInnerShadowsOuter();
             testE2eTableStylesGrammar();
             testE2eNeverFailLegacy();
             testE2eClassExtendsKeyword();
@@ -351,6 +353,132 @@ public class TestStyleSystem {
         // body cell 2/2 : explicit table-cell(row:,col:) beats table-column(2)
         assertEq("explicit table-cell beats table-column", "cell22-green", colorOf(cell(root, 2, 2)));
         assertEq("cell 2/1 -> col1 rule", "col1-purple", colorOf(cell(root, 2, 1)));
+    }
+
+    static void testStructuralContentInheritance() {
+        DefaultNTxNode root = new DefaultNTxNode(NTxNodeType.GROUP);
+        root.addRule(DefaultNTxStyleRule.of(root, SRC,
+                DefaultNTxNodeSelector.of(NTxStyleRuleSelectorItem.ofTableRow("header")),
+                NTxProp.ofString(NTxPropName.COLOR, "h-red")));
+        root.addRule(DefaultNTxStyleRule.of(root, SRC,
+                DefaultNTxNodeSelector.of(NTxStyleRuleSelectorItem.ofTableRow("even")),
+                NTxProp.ofString(NTxPropName.BACKGROUND_COLOR, "zebra")));
+        root.addRule(DefaultNTxStyleRule.of(root, SRC,
+                DefaultNTxNodeSelector.of(NTxStyleRuleSelectorItem.ofTableColumn(3)),
+                NTxProp.ofString(NTxPropName.COLOR, "col3-violet")));
+        root.addRule(DefaultNTxStyleRule.of(root, SRC,
+                DefaultNTxNodeSelector.of(NTxStyleRuleSelectorItem.ofTableCell(1, 1)),
+                NTxProp.ofString(NTxPropName.COLOR, "c11-teal")));
+
+        NTxNode table = engine().newDefaultNode(NTxNodeType.TABLE);
+        table.setSource(SRC);
+        root.addChild(table);
+        NTxNode hrow = rowNode("header", null, 1);
+        table.addChild(hrow);
+        NTxNode hc1 = cellNode(1, 1);
+        NTxNode hc2 = cellNode(1, 2);
+        NTxNode hc3 = cellNode(1, 3);
+        hrow.addChild(hc1);
+        hrow.addChild(hc2);
+        hrow.addChild(hc3);
+        NTxNode ht1 = textNode();
+        NTxNode ht2 = textNode();
+        NTxNode ht3 = textNode();
+        hc1.addChild(ht1);
+        hc2.addChild(ht2);
+        hc3.addChild(ht3);
+        // body rows : one odd (body-row 1) and one even (body-row 2)
+        NTxNode brow1 = rowNode("body", 1, 2);
+        NTxNode brow2 = rowNode("body", 2, 3);
+        table.addChild(brow1);
+        table.addChild(brow2);
+        NTxNode bc11 = cellNode(2, 1), bc13 = cellNode(2, 3);
+        NTxNode bc21 = cellNode(3, 1), bc23 = cellNode(3, 3);
+        brow1.addChild(bc11); brow1.addChild(cellNode(2, 2)); brow1.addChild(bc13);
+        brow2.addChild(bc21); brow2.addChild(cellNode(3, 2)); brow2.addChild(bc23);
+        NTxNode bt11 = textNode(); NTxNode bt13 = textNode();
+        NTxNode bt21 = textNode(); NTxNode bt23 = textNode();
+        bc11.addChild(bt11); bc13.addChild(bt13);
+        bc21.addChild(bt21); bc23.addChild(bt23);
+
+        // row-level: header color reaches the header cell AND its content
+        assertEq("header row itself", "h-red", colorOf(hrow));
+        assertEq("header cell(1,2) inherits row color", "h-red", colorOf(hc2));
+        assertEq("header cell(1,1) cell rule beats row rule", "c11-teal", colorOf(hc1));
+        assertEq("header cell(1,2) content inherits row color", "h-red", colorOf(ht2));
+        assertEq("header cell(1,1) content: cell rule beats row rule", "c11-teal", colorOf(ht1));
+        assertEq("header cell(1,3) content: col3 rule wins tie", "col3-violet", colorOf(ht3));
+        assertEq("body cell content not header colored", "#1A1A1A", colorOf(bt11));
+        assertEq("body cell content not header colored", "#1A1A1A", colorOf(bt11));
+
+        // zebra: body-row parity reaches content of even body rows only
+        assertEq("even body row bg", "zebra", propOf(brow2, NTxPropName.BACKGROUND_COLOR));
+        assertEq("even body row content bg", "zebra", propOf(bt21, NTxPropName.BACKGROUND_COLOR));
+        assertEq("odd body row content bg untouched", null, propOf(bt11, NTxPropName.BACKGROUND_COLOR));
+        assertEq("header content bg untouched", null, propOf(ht1, NTxPropName.BACKGROUND_COLOR));
+
+        // column-level: col3 color reaches every col3 cell and its content
+        assertEq("col3 cell", "col3-violet", colorOf(hc3));
+        assertEq("col3 header content", "col3-violet", colorOf(ht3));
+        assertEq("col3 body content", "col3-violet", colorOf(bt23));
+        assertEq("col1 body content not col3 colored", "#1A1A1A", colorOf(bt11));
+
+        // cell-level exact: (1,1) rule wins for the cell and its content
+        assertEq("cell(1,1) wins over col3", "c11-teal", colorOf(hc1));
+        assertEq("cell(1,1) content wins", "c11-teal", colorOf(ht1));
+
+        // content outside any table is never matched by structural selectors
+        NTxNode plain = textNode();
+        root.addChild(plain);
+        assertEq("plain text outside table unmatched", "#1A1A1A", colorOf(plain));
+        assertEq("plain text outside table unmatched (bg)", null, propOf(plain, NTxPropName.BACKGROUND_COLOR));
+    }
+
+    static void testNestedTableInnerShadowsOuter() {
+        DefaultNTxNode root = new DefaultNTxNode(NTxNodeType.GROUP);
+        root.addRule(DefaultNTxStyleRule.of(root, SRC,
+                DefaultNTxNodeSelector.of(NTxStyleRuleSelectorItem.ofTableCell(3, 4)),
+                NTxProp.ofString(NTxPropName.COLOR, "outer-blue")));
+        root.addRule(DefaultNTxStyleRule.of(root, SRC,
+                DefaultNTxNodeSelector.of(NTxStyleRuleSelectorItem.ofTableCell(1, 2)),
+                NTxProp.ofString(NTxPropName.COLOR, "inner-green")));
+        root.addRule(DefaultNTxStyleRule.of(root, SRC,
+                DefaultNTxNodeSelector.of(NTxStyleRuleSelectorItem.ofTableRow("even")),
+                NTxProp.ofString(NTxPropName.COLOR, "inner-row-paint")));
+
+        // outer table, outer cell at flattened (3,4)
+        NTxNode outerTable = engine().newDefaultNode(NTxNodeType.TABLE);
+        outerTable.setSource(SRC);
+        root.addChild(outerTable);
+        NTxNode outerRow = rowNode("body", 1, 1);
+        outerTable.addChild(outerRow);
+        NTxNode outerCell = cellNode(3, 4);
+        outerRow.addChild(outerCell);
+        NTxNode outerText = textNode();
+        outerCell.addChild(outerText);
+
+        // inner table inside the outer cell, inner cell at (1,2)
+        NTxNode innerTable = engine().newDefaultNode(NTxNodeType.TABLE);
+        innerTable.setSource(SRC);
+        outerCell.addChild(innerTable);
+        NTxNode innerRow = rowNode("body", 2, 1);
+        innerTable.addChild(innerRow);
+        NTxNode innerCell = cellNode(1, 2);
+        innerRow.addChild(innerCell);
+        NTxNode innerText = textNode();
+        innerCell.addChild(innerText);
+
+        assertEq("outer cell(3,4) matches its own rule", "outer-blue", colorOf(outerCell));
+        assertEq("outer cell content inherits outer rule", "outer-blue", colorOf(outerText));
+        assertEq("inner cell(1,2) matches inner rule", "inner-green", colorOf(innerCell));
+        // innermost context shadows the outer one: the (3,4) rule never reaches inside
+        assertEq("inner content sees only inner cell context", "inner-green", colorOf(innerText));
+        // zebra color of the inner row (bodyRow 2 = even) reaches the inner content;
+        // the exact cell(1,2) rule wins over the row rule by higher specificity
+        assertEq("inner row is even", "inner-row-paint", colorOf(innerRow));
+        assertEq("inner content: cell rule beats row rule", "inner-green", colorOf(innerText));
+        // a row node is never matched by table-cell / table-column rules
+        assertEq("outer row not matched by cell rule", "#1A1A1A", colorOf(outerRow));
     }
 
     static NTxNode row(NTxNode root, int i) {

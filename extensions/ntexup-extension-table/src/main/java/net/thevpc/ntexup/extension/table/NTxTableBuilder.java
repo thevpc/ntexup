@@ -1,6 +1,8 @@
 package net.thevpc.ntexup.extension.table;
 
+import net.thevpc.ntexup.api.document.NTxSizeRequirements;
 import net.thevpc.ntexup.api.document.elem2d.NTxBounds2D;
+import net.thevpc.ntexup.api.document.elem2d.NTxDouble2;
 import net.thevpc.ntexup.api.document.elem2d.NTxInt2;
 import net.thevpc.ntexup.api.document.elem2d.NTxMargin;
 import net.thevpc.ntexup.api.document.node.NTxNode;
@@ -21,6 +23,10 @@ import net.thevpc.nuts.elem.NElement;
 import net.thevpc.nuts.elem.NListContainerElement;
 import net.thevpc.nuts.util.NOptional;
 
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -31,6 +37,16 @@ import java.util.List;
  * Creates a table node that renders tabular data.
  */
 public class NTxTableBuilder implements NTxNodeBuilder {
+
+    /**
+     * Transparent paint used to neutralize background leakage on cell content
+     * nodes: cell/row background rules (e.g. {@code table-row(row: even)})
+     * cascade into content descendants through the structural selectors, but
+     * only the cell/row itself may paint a visible background. Giving the
+     * content an explicit, fully transparent background keeps the generic text
+     * renderer from painting a box over the cell background / grid lines.
+     */
+    private static final NElement NO_BACKGROUND = NElement.ofCustom(new Color(0, 0, 0, 0));
 
     private final NTxProperties defaultStyles = new NTxProperties();
 
@@ -44,11 +60,13 @@ public class NTxTableBuilder implements NTxNodeBuilder {
                         "data"
 
                 ).end()
+                .selfBounds2D(this::selfBounds2D)
+                .sizeRequirements(this::sizeRequirements)
                 .renderComponent(this::renderMain)
         ;
     }
 
-    private String asStr(NElement e) {
+    private static String asStr(NElement e) {
         if (e == null || e.isNull()) {
             return "";
         }
@@ -61,79 +79,10 @@ public class NTxTableBuilder implements NTxNodeBuilder {
     private void renderMain(NTxRendererContext rendererContext) {
         NTxNode node = rendererContext.node();
 
-        // Helper to convert NTxValue to List<List<String>>
-        java.util.function.Function<NTxValue, List<List<String>>> convertToTableData = value -> {
-            List<List<String>> result = new ArrayList<>();
-            NOptional<NElement> outerOpt = value.asElement();
-            if (outerOpt.isPresent()) {
-                NElement outer = outerOpt.get();
-                if (outer.isListContainer() && !outer.isNamed()) {
-                    NOptional<NListContainerElement> outerListOpt = outer.asListContainer();
-                    if (outerListOpt.isPresent()) {
-                        NListContainerElement outerList = outerListOpt.get();
-                        List<NElement> rows = outerList.children();
-                        for (NElement rowElem : rows) {
-                            NTxValue rowValue = NTxValue.of(rowElem);
-                            NOptional<NElement> rowElemOpt = rowValue.asElement();
-                            if (rowElemOpt.isPresent()) {
-                                NElement rowElemVal = rowElemOpt.get();
-                                if (rowElemVal.isListContainer() && !rowElemVal.isNamed()) {
-                                    NOptional<NListContainerElement> rowListOpt = rowElemVal.asListContainer();
-                                    if (rowListOpt.isPresent()) {
-                                        NListContainerElement rowList = rowListOpt.get();
-                                        List<NElement> cells = rowList.children();
-                                        List<String> rowData = new ArrayList<>();
-                                        for (NElement cellElem : cells) {
-                                            NTxValue cellValue = NTxValue.of(cellElem);
-                                            rowData.add(asStr(cellValue.asElement().orNull()));
-                                        }
-                                        result.add(rowData);
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            return result;
-        };
-
-        // Build data from arguments: headerData + bodyData + footerData, or data
-        List<List<String>> data = new ArrayList<>();
-        List<String> sections = new ArrayList<>();
-
-        // Try headerData, bodyData, footerData
-        List<List<String>> header = convertToTableData.apply(NTxValue.ofProp(node, "header-data"));
-        List<List<String>> body = convertToTableData.apply(NTxValue.ofProp(node, "data"));
-        List<List<String>> footer = convertToTableData.apply(NTxValue.ofProp(node, "footer-data"));
-
-        if (!header.isEmpty() || !body.isEmpty() || !footer.isEmpty()) {
-            data.addAll(header);
-            for (int i = 0; i < header.size(); i++) {
-                sections.add("header");
-            }
-            data.addAll(body);
-            for (int i = 0; i < body.size(); i++) {
-                sections.add("body");
-            }
-            data.addAll(footer);
-            for (int i = 0; i < footer.size(); i++) {
-                sections.add("footer");
-            }
-        } else {
-            // Try data
-            data = convertToTableData.apply(NTxValue.ofProp(node, "data"));
-            // If still empty, use a default
-            if (data.isEmpty()) {
-                data = List.of(
-                        List.of("Header1", "Header2"),
-                        List.of("Row1Col1", "Row1Col2")
-                );
-            }
-            for (int i = 0; i < data.size(); i++) {
-                sections.add("body");
-            }
-        }
+        // Build data from arguments: header + body + footer, or plain data
+        TableData td = tableData(node);
+        List<List<String>> data = td.data;
+        List<String> sections = td.sections;
 
         // Determine number of rows and columns
         int rows = data.size();
@@ -147,20 +96,20 @@ public class NTxTableBuilder implements NTxNodeBuilder {
             cols = 1;
         }
 
-        // Get padding
-        double pad = 0.0;
-        NTxMargin padding = NTxValueByName.getPadding(rendererContext);
-        if (padding != null) {
-            pad = padding.getLeft(); // use left as representative
-        }
-        double contentWidth = rendererContext.selfBounds2D().widthX() - 2 * pad;
-        double contentHeight = rendererContext.selfBounds2D().widthY() - 2 * pad;
+        // Measure the table from its content: the table self-sizes instead of
+        // filling the whole parent area (like text/flow nodes do), so the
+        // rendered box stays compact inside grid/column cells.
+        TableMeasure m = measure(rendererContext, node, td, cols);
+        double pad = m.pad;
+        double contentWidth = m.tableWidth - 2 * pad;
+        double contentHeight = m.tableHeight - 2 * pad;
 
-        // Compute column widths
-        double[] colWidths = new double[cols];
+        // Column widths come from the content measurement; an explicit
+        // columns-weight list overrides the natural proportions.
+        double[] colWidths = m.colWidths;
         NTxValue colWeightVal = NTxValue.ofProp(node, "columns-weight");
         NOptional<NElement> colWeightElemOpt = colWeightVal.asElement();
-        if (colWeightElemOpt.isPresent()) {
+        if (colWeightElemOpt.isPresent() && m.tableWidth > 0) {
             NElement colWeightElem = colWeightElemOpt.get();
             if (colWeightElem.isListContainer() && !colWeightElem.isNamed()) {
                 NOptional<NListContainerElement> colWeightListOpt = colWeightElem.asListContainer();
@@ -170,63 +119,23 @@ public class NTxTableBuilder implements NTxNodeBuilder {
                     double totalWeight = 0;
                     List<Double> weightValues = new ArrayList<>();
                     for (NElement wElem : weightElems) {
-                        NTxValue wVal = NTxValue.of(wElem);
-                        NOptional<Double> wOpt = wVal.asDouble();
-                        if (wOpt.isPresent()) {
-                            double w = wOpt.get();
-                            weightValues.add(w);
-                            totalWeight += w;
-                        } else {
-                            // try to parse as number from string
-                            NOptional<String> sOpt = wVal.asStringOrName();
-                            if (sOpt.isPresent()) {
-                                try {
-                                    double w = Double.parseDouble(sOpt.get());
-                                    weightValues.add(w);
-                                    totalWeight += w;
-                                } catch (NumberFormatException e) {
-                                    weightValues.add(1.0);
-                                    totalWeight += 1.0;
-                                }
-                            } else {
-                                weightValues.add(1.0);
-                                totalWeight += 1.0;
-                            }
-                        }
+                        NOptional<Double> wOpt = NTxValue.of(wElem).asDouble();
+                        double w = wOpt.orElse(1.0);
+                        weightValues.add(w);
+                        totalWeight += w;
                     }
                     if (totalWeight > 0) {
                         for (int i = 0; i < cols; i++) {
                             double w = i < weightValues.size() ? weightValues.get(i) : 1.0;
-                            colWidths[i] = (w / totalWeight) * contentWidth;
-                        }
-                    } else {
-                        // fallback to equal
-                        for (int i = 0; i < cols; i++) {
-                            colWidths[i] = contentWidth / cols;
+                            colWidths[i] = (w / totalWeight) * m.tableWidth;
                         }
                     }
-                } else {
-                    // fallback to equal
-                    for (int i = 0; i < cols; i++) {
-                        colWidths[i] = contentWidth / cols;
-                    }
                 }
-            } else {
-                // fallback to equal
-                for (int i = 0; i < cols; i++) {
-                    colWidths[i] = contentWidth / cols;
-                }
-            }
-        } else {
-            // equal widths
-            for (int i = 0; i < cols; i++) {
-                colWidths[i] = contentWidth / cols;
             }
         }
 
-        // Compute row heights (equal for now)
-        double[] rowHeights = new double[rows];
-        Arrays.fill(rowHeights, contentHeight / rows);
+        // Uniform row heights from the content measurement
+        double[] rowHeights = m.rowHeights;
 
         // Materialize rows and cells as real child nodes so that structural
         // selectors (table-row / table-cell / table-column) can match them.
@@ -246,19 +155,29 @@ public class NTxTableBuilder implements NTxNodeBuilder {
         double x0 = rendererContext.selfBounds2D().minX();
         double y0 = rendererContext.selfBounds2D().minY();
 
-        // Draw row and cell backgrounds (per materialized node styles)
+        // Draw row backgrounds, cell backgrounds, then cell content
+        // (real child nodes rendered by the generic pipeline).
         double cy = y0;
         for (int r = 0; r < rowNodes.size(); r++) {
             NTxNode rowNode = rowNodes.get(r);
             double rowH = rowHeights[Math.min(r, rowHeights.length - 1)];
-            NTxBounds2D rowRect = NTxBounds2D.ofWidth(x0, cy, contentWidth, rowH);
+            NTxBounds2D rowRect = NTxBounds2D.ofWidth(x0, cy, m.tableWidth, rowH);
             NTxRendererContext rowCtx = rendererContext.resolveNode(rowNode, rowRect);
             rowCtx.paintBackground(rowRect);
             double cx = x0;
             for (NTxNode cellNode : rowNode.children()) {
                 double colW = cellColWidth(cellNode, colWidths);
                 NTxBounds2D cellRect = NTxBounds2D.ofWidth(cx, cy, colW, rowH);
-                rowCtx.resolveNode(cellNode, cellRect).paintBackground(cellRect);
+                NTxRendererContext cellCtx = rowCtx.resolveNode(cellNode, cellRect);
+                cellCtx.paintBackground(cellRect);
+                List<NTxNode> contentChildren = cellNode.children();
+                if (!contentChildren.isEmpty() && colW > 2 * pad && rowH > 2 * pad) {
+                    NTxBounds2D innerRect = NTxBounds2D.ofWidth(
+                            cx + pad, cy + pad, colW - 2 * pad, rowH - 2 * pad);
+                    for (NTxNode contentChild : contentChildren) {
+                        renderContentChild(cellCtx, contentChild, innerRect);
+                    }
+                }
                 cx += colW;
             }
             cy += rowH;
@@ -289,30 +208,218 @@ public class NTxTableBuilder implements NTxNodeBuilder {
             }
         }
 
-        // Draw text for each cell (per-cell font and foreground)
-        cy = y0;
-        for (int r = 0; r < rowNodes.size(); r++) {
-            NTxNode rowNode = rowNodes.get(r);
-            double rowH = rowHeights[Math.min(r, rowHeights.length - 1)];
-            double cx = x0;
-            for (NTxNode cellNode : rowNode.children()) {
-                double colW = cellColWidth(cellNode, colWidths);
-                NTxBounds2D cellRect = NTxBounds2D.ofWidth(cx, cy, colW, rowH);
-                NTxRendererContext cellCtx = rendererContext.resolveNode(cellNode, cellRect);
-                cellCtx.applyFont();
-                cellCtx.applyForeground(true);
-                NOptional<NElement> textValue = cellNode.getPropertyValue(NTxPropName.VALUE);
-                String text = textValue.isPresent() ? textValue.get().asStringValue().orElse("") : "";
-                double xPos = cx + pad;
-                double yPos = cy + cellCtx.getFontSize();
-                cellCtx.graphics().drawString(text, xPos, yPos);
-                cx += colW;
-            }
-            cy += rowH;
-        }
-
         // Draw contour if enabled
         rendererContext.drawContour();
+    }
+
+    /**
+     * Self-sizing bounds: the table measures its own content (widest cell text
+     * per column, one text line per row) and reports a compact box anchored at
+     * the standard top-left position, exactly like text/flow nodes do. Without
+     * this, the table would fill its whole parent area and its rows would grow
+     * to hundreds of pixels inside grid cells.
+     */
+    public NTxBounds2D selfBounds2D(NTxRendererContext ctx) {
+        NTxNode node = ctx.node();
+        TableData td = tableData(node);
+        int cols = columnCount(td);
+        TableMeasure m = measure(ctx, node, td, cols);
+        if (m == null || m.tableWidth <= 0 || m.tableHeight <= 0) {
+            return ctx.defaultSelfBounds2D();
+        }
+        return NTxValueByName.selfBounds2D(new NTxDouble2(m.tableWidth, m.tableHeight), null, ctx);
+    }
+
+    /**
+     * Size requirements consistent with the self-sizing bounds, so laying
+     * containers (grids, columns, pages) can pack rows to the table content.
+     */
+    public NTxSizeRequirements sizeRequirements(NTxRendererContext ctx) {
+        NTxNode node = ctx.node();
+        TableData td = tableData(node);
+        int cols = columnCount(td);
+        TableMeasure m = measure(ctx, node, td, cols);
+        if (m == null || m.tableWidth <= 0 || m.tableHeight <= 0) {
+            return new NTxSizeRequirements(0, 0, 0, 0, 0, 0);
+        }
+        return new NTxSizeRequirements(
+                0, m.tableWidth, m.tableWidth,
+                0, m.tableHeight, m.tableHeight
+        );
+    }
+
+    private int columnCount(TableData td) {
+        int cols = 0;
+        for (List<String> row : td.data) {
+            if (row.size() > cols) {
+                cols = row.size();
+            }
+        }
+        return Math.max(cols, 1);
+    }
+
+    /**
+     * Extracts the table rows from the node props: either the
+     * header-data / data / footer-data combination, or a plain data list.
+     */
+    private TableData tableData(NTxNode node) {
+        List<List<String>> data = new ArrayList<>();
+        List<String> sections = new ArrayList<>();
+        List<List<String>> header = toRows(NTxValue.ofProp(node, "header-data").asElement().orNull());
+        List<List<String>> body = toRows(NTxValue.ofProp(node, "data").asElement().orNull());
+        List<List<String>> footer = toRows(NTxValue.ofProp(node, "footer-data").asElement().orNull());
+        if (!header.isEmpty() || !body.isEmpty() || !footer.isEmpty()) {
+            data.addAll(header);
+            for (int i = 0; i < header.size(); i++) {
+                sections.add("header");
+            }
+            data.addAll(body);
+            for (int i = 0; i < body.size(); i++) {
+                sections.add("body");
+            }
+            data.addAll(footer);
+            for (int i = 0; i < footer.size(); i++) {
+                sections.add("footer");
+            }
+        } else {
+            data = body;
+            if (data.isEmpty()) {
+                data = List.of(
+                        List.of("Header1", "Header2"),
+                        List.of("Row1Col1", "Row1Col2")
+                );
+            }
+            for (int i = 0; i < data.size(); i++) {
+                sections.add("body");
+            }
+        }
+        TableData td = new TableData();
+        td.data = data;
+        td.sections = sections;
+        return td;
+    }
+
+    /** Converts a plain (non-named) list-of-lists element to rows of strings. */
+    private static List<List<String>> toRows(NElement outer) {
+        List<List<String>> result = new ArrayList<>();
+        if (outer == null || outer.isNull()) {
+            return result;
+        }
+        if (outer.isListContainer() && !outer.isNamed()) {
+            NOptional<NListContainerElement> outerListOpt = outer.asListContainer();
+            if (outerListOpt.isPresent()) {
+                for (NElement rowElem : outerListOpt.get().children()) {
+                    NTxValue rowValue = NTxValue.of(rowElem);
+                    NOptional<NElement> rowElemOpt = rowValue.asElement();
+                    if (rowElemOpt.isPresent()) {
+                        NElement rowElemVal = rowElemOpt.get();
+                        if (rowElemVal.isListContainer() && !rowElemVal.isNamed()) {
+                            NOptional<NListContainerElement> rowListOpt = rowElemVal.asListContainer();
+                            if (rowListOpt.isPresent()) {
+                                List<String> rowData = new ArrayList<>();
+                                for (NElement cellElem : rowListOpt.get().children()) {
+                                    rowData.add(asStr(cellElem));
+                                }
+                                result.add(rowData);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Measures the table content and derives the natural column widths / row
+     * heights / total size. Text is measured at the same clamped font that the
+     * renderer will use, so the painted content always fits the box.
+     */
+    private TableMeasure measure(NTxRendererContext ctx, NTxNode node, TableData td, int cols) {
+        List<List<String>> data = td.data;
+        int rows = data.size();
+        if (rows == 0) {
+            return null;
+        }
+        double pad = 0.0;
+        NTxMargin padding = NTxValueByName.getPadding(ctx);
+        if (padding != null) {
+            pad = padding.getLeft(); // use left as representative
+        }
+        NTxGraphics g = ctx.graphics().copy();
+        try {
+            double baseFont = ctx.getFontSize();
+            ctx.applyFont();
+            FontMetrics fmBig = g.getFontMetrics();
+            double lineH0 = Math.max(fmBig.getAscent() + fmBig.getDescent(), 1);
+            double useFont = Math.max(6, Math.min(baseFont, lineH0 * 0.55));
+            FontMetrics fmSmall = g.getFontMetrics(fmBig.getFont().deriveFont((float) useFont));
+            double lineH = Math.max(fmSmall.getAscent() + fmSmall.getDescent(), 1);
+            double[] colWidths = new double[cols];
+            for (int r = 0; r < rows; r++) {
+                List<String> rowData = data.get(r);
+                for (int c = 0; c < cols; c++) {
+                    String text = c < rowData.size() ? rowData.get(c) : "";
+                    if (!text.isEmpty()) {
+                        double w = fmSmall.stringWidth(text);
+                        if (w > colWidths[c]) {
+                            colWidths[c] = w;
+                        }
+                    }
+                }
+            }
+            double rowHeight = lineH + 2 * pad;
+            double tableWidth = 0;
+            for (int c = 0; c < cols; c++) {
+                colWidths[c] = colWidths[c] + 2 * pad;
+                tableWidth += colWidths[c];
+            }
+            double tableHeight = rows * rowHeight;
+            TableMeasure m = new TableMeasure();
+            m.colWidths = colWidths;
+            m.rowHeights = new double[rows];
+            Arrays.fill(m.rowHeights, rowHeight);
+            m.rowHeight = rowHeight;
+            m.pad = pad;
+            m.cellFont = useFont;
+            m.tableWidth = tableWidth;
+            m.tableHeight = tableHeight;
+            return m;
+        } finally {
+            g.dispose();
+        }
+    }
+
+    /**
+     * Renders one cell content node through the generic pipeline, laid out in
+     * a box centered inside the cell. The font size is clamped so the text
+     * always fits the row height (a plain table inherits the slide body font,
+     * which is far too large for table cells), and horizontal/vertical
+     * centering is computed from the real font metrics.
+     */
+    private void renderContentChild(NTxRendererContext cellCtx, NTxNode contentChild, NTxBounds2D innerRect) {
+        double baseFont = cellCtx.getFontSize();
+        double useFont = Math.max(6, Math.min(baseFont, innerRect.widthY() * 0.55));
+        // Explicit px font size -> magnitude 0, wins the cascade and is used
+        // both for measuring and painting, so the drawn text matches the box.
+        contentChild.setProperty(NTxProp.ofObject(NTxPropName.FONT_SIZE, NElement.ofLong(Math.round(useFont), "px")));
+        NTxRendererContext contentCtx = cellCtx.resolveNode(contentChild, innerRect);
+        contentCtx.applyFont();
+        NTxGraphics cg = contentCtx.graphics();
+        String text = NTxValue.ofProp(contentChild, NTxPropName.VALUE).asString().orElse("");
+        FontMetrics fm = cg.getFontMetrics();
+        double th = fm.getAscent() + fm.getDescent();
+        double tw = 0;
+        if (!text.isEmpty()) {
+            Rectangle2D tb = cg.getStringBounds(text);
+            tw = tb.getWidth();
+        }
+        double bw = Math.min(tw, innerRect.widthX());
+        double bh = Math.min(th, innerRect.widthY());
+        double bx = innerRect.minX() + Math.max(0, (innerRect.widthX() - tw) / 2.0);
+        double by = innerRect.minY() + Math.max(0, (innerRect.widthY() - th) / 2.0);
+        NTxBounds2D contentBox = NTxBounds2D.ofWidth(bx, by, Math.max(1, bw), Math.max(1, bh));
+        cellCtx.resolveNode(contentChild, contentBox).render();
     }
 
     private double cellColWidth(NTxNode cellNode, double[] colWidths) {
@@ -350,11 +457,38 @@ public class NTxTableBuilder implements NTxNodeBuilder {
                 cell.setProperty(NTxProp.ofInt(NTxPropName.ROW_INDEX, r + 1));
                 cell.setProperty(NTxProp.ofInt(NTxPropName.COL_INDEX, c + 1));
                 cell.setProperty(NTxProp.ofString(NTxPropName.VALUE, text));
+                if (!text.isEmpty()) {
+                    // Real child node: cell content renders through the generic
+                    // pipeline and inherits the cell/row structural styles via
+                    // the enclosing table-row / table-cell context.
+                    NTxNode content = engine.newDefaultNode(NTxNodeType.TEXT);
+                    content.setSource(table.source());
+                    content.setProperty(NTxProp.ofString(NTxPropName.VALUE, text));
+                    content.setProperty(NTxProp.ofObject(NTxPropName.BACKGROUND_COLOR, NO_BACKGROUND));
+                    cell.append(content);
+                }
                 row.append(cell);
             }
             table.append(row);
             out.add(row);
         }
         return out;
+    }
+
+    /** Rows of a table plus the section label ("header"/"body"/"footer") of each row. */
+    private static class TableData {
+        List<List<String>> data;
+        List<String> sections;
+    }
+
+    /** Content-driven geometry of a measured table. */
+    private static class TableMeasure {
+        double[] colWidths;
+        double[] rowHeights;
+        double rowHeight;
+        double pad;
+        double cellFont;
+        double tableWidth;
+        double tableHeight;
     }
 }

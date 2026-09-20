@@ -1,7 +1,9 @@
 package net.thevpc.ntexup.api.document.style;
 
 import net.thevpc.ntexup.api.document.node.NTxNode;
+import net.thevpc.ntexup.api.document.node.NTxNodeType;
 import net.thevpc.ntexup.api.log.NTxLogger;
+import net.thevpc.ntexup.api.util.NTxUtils;
 import net.thevpc.nuts.elem.NElement;
 import net.thevpc.nuts.text.NMsg;
 import net.thevpc.nuts.util.NOptional;
@@ -204,7 +206,10 @@ public abstract class NTxStyleRuleSelectorItem {
     /**
      * Structural selector on table rows: {@code table-row(header)} /
      * {@code table-row(even)} / {@code table-row(odd)} / {@code table-row}.
-     * Matches real {@code table-row} nodes (materialized by the table builder).
+     * Matches the nearest enclosing {@code table-row} (the row itself or any
+     * node rendered inside it). This is what lets cell content inherit the
+     * row-level styles (e.g. {@code table-header} foreground color flowing into
+     * the text of every header cell).
      */
     public static class TableRowItem extends NTxStyleRuleSelectorItem {
         private final String kind; // header | even | odd | null
@@ -219,14 +224,15 @@ public abstract class NTxStyleRuleSelectorItem {
 
         @Override
         public boolean acceptNode(NTxNode n) {
-            if (!"table-row".equals(n.type())) {
+            NTxNode ctx = firstNodeUpOfType(n, NTxNodeType.TABLE_ROW);
+            if (ctx == null) {
                 return false;
             }
             if (kind == null || kind.isEmpty()) {
                 return true;
             }
-            String section = NTxStringProp.of(n, NTxPropName.SECTION).orElse("");
-            int bodyRow = NTxIntProp.of(n, NTxPropName.BODY_ROW).orElse(-1);
+            String section = NTxStringProp.of(ctx, NTxPropName.SECTION).orElse("");
+            int bodyRow = NTxIntProp.of(ctx, NTxPropName.BODY_ROW).orElse(-1);
             switch (kind) {
                 case "header": {
                     return "header".equals(section);
@@ -263,6 +269,8 @@ public abstract class NTxStyleRuleSelectorItem {
      * Structural selector on table cells: {@code table-cell(row: r, col: c)}.
      * Either coordinate may be omitted (matches any row/column index). Indices
      * are 1-based over the full flattened table data (header + body + footer).
+     * Matches the nearest enclosing {@code table-cell} (the cell itself or any
+     * node rendered inside it) so cell styles cascade into the cell content.
      */
     public static class TableCellItem extends NTxStyleRuleSelectorItem {
         private final Integer row;
@@ -283,16 +291,17 @@ public abstract class NTxStyleRuleSelectorItem {
 
         @Override
         public boolean acceptNode(NTxNode n) {
-            if (!"table-cell".equals(n.type())) {
+            NTxNode ctx = firstNodeUpOfType(n, NTxNodeType.TABLE_CELL);
+            if (ctx == null) {
                 return false;
             }
             if (row != null) {
-                if (row != NTxIntProp.of(n, NTxPropName.ROW_INDEX).orElse(-1)) {
+                if (row != NTxIntProp.of(ctx, NTxPropName.ROW_INDEX).orElse(-1)) {
                     return false;
                 }
             }
             if (col != null) {
-                if (col != NTxIntProp.of(n, NTxPropName.COL_INDEX).orElse(-1)) {
+                if (col != NTxIntProp.of(ctx, NTxPropName.COL_INDEX).orElse(-1)) {
                     return false;
                 }
             }
@@ -332,7 +341,8 @@ public abstract class NTxStyleRuleSelectorItem {
 
     /**
      * Structural selector on table columns: {@code table-column(n)}, 1-based.
-     * Matches {@code table-cell} nodes whose column index equals n.
+     * Matches nodes whose nearest enclosing {@code table-cell} has column
+     * index n (the cell itself, or any node rendered inside it).
      */
     public static class TableColumnItem extends NTxStyleRuleSelectorItem {
         private final int col;
@@ -347,8 +357,8 @@ public abstract class NTxStyleRuleSelectorItem {
 
         @Override
         public boolean acceptNode(NTxNode n) {
-            return "table-cell".equals(n.type())
-                    && col == NTxIntProp.of(n, NTxPropName.COL_INDEX).orElse(-1);
+            NTxNode ctx = firstNodeUpOfType(n, NTxNodeType.TABLE_CELL);
+            return ctx != null && col == NTxIntProp.of(ctx, NTxPropName.COL_INDEX).orElse(-1);
         }
 
         @Override
@@ -376,6 +386,28 @@ public abstract class NTxStyleRuleSelectorItem {
             return DefaultNTxNodeSelector.ANY_ITEM;
         }
         return new SimpleItem(stypes, snames);
+    }
+
+    /**
+     * Returns the nearest node up the tree (starting at {@code n} itself)
+     * whose type equals {@code targetType}, or {@code null} when the node is
+     * outside any table structure. The search stops at a {@code table}
+     * boundary, which makes nested tables shadow their ancestors: content of a
+     * table living inside a cell of another table only ever sees the innermost
+     * table's row/cell context.
+     */
+    private static NTxNode firstNodeUpOfType(NTxNode n, String targetType) {
+        NTxNode cur = n;
+        while (cur != null) {
+            if (NTxNodeType.TABLE.equals(cur.type())) {
+                return null;
+            }
+            if (targetType.equals(cur.type())) {
+                return cur;
+            }
+            cur = NTxUtils.firstNodeUp(cur.parent());
+        }
+        return null;
     }
 
     public static NTxStyleRuleSelectorItem ofClassDef(String name, List<String> bases) {
