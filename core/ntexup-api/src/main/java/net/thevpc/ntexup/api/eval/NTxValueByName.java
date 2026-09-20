@@ -540,7 +540,7 @@ public class NTxValueByName {
         return (double) ctx.node().getAndSetRenderCache(NTxPropName.COLWEIGHT, AUTO_FORCE,
                 () -> {
                     {
-                        Double i = NTxValueByType.getDouble(ctx, NTxPropName.COLWEIGHT, "col-weight", "colWeight").orElse(0.0);
+                        Double i = NTxValueByType.getDouble(ctx, NTxPropName.COLWEIGHT, "col-weight", "column-weight", "colWeight").orElse(0.0);
                         if (i == null || Double.isNaN(i) || Double.isInfinite(i)) {
                             return 0.0;
                         } else if (i <= 0) {

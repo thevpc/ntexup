@@ -72,6 +72,8 @@ public class TestStyleSystem {
             testLegacyDotDoesNotLeak();
             testAndSelectors();
             testTableHeaderAndKeyedFactories();
+            testTableWeightSelector();
+            testTableWeightGrammarNeverFails();
             testStructuralContentInheritance();
             testNestedTableInnerShadowsOuter();
             testE2eTableStylesGrammar();
@@ -664,6 +666,67 @@ public class TestStyleSystem {
         NTxStyleRuleSelectorItem legacy = NTxStyleRuleSelectorItem.of("table-row(header)", cap).get();
         assertTrue("legacy table-row(header) resolves best-effort", legacy.acceptNode(header));
         assertTrue("legacy table-row(header) warns", String.join("\n", cap.msgs).contains("deprecated"));
+    }
+
+    static void testTableWeightSelector() {
+        NTxNode c12 = cellNode(1, 2);
+        NTxNode c21 = cellNode(2, 1);
+        NTxNode c23 = cellNode(2, 3);
+        NTxNode c31 = cellNode(3, 1);
+
+        NTxStyleRuleSelectorItem wt = NTxStyleRuleSelectorItem.of("table-weight", null).get();
+        assertTrue("table-weight matches any cell", wt.acceptNode(c12) && wt.acceptNode(c23));
+
+        NTxStyleRuleSelectorItem rowOnly = NTxStyleRuleSelectorItem.of("table-weight(row: 2)", null).get();
+        assertTrue("table-weight(row:) matches row2 cells", rowOnly.acceptNode(c21) && rowOnly.acceptNode(c23));
+        assertTrue("table-weight(row:) rejects row1", !rowOnly.acceptNode(c12));
+        assertTrue("table-weight(row:) rejects row3", !rowOnly.acceptNode(c31));
+
+        NTxStyleRuleSelectorItem colOnly = NTxStyleRuleSelectorItem.of("table-weight(col: 3)", null).get();
+        assertTrue("table-weight(col:) matches col3 cells", colOnly.acceptNode(c23));
+        assertTrue("table-weight(col:) rejects col1/col2", !colOnly.acceptNode(c21) && !colOnly.acceptNode(c12));
+
+        NTxStyleRuleSelectorItem both = NTxStyleRuleSelectorItem.of("table-weight(row: 2, col: 3)", null).get();
+        assertTrue("table-weight(row:,col:) exact match", both.acceptNode(c23));
+        assertTrue("table-weight(row:,col:) not other cells", !both.acceptNode(c21) && !both.acceptNode(c12));
+
+        // content rendered inside a cell also matches (cascade into cell content)
+        NTxNode text = textNode();
+        c23.append(text);
+        assertTrue("table-weight matches cell content", colOnly.acceptNode(text));
+
+        // a table-weight rule attaches props to the matched cells through the cascade
+        DefaultNTxNode root = new DefaultNTxNode(NTxNodeType.GROUP);
+        NTxNode table = engine().newDefaultNode(NTxNodeType.TABLE);
+        table.setSource(SRC);
+        root.addChild(table);
+        NTxNode row2 = rowNode("body", 2, 2);
+        table.append(row2);
+        NTxNode cell2x3 = cellNode(2, 3);
+        row2.append(cell2x3);
+        root.addRule(DefaultNTxStyleRule.of(root, SRC,
+                DefaultNTxNodeSelector.of(NTxStyleRuleSelectorItem.of("table-weight(row: 2, col: 3)", null).get()),
+                NTxProp.ofDouble(NTxPropName.ROW_WEIGHT, 3.0),
+                NTxProp.ofDouble(NTxPropName.COL_WEIGHT, 2.0)));
+        assertEq("table-weight rule sets row-weight on target cell", "3.0", propOf(cell2x3, NTxPropName.ROW_WEIGHT));
+        assertEq("table-weight rule sets col-weight on target cell", "2.0", propOf(cell2x3, NTxPropName.COL_WEIGHT));
+        assertEq("table-weight rule leaves the table itself untouched", null, propOf(table, NTxPropName.ROW_WEIGHT));
+
+        CaptureLogger cap2 = new CaptureLogger();
+        assertTrue("never-fail: table-weight() empty named is dropped", !NTxStyleRuleSelectorItem.of("table-weight()", cap2).isPresent());
+    }
+
+    static void testTableWeightGrammarNeverFails() {
+        String doc = "" +
+                "styles{\n" +
+                "   table-weight(row: 2): { row-weight: 3 }\n" +
+                "   table-weight(col: 3): { column-weight: 2, color: \"#059669\" }\n" +
+                "   table-weight(row: 1, col: 2): { row-weight: 1, column-weight: 1 }\n" +
+                "   table-weight(bogus): { row-weight: 5 }\n" +
+                "}\n";
+        DefaultNTxEngine e = new DefaultNTxEngine();
+        NTxCompiledDocument d = e.loadDocument(new ByteArrayInputStream(doc.getBytes()));
+        assertTrue("never-fail: table-weight grammar compiles (bogus dropped)", d != null);
     }
 
     static void testE2eTableStylesGrammar() {

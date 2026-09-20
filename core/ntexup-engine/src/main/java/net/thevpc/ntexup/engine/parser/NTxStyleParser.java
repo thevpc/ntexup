@@ -190,6 +190,7 @@ public class NTxStyleParser {
      *     <li>table-row(header|even|odd)</li>
      *     <li>table-column(n)</li>
      *     <li>table-cell(row: r, col: c)</li>
+     *     <li>table-weight(row: r, col: c) — either coordinate optional</li>
      *     <li>legacy: any other name is treated as a type selector, and bare
      *     params are treated as selector items (previous TUPLE behavior)</li>
      * </ul>
@@ -389,6 +390,45 @@ public class NTxStyleParser {
             }
             if (!dead) {
                 items.add(NTxStyleRuleSelectorItem.ofTableCell(row, col));
+            }
+            return;
+        }
+        if (uid.equals("table-weight")) {
+            Integer row = null;
+            Integer col = null;
+            boolean dead = false;
+            if (params != null) {
+                for (NElement p : params) {
+                    if (p.isNamedPair()) {
+                        NPairElement pair = p.asNamedPair().get();
+                        String k = NTxUtils.uid(NTxValue.of(pair.key()).asStringOrName().orElse(""));
+                        if (!(k.equals("row") || k.equals("r") || k.equals("col") || k.equals("c"))) {
+                            NMsg errMsg = NMsg.ofC("[%s] invalid style rule selector %s. table-weight accepts only row : and col : 1-based indices", NTxUtils.shortName(context.source()), name).asSevere();
+                            context.log(errMsg, context.source());
+                            dead = true;
+                            continue;
+                        }
+                        NOptional<Integer> v = _asInt(pair.value(), context);
+                        if (!v.isPresent()) {
+                            dead = true;
+                            continue;
+                        }
+                        if (k.equals("row") || k.equals("r")) {
+                            row = v.get();
+                        } else {
+                            col = v.get();
+                        }
+                    } else if (isClassUseWord(p)) {
+                        addClassUseParam(p, items);
+                    } else {
+                        NMsg errMsg = NMsg.ofC("[%s] invalid style rule selector %s. table-weight accepts only row : and col : 1-based indices", NTxUtils.shortName(context.source()), name).asSevere();
+                        context.log(errMsg, context.source());
+                        dead = true;
+                    }
+                }
+            }
+            if (!dead) {
+                items.add(NTxStyleRuleSelectorItem.ofTableWeight(row, col));
             }
             return;
         }

@@ -104,42 +104,36 @@ public class NTxTableBuilder implements NTxNodeBuilder {
         double contentWidth = m.tableWidth - 2 * pad;
         double contentHeight = m.tableHeight - 2 * pad;
 
-        // Column widths come from the content measurement; an explicit
-        // columns-weight list overrides the natural proportions.
+        // Materialize rows and cells as real child nodes so that structural
+        // selectors (table-row / table-cell / table-column / table-weight) can
+        // match them.
+        List<NTxNode> rowNodes = materializeTable(rendererContext, node, data, sections, cols);
+
+        // Per-cell row/column weights (max per row/column) resize the natural
+        // content-driven proportions, exactly like a grid row/column weight
+        // list. Global columns-weight / rows-weight lists still win when
+        // present (grid convention).
         double[] colWidths = m.colWidths;
-        NTxValue colWeightVal = NTxValue.ofProp(node, "columns-weight");
-        NOptional<NElement> colWeightElemOpt = colWeightVal.asElement();
-        if (colWeightElemOpt.isPresent() && m.tableWidth > 0) {
-            NElement colWeightElem = colWeightElemOpt.get();
-            if (colWeightElem.isListContainer() && !colWeightElem.isNamed()) {
-                NOptional<NListContainerElement> colWeightListOpt = colWeightElem.asListContainer();
-                if (colWeightListOpt.isPresent()) {
-                    NListContainerElement colWeightList = colWeightListOpt.get();
-                    List<NElement> weightElems = colWeightList.children();
-                    double totalWeight = 0;
-                    List<Double> weightValues = new ArrayList<>();
-                    for (NElement wElem : weightElems) {
-                        NOptional<Double> wOpt = NTxValue.of(wElem).asDouble();
-                        double w = wOpt.orElse(1.0);
-                        weightValues.add(w);
-                        totalWeight += w;
-                    }
-                    if (totalWeight > 0) {
-                        for (int i = 0; i < cols; i++) {
-                            double w = i < weightValues.size() ? weightValues.get(i) : 1.0;
-                            colWidths[i] = (w / totalWeight) * m.tableWidth;
-                        }
-                    }
-                }
+        double[] rowHeights = m.rowHeights;
+        TableWeights w = computeWeights(rendererContext, rowNodes, rows, cols);
+        double sumColWeights = 0;
+        for (double cw : w.colWeights) {
+            sumColWeights += cw;
+        }
+        if (w.haveColWeights && sumColWeights > 0 && m.tableWidth > 0) {
+            for (int i = 0; i < cols; i++) {
+                colWidths[i] = (w.colWeights[i] / sumColWeights) * m.tableWidth;
             }
         }
-
-        // Uniform row heights from the content measurement
-        double[] rowHeights = m.rowHeights;
-
-        // Materialize rows and cells as real child nodes so that structural
-        // selectors (table-row / table-cell / table-column) can match them.
-        List<NTxNode> rowNodes = materializeTable(rendererContext, node, data, sections, cols);
+        double sumRowWeights = 0;
+        for (double rw : w.rowWeights) {
+            sumRowWeights += rw;
+        }
+        if (w.haveRowWeights && sumRowWeights > 0 && m.tableHeight > 0) {
+            for (int i = 0; i < rows; i++) {
+                rowHeights[i] = (w.rowWeights[i] / sumRowWeights) * m.tableHeight;
+            }
+        }
 
         NTxGraphics g = rendererContext.graphics();
         // Draw background
@@ -475,10 +469,91 @@ public class NTxTableBuilder implements NTxNodeBuilder {
         return out;
     }
 
+    /**
+     * Computes per-cell row/column weights: each cell may carry a
+     * {@code row-weight} and/or {@code column-weight} — set directly on the
+     * cell or through a style rule using the {@code table-weight(row: r, col: c)}
+     * selector. A row/column gets the max weight of its cells (per-cell
+     * equivalent of the grid's {@code rows-weight: [1, 1, 3]} list);
+     * rows/columns with no explicit weight default to 1. Global
+     * {@code columns-weight} / {@code rows-weight} lists on the table node
+     * still override the per-cell values when present (grid convention).
+     */
+    private TableWeights computeWeights(NTxRendererContext rendererContext, List<NTxNode> rowNodes, int rows, int cols) {
+        TableWeights w = new TableWeights();
+        w.colWeights = new double[cols];
+        w.rowWeights = new double[rows];
+        if (rowNodes.isEmpty() || rows == 0 || cols == 0) {
+            Arrays.fill(w.colWeights, 1.0);
+            Arrays.fill(w.rowWeights, 1.0);
+            return w;
+        }
+        for (int r = 0; r < rows; r++) {
+            NTxNode rowNode = r < rowNodes.size() ? rowNodes.get(r) : null;
+            if (rowNode == null) {
+                continue;
+            }
+            int c = 0;
+            for (NTxNode cell : rowNode.children()) {
+                if (c >= cols) {
+                    break;
+                }
+                NTxRendererContext cellCtx = rendererContext.resolveNode(cell, NTxBounds2D.ofWidth(0, 0, 1, 1));
+                double rw = NTxValueByName.getRowWeight(cellCtx);
+                double cw = NTxValueByName.getColWeight(cellCtx);
+                if (rw > 0) {
+                    w.haveRowWeights = true;
+                    w.rowWeights[r] = Math.max(w.rowWeights[r], rw);
+                }
+                if (cw > 0) {
+                    w.haveColWeights = true;
+                    w.colWeights[c] = Math.max(w.colWeights[c], cw);
+                }
+                c++;
+            }
+        }
+        // Global weight lists on the table node win when present (grid convention)
+        double[] globalColWeights = NTxValueByName.getColumnsWeight(rendererContext);
+        if (globalColWeights != null && globalColWeights.length > 0) {
+            w.haveColWeights = true;
+            for (int i = 0; i < cols; i++) {
+                double gw = globalColWeights[i % globalColWeights.length];
+                w.colWeights[i] = gw > 0 ? gw : 1.0;
+            }
+        }
+        double[] globalRowWeights = NTxValueByName.getRowsWeight(rendererContext);
+        if (globalRowWeights != null && globalRowWeights.length > 0) {
+            w.haveRowWeights = true;
+            for (int i = 0; i < rows; i++) {
+                double gw = globalRowWeights[i % globalRowWeights.length];
+                w.rowWeights[i] = gw > 0 ? gw : 1.0;
+            }
+        }
+        for (int i = 0; i < cols; i++) {
+            if (w.colWeights[i] <= 0) {
+                w.colWeights[i] = 1.0;
+            }
+        }
+        for (int i = 0; i < rows; i++) {
+            if (w.rowWeights[i] <= 0) {
+                w.rowWeights[i] = 1.0;
+            }
+        }
+        return w;
+    }
+
     /** Rows of a table plus the section label ("header"/"body"/"footer") of each row. */
     private static class TableData {
         List<List<String>> data;
         List<String> sections;
+    }
+
+    /** Per-cell-derived row/column weights of a table. */
+    private static class TableWeights {
+        double[] colWeights;
+        double[] rowWeights;
+        boolean haveColWeights;
+        boolean haveRowWeights;
     }
 
     /** Content-driven geometry of a measured table. */

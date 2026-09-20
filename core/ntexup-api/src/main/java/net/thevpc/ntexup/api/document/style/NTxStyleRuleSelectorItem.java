@@ -204,22 +204,28 @@ public abstract class NTxStyleRuleSelectorItem {
     }
 
     /**
-     * Structural selector on table rows: {@code table-row(header)} /
-     * {@code table-row(even)} / {@code table-row(odd)} / {@code table-row}.
-     * Matches the nearest enclosing {@code table-row} (the row itself or any
-     * node rendered inside it). This is what lets cell content inherit the
-     * row-level styles (e.g. {@code table-header} foreground color flowing into
-     * the text of every header cell).
+     * Structural selector on table rows: {@code table-row(row: n)} (nth data
+     * row, 1-based over the body), {@code table-row(row: header|even|odd)} or
+     * bare {@code table-row}. Matches the nearest enclosing {@code table-row}
+     * (the row itself or any node rendered inside it). This is what lets cell
+     * content inherit the row-level styles (e.g. {@code table-header} foreground
+     * color flowing into the text of every header cell).
      */
     public static class TableRowItem extends NTxStyleRuleSelectorItem {
-        private final String kind; // header | even | odd | null
+        private final String kind;  // header | even | odd | null
+        private final Integer row;  // 1-based data (body) row, null when kind-based
 
-        public TableRowItem(String kind) {
+        public TableRowItem(String kind, Integer row) {
             this.kind = kind == null ? null : kind.trim();
+            this.row = row;
         }
 
         public String getKind() {
             return kind;
+        }
+
+        public Integer getRow() {
+            return row;
         }
 
         @Override
@@ -228,10 +234,14 @@ public abstract class NTxStyleRuleSelectorItem {
             if (ctx == null) {
                 return false;
             }
+            String section = NTxStringProp.of(ctx, NTxPropName.SECTION).orElse("");
+            int sectionRow = NTxIntProp.of(ctx, NTxPropName.SECTION_ROW).orElse(-1);
+            if (row != null) {
+                return "body".equals(section) && sectionRow == row;
+            }
             if (kind == null || kind.isEmpty()) {
                 return true;
             }
-            String section = NTxStringProp.of(ctx, NTxPropName.SECTION).orElse("");
             int bodyRow = NTxIntProp.of(ctx, NTxPropName.BODY_ROW).orElse(-1);
             switch (kind) {
                 case "header": {
@@ -251,26 +261,34 @@ public abstract class NTxStyleRuleSelectorItem {
         public boolean equals(Object o) {
             if (o == null || getClass() != o.getClass()) return false;
             TableRowItem item = (TableRowItem) o;
-            return Objects.equals(kind, item.kind);
+            return Objects.equals(kind, item.kind) && Objects.equals(row, item.row);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash("TableRowItem", kind);
+            return Objects.hash("TableRowItem", kind, row);
         }
 
         @Override
         public String toString() {
+            if (row != null) {
+                return "table-row(row: " + row + ")";
+            }
             return kind == null || kind.isEmpty() ? "table-row" : "table-row(" + kind + ")";
         }
     }
 
     /**
      * Structural selector on table cells: {@code table-cell(row: r, col: c)}.
-     * Either coordinate may be omitted (matches any row/column index). Indices
-     * are 1-based over the full flattened table data (header + body + footer).
-     * Matches the nearest enclosing {@code table-cell} (the cell itself or any
-     * node rendered inside it) so cell styles cascade into the cell content.
+     * Either coordinate may be omitted (matches any row/column index).
+     * {@code row:} is 1-based over the <b>body</b> (data) rows only — so
+     * cell 1,1 is the first data cell and header/footer rows are never
+     * counted. When any coordinate is given the selector restricts to data
+     * (body) cells; header/footer cells are addressed with
+     * {@code table-header(row: n, col: m)} / {@code table-footer(row: n, col: m)}
+     * instead. Matches the nearest enclosing {@code table-cell} (the cell
+     * itself or any node rendered inside it) so cell styles cascade into the
+     * cell content.
      */
     public static class TableCellItem extends NTxStyleRuleSelectorItem {
         private final Integer row;
@@ -295,8 +313,14 @@ public abstract class NTxStyleRuleSelectorItem {
             if (ctx == null) {
                 return false;
             }
+            if (row != null || col != null) {
+                // coordinate-constrained table-cell targets the body (data) only
+                if (!"body".equals(NTxStringProp.of(ctx, NTxPropName.SECTION).orElse(""))) {
+                    return false;
+                }
+            }
             if (row != null) {
-                if (row != NTxIntProp.of(ctx, NTxPropName.ROW_INDEX).orElse(-1)) {
+                if (row != NTxIntProp.of(ctx, NTxPropName.SECTION_ROW).orElse(-1)) {
                     return false;
                 }
             }
@@ -337,6 +361,166 @@ public abstract class NTxStyleRuleSelectorItem {
             sb.append(')');
             return sb.toString();
         }
+    }
+
+    /**
+     * Structural selector on header rows/cells: {@code table-header},
+     * {@code table-header(row: n)}, {@code table-header(col: m)} or
+     * {@code table-header(row: n, col: m)}. {@code row:} counts header rows
+     * only (1-based within the header section); {@code col:} counts columns.
+     * Without a {@code col:} it matches the nearest enclosing
+     * {@code table-row} (the header row itself or any node rendered inside
+     * it), so row-level styles/weights flow into the header cells. With a
+     * {@code col:} it matches the nearest enclosing {@code table-cell}, which
+     * is how a header cell gets its own weight (e.g.
+     * {@code table-header(row: 1, col: 3): { column-weight: 2 }}).
+     */
+    public static class TableHeaderItem extends NTxStyleRuleSelectorItem {
+        private final Integer row;  // 1-based within the header section
+        private final Integer col;  // 1-based column index
+
+        public TableHeaderItem(Integer row, Integer col) {
+            this.row = row;
+            this.col = col;
+        }
+
+        public Integer getRow() {
+            return row;
+        }
+
+        public Integer getCol() {
+            return col;
+        }
+
+        @Override
+        public boolean acceptNode(NTxNode n) {
+            if (col != null) {
+                NTxNode ctx = firstNodeUpOfType(n, NTxNodeType.TABLE_CELL);
+                if (ctx == null) {
+                    return false;
+                }
+                if (!"header".equals(NTxStringProp.of(ctx, NTxPropName.SECTION).orElse(""))) {
+                    return false;
+                }
+                if (row != null && row != NTxIntProp.of(ctx, NTxPropName.SECTION_ROW).orElse(-1)) {
+                    return false;
+                }
+                return col == NTxIntProp.of(ctx, NTxPropName.COL_INDEX).orElse(-1);
+            }
+            NTxNode ctx = firstNodeUpOfType(n, NTxNodeType.TABLE_ROW);
+            if (ctx == null) {
+                return false;
+            }
+            if (!"header".equals(NTxStringProp.of(ctx, NTxPropName.SECTION).orElse(""))) {
+                return false;
+            }
+            return row == null || row == NTxIntProp.of(ctx, NTxPropName.SECTION_ROW).orElse(-1);
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (o == null || getClass() != o.getClass()) return false;
+            TableHeaderItem item = (TableHeaderItem) o;
+            return Objects.equals(row, item.row) && Objects.equals(col, item.col);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash("TableHeaderItem", row, col);
+        }
+
+        @Override
+        public String toString() {
+            StringBuilder sb = new StringBuilder("table-header(");
+            String inner = rowColInner(row, col);
+            sb.append(inner).append(')');
+            return inner.isEmpty() ? "table-header" : sb.toString();
+        }
+    }
+
+    /**
+     * Structural selector on footer rows/cells: {@code table-footer},
+     * {@code table-footer(row: n)}, {@code table-footer(col: m)} or
+     * {@code table-footer(row: n, col: m)}, mirroring {@code table-header}
+     * for the footer section.
+     */
+    public static class TableFooterItem extends NTxStyleRuleSelectorItem {
+        private final Integer row;  // 1-based within the footer section
+        private final Integer col;  // 1-based column index
+
+        public TableFooterItem(Integer row, Integer col) {
+            this.row = row;
+            this.col = col;
+        }
+
+        public Integer getRow() {
+            return row;
+        }
+
+        public Integer getCol() {
+            return col;
+        }
+
+        @Override
+        public boolean acceptNode(NTxNode n) {
+            if (col != null) {
+                NTxNode ctx = firstNodeUpOfType(n, NTxNodeType.TABLE_CELL);
+                if (ctx == null) {
+                    return false;
+                }
+                if (!"footer".equals(NTxStringProp.of(ctx, NTxPropName.SECTION).orElse(""))) {
+                    return false;
+                }
+                if (row != null && row != NTxIntProp.of(ctx, NTxPropName.SECTION_ROW).orElse(-1)) {
+                    return false;
+                }
+                return col == NTxIntProp.of(ctx, NTxPropName.COL_INDEX).orElse(-1);
+            }
+            NTxNode ctx = firstNodeUpOfType(n, NTxNodeType.TABLE_ROW);
+            if (ctx == null) {
+                return false;
+            }
+            if (!"footer".equals(NTxStringProp.of(ctx, NTxPropName.SECTION).orElse(""))) {
+                return false;
+            }
+            return row == null || row == NTxIntProp.of(ctx, NTxPropName.SECTION_ROW).orElse(-1);
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (o == null || getClass() != o.getClass()) return false;
+            TableFooterItem item = (TableFooterItem) o;
+            return Objects.equals(row, item.row) && Objects.equals(col, item.col);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash("TableFooterItem", row, col);
+        }
+
+        @Override
+        public String toString() {
+            StringBuilder sb = new StringBuilder("table-footer(");
+            String inner = rowColInner(row, col);
+            sb.append(inner).append(')');
+            return inner.isEmpty() ? "table-footer" : sb.toString();
+        }
+    }
+
+    private static String rowColInner(Integer row, Integer col) {
+        StringBuilder sb = new StringBuilder();
+        boolean first = true;
+        if (row != null) {
+            sb.append("row: ").append(row);
+            first = false;
+        }
+        if (col != null) {
+            if (!first) {
+                sb.append(", ");
+            }
+            sb.append("col: ").append(col);
+        }
+        return sb.toString();
     }
 
     /**
@@ -426,6 +610,10 @@ public abstract class NTxStyleRuleSelectorItem {
         return new TableCellItem(row, col);
     }
 
+    public static NTxStyleRuleSelectorItem ofTableWeight(Integer row, Integer col) {
+        return new TableWeightItem(row, col);
+    }
+
     public static NTxStyleRuleSelectorItem ofTableColumn(int col) {
         return new TableColumnItem(col);
     }
@@ -500,7 +688,8 @@ public abstract class NTxStyleRuleSelectorItem {
                 || item.equals("table-header")
                 || item.startsWith("table-row")
                 || item.startsWith("table-column")
-                || item.startsWith("table-cell");
+                || item.startsWith("table-cell")
+                || item.startsWith("table-weight");
     }
 
     private static void _warn(NTxLogger log, String msg, Object... args) {
@@ -627,6 +816,40 @@ public abstract class NTxStyleRuleSelectorItem {
                 return NOptional.of(ofTableCell(row, col));
             }
             return _err(log, "invalid table-cell selector '%s'", item);
+        }
+        if (item.startsWith("table-weight")) {
+            String rest = item.substring("table-weight".length());
+            if (rest.isEmpty()) {
+                return NOptional.of(ofTableWeight(null, null));
+            }
+            if (rest.startsWith("(") && rest.endsWith(")")) {
+                String inner = rest.substring(1, rest.length() - 1);
+                Integer row = null;
+                Integer col = null;
+                for (String kv : inner.split(",")) {
+                    int ci = kv.indexOf(':');
+                    if (ci < 0) {
+                        return _err(log, "invalid table-weight selector '%s'", item);
+                    }
+                    String k = NStringUtils.strip(kv.substring(0, ci));
+                    String v = NStringUtils.strip(kv.substring(ci + 1));
+                    int iv;
+                    try {
+                        iv = Integer.parseInt(v);
+                    } catch (NumberFormatException e) {
+                        return _err(log, "invalid table-weight selector '%s'", item);
+                    }
+                    if (k.equalsIgnoreCase("row") || k.equalsIgnoreCase("r")) {
+                        row = iv;
+                    } else if (k.equalsIgnoreCase("col") || k.equalsIgnoreCase("c")) {
+                        col = iv;
+                    } else {
+                        return _err(log, "invalid table-weight selector '%s'", item);
+                    }
+                }
+                return NOptional.of(ofTableWeight(row, col));
+            }
+            return _err(log, "invalid table-weight selector '%s'", item);
         }
         return _err(log, "invalid special selector '%s'", item);
     }
