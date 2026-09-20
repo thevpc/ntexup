@@ -8,7 +8,7 @@ import net.thevpc.ntexup.api.eval.NTxResolutionContext;
 import net.thevpc.ntexup.api.parser.NTxNodeParserFactory;
 import net.thevpc.ntexup.api.source.NTxSource;
 import net.thevpc.ntexup.api.util.NTxUtils;
-import net.thevpc.ntexup.engine.parser.ctrlnodes.CtrNTxNodelUncompiled;
+import net.thevpc.ntexup.engine.parser.ctrlnodes.CtrNTxNodeUncompiled;
 import net.thevpc.ntexup.engine.parser.ctrlnodes.CtrlNTxNodeCall;
 import net.thevpc.ntexup.engine.document.DefaultNTxNode;
 import net.thevpc.ntexup.api.eval.NTxValue;
@@ -117,7 +117,12 @@ public class DefaultNTxDocumentItemParserFactory
         }
         NTxNodeParser p = context.itemParser().nodeTypeParser(NTxNodeType.TEXT).orNull();
         if (p != null) {
-            return p.parseNode(context);
+            NTxResolutionContext c2 = context.withElement(
+                    NElement.ofNamedTuple("text",
+                            NElement.ofPair("value", c)
+                    )
+            );
+            return p.parseNode(c2);
         }
         return _invalidSupport(NMsg.ofC("[%s] unable to resolve node : %s", NTxUtils.shortName(context.source()), NTxUtils.snippet(c)), context);
     }
@@ -216,7 +221,7 @@ public class DefaultNTxDocumentItemParserFactory
                 NTxSource source = context.source();
                 List<NTxNode> defBody = new ArrayList<>();
                 for (NElement child : object.children()) {
-                    NTxItem item = new CtrNTxNodelUncompiled(child,source);
+                    NTxItem item = new CtrNTxNodeUncompiled(child,source);
                     NTxItemBag b = new NTxItemBag(Arrays.asList(item));
                     if (b.isNodes()) {
                         defBody.addAll(b.nodes());
@@ -296,7 +301,7 @@ public class DefaultNTxDocumentItemParserFactory
         List<NTxNode> nodes = new ArrayList<>();
         NElement v = c.value().orNull();
         if (v != null) {
-            nodes.add(new CtrNTxNodelUncompiled(v,context.source()));
+            nodes.add(new CtrNTxNodeUncompiled(v,context.source()));
         }
         NListElement li = c.subList().orNull();
         if (li != null) {
@@ -482,13 +487,13 @@ public class DefaultNTxDocumentItemParserFactory
             NTxNode pg = f.ofGroup().setSource(context.source());
             pg.setStyleClasses(allStyles == null ? null : allStyles.toArray(new String[0]));
             for (NElement child : ee.body()) {
-                pg.append(new CtrNTxNodelUncompiled(child, context.source()));
+                pg.append(new CtrNTxNodeUncompiled(child, context.source()));
             }
             return NScoredCallable.ofValid(pg);
         } else {
             NTxItemList pg = new NTxItemList();
             for (NElement child : ee.body()) {
-                pg.add(new CtrNTxNodelUncompiled(child, context.source()));
+                pg.add(new CtrNTxNodeUncompiled(child, context.source()));
             }
             return NScoredCallable.ofValid(pg);
         }

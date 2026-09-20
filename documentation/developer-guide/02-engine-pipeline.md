@@ -30,7 +30,7 @@ TSON is read with the Nuts TSON reader, not with a custom tokenizer:
    - A directory is scanned for `*.ntx` (recursively, one level for folder loads via `NTxEngineUtils.isNTexupFile`), `main.ntx` is forced first, then alphabetical order (extension-insensitive comparator). Each file is loaded through `loadNode(...)` and appended to the document root.
    - A single file is parsed by `NTxDocStreamParser`.
 2. `NTxDocStreamParser` (`engine/parser/NTxDocStreamParser.java`) reads the whole file with `NElementReader.ofTson().read(...)` → an `NElement`, tags every element with its **origin file** (`addCompilerDeclarationPathAnnotations`, used later for error reporting), and rewrites `if / elseif / else` sibling chains into a single nested `if{ cond, trueBloc, falseBloc }` control element.
-3. `elementToDocument` (`DefaultNTxEngine.java:1019`) does something surprising at first: **the entire document is wrapped in a single `CtrNTxNodelUncompiled` node holding the raw `NElement`**, and that single node is appended to the root (a `page-group`).
+3. `elementToDocument` (`DefaultNTxEngine.java:1019`) does something surprising at first: **the entire document is wrapped in a single `CtrNTxNodeUncompiled` node holding the raw `NElement`**, and that single node is appended to the root (a `page-group`).
 
 ### Why "one node for the whole file"?
 
@@ -54,7 +54,7 @@ Net effect: opening/loading a huge deck costs only a TSON parse; no intermediate
 ### 3.2 The `compileNode` dispatcher (`NTxCompiler.java:105`) — key rules
 
 - **Page boundary rule (the core of laziness):** when the walker enters a node of type `PAGE` and was *not* already inside a page, it **stops** — `visitor.visitNode(node, context); return;` (`NTxCompiler.java:129`). Page *children are not compiled during document compilation*.
-- `CtrNTxNodelUncompiled` (raw TSON) → calls `engine.parseNode(raw, context, ...)` right there, then re-dispatches (`NTxCompiler.java:135`). This is where deferred parse finally happens for document-level statements.
+- `CtrNTxNodeUncompiled` (raw TSON) → calls `engine.parseNode(raw, context, ...)` right there, then re-dispatches (`NTxCompiler.java:135`). This is where deferred parse finally happens for document-level statements.
 - Control nodes are expanded by type:
   - `CTRL_IF` → eval condition, take true/false child block (`compileNodeTree_if`, `:604`).
   - `CTRL_FOR` → eval expression, iterate (one new child-context per iteration bound with `withVar(...)`), parse each body element (`compileNodeTree_for`, `:630`).
@@ -127,14 +127,14 @@ When the compiler reaches a `CTRL_INCLUDE` node (created by the include parser):
 1. **Resolve** the argument with `context.resolvePath(...)` → supports `eitherPath(a, b)` (local first, then GitHub), `github://...` (cloned via `NTxGitHelper`), relative/absolute `NPath`.
 2. **Glob**: for a directory use `**/*.ntx`; a `.ntx` file is used as-is. Multiple comma-separated patterns are also allowed.
 3. **Sort**: `NTxEngineUtils.comparePaths` (extension-insensitive) so `0010-...` < `0020-...`; `main.ntx` is *not* re-added for includes.
-4. **For each file**: `engine.loadNode(node, path, compiledDocument)` parses the file → returns **a `CtrNTxNodelUncompiled`** (raw element again!) → `new DispatchCompileNodeVisitor(visitor).visitItem(item, context)` → the included file's top-level content is **compiled immediately in the current context** (same page-boundary rule applies: a `page` inside the include is *not* descended into, non-page statements are compiled now).
+4. **For each file**: `engine.loadNode(node, path, compiledDocument)` parses the file → returns **a `CtrNTxNodeUncompiled`** (raw element again!) → `new DispatchCompileNodeVisitor(visitor).visitItem(item, context)` → the included file's top-level content is **compiled immediately in the current context** (same page-boundary rule applies: a `page` inside the include is *not* descended into, non-page statements are compiled now).
 5. **Register** the file with `addMonitoredSource(nPath)` (for hot reload) and, in a boot context, `addSourceFingerprintPart(...)`.
 
 **Timing summary — when is an included chunk compiled?**
 - The include *directive* is resolved strictly in source order, at the moment the walker reaches it, using the context of its position in `main.ntx`.
 - Each included file's *non-page* statements compile **eagerly at that point** (this is how `01-styles` and `03-lib` components become available to later includes).
 - Any `page{...}` inside an included file is only **scheduled** — it is pushed into the lazy page pipeline and compiled on demand by `readMore()` when the viewer/renderer reaches that page number.
-- `CtrNTxNodelUncompiled` indirection means the parse of each included file is itself deferred until the compiler asks for its nodes.
+- `CtrNTxNodeUncompiled` indirection means the parse of each included file is itself deferred until the compiler asks for its nodes.
 
 ### 5.2 `import()` — Java extensions (`compileNodeTree_import`, `NTxCompiler.java:587`)
 

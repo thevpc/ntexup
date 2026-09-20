@@ -51,3 +51,4 @@ extensions/ntexup-extension-presenters/target
 /core/ntexup-desktop/target/
 /renderers/ntexup-renderer-image/target/
 /extensions/ntexup-extension-progress/target/
+/extensions/ntexup-extension-table/target/

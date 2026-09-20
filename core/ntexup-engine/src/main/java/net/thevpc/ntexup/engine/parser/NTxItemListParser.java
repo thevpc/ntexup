@@ -5,7 +5,7 @@ import net.thevpc.ntexup.api.document.node.NTxItemList;
 import net.thevpc.ntexup.api.document.style.NTxProp;
 import net.thevpc.ntexup.api.eval.NTxResolutionContext;
 import net.thevpc.ntexup.api.eval.NTxValue;
-import net.thevpc.ntexup.engine.parser.ctrlnodes.CtrNTxNodelUncompiled;
+import net.thevpc.ntexup.engine.parser.ctrlnodes.CtrNTxNodeUncompiled;
 import net.thevpc.nuts.util.NOptional;
 import net.thevpc.nuts.elem.NElement;
 
@@ -39,7 +39,7 @@ public class NTxItemListParser {
                 }
                 for (NElement e : ee.body()) {
                     pg.add(
-                            new CtrNTxNodelUncompiled(e,context.source())
+                            new CtrNTxNodeUncompiled(e,context.source())
                     );
                 }
             }

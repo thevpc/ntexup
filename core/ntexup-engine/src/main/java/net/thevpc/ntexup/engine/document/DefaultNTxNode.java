@@ -798,7 +798,7 @@ public class DefaultNTxNode implements NTxNode, Cloneable{
         try {
             c = (DefaultNTxNode) super.clone();
             c.properties=new NTxProperties(this);
-            c.properties.set(c.properties.toList());
+            c.properties.set(properties.toList());
             c.userObjects=userObjects==null?null:new HashMap<>(userObjects);
             c.renderCache=renderCache==null?null:new HashMap<>(renderCache);
             c.children=children().stream().map(NTxNode::copy).collect(Collectors.toList());

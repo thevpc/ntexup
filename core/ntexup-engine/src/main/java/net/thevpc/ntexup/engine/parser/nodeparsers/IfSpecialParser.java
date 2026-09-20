@@ -7,7 +7,7 @@ import net.thevpc.ntexup.api.document.node.NTxItemList;
 import net.thevpc.ntexup.api.document.node.NTxNode;
 import net.thevpc.ntexup.api.document.node.NTxNodeType;
 import net.thevpc.ntexup.api.util.NTxUtils;
-import net.thevpc.ntexup.engine.parser.ctrlnodes.CtrNTxNodelUncompiled;
+import net.thevpc.ntexup.engine.parser.ctrlnodes.CtrNTxNodeUncompiled;
 import net.thevpc.ntexup.engine.parser.ctrlnodes.CtrlNTxNodeIf;
 import net.thevpc.nuts.concurrent.NScoredCallable;
 import net.thevpc.nuts.elem.NElement;
@@ -36,7 +36,7 @@ public class IfSpecialParser extends NTxNodeParserBase {
                         List<NTxNode> __falseBloc = new ArrayList<>();
                         for (NElement child : obj.children()) {
                             __trueBloc.add(
-                                    new CtrNTxNodelUncompiled(child,context.source())
+                                    new CtrNTxNodeUncompiled(child,context.source())
                             );
                         }
                         for (NElement e : obj.params().get()) {
@@ -51,7 +51,7 @@ public class IfSpecialParser extends NTxNodeParserBase {
                                 if (ee.isAnyObject()) {
                                     for (NElement child : ee.asObject().get().children()) {
                                         __falseBloc.add(
-                                                new CtrNTxNodelUncompiled(child,context.source())
+                                                new CtrNTxNodeUncompiled(child,context.source())
                                         );
                                     }
                                 }

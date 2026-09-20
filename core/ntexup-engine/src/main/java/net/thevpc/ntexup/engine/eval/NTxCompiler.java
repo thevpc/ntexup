@@ -33,7 +33,6 @@ import net.thevpc.nuts.util.*;
 
 import java.util.*;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 public class NTxCompiler {
     private final NTxEngine engine;
@@ -132,7 +131,7 @@ public class NTxCompiler {
                     visitor.visitNode(node, context);
                     return;
                 }
-                if (node instanceof CtrNTxNodelUncompiled) {
+                if (node instanceof CtrNTxNodeUncompiled) {
                     NElement raw = node.getRaw();
                     NElement oldElement = context.element();
                     try {

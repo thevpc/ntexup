@@ -43,7 +43,7 @@ import net.thevpc.ntexup.api.document.*;
 import net.thevpc.ntexup.api.parser.*;
 import net.thevpc.ntexup.api.renderer.*;
 import net.thevpc.ntexup.api.util.NTxUtils;
-import net.thevpc.ntexup.engine.parser.ctrlnodes.CtrNTxNodelUncompiled;
+import net.thevpc.ntexup.engine.parser.ctrlnodes.CtrNTxNodeUncompiled;
 import net.thevpc.ntexup.engine.parser.nodeparsers.StylesSpecialParser;
 import net.thevpc.ntexup.engine.renderer.DefaultNTxRendererContext;
 import net.thevpc.ntexup.engine.ext.NTxNodeBuilderContextImpl;
@@ -1033,7 +1033,7 @@ public class DefaultNTxEngine implements NTxEngine {
         initializeComponents();
         NTxDocument docd = documentFactory().ofDocument(source);
         docd.root().setSource(source);
-        docd.root().append(new CtrNTxNodelUncompiled(element, source));
+        docd.root().append(new CtrNTxNodeUncompiled(element, source));
         NTxCompiledDocumentImpl cd = new NTxCompiledDocumentImpl(docd, this);
         cd.sourceMonitor().add(source);
         cd.setSuccessfullyLoaded(true);
@@ -1052,7 +1052,7 @@ public class DefaultNTxEngine implements NTxEngine {
         if (bootNode) {
             ((NTxCompiledDocumentImpl) document).addSourceFingerprintPart(null, path.readBytes());
         }
-        return NOptional.of(new CtrNTxNodelUncompiled(c, source));
+        return NOptional.of(new CtrNTxNodeUncompiled(c, source));
     }
 
     @Override

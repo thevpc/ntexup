@@ -31,7 +31,7 @@ TSON .ntx ──NTxDocStreamParser──▶ NElement (raw, one CtrNTxNodelUncomp
 ```
 
 Key lazy facts you must respect when debugging:
-- **Deferred parse:** a whole `.ntx` file is held as one raw `NElement` (`CtrNTxNodelUncompiled`); `NElement → NTxNode` conversion happens at compile time.
+- **Deferred parse:** a whole `.ntx` file is held as one raw `NElement` (`CtrNTxNodeUncompiled`); `NElement → NTxNode` conversion happens at compile time.
 - **Page boundary:** document compilation stops at a `page{...}` node (`NTxCompiler.compileNode`); page children compile **on demand** via `NTxCompiledDocumentImpl.readMore()` (auto-pagination: content without an explicit `page` becomes a `PendingAutoPage`).
 - **Includes:** resolved in source order at the `include(...)` point. The included file's non-page content compiles eagerly there; `page`s inside it are scheduled and compiled lazily.
 - **Imports:** `import("x")` → `DefaultNTxEngine.importDependencies` → jar added to the engine's `NMutableClassLoader` → every service registry rescans (`NtxServiceListImpl2`).

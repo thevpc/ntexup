@@ -308,7 +308,7 @@ public abstract class NTxNodeParserBase implements NTxNodeParser {
             }
         }
         for (NElement e : body) {
-            info.node().append(new CtrNTxNodelUncompiled(e, info.parseContext().source()));
+            info.node().append(new CtrNTxNodeUncompiled(e, info.parseContext().source()));
         }
     }
 
@@ -320,7 +320,7 @@ public abstract class NTxNodeParserBase implements NTxNodeParser {
                 return v;
             }
         }
-        if (item instanceof CtrNTxNodelUncompiled) {
+        if (item instanceof CtrNTxNodeUncompiled) {
             NElement v = item.getRaw();
             if (v != null) {
                 return v;

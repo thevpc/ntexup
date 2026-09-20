@@ -14,6 +14,7 @@ import net.thevpc.nuts.elem.NElement;
 import net.thevpc.nuts.io.NPath;
 import net.thevpc.nuts.util.NBlankable;
 import net.thevpc.nuts.text.NMsg;
+import net.thevpc.nuts.util.NStringUtils;
 
 import java.awt.*;
 
@@ -48,7 +49,14 @@ public class NTxTextRendererBase extends NTxTextBaseRenderer {
     public String resolveStringOrFileOr(NElement str, NElement file, String defaultValue, NTxRendererContext ctx) {
         if (str != null) {
             NElement vElemValue = ctx.evalExpression(str).orNull();
-            return NTxUtilsText.trimBloc(NTxValue.of(vElemValue).asStringOrName().orElse(""));
+            if (vElemValue==null || vElemValue.isNull()) {
+                return "";
+            }
+            String ss = NTxValue.of(vElemValue).asStringOrName().orNull();
+            if(ss!=null) {
+                return NTxUtilsText.trimBloc(ss);
+            }
+            return NStringUtils.strip(vElemValue.toString());
         } else {
             NElement vElemValue = ctx.evalExpression(file).orNull();
             NPath nPath = ctx.resolvePath(vElemValue);
@@ -56,7 +64,7 @@ public class NTxTextRendererBase extends NTxTextBaseRenderer {
                 ctx.sourceMonitor().add(nPath);
                 if (nPath.isRegularFile()) {
                     try {
-                        return nPath.readString().trim();
+                        return NStringUtils.strip(nPath.readString());
                     } catch (Exception e) {
                         ctx.log(NMsg.ofC("unable to read path %s : %s", nPath, e).asError(), ctx.source());
                     }

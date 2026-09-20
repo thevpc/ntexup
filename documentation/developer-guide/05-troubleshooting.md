@@ -98,7 +98,7 @@ Deliberate architecture that can surprise you:
 | If the stack shows… | Look at |
 |---|---|
 | `NTxCompiler.compileNodeTree_*` | a control-structure bug at compile time (include/import/for/if/assign) |
-| `CtrNTxNodelUncompiled` + `parseNode` | deferred parse failed for the raw TSON at that position |
+| `CtrNTxNodeUncompiled` + `parseNode` | deferred parse failed for the raw TSON at that position |
 | `NTxCompiledDocumentImpl.readMore` | page materialization (auto-pagination / boundary) issue |
 | `NTxNodeRendererBase.render` / your `renderMain` | rendering of one node type (rotation/shadow wrapper around your code) |
 | `NTxGraphicsImpl.drawImage` | image decoding/dispatch (SVG/GIF/PNG factory) failed |
