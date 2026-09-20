@@ -42,8 +42,7 @@ public class JTextAreaNTxMessageList extends JPanel implements NTxLogger {
         if (type == null) {
             type = Level.INFO;
         }
-
-        NMsg mm = NMsg.ofC("[%s] [%s] [%s] %s",
+        NMsg mm = NMsg.ofC("[%-30s] [%s] [%s] %s",
                 time,
                 type,
                 source == null ? null : source.shortName(),
