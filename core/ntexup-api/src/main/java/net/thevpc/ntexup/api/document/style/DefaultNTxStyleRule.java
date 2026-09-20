@@ -17,8 +17,14 @@ public class DefaultNTxStyleRule implements NTxStyleRule {
     private final NTxNode parent;
 
 
-    public static DefaultNTxStyleRule ofClass(NTxNode parent, NTxSource source, String name, NTxProp... styles) {
-        return of(parent, source, name == null ? DefaultNTxNodeSelector.ofAny() : DefaultNTxNodeSelector.of(NTxStyleRuleSelectorItem.ofClasses(name)), styles);
+    /**
+     * Registers a class definition ({@code class-<name>(<bases>)}), backed by a
+     * rule whose selector is a {@link NTxStyleRuleSelectorItem.ClassDefItem}.
+     * Class definitions never match nodes directly; they are folded into nodes
+     * that reference the class by name (usage-site {@code @(name)}).
+     */
+    public static DefaultNTxStyleRule ofClassDef(NTxNode parent, NTxSource source, String name, java.util.List<String> bases, NTxProp... styles) {
+        return of(parent, source, DefaultNTxNodeSelector.of(NTxStyleRuleSelectorItem.ofClassDef(name, bases)), styles);
     }
 
     public static DefaultNTxStyleRule of(NTxNode parent, NTxSource source, NTxStyleRuleSelector filter, NTxProp... styles) {

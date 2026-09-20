@@ -100,7 +100,7 @@
 
 ## S
 
-**Selector** — the "who" part of a style rule (`page`, `(.class)`, `*`).
+**Selector** — the "who" part of a style rule (`page`, `(*)`, `table-row(even)`, `class-card-item`).
 
 **Scene3D** — a container for 3D primitives with camera and transform.
 

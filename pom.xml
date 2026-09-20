@@ -102,6 +102,7 @@
         <module>renderers/ntexup-renderer-web</module>
 
         <module>test/ntexup-examples</module>
+        <module>test/ntexup-test</module>
 
         <module>core/ntexup-engine-full</module>
         <module>core/ntexup-desktop</module>

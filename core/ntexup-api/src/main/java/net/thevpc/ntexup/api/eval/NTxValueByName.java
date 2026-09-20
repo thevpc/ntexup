@@ -281,7 +281,7 @@ public class NTxValueByName {
         renderInfo.lineColor = NTxValueByType.getPaint(ctx, NTxPropName.LINE_COLOR,   "stroke-color").orElse(renderInfo.foregroundColor);
         renderInfo.contourColor = NTxValueByType.getPaint(ctx, NTxPropName.CONTOUR_COLOR).orElse(renderInfo.lineColor);
         renderInfo.meshColor = NTxValueByType.getPaint(ctx,  NTxPropName.MESH_COLOR).orElse(renderInfo.contourColor);
-        renderInfo.backgroundColor = NTxValueByType.getPaint(ctx, NTxPropName.BACKGROUND_COLOR,"bg").orNull();
+        renderInfo.backgroundColor = NTxValueByType.getPaint(ctx, NTxPropName.BACKGROUND_COLOR,"bg","background").orNull();
         renderInfo.fillBackground = NTxValueByType.getBoolean(ctx, NTxPropName.FILL_BACKGROUND, "fill").orElse(false);
         renderInfo.debugLevel = NTxValueByType.getIntOrBoolean(ctx, NTxPropName.DEBUG).orElse(0);
         renderInfo.debugColor = (Color) NTxValueByType.getPaint(ctx, NTxPropName.DEBUG_COLOR).orElse(Color.GRAY);

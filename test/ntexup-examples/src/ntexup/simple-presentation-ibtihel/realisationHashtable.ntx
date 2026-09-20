@@ -1,5 +1,5 @@
 {
-styles{.H2:{
+styles{class-H2:{
                          font-size:12%P,
                          color:"#FFC55A",
                          font-bold

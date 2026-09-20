@@ -15,7 +15,8 @@ styles {
     "*":    { font-size: 10, color: black }   // or `(*)`
     source: { font-size: 3%P, background: "#0a192f", font-family: monospaced }
     page:   { background: "#ffffff" }
-    (.card-item): { margin: (4, 0), at: left }
+    class-bordered:        { stroke: basic(width: 2, dash: [8,4]) }
+    class-card-item(bordered): { margin: (4, 0), at: left }
 }
 ```
 
@@ -25,19 +26,33 @@ Selectors:
 |----------|---------|
 | `"*"` (or `(*)`) | all elements |
 | `page`, `source`, `text`, ... | by node type |
-| `(.class)` | by class |
+| `class-my-item` | **declares** a reusable style class |
+| `class-my-item(base1, base2)` | declares a class inheriting from the listed base classes |
+| `table-row(header\|even\|odd)` | table rows (`even`/`odd` count over body rows only) |
+| `table-column(n)` | cells of the 1-based column `n` |
+| `table-cell(row: r, col: c)` | the cell at 1-based row `r` / column `c` |
 
-Nodes opt into a class in two ways:
+Legacy dot selectors (`.H1`) are no longer supported; declare `class-H1:` in a
+`styles` block and apply it with `@(H1)`.
+
+Nodes opt into a class with a class annotation:
 
 ```tson
-// 1) class property
-text("Hello", class: compact)
-
-// 2) class annotation before the node
-@(compact) text("Hello")
+@(card-item) text("Hello")
 ```
 
-Styles match both.
+or with the `class` property:
+
+```tson
+text("Hello", class: card-item)
+```
+
+Classes resolve like regular rules with a single-level flattening: the closest
+enclosing `styles` block wins, `class-a(b, c)` merges its base classes (declared
+left to right, later base wins) plus its own properties, and the result behaves
+like one virtual rule at the usage site. Inline node properties always win, and
+an explicit type selector (e.g. `text { ... }`) beats a class at the same
+distance.
 
 ## Theme Digital Colors
 
@@ -182,10 +197,13 @@ styles {
     page: { background: documentSurface }
 
     // Content
-    title: { font-size: 4%P, font-bold, color: documentColors[1] }
+    class-title: { font-size: 4%P, font-bold, color: documentColors[1] }
     ul:    { font-size: 2%P, margin: 2 }
     source:{ font-size: 3%P, background: "#0a192f", at: left }
 }
+
+@(title) text("Title")
+@(title) text("Nested title")
 ```
 
 ## Source-Code Token Colors

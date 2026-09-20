@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 public class NTxPropCalculator {
 
     private NTxEngine engine;
+    private final Map<NTxStyleRule, Map<NTxNode, NTxProperties>> classFlattenCache = new HashMap<>();
 
     public NTxPropCalculator(NTxEngine engine) {
         this.engine = engine;
@@ -87,6 +88,148 @@ public class NTxPropCalculator {
         return _HStyleRuleResult2(t, rules, propertyNames);
     }
 
+    private static class ClassFoldResult {
+        NTxProperties props;
+        NTxStyleMagnitude magn;
+
+        public ClassFoldResult(NTxProperties props, NTxStyleMagnitude magn) {
+            this.props = props;
+            this.magn = magn;
+        }
+    }
+
+    private NTxStyleRuleSelectorItem.ClassDefItem classDefItemOf(NTxStyleRule rule) {
+        NTxStyleRuleSelector s = rule.selector();
+        if (s instanceof DefaultNTxNodeSelector) {
+            Set<String> defs = ((DefaultNTxNodeSelector) s).getClassDefNames();
+            if (defs.size() == 1) {
+                return ((DefaultNTxNodeSelector) s).getClassDef(defs.iterator().next());
+            }
+        }
+        return null;
+    }
+
+    private static class ClassDefRef {
+        final NTxStyleRule rule;
+        final NTxNode container;
+
+        ClassDefRef(NTxStyleRule rule, NTxNode container) {
+            this.rule = rule;
+            this.container = container;
+        }
+    }
+
+    private NTxStyleRule findClassDefIn(NTxNode on, String name) {
+        for (NTxStyleRule rule : on.rules()) {
+            NTxStyleRuleSelector s = rule.selector();
+            if (s instanceof DefaultNTxNodeSelector) {
+                Set<String> defs = ((DefaultNTxNodeSelector) s).getClassDefNames();
+                if (defs.size() == 1 && defs.contains(name)) {
+                    return rule;
+                }
+            }
+        }
+        return null;
+    }
+
+    private ClassDefRef findClassDef(NTxNode from, String name) {
+        NTxNode p = from;
+        while (p != null) {
+            NTxStyleRule r = findClassDefIn(p, name);
+            if (r != null) {
+                return new ClassDefRef(r, p);
+            }
+            p = NTxUtils.firstNodeUp(p.parent());
+        }
+        return null;
+    }
+
+    private int distanceTo(NTxNode from, NTxNode container) {
+        int d = 0;
+        NTxNode p = NTxUtils.firstNodeUp(from.parent());
+        while (p != null) {
+            d++;
+            if (p == container) {
+                return d;
+            }
+            p = NTxUtils.firstNodeUp(p.parent());
+        }
+        return -1;
+    }
+
+    private int indexOfRule(NTxStyleRule rule, NTxNode container) {
+        NTxStyleRule[] rules = container.rules();
+        for (int i = 0; i < rules.length; i++) {
+            if (rules[i] == rule) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    private NTxProperties flattenClassDef(NTxStyleRule def, NTxNode container, Set<NTxStyleRule> visiting) {
+        Map<NTxNode, NTxProperties> byContainer = classFlattenCache.get(def);
+        if (byContainer == null) {
+            byContainer = new HashMap<>();
+            classFlattenCache.put(def, byContainer);
+        }
+        NTxProperties cached = byContainer.get(container);
+        if (cached != null) {
+            return cached;
+        }
+        NTxProperties acc = new NTxProperties(container);
+        if (visiting.contains(def)) {
+            return acc;
+        }
+        visiting.add(def);
+        NTxStyleRuleSelectorItem.ClassDefItem item = classDefItemOf(def);
+        if (item != null) {
+            List<String> bases = item.getBases();
+            if (bases != null) {
+                for (String base : bases) {
+                    ClassDefRef bd = findClassDef(container, base);
+                    if (bd != null) {
+                        acc.set(flattenClassDef(bd.rule, bd.container, visiting).toArray());
+                    }
+                }
+            }
+        }
+        acc.set(def.styles().toArray());
+        visiting.remove(def);
+        byContainer.put(container, acc);
+        return acc;
+    }
+
+    public ClassFoldResult computeClassFoldAll(NTxNode node) {
+        String[] cls = node.getStyleClasses();
+        if (cls == null || cls.length == 0) {
+            return null;
+        }
+        NTxProperties acc = new NTxProperties(node);
+        NTxStyleRule bestDef = null;
+        int bestDist = Integer.MAX_VALUE;
+        int bestIndex = -1;
+        for (String c : cls) {
+            ClassDefRef ref = findClassDef(node, c);
+            if (ref == null) {
+                continue;
+            }
+            NTxStyleRule def = ref.rule;
+            int dist = distanceTo(node, ref.container);
+            int idx = indexOfRule(def, ref.container);
+            if (dist >= 0 && (dist < bestDist || (dist == bestDist && idx > bestIndex))) {
+                bestDist = dist;
+                bestIndex = idx;
+                bestDef = def;
+            }
+            acc.set(flattenClassDef(def, ref.container, new HashSet<>()).toArray());
+        }
+        if (bestDef == null) {
+            return null;
+        }
+        return new ClassFoldResult(acc, new NTxStyleMagnitude(bestDist, bestIndex, DefaultNTxNodeSelector.ofAny()));
+    }
+
     public NOptional<NTxStyleAndMagnitude> computePropertyMagnitude(NTxNode node, String[] propertyNames) {
         propertyNames = NTxUtils.uids(propertyNames);
         NOptional<NTxProp> u = node.getProperty(propertyNames);
@@ -98,10 +241,18 @@ public class NTxPropCalculator {
                     )
             );
         }
-        NTxNode p = NTxUtils.firstNodeUp(node.parent());
-        int distance = 1;
+        ClassFoldResult classFold = computeClassFoldAll(node);
         NTxProp bestStyle = null;
         NTxStyleMagnitude bestMag = null;
+        if (classFold != null) {
+            NOptional<NTxProp> fp = classFold.props.get(propertyNames);
+            if (fp.isPresent()) {
+                bestStyle = fp.get();
+                bestMag = classFold.magn;
+            }
+        }
+        NTxNode p = NTxUtils.firstNodeUp(node.parent());
+        int distance = 1;
         List<HStyleRuleResult2> acceptable = new ArrayList<>();
         while (p != null) {
             HStyleRuleResult2[] validRules = _HStyleRuleResult2(node, p, propertyNames);
@@ -190,6 +341,16 @@ public class NTxPropCalculator {
                             new NTxStyleMagnitude(0, 0, DefaultNTxNodeSelector.ofAny())
                     )
             );
+        }
+        ClassFoldResult classFold = computeClassFoldAll(node);
+        if (classFold != null) {
+            for (NTxProp property : classFold.props.toList()) {
+                NTxStyleAndMagnitude m2 = new NTxStyleAndMagnitude(property, classFold.magn);
+                NTxStyleAndMagnitude existing = found.get(property.getName());
+                if (existing == null || m2.getMagnetude().compareTo(existing.getMagnetude()) <= 0) {
+                    found.put(property.getName(), m2);
+                }
+            }
         }
         NTxNode p = NTxUtils.firstNodeUp(node.parent());
         int distance = 1;

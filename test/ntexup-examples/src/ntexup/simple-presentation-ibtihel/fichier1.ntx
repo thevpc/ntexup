@@ -1,6 +1,6 @@
 {
 styles{
-    .simple-page:{
+    class-simple-page:{
     shadow:(color:gray,shift:(1,1))
 
     }

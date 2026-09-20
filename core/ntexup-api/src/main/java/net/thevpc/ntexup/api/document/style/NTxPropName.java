@@ -117,6 +117,10 @@ public class NTxPropName {
     public static final String ROWS_WEIGHT="rows-weight";
     public static final String COLUMNS_WEIGHT="columns-weight";
     public static final String CLASS ="class";
+    public static final String SECTION="section";
+    public static final String BODY_ROW="body-row";
+    public static final String ROW_INDEX="row-index";
+    public static final String COL_INDEX="col-index";
     public static final String HIDE ="disabled";
     public static final String NAME="name";
     public static final String MAX_X="xmax";

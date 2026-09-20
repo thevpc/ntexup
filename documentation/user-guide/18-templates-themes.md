@@ -148,14 +148,14 @@ mytheme/v1.0/
 ```tson
 // Theme base styles
 styles {
-    page:    { background: #fdf6e3, font-family: "SansSerif" }
-    title:   { font-size: 4%P, font-bold, color: #b58900 }
-    body:    { font-size: 1.5%P, color: #073642 }
+    page:         { background: #fdf6e3, font-family: "SansSerif" }
+    class-title:  { font-size: 4%P, font-bold, color: #b58900 }
+    class-body:   { font-size: 1.5%P, color: #073642 }
 }
 
 // Theme components
 @define myTitle(textValue) {
-    text(textValue, class: title, at: top-left)
+    text(textValue, @(title), at: top-left)
 }
 
 @define myPageFooter(index) {

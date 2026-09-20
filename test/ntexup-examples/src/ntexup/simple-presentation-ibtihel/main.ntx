@@ -1,7 +1,7 @@
 {
 styles{
 
-    .H1:{
+    class-H1:{
                   font-size:20%P,
                   color:"#FC4100",
                   font-bold

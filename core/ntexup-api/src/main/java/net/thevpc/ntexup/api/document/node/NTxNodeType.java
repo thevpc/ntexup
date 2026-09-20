@@ -38,6 +38,15 @@ public class NTxNodeType {
     public static final String GRID="grid";
     public static final String ROW="row";
     public static final String COLUMN="column";
+
+    /**
+     * A table node (rendered by the table extension). Rows and cells are
+     * materialized as real {@code table-row} / {@code table-cell} child nodes
+     * so that structural selectors can match them.
+     */
+    public static final String TABLE="table";
+    public static final String TABLE_ROW="table-row";
+    public static final String TABLE_CELL="table-cell";
     public static final String PLAIN ="plain";
     public static final String RECTANGLE="rectangle";
     public static final String SPHERE="sphere";

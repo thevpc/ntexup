@@ -389,9 +389,9 @@ import("plantuml")
 
 ```tson
 styles {
-    "*":         { font-size: 10, color: black }
-    "title":     { font-size: 48, bold: true }
-    (.class):    { color: blue }
+    "all":       { font-size: 10, color: black }
+    class-title: { font-size: 48, bold: true }
+    class-note:  { color: blue }
     source:      { at: left }
 }
 ```

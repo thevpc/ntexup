@@ -15,6 +15,7 @@ import net.thevpc.nuts.elem.NElement;
 
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import net.thevpc.nuts.util.NBlankable;
@@ -44,7 +45,7 @@ public class NTxParseHelper {
 
     public static boolean fillAnnotations(NElement e, NTxNode p) {
         boolean some = false;
-        Set<String> allClasses = new HashSet<>();
+        Set<String> allClasses = new LinkedHashSet<>();
         for (NElementAnnotation a : e.annotations()) {
             String nn = a.name();
             if (NBlankable.isBlank(nn)) {

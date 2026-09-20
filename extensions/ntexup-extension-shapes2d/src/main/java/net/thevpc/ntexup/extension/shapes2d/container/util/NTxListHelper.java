@@ -214,7 +214,7 @@ public class NTxListHelper {
                             styles.add(NTxProp.of("size", NElement.ofDouble(2.5, "%P")));
                             styles.add(NTxProp.of("background", NElement.ofString("blue")));
                         }
-                        r.addRule(DefaultNTxStyleRule.ofClass(r, r.source(), clsPrefix + "-bullet", styles.toArray(new NTxProp[0])));
+                        r.addRule(DefaultNTxStyleRule.ofClassDef(r, r.source(), clsPrefix + "-bullet", null, styles.toArray(new NTxProp[0])));
                     }
                     specialStyle = clsPrefix + "-bullet";
                 }

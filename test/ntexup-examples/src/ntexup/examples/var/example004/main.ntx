@@ -1,6 +1,6 @@
 (name:'myname', classes:[class1,class2],disabled:false){
     styles:{
-        "" :{
+        all :{
             color:blue,
             font-size:40,
         }
@@ -8,7 +8,7 @@
             font-size:50,
             bold:true
         },
-        (.myname, ul, somename):{
+        class-myname :{
 
         }
     },

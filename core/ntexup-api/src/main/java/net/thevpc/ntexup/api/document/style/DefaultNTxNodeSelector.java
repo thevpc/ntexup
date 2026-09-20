@@ -1,6 +1,5 @@
 package net.thevpc.ntexup.api.document.style;
 
-import net.thevpc.ntexup.api.document.node.NTxItem;
 import net.thevpc.ntexup.api.document.node.NTxNode;
 import net.thevpc.nuts.elem.NElement;
 
@@ -20,7 +19,13 @@ public class DefaultNTxNodeSelector implements NTxStyleRuleSelector {
     }
 
     public static DefaultNTxNodeSelector of(NTxStyleRuleSelectorItem... items) {
-        if (items == null || items.length==0 || Arrays.stream(items).anyMatch(x->Objects.equals(x,ANY_ITEM))) {
+        if (items == null || items.length==0) {
+            // An empty selector must never match everything; it is an inert
+            // (dead) selector, otherwise a leftover unresolvable item such as a
+            // legacy '.name' would silently style every node in the document.
+            return NONE;
+        }
+        if (Arrays.stream(items).anyMatch(x->Objects.equals(x,ANY_ITEM))) {
             return ANY;
         }
         boolean none=false;
@@ -40,7 +45,9 @@ public class DefaultNTxNodeSelector implements NTxStyleRuleSelector {
             return NONE;
         }
         if (items2.isEmpty()) {
-            return ANY;
+            // Only null/unresolvable items remained: treat the selector as dead
+            // (NONE), never as everything-matching.
+            return NONE;
         }
         return new DefaultNTxNodeSelector(items2);
     }
@@ -50,35 +57,46 @@ public class DefaultNTxNodeSelector implements NTxStyleRuleSelector {
         this.items.addAll(items);
     }
 
-    private Set<String> computeClasses(NTxItem n) {
+    /**
+     * Returns the names of any class definitions ({@code class-<name>}) held in
+     * this selector.
+     */
+    public Set<String> getClassDefNames() {
         Set<String> all = new HashSet<>();
-        while (n != null) {
-            if (n instanceof NTxNode) {
-                all.addAll(((NTxNode) n).styleClasses());
+        for (NTxStyleRuleSelectorItem item : items) {
+            if (item instanceof NTxStyleRuleSelectorItem.ClassDefItem) {
+                all.add(((NTxStyleRuleSelectorItem.ClassDefItem) item).getName());
             }
-            n = n.parent();
         }
         return all;
     }
 
-    public Set<String> getClasses() {
-        Set<String> c = new HashSet<>();
+    /**
+     * Returns the class definition item with the given name if present.
+     */
+    public NTxStyleRuleSelectorItem.ClassDefItem getClassDef(String name) {
         for (NTxStyleRuleSelectorItem item : items) {
-            if (item instanceof NTxStyleRuleSelectorItem.SimpleItem) {
-                c.addAll(((NTxStyleRuleSelectorItem.SimpleItem) item).getClasses());
+            if (item instanceof NTxStyleRuleSelectorItem.ClassDefItem) {
+                NTxStyleRuleSelectorItem.ClassDefItem cd = (NTxStyleRuleSelectorItem.ClassDefItem) item;
+                if (Objects.equals(name, cd.getName())) {
+                    return cd;
+                }
             }
         }
-        return Collections.unmodifiableSet(c);
+        return null;
     }
 
     @Override
     public boolean acceptNode(NTxNode n) {
+        // Conjunction: every item must accept the node. A selector such as
+        // table(class-important) therefore means "a table node that also
+        // carries the class important".
         for (NTxStyleRuleSelectorItem item : items) {
-            if (item.acceptNode(n)) {
-                return true;
+            if (!item.acceptNode(n)) {
+                return false;
             }
         }
-        return false;
+        return !items.isEmpty();
     }
 
     @Override
@@ -100,18 +118,51 @@ public class DefaultNTxNodeSelector implements NTxStyleRuleSelector {
 
         DefaultNTxNodeSelector op = (DefaultNTxNodeSelector) o;
 
-        // 1. Find the "Best" (Most Specific) Item in each collection
-        NTxStyleRuleSelectorItem bestThis = findBestItem(this.items);
-        NTxStyleRuleSelectorItem bestOther = findBestItem(op.items);
+        // 1. More constraints (explicit AND terms) = more specific.
+        int cThis = constraintCount();
+        int cOther = op.constraintCount();
+        if (cThis != cOther) {
+            // smaller result = higher specificity
+            return Integer.compare(cOther, cThis);
+        }
 
-        // 2. Compare the two best items
-        return compareSpecificItems(bestThis, bestOther);
+        // 2. Same count: compare rank signatures from strongest to weakest term.
+        List<Integer> thisRanks = sortedRanks(this.items);
+        List<Integer> otherRanks = sortedRanks(op.items);
+        int n = Math.min(thisRanks.size(), otherRanks.size());
+        for (int i = 0; i < n; i++) {
+            int a = thisRanks.get(i);
+            int b = otherRanks.get(i);
+            if (a != b) {
+                return Integer.compare(b, a);
+            }
+        }
+        if (thisRanks.size() != otherRanks.size()) {
+            return Integer.compare(otherRanks.size(), thisRanks.size());
+        }
+
+        // 3. Fallback: stable lexical order.
+        return this.toString().compareTo(o.toString());
     }
 
-    private NTxStyleRuleSelectorItem findBestItem(Set<NTxStyleRuleSelectorItem> items) {
-        return items.stream()
-                .min(this::compareSpecificItems) // Minimum result = Higher specificity
-                .orElse(ANY_ITEM);
+    private int constraintCount() {
+        int c = 0;
+        for (NTxStyleRuleSelectorItem item : items) {
+            if (!(item instanceof NTxStyleRuleSelectorItem.AnyItem)
+                    && !(item instanceof NTxStyleRuleSelectorItem.NoneItem)) {
+                c++;
+            }
+        }
+        return c;
+    }
+
+    private static List<Integer> sortedRanks(Set<NTxStyleRuleSelectorItem> items) {
+        List<Integer> ranks = new ArrayList<>();
+        for (NTxStyleRuleSelectorItem item : items) {
+            ranks.add(specificityRank(item));
+        }
+        ranks.sort(Collections.reverseOrder());
+        return ranks;
     }
 
     @Override
@@ -129,41 +180,65 @@ public class DefaultNTxNodeSelector implements NTxStyleRuleSelector {
 
 
 
+    private static int specificityRank(NTxStyleRuleSelectorItem it) {
+        if (it instanceof NTxStyleRuleSelectorItem.AnyItem) {
+            return 1;
+        }
+        if (it instanceof NTxStyleRuleSelectorItem.NoneItem) {
+            return 0;
+        }
+        if (it instanceof NTxStyleRuleSelectorItem.ClassUseItem) {
+            return 8;
+        }
+        if (it instanceof NTxStyleRuleSelectorItem.ClassDefItem) {
+            return 0;
+        }
+        if (it instanceof NTxStyleRuleSelectorItem.TableRowItem) {
+            NTxStyleRuleSelectorItem.TableRowItem t = (NTxStyleRuleSelectorItem.TableRowItem) it;
+            return (t.getKind() == null || t.getKind().isEmpty()) ? 2 : 3;
+        }
+        if (it instanceof NTxStyleRuleSelectorItem.TableColumnItem) {
+            return 4;
+        }
+        if (it instanceof NTxStyleRuleSelectorItem.TableCellItem) {
+            NTxStyleRuleSelectorItem.TableCellItem t = (NTxStyleRuleSelectorItem.TableCellItem) it;
+            if (t.getRow() != null && t.getCol() != null) {
+                return 6;
+            }
+            if (t.getRow() != null || t.getCol() != null) {
+                return 5;
+            }
+            return 4;
+        }
+        if (it instanceof NTxStyleRuleSelectorItem.SimpleItem) {
+            return 7;
+        }
+        return 0;
+    }
+
     private int compareSpecificItems(NTxStyleRuleSelectorItem a, NTxStyleRuleSelectorItem b) {
         if (a.equals(b)) return 0;
+
+        int ra = specificityRank(a);
+        int rb = specificityRank(b);
+        if (ra != rb) {
+            // smaller result = higher specificity
+            return Integer.compare(rb, ra);
+        }
 
         // Tier 1: SimpleItem (The actual logic-heavy selectors)
         if (a instanceof NTxStyleRuleSelectorItem.SimpleItem && b instanceof NTxStyleRuleSelectorItem.SimpleItem) {
             NTxStyleRuleSelectorItem.SimpleItem sa = (NTxStyleRuleSelectorItem.SimpleItem) a;
             NTxStyleRuleSelectorItem.SimpleItem sb = (NTxStyleRuleSelectorItem.SimpleItem) b;
 
-            // Specificity: Names > Types > Classes
+            // Specificity: Names > Types
             int c = Integer.compare(sb.getNames().size(), sa.getNames().size());
             if (c != 0) return c;
 
             c = Integer.compare(sb.getTypes().size(), sa.getTypes().size());
             if (c != 0) return c;
-
-            c = Integer.compare(sb.getClasses().size(), sa.getClasses().size());
-            if (c != 0) return c;
-
-            return sa.toString().compareTo(sb.toString());
         }
 
-        // Tier 2: AnyItem (*) - Matches everything, so it has low specificity
-        if (a instanceof NTxStyleRuleSelectorItem.AnyItem) {
-            // AnyItem is more specific than NoneItem, but less than SimpleItem
-            return (b instanceof NTxStyleRuleSelectorItem.NoneItem) ? -1 : 1;
-        }
-        if (b instanceof NTxStyleRuleSelectorItem.AnyItem) {
-            return (a instanceof NTxStyleRuleSelectorItem.NoneItem) ? 1 : -1;
-        }
-
-        // Tier 3: NoneItem (!) - The "Void".
-        // It never matches, so it has the lowest possible "functional" priority.
-        if (a instanceof NTxStyleRuleSelectorItem.NoneItem) return 1;
-        if (b instanceof NTxStyleRuleSelectorItem.NoneItem) return -1;
-
-        return 0;
+        return a.toString().compareTo(b.toString());
     }
 }

@@ -1097,7 +1097,7 @@ public class DefaultNTxEngine implements NTxEngine {
             NTxStyleRuleSelector s = x.selector();
             if (s instanceof DefaultNTxNodeSelector) {
                 DefaultNTxNodeSelector y = (DefaultNTxNodeSelector) s;
-                return y.getClasses().stream();
+                return y.getClassDefNames().stream();
             }
             return Stream.empty();
         }).collect(Collectors.toSet());

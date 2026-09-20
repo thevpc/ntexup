@@ -18,15 +18,15 @@ styles:{
     line:{
         color:black
     }
-    .dielectric:{
+    class-dielectric:{
         background-color:black
     }
-    .dimLine:{
+    class-dimLine:{
         start-arrow:simple()
         end-arrow:simple()
         stroke:basic(dashed)
     }
-    .dimension:{
+    class-dimension:{
         color:black
         arrow:simple()
         stroke:dashed

@@ -1,6 +1,6 @@
 styles {
     // The "Catch-All" Global Reset
-    (*) {
+    all {
         font-family : "SansSerif",
         font-size   : 5%P,        // Comfortable for presentation viewing
         color       : "#1A1A1A",      // Soft black for eye comfort
@@ -20,7 +20,7 @@ styles {
 //    }
 //
 //    // Standard Presentation Titles (assuming you use a .title class)
-//    (.title) {
+//    cass-title {
 //        font-size   : 7%P,
 //        color       : "DarkBlue",      // Soft black for eye comfort
 //        font-bold,
@@ -29,11 +29,11 @@ styles {
 //    }
 //
 //    // List Handling
-//    (.ul-item) {
+//    class-ul-item {
 //        margin : (2%P, 0),
 //        at     : left,
 //    }
-//    (.ul-bullet) {
+//    class-ul-bullet {
 //        margin : (2%P, 2%P),
 //        background : "#393a3a8",
 //        at         : left,
@@ -56,7 +56,7 @@ styles {
 //    }
 //
 //    // Figure/Image Captions
-//    (.image-fig-legend) {
+//    class-image-fig-legend {
 //        at        : bottom,
 //        font-size : 2.5%P,
 //        color     : "#555555",
