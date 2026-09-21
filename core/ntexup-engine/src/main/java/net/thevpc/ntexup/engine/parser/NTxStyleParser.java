@@ -187,10 +187,11 @@ public class NTxStyleParser {
      * Dispatches selectors written as named elements with optional parameters:
      * <ul>
      *     <li>class-&lt;name&gt;[(base, ...)]  - class definition</li>
-     *     <li>table-row(header|even|odd)</li>
-     *     <li>table-column(n)</li>
-     *     <li>table-cell(row: r, col: c)</li>
-     *     <li>table-weight(row: r, col: c) — either coordinate optional</li>
+     *     <li>table-row(row: header|even|odd) or table-row(row: n)</li>
+     *     <li>table-column(col: n)</li>
+     *     <li>table-cell(row: r, col: c) — row: is 1-based over data rows</li>
+     *     <li>table-header(row: n[, col: m]) / table-footer(row: n[, col: m])</li>
+     *     <li>table-weight(...) — removed selector; dropped with a warning</li>
      *     <li>legacy: any other name is treated as a type selector, and bare
      *     params are treated as selector items (previous TUPLE behavior)</li>
      * </ul>
@@ -264,23 +265,29 @@ public class NTxStyleParser {
         }
         if (uid.equals("table-row")) {
             String kind = null;
+            Integer row = null;
             boolean dead = false;
             if (params != null) {
                 for (NElement p : params) {
                     if (p.isNamedPair()) {
                         NPairElement pair = p.asNamedPair().get();
                         String k = NTxUtils.uid(NTxValue.of(pair.key()).asStringOrName().orElse(""));
-                        String v = NTxUtils.uid(NTxValue.of(pair.value()).asStringOrName().orElse(""));
                         if (k.equals("row") || k.equals("r")) {
+                            String v = NTxUtils.uid(NTxValue.of(pair.value()).asStringOrName().orElse(""));
                             if (v.equals("header") || v.equals("even") || v.equals("odd")) {
                                 kind = v;
                             } else {
-                                NMsg errMsg = NMsg.ofC("[%s] invalid style rule selector %s. table-row(row:) accepts one of header, even or odd", NTxUtils.shortName(context.source()), name).asSevere();
-                                context.log(errMsg, context.source());
-                                dead = true;
+                                NOptional<Integer> vi = NTxValue.of(pair.value()).asInt();
+                                if (vi.isPresent() && vi.get() > 0) {
+                                    row = vi.get();
+                                } else {
+                                    NMsg errMsg = NMsg.ofC("[%s] invalid style rule selector %s. table-row(row:) accepts header, even, odd or a 1-based data-row index", NTxUtils.shortName(context.source()), name).asSevere();
+                                    context.log(errMsg, context.source());
+                                    dead = true;
+                                }
                             }
                         } else {
-                            NMsg errMsg = NMsg.ofC("[%s] invalid style rule selector %s. table-row accepts only row: {header, even, odd} or class-* usages", NTxUtils.shortName(context.source()), name).asSevere();
+                            NMsg errMsg = NMsg.ofC("[%s] invalid style rule selector %s. table-row accepts only row: {header, even, odd, n} or class-* usages", NTxUtils.shortName(context.source()), name).asSevere();
                             context.log(errMsg, context.source());
                             dead = true;
                         }
@@ -295,12 +302,12 @@ public class NTxStyleParser {
                                 context.log(errMsg, context.source());
                                 kind = w;
                             } else {
-                                NMsg errMsg = NMsg.ofC("[%s] invalid style rule selector %s. table-row accepts only row: {header, even, odd} or class-* usages", NTxUtils.shortName(context.source()), name).asSevere();
+                                NMsg errMsg = NMsg.ofC("[%s] invalid style rule selector %s. table-row accepts only row: {header, even, odd, n} or class-* usages", NTxUtils.shortName(context.source()), name).asSevere();
                                 context.log(errMsg, context.source());
                                 dead = true;
                             }
                         } else {
-                            NMsg errMsg = NMsg.ofC("[%s] invalid style rule selector %s. table-row accepts only row: {header, even, odd} or class-* usages", NTxUtils.shortName(context.source()), name).asSevere();
+                            NMsg errMsg = NMsg.ofC("[%s] invalid style rule selector %s. table-row accepts only row: {header, even, odd, n} or class-* usages", NTxUtils.shortName(context.source()), name).asSevere();
                             context.log(errMsg, context.source());
                             dead = true;
                         }
@@ -308,7 +315,48 @@ public class NTxStyleParser {
                 }
             }
             if (!dead) {
-                items.add(NTxStyleRuleSelectorItem.ofTableRow(kind));
+                items.add(NTxStyleRuleSelectorItem.ofTableRow(kind, row));
+            }
+            return;
+        }
+        if (uid.equals("table-header") || uid.equals("table-footer")) {
+            Integer row = null;
+            Integer col = null;
+            boolean dead = false;
+            if (params != null) {
+                for (NElement p : params) {
+                    if (p.isNamedPair()) {
+                        NPairElement pair = p.asNamedPair().get();
+                        String k = NTxUtils.uid(NTxValue.of(pair.key()).asStringOrName().orElse(""));
+                        if (!(k.equals("row") || k.equals("r") || k.equals("col") || k.equals("c"))) {
+                            NMsg errMsg = NMsg.ofC("[%s] invalid style rule selector %s. %s accepts only row: and col: 1-based indices", NTxUtils.shortName(context.source()), name, uid).asSevere();
+                            context.log(errMsg, context.source());
+                            dead = true;
+                            continue;
+                        }
+                        NOptional<Integer> v = _asInt(pair.value(), context);
+                        if (!v.isPresent()) {
+                            dead = true;
+                            continue;
+                        }
+                        if (k.equals("row") || k.equals("r")) {
+                            row = v.get();
+                        } else {
+                            col = v.get();
+                        }
+                    } else if (isClassUseWord(p)) {
+                        addClassUseParam(p, items);
+                    } else {
+                        NMsg errMsg = NMsg.ofC("[%s] invalid style rule selector %s. %s accepts only row: and col: 1-based indices", NTxUtils.shortName(context.source()), name, uid).asSevere();
+                        context.log(errMsg, context.source());
+                        dead = true;
+                    }
+                }
+            }
+            if (!dead) {
+                items.add(uid.equals("table-header")
+                        ? NTxStyleRuleSelectorItem.ofTableHeader(row, col)
+                        : NTxStyleRuleSelectorItem.ofTableFooter(row, col));
             }
             return;
         }
@@ -394,42 +442,12 @@ public class NTxStyleParser {
             return;
         }
         if (uid.equals("table-weight")) {
-            Integer row = null;
-            Integer col = null;
-            boolean dead = false;
-            if (params != null) {
-                for (NElement p : params) {
-                    if (p.isNamedPair()) {
-                        NPairElement pair = p.asNamedPair().get();
-                        String k = NTxUtils.uid(NTxValue.of(pair.key()).asStringOrName().orElse(""));
-                        if (!(k.equals("row") || k.equals("r") || k.equals("col") || k.equals("c"))) {
-                            NMsg errMsg = NMsg.ofC("[%s] invalid style rule selector %s. table-weight accepts only row : and col : 1-based indices", NTxUtils.shortName(context.source()), name).asSevere();
-                            context.log(errMsg, context.source());
-                            dead = true;
-                            continue;
-                        }
-                        NOptional<Integer> v = _asInt(pair.value(), context);
-                        if (!v.isPresent()) {
-                            dead = true;
-                            continue;
-                        }
-                        if (k.equals("row") || k.equals("r")) {
-                            row = v.get();
-                        } else {
-                            col = v.get();
-                        }
-                    } else if (isClassUseWord(p)) {
-                        addClassUseParam(p, items);
-                    } else {
-                        NMsg errMsg = NMsg.ofC("[%s] invalid style rule selector %s. table-weight accepts only row : and col : 1-based indices", NTxUtils.shortName(context.source()), name).asSevere();
-                        context.log(errMsg, context.source());
-                        dead = true;
-                    }
-                }
-            }
-            if (!dead) {
-                items.add(NTxStyleRuleSelectorItem.ofTableWeight(row, col));
-            }
+            // table-weight(row:/col:) was removed: weights are plain row-weight /
+            // column-weight props set through table-row / table-header /
+            // table-footer / table-column / table-cell selectors instead.
+            // Never-fail: the rule is dropped with a warning.
+            NMsg errMsg = NMsg.ofC("[%s] table-weight(...) selector is removed; set row-weight / column-weight through table-row(row: n), table-header(row: n[, col: m]), table-footer(row: n[, col: m]), table-column(col: n) or table-cell(row: r, col: c) instead", NTxUtils.shortName(context.source())).asWarning();
+            context.log(errMsg, context.source());
             return;
         }
         if (params == null || params.isEmpty()) {

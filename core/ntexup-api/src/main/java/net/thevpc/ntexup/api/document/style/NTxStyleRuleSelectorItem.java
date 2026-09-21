@@ -603,15 +603,23 @@ public abstract class NTxStyleRuleSelectorItem {
     }
 
     public static NTxStyleRuleSelectorItem ofTableRow(String kind) {
-        return new TableRowItem(kind);
+        return new TableRowItem(kind, null);
+    }
+
+    public static NTxStyleRuleSelectorItem ofTableRow(String kind, Integer row) {
+        return new TableRowItem(kind, row);
     }
 
     public static NTxStyleRuleSelectorItem ofTableCell(Integer row, Integer col) {
         return new TableCellItem(row, col);
     }
 
-    public static NTxStyleRuleSelectorItem ofTableWeight(Integer row, Integer col) {
-        return new TableWeightItem(row, col);
+    public static NTxStyleRuleSelectorItem ofTableHeader(Integer row, Integer col) {
+        return new TableHeaderItem(row, col);
+    }
+
+    public static NTxStyleRuleSelectorItem ofTableFooter(Integer row, Integer col) {
+        return new TableFooterItem(row, col);
     }
 
     public static NTxStyleRuleSelectorItem ofTableColumn(int col) {
@@ -685,11 +693,11 @@ public abstract class NTxStyleRuleSelectorItem {
 
     private static boolean isSpecialSelectorPrefix(String item) {
         return item.startsWith("class-")
-                || item.equals("table-header")
+                || item.startsWith("table-header")
+                || item.startsWith("table-footer")
                 || item.startsWith("table-row")
                 || item.startsWith("table-column")
-                || item.startsWith("table-cell")
-                || item.startsWith("table-weight");
+                || item.startsWith("table-cell");
     }
 
     private static void _warn(NTxLogger log, String msg, Object... args) {
@@ -726,13 +734,38 @@ public abstract class NTxStyleRuleSelectorItem {
             }
             return NOptional.of(ofClassDef(name, bases));
         }
-        if (item.equals("table-header")) {
-            return NOptional.of(ofTableRow("header"));
+        if (item.startsWith("table-header")) {
+            String rest = item.substring("table-header".length());
+            if (rest.isEmpty()) {
+                return NOptional.of(ofTableHeader(null, null));
+            }
+            if (rest.startsWith("(") && rest.endsWith(")")) {
+                Integer[] rc = parseRowCol(rest, item, log);
+                if (rc == null) {
+                    return NOptional.ofEmpty(NMsg.ofC("invalid table-header selector '%s'", item));
+                }
+                return NOptional.of(ofTableHeader(rc[0], rc[1]));
+            }
+            return _err(log, "invalid table-header selector '%s', expected table-header(row: n[, col: m])", item);
+        }
+        if (item.startsWith("table-footer")) {
+            String rest = item.substring("table-footer".length());
+            if (rest.isEmpty()) {
+                return NOptional.of(ofTableFooter(null, null));
+            }
+            if (rest.startsWith("(") && rest.endsWith(")")) {
+                Integer[] rc = parseRowCol(rest, item, log);
+                if (rc == null) {
+                    return NOptional.ofEmpty(NMsg.ofC("invalid table-footer selector '%s'", item));
+                }
+                return NOptional.of(ofTableFooter(rc[0], rc[1]));
+            }
+            return _err(log, "invalid table-footer selector '%s', expected table-footer(row: n[, col: m])", item);
         }
         if (item.startsWith("table-row")) {
             String rest = item.substring("table-row".length());
             if (rest.isEmpty()) {
-                return NOptional.of(ofTableRow(null));
+                return NOptional.of(ofTableRow(null, null));
             }
             if (rest.startsWith("(") && rest.endsWith(")")) {
                 String inner = NStringUtils.strip(rest.substring(1, rest.length() - 1));
@@ -742,19 +775,27 @@ public abstract class NTxStyleRuleSelectorItem {
                     String v = NStringUtils.strip(inner.substring(ci + 1));
                     if (k.equalsIgnoreCase("row") || k.equalsIgnoreCase("r")) {
                         if (v.isEmpty() || v.matches("header|even|odd")) {
-                            return NOptional.of(ofTableRow(v.isEmpty() ? null : v));
+                            return NOptional.of(ofTableRow(v.isEmpty() ? null : v, null));
+                        }
+                        try {
+                            int bodyRow = Integer.parseInt(v);
+                            if (bodyRow > 0) {
+                                return NOptional.of(ofTableRow(null, bodyRow));
+                            }
+                        } catch (NumberFormatException e) {
+                            // fallthrough
                         }
                     }
-                    return _err(log, "invalid table-row selector '%s', expected table-row(row: header|even|odd) or table-header", item);
+                    return _err(log, "invalid table-row selector '%s', expected table-row(row: header|even|odd) or table-row(row: n) with n a 1-based data-row index", item);
                 }
                 // legacy positional form, kept as a best-effort migration
                 _warn(log, "table-row(%s): positional form is deprecated; use table-row(row: %s)%s",
                         inner, inner.isEmpty() ? "header" : inner, inner.equals("header") ? " or table-header" : "");
                 if (inner.isEmpty() || inner.matches("header|even|odd")) {
-                    return NOptional.of(ofTableRow(inner.isEmpty() ? null : inner));
+                    return NOptional.of(ofTableRow(inner.isEmpty() ? null : inner, null));
                 }
             }
-            return _err(log, "invalid table-row selector '%s', expected header, even or odd", item);
+            return _err(log, "invalid table-row selector '%s', expected header, even, odd or a 1-based data-row index", item);
         }
         if (item.startsWith("table-column")) {
             String rest = item.substring("table-column".length());
@@ -789,69 +830,57 @@ public abstract class NTxStyleRuleSelectorItem {
                 return NOptional.of(ofTableCell(null, null));
             }
             if (rest.startsWith("(") && rest.endsWith(")")) {
-                String inner = rest.substring(1, rest.length() - 1);
-                Integer row = null;
-                Integer col = null;
-                for (String kv : inner.split(",")) {
-                    int ci = kv.indexOf(':');
-                    if (ci < 0) {
-                        return _err(log, "invalid table-cell selector '%s'", item);
-                    }
-                    String k = NStringUtils.strip(kv.substring(0, ci));
-                    String v = NStringUtils.strip(kv.substring(ci + 1));
-                    int iv;
-                    try {
-                        iv = Integer.parseInt(v);
-                    } catch (NumberFormatException e) {
-                        return _err(log, "invalid table-cell selector '%s'", item);
-                    }
-                    if (k.equalsIgnoreCase("row") || k.equalsIgnoreCase("r")) {
-                        row = iv;
-                    } else if (k.equalsIgnoreCase("col") || k.equalsIgnoreCase("c")) {
-                        col = iv;
-                    } else {
-                        return _err(log, "invalid table-cell selector '%s'", item);
-                    }
+                Integer[] rc = parseRowCol(rest, item, log);
+                if (rc == null) {
+                    return NOptional.ofEmpty(NMsg.ofC("invalid table-cell selector '%s'", item));
                 }
-                return NOptional.of(ofTableCell(row, col));
+                return NOptional.of(ofTableCell(rc[0], rc[1]));
             }
             return _err(log, "invalid table-cell selector '%s'", item);
         }
-        if (item.startsWith("table-weight")) {
-            String rest = item.substring("table-weight".length());
-            if (rest.isEmpty()) {
-                return NOptional.of(ofTableWeight(null, null));
-            }
-            if (rest.startsWith("(") && rest.endsWith(")")) {
-                String inner = rest.substring(1, rest.length() - 1);
-                Integer row = null;
-                Integer col = null;
-                for (String kv : inner.split(",")) {
-                    int ci = kv.indexOf(':');
-                    if (ci < 0) {
-                        return _err(log, "invalid table-weight selector '%s'", item);
-                    }
-                    String k = NStringUtils.strip(kv.substring(0, ci));
-                    String v = NStringUtils.strip(kv.substring(ci + 1));
-                    int iv;
-                    try {
-                        iv = Integer.parseInt(v);
-                    } catch (NumberFormatException e) {
-                        return _err(log, "invalid table-weight selector '%s'", item);
-                    }
-                    if (k.equalsIgnoreCase("row") || k.equalsIgnoreCase("r")) {
-                        row = iv;
-                    } else if (k.equalsIgnoreCase("col") || k.equalsIgnoreCase("c")) {
-                        col = iv;
-                    } else {
-                        return _err(log, "invalid table-weight selector '%s'", item);
-                    }
-                }
-                return NOptional.of(ofTableWeight(row, col));
-            }
-            return _err(log, "invalid table-weight selector '%s'", item);
-        }
         return _err(log, "invalid special selector '%s'", item);
+    }
+
+    /**
+     * Parses the {@code (row: n, col: m)} inner body shared by the
+     * {@code table-cell}, {@code table-header} and {@code table-footer}
+     * selector forms. Both coordinates are optional. Returns
+     * {@code [row, col]} (either may be null) or {@code null} after logging
+     * whenever the inner text is malformed (never-fail parsing).
+     */
+    private static Integer[] parseRowCol(String rest, String item, NTxLogger log) {
+        String inner = rest.substring(1, rest.length() - 1);
+        Integer row = null;
+        Integer col = null;
+        for (String kv : inner.split(",")) {
+            int ci = kv.indexOf(':');
+            if (ci < 0) {
+                return _errNull(log, "invalid selector '%s', expected row: and/or col: 1-based indices", item);
+            }
+            String k = NStringUtils.strip(kv.substring(0, ci));
+            String v = NStringUtils.strip(kv.substring(ci + 1));
+            int iv;
+            try {
+                iv = Integer.parseInt(v);
+            } catch (NumberFormatException e) {
+                return _errNull(log, "invalid selector '%s', expected row: and/or col: 1-based indices", item);
+            }
+            if (k.equalsIgnoreCase("row") || k.equalsIgnoreCase("r")) {
+                row = iv;
+            } else if (k.equalsIgnoreCase("col") || k.equalsIgnoreCase("c")) {
+                col = iv;
+            } else {
+                return _errNull(log, "invalid selector '%s', expected row: and/or col: 1-based indices", item);
+            }
+        }
+        return new Integer[]{row, col};
+    }
+
+    private static Integer[] _errNull(NTxLogger log, String msg, String item) {
+        if (log != null) {
+            log.log(NMsg.ofC(msg, item));
+        }
+        return null;
     }
 
     private static NOptional<NTxStyleRuleSelectorItem> _err(NTxLogger log, String msg, String item) {

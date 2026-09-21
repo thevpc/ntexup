@@ -197,6 +197,14 @@ public class DefaultNTxNodeSelector implements NTxStyleRuleSelector {
             NTxStyleRuleSelectorItem.TableRowItem t = (NTxStyleRuleSelectorItem.TableRowItem) it;
             return (t.getKind() == null || t.getKind().isEmpty()) ? 2 : 3;
         }
+        if (it instanceof NTxStyleRuleSelectorItem.TableHeaderItem) {
+            NTxStyleRuleSelectorItem.TableHeaderItem t = (NTxStyleRuleSelectorItem.TableHeaderItem) it;
+            return sectionItemRank(t.getRow(), t.getCol());
+        }
+        if (it instanceof NTxStyleRuleSelectorItem.TableFooterItem) {
+            NTxStyleRuleSelectorItem.TableFooterItem t = (NTxStyleRuleSelectorItem.TableFooterItem) it;
+            return sectionItemRank(t.getRow(), t.getCol());
+        }
         if (it instanceof NTxStyleRuleSelectorItem.TableColumnItem) {
             return 4;
         }
@@ -214,6 +222,22 @@ public class DefaultNTxNodeSelector implements NTxStyleRuleSelector {
             return 7;
         }
         return 0;
+    }
+
+    /**
+     * Specificity rank for the hybrid {@code table-header} / {@code table-footer}
+     * items: a row-constrained (or bare) form ranks like a sectioned table-row,
+     * a col-constrained form like a cell-column selector, and the full
+     * {@code row + col} form like an exact table-cell.
+     */
+    private static int sectionItemRank(Integer row, Integer col) {
+        if (row != null && col != null) {
+            return 6;
+        }
+        if (col != null) {
+            return 5;
+        }
+        return 3;
     }
 
     private int compareSpecificItems(NTxStyleRuleSelectorItem a, NTxStyleRuleSelectorItem b) {

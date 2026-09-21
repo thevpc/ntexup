@@ -105,8 +105,8 @@ public class NTxTableBuilder implements NTxNodeBuilder {
         double contentHeight = m.tableHeight - 2 * pad;
 
         // Materialize rows and cells as real child nodes so that structural
-        // selectors (table-row / table-cell / table-column / table-weight) can
-        // match them.
+        // selectors (table-row / table-cell / table-column / table-header /
+        // table-footer) can match them.
         List<NTxNode> rowNodes = materializeTable(rendererContext, node, data, sections, cols);
 
         // Per-cell row/column weights (max per row/column) resize the natural
@@ -432,7 +432,9 @@ public class NTxTableBuilder implements NTxNodeBuilder {
         }
         NTxEngine engine = rendererContext.engine();
         List<NTxNode> out = new ArrayList<>();
+        int headerCounter = 0;
         int bodyCounter = 0;
+        int footerCounter = 0;
         for (int r = 0; r < data.size(); r++) {
             String section = sections.get(Math.min(r, sections.size() - 1));
             List<String> rowData = data.get(r);
@@ -440,14 +442,27 @@ public class NTxTableBuilder implements NTxNodeBuilder {
             row.setSource(table.source());
             row.setProperty(NTxProp.ofString(NTxPropName.SECTION, section));
             row.setProperty(NTxProp.ofInt(NTxPropName.ROW_INDEX, r + 1));
+            int sectionRow;
+            if ("header".equals(section)) {
+                sectionRow = ++headerCounter;
+            } else if ("footer".equals(section)) {
+                sectionRow = ++footerCounter;
+            } else {
+                sectionRow = ++bodyCounter;
+            }
+            row.setProperty(NTxProp.ofInt(NTxPropName.SECTION_ROW, sectionRow));
             if ("body".equals(section)) {
-                bodyCounter++;
                 row.setProperty(NTxProp.ofInt(NTxPropName.BODY_ROW, bodyCounter));
             }
             for (int c = 0; c < cols; c++) {
                 String text = c < rowData.size() ? rowData.get(c) : "";
                 NTxNode cell = engine.newDefaultNode(NTxNodeType.TABLE_CELL);
                 cell.setSource(table.source());
+                cell.setProperty(NTxProp.ofString(NTxPropName.SECTION, section));
+                cell.setProperty(NTxProp.ofInt(NTxPropName.SECTION_ROW, sectionRow));
+                if ("body".equals(section)) {
+                    cell.setProperty(NTxProp.ofInt(NTxPropName.BODY_ROW, bodyCounter));
+                }
                 cell.setProperty(NTxProp.ofInt(NTxPropName.ROW_INDEX, r + 1));
                 cell.setProperty(NTxProp.ofInt(NTxPropName.COL_INDEX, c + 1));
                 cell.setProperty(NTxProp.ofString(NTxPropName.VALUE, text));
@@ -470,14 +485,19 @@ public class NTxTableBuilder implements NTxNodeBuilder {
     }
 
     /**
-     * Computes per-cell row/column weights: each cell may carry a
-     * {@code row-weight} and/or {@code column-weight} — set directly on the
-     * cell or through a style rule using the {@code table-weight(row: r, col: c)}
-     * selector. A row/column gets the max weight of its cells (per-cell
-     * equivalent of the grid's {@code rows-weight: [1, 1, 3]} list);
-     * rows/columns with no explicit weight default to 1. Global
-     * {@code columns-weight} / {@code rows-weight} lists on the table node
-     * still override the per-cell values when present (grid convention).
+     * Computes per-row/column weights: a {@code row-weight} may live on the
+     * row node itself (set through {@code table-row(row: n)},
+     * {@code table-header(row: n)} or {@code table-footer(row: n)} rules) or on
+     * any of its cells, and a {@code column-weight} may live on any cell of the
+     * column (set through {@code table-column(col: n)},
+     * {@code table-cell(row: r, col: c)} or section selectors) — the row
+     * weight is the max of the row's own weight and its cells' weights, the
+     * column weight the max of its cells' weights (per-cell equivalent of the
+     * grid's {@code rows-weight: [1, 1, 3]} list). Rows/columns with no explicit
+     * weight default to 1, so every row and column — header, body and footer —
+     * participates in the proportional sizing. Global {@code columns-weight} /
+     * {@code rows-weight} lists on the table node still override the per-cell
+     * values when present (grid convention).
      */
     private TableWeights computeWeights(NTxRendererContext rendererContext, List<NTxNode> rowNodes, int rows, int cols) {
         TableWeights w = new TableWeights();
@@ -492,6 +512,14 @@ public class NTxTableBuilder implements NTxNodeBuilder {
             NTxNode rowNode = r < rowNodes.size() ? rowNodes.get(r) : null;
             if (rowNode == null) {
                 continue;
+            }
+            // the row node itself may carry a row-weight (table-row(row: n) /
+            // table-header(row: n) / table-footer(row: n) rules)
+            NTxRendererContext rowCtx = rendererContext.resolveNode(rowNode, NTxBounds2D.ofWidth(0, 0, 1, 1));
+            double rowNodeWeight = NTxValueByName.getRowWeight(rowCtx);
+            if (rowNodeWeight > 0) {
+                w.haveRowWeights = true;
+                w.rowWeights[r] = Math.max(w.rowWeights[r], rowNodeWeight);
             }
             int c = 0;
             for (NTxNode cell : rowNode.children()) {

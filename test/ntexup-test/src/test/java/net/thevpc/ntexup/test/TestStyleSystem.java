@@ -145,20 +145,32 @@ public class TestStyleSystem {
         return n;
     }
 
-    static NTxNode rowNode(String section, Integer bodyRow, int absIndex) {
+    static NTxNode rowNode(String section, Integer sectionRow, int absIndex) {
         NTxNode n = engine().newDefaultNode(NTxNodeType.TABLE_ROW);
         n.setSource(SRC);
         n.setProperty(NTxProp.ofString(NTxPropName.SECTION, section));
-        if (bodyRow != null) {
-            n.setProperty(NTxProp.ofInt(NTxPropName.BODY_ROW, bodyRow));
+        if (sectionRow != null) {
+            n.setProperty(NTxProp.ofInt(NTxPropName.SECTION_ROW, sectionRow));
+            if ("body".equals(section)) {
+                n.setProperty(NTxProp.ofInt(NTxPropName.BODY_ROW, sectionRow));
+            }
         }
         n.setProperty(NTxProp.ofInt(NTxPropName.ROW_INDEX, absIndex));
         return n;
     }
 
     static NTxNode cellNode(int row, int col) {
+        return cellNode(row, col, "body");
+    }
+
+    static NTxNode cellNode(int row, int col, String section) {
         NTxNode n = engine().newDefaultNode(NTxNodeType.TABLE_CELL);
         n.setSource(SRC);
+        n.setProperty(NTxProp.ofString(NTxPropName.SECTION, section));
+        n.setProperty(NTxProp.ofInt(NTxPropName.SECTION_ROW, row));
+        if ("body".equals(section)) {
+            n.setProperty(NTxProp.ofInt(NTxPropName.BODY_ROW, row));
+        }
         n.setProperty(NTxProp.ofInt(NTxPropName.ROW_INDEX, row));
         n.setProperty(NTxProp.ofInt(NTxPropName.COL_INDEX, col));
         return n;
@@ -281,14 +293,16 @@ public class TestStyleSystem {
 
     static void testTableSelectors() {
         // header row, 2 body rows, 1 footer row ; full data row indices 1..4
-        NTxNode header = rowNode("header", null, 1);
+        NTxNode header = rowNode("header", 1, 1);
         NTxNode body1 = rowNode("body", 1, 2);
         NTxNode body2 = rowNode("body", 2, 3);
-        NTxNode footer = rowNode("footer", null, 4);
+        NTxNode footer = rowNode("footer", 1, 4);
 
         NTxStyleRuleSelectorItem h = NTxStyleRuleSelectorItem.ofTableRow("header");
         NTxStyleRuleSelectorItem even = NTxStyleRuleSelectorItem.ofTableRow("even");
         NTxStyleRuleSelectorItem odd = NTxStyleRuleSelectorItem.ofTableRow("odd");
+        NTxStyleRuleSelectorItem bodyRow1 = NTxStyleRuleSelectorItem.ofTableRow(null, 1);
+        NTxStyleRuleSelectorItem bodyRow2 = NTxStyleRuleSelectorItem.ofTableRow(null, 2);
 
         assertTrue("table-row(header) matches header", h.acceptNode(header));
         assertTrue("table-row(header) not body", !h.acceptNode(body1));
@@ -297,10 +311,16 @@ public class TestStyleSystem {
         assertTrue("table-row(even) matches second body row (header not counted)", even.acceptNode(body2));
         assertTrue("table-row(odd) not second body row", !odd.acceptNode(body2));
         assertTrue("zebra excludes footer", !even.acceptNode(footer) && !odd.acceptNode(footer));
+        assertTrue("table-row(row: 1) matches first data row", bodyRow1.acceptNode(body1));
+        assertTrue("table-row(row: 1) rejects header", !bodyRow1.acceptNode(header));
+        assertTrue("table-row(row: 2) matches second data row", bodyRow2.acceptNode(body2));
+        assertTrue("table-row(row: 2) rejects footer", !bodyRow2.acceptNode(footer));
 
         NTxNode c11 = cellNode(1, 1);
         NTxNode c12 = cellNode(1, 2);
         NTxNode c21 = cellNode(2, 1);
+        NTxNode hc = cellNode(1, 1, "header");
+        NTxNode fc = cellNode(1, 2, "footer");
         NTxStyleRuleSelectorItem exact = NTxStyleRuleSelectorItem.ofTableCell(1, 1);
         NTxStyleRuleSelectorItem rowOnly = NTxStyleRuleSelectorItem.ofTableCell(1, null);
         NTxStyleRuleSelectorItem colOnly = NTxStyleRuleSelectorItem.ofTableCell(null, 1);
@@ -312,6 +332,27 @@ public class TestStyleSystem {
         assertTrue("table-cell(col:) matches all rows of col", colOnly.acceptNode(c11) && colOnly.acceptNode(c21));
         assertTrue("table-column(n) matches coln cells", column1.acceptNode(c11) && column1.acceptNode(c21));
         assertTrue("table-column(n) not other cols", !column1.acceptNode(c12));
+
+        // cell row indices are data-relative: header / footer cells are never
+        // matched by coordinate-constrained table-cell selectors
+        assertTrue("table-cell(row: 1) rejects header cell", !rowOnly.acceptNode(hc));
+        assertTrue("table-cell(row:,col:) rejects header cell", !exact.acceptNode(hc));
+        assertTrue("table-cell(col:) rejects header cell", !colOnly.acceptNode(hc));
+        assertTrue("bare table-cell matches header cells too", NTxStyleRuleSelectorItem.ofTableCell(null, null).acceptNode(hc));
+
+        // table-header / table-footer address header & footer rows and cells
+        NTxStyleRuleSelectorItem th = NTxStyleRuleSelectorItem.ofTableHeader(1, 1);
+        NTxStyleRuleSelectorItem tf = NTxStyleRuleSelectorItem.ofTableFooter(null, null);
+        NTxStyleRuleSelectorItem tfc = NTxStyleRuleSelectorItem.ofTableFooter(1, 2);
+        NTxStyleRuleSelectorItem thRow = NTxStyleRuleSelectorItem.ofTableHeader(1, null);
+        assertTrue("table-header(row: 1, col: 1) matches header (1,1)", th.acceptNode(hc));
+        assertTrue("table-header(row: 1, col: 1) rejects body (1,1)", !th.acceptNode(c11));
+        assertTrue("table-header(row: 1) matches 1st header row", thRow.acceptNode(header));
+        assertTrue("table-header(row: 1) rejects 2nd header row", !thRow.acceptNode(rowNode("header", 2, 5)));
+        assertTrue("table-footer matches footer row", tf.acceptNode(footer));
+        assertTrue("table-footer rejects header", !tf.acceptNode(header));
+        assertTrue("table-footer(row: 1, col: 2) matches footer cell", tfc.acceptNode(fc));
+        assertTrue("table-footer(row: 1, col: 2) rejects body cell", !tfc.acceptNode(c12));
     }
 
     static void testTableResolution() {
@@ -331,10 +372,10 @@ public class TestStyleSystem {
                 NTxProp.ofString(NTxPropName.COLOR, "cell22-green")));
 
         for (int tr = 1; tr <= 3; tr++) {
-            NTxNode row = rowNode(tr == 1 ? "header" : "body", tr == 1 ? null : tr - 1, tr);
+            NTxNode row = rowNode(tr == 1 ? "header" : "body", tr == 1 ? 1 : tr - 1, tr);
             root.addChild(row);
             for (int c = 1; c <= 2; c++) {
-                row.addChild(cellNode(tr, c));
+                row.addChild(cellNode(tr == 1 ? 1 : tr - 1, c, tr == 1 ? "header" : "body"));
             }
         }
 
@@ -352,8 +393,8 @@ public class TestStyleSystem {
         assertEq("header cell col1 -> col1 rule", "col1-purple", colorOf(cell(root, 1, 1)));
         // header cell col2 -> col2 rule
         assertEq("header cell col2 -> col2 rule", "col2-blue", colorOf(cell(root, 1, 2)));
-        // body cell 2/2 : explicit table-cell(row:,col:) beats table-column(2)
-        assertEq("explicit table-cell beats table-column", "cell22-green", colorOf(cell(root, 2, 2)));
+        // body cell (data row 2, col 2): explicit table-cell(row:,col:) beats table-column(2)
+        assertEq("explicit table-cell beats table-column", "cell22-green", colorOf(cell(root, 3, 2)));
         assertEq("cell 2/1 -> col1 rule", "col1-purple", colorOf(cell(root, 2, 1)));
     }
 
@@ -371,15 +412,19 @@ public class TestStyleSystem {
         root.addRule(DefaultNTxStyleRule.of(root, SRC,
                 DefaultNTxNodeSelector.of(NTxStyleRuleSelectorItem.ofTableCell(1, 1)),
                 NTxProp.ofString(NTxPropName.COLOR, "c11-teal")));
+        // header cells are addressed through table-header(row: n, col: m)
+        root.addRule(DefaultNTxStyleRule.of(root, SRC,
+                DefaultNTxNodeSelector.of(NTxStyleRuleSelectorItem.ofTableHeader(1, 1)),
+                NTxProp.ofString(NTxPropName.COLOR, "hc11-orange")));
 
         NTxNode table = engine().newDefaultNode(NTxNodeType.TABLE);
         table.setSource(SRC);
         root.addChild(table);
-        NTxNode hrow = rowNode("header", null, 1);
+        NTxNode hrow = rowNode("header", 1, 1);
         table.addChild(hrow);
-        NTxNode hc1 = cellNode(1, 1);
-        NTxNode hc2 = cellNode(1, 2);
-        NTxNode hc3 = cellNode(1, 3);
+        NTxNode hc1 = cellNode(1, 1, "header");
+        NTxNode hc2 = cellNode(1, 2, "header");
+        NTxNode hc3 = cellNode(1, 3, "header");
         hrow.addChild(hc1);
         hrow.addChild(hc2);
         hrow.addChild(hc3);
@@ -389,15 +434,15 @@ public class TestStyleSystem {
         hc1.addChild(ht1);
         hc2.addChild(ht2);
         hc3.addChild(ht3);
-        // body rows : one odd (body-row 1) and one even (body-row 2)
+        // body rows : one odd (data row 1) and one even (data row 2)
         NTxNode brow1 = rowNode("body", 1, 2);
         NTxNode brow2 = rowNode("body", 2, 3);
         table.addChild(brow1);
         table.addChild(brow2);
-        NTxNode bc11 = cellNode(2, 1), bc13 = cellNode(2, 3);
-        NTxNode bc21 = cellNode(3, 1), bc23 = cellNode(3, 3);
-        brow1.addChild(bc11); brow1.addChild(cellNode(2, 2)); brow1.addChild(bc13);
-        brow2.addChild(bc21); brow2.addChild(cellNode(3, 2)); brow2.addChild(bc23);
+        NTxNode bc11 = cellNode(1, 1), bc13 = cellNode(1, 3);
+        NTxNode bc21 = cellNode(2, 1), bc23 = cellNode(2, 3);
+        brow1.addChild(bc11); brow1.addChild(cellNode(1, 2)); brow1.addChild(bc13);
+        brow2.addChild(bc21); brow2.addChild(cellNode(2, 2)); brow2.addChild(bc23);
         NTxNode bt11 = textNode(); NTxNode bt13 = textNode();
         NTxNode bt21 = textNode(); NTxNode bt23 = textNode();
         bc11.addChild(bt11); bc13.addChild(bt13);
@@ -406,12 +451,10 @@ public class TestStyleSystem {
         // row-level: header color reaches the header cell AND its content
         assertEq("header row itself", "h-red", colorOf(hrow));
         assertEq("header cell(1,2) inherits row color", "h-red", colorOf(hc2));
-        assertEq("header cell(1,1) cell rule beats row rule", "c11-teal", colorOf(hc1));
+        assertEq("header cell(1,1) table-header(1,1) beats row rule", "hc11-orange", colorOf(hc1));
         assertEq("header cell(1,2) content inherits row color", "h-red", colorOf(ht2));
-        assertEq("header cell(1,1) content: cell rule beats row rule", "c11-teal", colorOf(ht1));
+        assertEq("header cell(1,1) content: table-header(1,1) beats row rule", "hc11-orange", colorOf(ht1));
         assertEq("header cell(1,3) content: col3 rule wins tie", "col3-violet", colorOf(ht3));
-        assertEq("body cell content not header colored", "#1A1A1A", colorOf(bt11));
-        assertEq("body cell content not header colored", "#1A1A1A", colorOf(bt11));
 
         // zebra: body-row parity reaches content of even body rows only
         assertEq("even body row bg", "zebra", propOf(brow2, NTxPropName.BACKGROUND_COLOR));
@@ -423,11 +466,14 @@ public class TestStyleSystem {
         assertEq("col3 cell", "col3-violet", colorOf(hc3));
         assertEq("col3 header content", "col3-violet", colorOf(ht3));
         assertEq("col3 body content", "col3-violet", colorOf(bt23));
-        assertEq("col1 body content not col3 colored", "#1A1A1A", colorOf(bt11));
+        assertEq("col1 body content (2,1) not col3 colored", "#1A1A1A", colorOf(bt21));
 
-        // cell-level exact: (1,1) rule wins for the cell and its content
-        assertEq("cell(1,1) wins over col3", "c11-teal", colorOf(hc1));
-        assertEq("cell(1,1) content wins", "c11-teal", colorOf(ht1));
+        // cell-level exact data cell: table-cell(1,1) wins for the first data cell
+        assertEq("data cell(1,1) wins over row", "c11-teal", colorOf(bc11));
+        assertEq("data cell(1,1) content wins", "c11-teal", colorOf(bt11));
+        // ... but never reaches the header cell (data-relative indexing)
+        assertEq("header (1,1) not touched by data cell rule", "hc11-orange", colorOf(hc1));
+        assertEq("header (1,1) content not touched by data cell rule", "hc11-orange", colorOf(ht1));
 
         // content outside any table is never matched by structural selectors
         NTxNode plain = textNode();
@@ -439,7 +485,7 @@ public class TestStyleSystem {
     static void testNestedTableInnerShadowsOuter() {
         DefaultNTxNode root = new DefaultNTxNode(NTxNodeType.GROUP);
         root.addRule(DefaultNTxStyleRule.of(root, SRC,
-                DefaultNTxNodeSelector.of(NTxStyleRuleSelectorItem.ofTableCell(3, 4)),
+                DefaultNTxNodeSelector.of(NTxStyleRuleSelectorItem.ofTableCell(1, 4)),
                 NTxProp.ofString(NTxPropName.COLOR, "outer-blue")));
         root.addRule(DefaultNTxStyleRule.of(root, SRC,
                 DefaultNTxNodeSelector.of(NTxStyleRuleSelectorItem.ofTableCell(1, 2)),
@@ -448,18 +494,18 @@ public class TestStyleSystem {
                 DefaultNTxNodeSelector.of(NTxStyleRuleSelectorItem.ofTableRow("even")),
                 NTxProp.ofString(NTxPropName.COLOR, "inner-row-paint")));
 
-        // outer table, outer cell at flattened (3,4)
+        // outer table, outer cell at data (1,4)
         NTxNode outerTable = engine().newDefaultNode(NTxNodeType.TABLE);
         outerTable.setSource(SRC);
         root.addChild(outerTable);
         NTxNode outerRow = rowNode("body", 1, 1);
         outerTable.addChild(outerRow);
-        NTxNode outerCell = cellNode(3, 4);
+        NTxNode outerCell = cellNode(1, 4);
         outerRow.addChild(outerCell);
         NTxNode outerText = textNode();
         outerCell.addChild(outerText);
 
-        // inner table inside the outer cell, inner cell at (1,2)
+        // inner table inside the outer cell, inner cell at data (1,2)
         NTxNode innerTable = engine().newDefaultNode(NTxNodeType.TABLE);
         innerTable.setSource(SRC);
         outerCell.addChild(innerTable);
@@ -470,10 +516,10 @@ public class TestStyleSystem {
         NTxNode innerText = textNode();
         innerCell.addChild(innerText);
 
-        assertEq("outer cell(3,4) matches its own rule", "outer-blue", colorOf(outerCell));
+        assertEq("outer cell(1,4) matches its own rule", "outer-blue", colorOf(outerCell));
         assertEq("outer cell content inherits outer rule", "outer-blue", colorOf(outerText));
         assertEq("inner cell(1,2) matches inner rule", "inner-green", colorOf(innerCell));
-        // innermost context shadows the outer one: the (3,4) rule never reaches inside
+        // innermost context shadows the outer one: the (1,4) rule never reaches inside
         assertEq("inner content sees only inner cell context", "inner-green", colorOf(innerText));
         // zebra color of the inner row (bodyRow 2 = even) reaches the inner content;
         // the exact cell(1,2) rule wins over the row rule by higher specificity
@@ -632,9 +678,9 @@ public class TestStyleSystem {
     }
 
     static void testTableHeaderAndKeyedFactories() {
-        NTxNode header = rowNode("header", null, 1);
+        NTxNode header = rowNode("header", 1, 1);
         NTxNode body1 = rowNode("body", 1, 2);
-        NTxNode footer = rowNode("footer", null, 4);
+        NTxNode footer = rowNode("footer", 1, 4);
 
         NTxStyleRuleSelectorItem th = NTxStyleRuleSelectorItem.of("table-header", null).get();
         assertTrue("table-header matches header row", th.acceptNode(header));
@@ -652,6 +698,29 @@ public class TestStyleSystem {
         NTxStyleRuleSelectorItem cell = NTxStyleRuleSelectorItem.of("table-cell(row: 2, col: 2)", null).get();
         assertTrue("table-cell(row:2,col:2) matches", cell.acceptNode(cellNode(2, 2)));
         assertTrue("table-cell(row:2,col:2) rejects (1,1)", !cell.acceptNode(cellNode(1, 1)));
+        // data-relative: row: 1 never matches a header cell
+        NTxStyleRuleSelectorItem cellR1 = NTxStyleRuleSelectorItem.of("table-cell(row: 1)", null).get();
+        assertTrue("table-cell(row: 1) matches first data cell", cellR1.acceptNode(cellNode(1, 1)));
+        assertTrue("table-cell(row: 1) rejects header cell", !cellR1.acceptNode(cellNode(1, 1, "header")));
+
+        // numeric table-row: nth data row
+        NTxStyleRuleSelectorItem bodyRow1 = NTxStyleRuleSelectorItem.of("table-row(row: 1)", null).get();
+        assertTrue("table-row(row: 1) matches first data row", bodyRow1.acceptNode(body1));
+        assertTrue("table-row(row: 1) rejects header", !bodyRow1.acceptNode(header));
+
+        // table-header / table-footer with section-relative row + optional col
+        NTxStyleRuleSelectorItem th2 = NTxStyleRuleSelectorItem.of("table-header(row: 2)", null).get();
+        assertTrue("table-header(row: 2) matches 2nd header row", th2.acceptNode(rowNode("header", 2, 5)));
+        assertTrue("table-header(row: 2) rejects 1st header row", !th2.acceptNode(header));
+        NTxStyleRuleSelectorItem thc = NTxStyleRuleSelectorItem.of("table-header(row: 1, col: 1)", null).get();
+        assertTrue("table-header(row:1,col:1) matches header (1,1)", thc.acceptNode(cellNode(1, 1, "header")));
+        assertTrue("table-header(row:1,col:1) rejects body (1,1)", !thc.acceptNode(cellNode(1, 1)));
+        NTxStyleRuleSelectorItem tf = NTxStyleRuleSelectorItem.of("table-footer", null).get();
+        assertTrue("table-footer matches footer row", tf.acceptNode(footer));
+        assertTrue("table-footer rejects header", !tf.acceptNode(header));
+        NTxStyleRuleSelectorItem tfc = NTxStyleRuleSelectorItem.of("table-footer(row: 1, col: 2)", null).get();
+        assertTrue("table-footer(row:1,col:2) matches footer cell", tfc.acceptNode(cellNode(1, 2, "footer")));
+        assertTrue("table-footer(row:1,col:2) rejects body cell", !tfc.acceptNode(cellNode(1, 2)));
 
         NTxNode evenImp = rowNode("body", 2, 3);
         evenImp.addStyleClass("important");
@@ -666,67 +735,125 @@ public class TestStyleSystem {
         NTxStyleRuleSelectorItem legacy = NTxStyleRuleSelectorItem.of("table-row(header)", cap).get();
         assertTrue("legacy table-row(header) resolves best-effort", legacy.acceptNode(header));
         assertTrue("legacy table-row(header) warns", String.join("\n", cap.msgs).contains("deprecated"));
+
+        // removed table-weight selector still parses without failing (never-fail)
+        CaptureLogger cap3 = new CaptureLogger();
+        assertTrue("removed table-weight parses without failing", NTxStyleRuleSelectorItem.of("table-weight(row: 2)", cap3).isPresent());
     }
 
     static void testTableWeightSelector() {
-        NTxNode c12 = cellNode(1, 2);
-        NTxNode c21 = cellNode(2, 1);
-        NTxNode c23 = cellNode(2, 3);
-        NTxNode c31 = cellNode(3, 1);
-
-        NTxStyleRuleSelectorItem wt = NTxStyleRuleSelectorItem.of("table-weight", null).get();
-        assertTrue("table-weight matches any cell", wt.acceptNode(c12) && wt.acceptNode(c23));
-
-        NTxStyleRuleSelectorItem rowOnly = NTxStyleRuleSelectorItem.of("table-weight(row: 2)", null).get();
-        assertTrue("table-weight(row:) matches row2 cells", rowOnly.acceptNode(c21) && rowOnly.acceptNode(c23));
-        assertTrue("table-weight(row:) rejects row1", !rowOnly.acceptNode(c12));
-        assertTrue("table-weight(row:) rejects row3", !rowOnly.acceptNode(c31));
-
-        NTxStyleRuleSelectorItem colOnly = NTxStyleRuleSelectorItem.of("table-weight(col: 3)", null).get();
-        assertTrue("table-weight(col:) matches col3 cells", colOnly.acceptNode(c23));
-        assertTrue("table-weight(col:) rejects col1/col2", !colOnly.acceptNode(c21) && !colOnly.acceptNode(c12));
-
-        NTxStyleRuleSelectorItem both = NTxStyleRuleSelectorItem.of("table-weight(row: 2, col: 3)", null).get();
-        assertTrue("table-weight(row:,col:) exact match", both.acceptNode(c23));
-        assertTrue("table-weight(row:,col:) not other cells", !both.acceptNode(c21) && !both.acceptNode(c12));
-
-        // content rendered inside a cell also matches (cascade into cell content)
-        NTxNode text = textNode();
-        c23.append(text);
-        assertTrue("table-weight matches cell content", colOnly.acceptNode(text));
-
-        // a table-weight rule attaches props to the matched cells through the cascade
+        // weights are plain row-weight / column-weight props set through the
+        // structural selectors: table-row(row: n), table-header(row: n[, col: m]),
+        // table-footer(row: n[, col: m]), table-column(col: n), table-cell(row: r, col: c).
         DefaultNTxNode root = new DefaultNTxNode(NTxNodeType.GROUP);
         NTxNode table = engine().newDefaultNode(NTxNodeType.TABLE);
         table.setSource(SRC);
         root.addChild(table);
-        NTxNode row2 = rowNode("body", 2, 2);
-        table.append(row2);
-        NTxNode cell2x3 = cellNode(2, 3);
-        row2.append(cell2x3);
-        root.addRule(DefaultNTxStyleRule.of(root, SRC,
-                DefaultNTxNodeSelector.of(NTxStyleRuleSelectorItem.of("table-weight(row: 2, col: 3)", null).get()),
-                NTxProp.ofDouble(NTxPropName.ROW_WEIGHT, 3.0),
-                NTxProp.ofDouble(NTxPropName.COL_WEIGHT, 2.0)));
-        assertEq("table-weight rule sets row-weight on target cell", "3.0", propOf(cell2x3, NTxPropName.ROW_WEIGHT));
-        assertEq("table-weight rule sets col-weight on target cell", "2.0", propOf(cell2x3, NTxPropName.COL_WEIGHT));
-        assertEq("table-weight rule leaves the table itself untouched", null, propOf(table, NTxPropName.ROW_WEIGHT));
+        NTxNode header = rowNode("header", 1, 1);
+        NTxNode body1 = rowNode("body", 1, 2);
+        NTxNode body2 = rowNode("body", 2, 3);
+        NTxNode footer = rowNode("footer", 1, 4);
+        table.append(header);
+        table.append(body1);
+        table.append(body2);
+        table.append(footer);
+        NTxNode hc1 = cellNode(1, 1, "header"); header.append(hc1);
+        NTxNode hc3 = cellNode(1, 3, "header"); header.append(hc3);
+        NTxNode b11 = cellNode(1, 1); body1.append(b11);
+        NTxNode b23 = cellNode(2, 3); body2.append(b23);
+        NTxNode fc1 = cellNode(1, 1, "footer"); footer.append(fc1);
+        NTxNode fc3 = cellNode(1, 3, "footer"); footer.append(fc3);
 
+        // header row weight via table-header(row: n)
+        root.addRule(DefaultNTxStyleRule.of(root, SRC,
+                DefaultNTxNodeSelector.of(NTxStyleRuleSelectorItem.of("table-header(row: 1)", null).get()),
+                NTxProp.ofDouble(NTxPropName.ROW_WEIGHT, 3.0)));
+        assertEq("table-header(row:) sets row-weight on header row", "3.0", propOf(header, NTxPropName.ROW_WEIGHT));
+        assertEq("table-header(row:) leaves body row", null, propOf(body1, NTxPropName.ROW_WEIGHT));
+
+        // header cell weight via table-header(row: n, col: m) — "columns in headers"
+        root.addRule(DefaultNTxStyleRule.of(root, SRC,
+                DefaultNTxNodeSelector.of(NTxStyleRuleSelectorItem.of("table-header(row: 1, col: 3)", null).get()),
+                NTxProp.ofDouble(NTxPropName.COL_WEIGHT, 4.0)));
+        assertEq("table-header(row:,col:) sets column-weight on header cell", "4.0", propOf(hc3, NTxPropName.COL_WEIGHT));
+        assertEq("table-header(row:,col:) leaves col1 header cell", null, propOf(hc1, NTxPropName.COL_WEIGHT));
+
+        // footer row weight via table-footer(row: n)
+        root.addRule(DefaultNTxStyleRule.of(root, SRC,
+                DefaultNTxNodeSelector.of(NTxStyleRuleSelectorItem.of("table-footer(row: 1)", null).get()),
+                NTxProp.ofDouble(NTxPropName.ROW_WEIGHT, 2.0)));
+        assertEq("table-footer(row:) sets row-weight on footer row", "2.0", propOf(footer, NTxPropName.ROW_WEIGHT));
+
+        // data row weight via table-row(row: n)
+        root.addRule(DefaultNTxStyleRule.of(root, SRC,
+                DefaultNTxNodeSelector.of(NTxStyleRuleSelectorItem.of("table-row(row: 1)", null).get()),
+                NTxProp.ofDouble(NTxPropName.ROW_WEIGHT, 2.0)));
+        assertEq("table-row(row:) sets row-weight on first data row", "2.0", propOf(body1, NTxPropName.ROW_WEIGHT));
+        assertEq("table-row(row:) leaves 2nd data row", null, propOf(body2, NTxPropName.ROW_WEIGHT));
+
+        // column weight via table-column(col: n) reaches cells in ALL sections
+        root.addRule(DefaultNTxStyleRule.of(root, SRC,
+                DefaultNTxNodeSelector.of(NTxStyleRuleSelectorItem.of("table-column(col: 3)", null).get()),
+                NTxProp.ofDouble(NTxPropName.COL_WEIGHT, 2.0)));
+        assertEq("table-column sets column-weight on col3 body cell", "2.0", propOf(b23, NTxPropName.COL_WEIGHT));
+        // col3 header cell (1,3) keeps the 4.0 from the more specific table-header(row:,col:) rule
+        assertEq("table-header(row:,col:) col3 cell keeps its own weight", "4.0", propOf(hc3, NTxPropName.COL_WEIGHT));
+        assertEq("table-column sets column-weight on col3 footer cell", "2.0", propOf(fc3, NTxPropName.COL_WEIGHT));
+        assertEq("table-column leaves col1", null, propOf(b11, NTxPropName.COL_WEIGHT));
+        // an uncovered header column cell receives the table-column rule: a 2nd
+        // header row's col-3 cell is not covered by table-header(row: 1, col: 3)
+        NTxNode hrow2 = rowNode("header", 2, 2); table.append(hrow2);
+        NTxNode hc2b = cellNode(2, 3, "header"); hrow2.append(hc2b);
+        assertEq("table-column reaches header cell via column rule", "2.0", propOf(hc2b, NTxPropName.COL_WEIGHT));
+
+        // per-cell weights via table-cell(row:, col:) — body cells only
+        root.addRule(DefaultNTxStyleRule.of(root, SRC,
+                DefaultNTxNodeSelector.of(NTxStyleRuleSelectorItem.of("table-cell(row: 1, col: 1)", null).get()),
+                NTxProp.ofDouble(NTxPropName.ROW_WEIGHT, 5.0),
+                NTxProp.ofDouble(NTxPropName.COL_WEIGHT, 1.5)));
+        assertEq("table-cell sets row-weight on data cell (1,1)", "5.0", propOf(b11, NTxPropName.ROW_WEIGHT));
+        assertEq("table-cell sets col-weight on data cell (1,1)", "1.5", propOf(b11, NTxPropName.COL_WEIGHT));
+
+        // table-cell(row:, col:) is strictly body: the same coordinates on the
+        // header row must NOT receive the data-cell rule (it keeps the value
+        // inherited from the header-row rule, 3.0)
+        NTxNode b12 = cellNode(1, 2); body1.append(b12);
+        NTxNode hc2 = cellNode(1, 2, "header"); header.append(hc2);
+        root.addRule(DefaultNTxStyleRule.of(root, SRC,
+                DefaultNTxNodeSelector.of(NTxStyleRuleSelectorItem.of("table-cell(row: 1, col: 2)", null).get()),
+                NTxProp.ofDouble(NTxPropName.ROW_WEIGHT, 7.0)));
+        assertEq("table-cell(row:1,col:2) sets row-weight on data (1,2)", "7.0", propOf(b12, NTxPropName.ROW_WEIGHT));
+        assertEq("table-cell never touches header (1,2)", "3.0", propOf(hc2, NTxPropName.ROW_WEIGHT));
+
+        // content rendered inside a cell also matches (cascade into cell content)
+        NTxNode text = textNode();
+        b23.append(text);
+        NTxStyleRuleSelectorItem col3 = NTxStyleRuleSelectorItem.of("table-column(col: 3)", null).get();
+        assertTrue("table-column matches cell content", col3.acceptNode(text));
+        NTxStyleRuleSelectorItem wBody = NTxStyleRuleSelectorItem.of("table-row(row: 2)", null).get();
+        assertTrue("table-row(row: 2) matches row and its content", wBody.acceptNode(body2) && wBody.acceptNode(text));
+
+        // the removed table-weight selector never breaks a document (never-fail)
         CaptureLogger cap2 = new CaptureLogger();
-        assertTrue("never-fail: table-weight() empty named is dropped", !NTxStyleRuleSelectorItem.of("table-weight()", cap2).isPresent());
+        assertTrue("never-fail: table-weight parses after removal", NTxStyleRuleSelectorItem.of("table-weight()", cap2).isPresent());
     }
 
     static void testTableWeightGrammarNeverFails() {
         String doc = "" +
                 "styles{\n" +
+                "   table-row(row: 2): { row-weight: 3 }\n" +
+                "   table-column(col: 3): { column-weight: 2, color: \"#059669\" }\n" +
+                "   table-header(row: 1, col: 2): { row-weight: 1, column-weight: 1 }\n" +
+                "   table-footer(row: 1): { row-weight: 2 }\n" +
+                "   table-cell(row: 1, col: 1): { row-weight: 2, column-weight: 2 }\n" +
+                "   table-row(row: bogus): { row-weight: 5 }\n" +
+                "   table-header(bogus): { row-weight: 5 }\n" +
+                "   table-footer(row: header): { row-weight: 5 }\n" +
                 "   table-weight(row: 2): { row-weight: 3 }\n" +
-                "   table-weight(col: 3): { column-weight: 2, color: \"#059669\" }\n" +
-                "   table-weight(row: 1, col: 2): { row-weight: 1, column-weight: 1 }\n" +
-                "   table-weight(bogus): { row-weight: 5 }\n" +
                 "}\n";
         DefaultNTxEngine e = new DefaultNTxEngine();
         NTxCompiledDocument d = e.loadDocument(new ByteArrayInputStream(doc.getBytes()));
-        assertTrue("never-fail: table-weight grammar compiles (bogus dropped)", d != null);
+        assertTrue("never-fail: weight-style grammar compiles (bogus dropped, table-weight warned)", d != null);
     }
 
     static void testE2eTableStylesGrammar() {
@@ -735,10 +862,13 @@ public class TestStyleSystem {
                 "   class-important: { color: red }\n" +
                 "   class-b(extends: important): { font-bold }\n" +
                 "   table-header: { background-color: \"#1e293b\", color: \"#ffffff\" }\n" +
+                "   table-header(row: 1, col: 1): { background-color: \"#7c3aed\", column-weight: 1.5 }\n" +
+                "   table-footer(row: 1): { background-color: \"#e2e8f0\", row-weight: 1.5 }\n" +
                 "   table-row(row: even): { background-color: \"#eef2ff\", color: \"#1e293b\" }\n" +
                 "   table-row(row: odd): { background-color: \"#ffffff\" }\n" +
+                "   table-row(row: 1): { row-weight: 2 }\n" +
                 "   table-row(row: even, class-important): { background-color: \"#fef3c7\" }\n" +
-                "   table-column(col: 1): { font-bold }\n" +
+                "   table-column(col: 1): { font-bold, column-weight: 1.5 }\n" +
                 "   table-cell(row: 1, col: 1): { background-color: \"#7c3aed\", color: \"#ffffff\" }\n" +
                 "   table(class-important): { background-color: \"#fef3c7\" }\n" +
                 "}\n";
