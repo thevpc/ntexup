@@ -195,7 +195,7 @@ Later definitions win.
 ## Troubleshooting
 
 - **"repository template not found"** — benign warnings on first run.
-- **Theme not found** — network access to GitHub required; git must be installed.
+- **Theme not found** — network access to GitHub required (the clone uses an embedded JGit provider; the system `git` tool is not needed unless you request `--git-provider system`).
 - **Wrong theme name** — check `nuts ntexup list-templates`.
 
 ## Related

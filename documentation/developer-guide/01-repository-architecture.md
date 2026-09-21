@@ -35,7 +35,7 @@ TSON (.ntx)
    │  NTxDocStreamParser (NElementReader.ofTson)
    ▼
 NElement (raw TSON model)                    ─── PARSED (but not yet nodes)
-   │  NTxCompiler.compileNode / CtrNTxNodelUncompiled
+   │  NTxCompiler.compileNode / CtrNTxNodeUncompiled
    ▼
 NTxNode tree + NTxCompiledDocument           ─── COMPILED (per page, lazily)
    │  NTxRendererContext / NTxGraphics
@@ -57,10 +57,10 @@ Top-level directory (`ntexup/`):
 | `core/` | Engine + API + desktop UI/CLI |
 | `lib/` | **Neutral shared libraries** (geometry). Nothing depends on extensions here. |
 | `extensions/` | Java plugins (`ntexup-extension-*`) loaded at runtime via `import()`. |
-| `renderers/` | Output renderers: PDF, HTML, Screen, Web. |
+| `renderers/` | Output renderers: PDF, Image (PNG), HTML, Screen, Web. |
 | `tutorials/` | Minimal runnable extension tutorial. |
 | `companions/` | Standalone apps (scoreboard) not bundled as engine extensions. |
-| `test/` | Sample decks + `main()` render programs (the current "tests"). |
+| `test/` | `ntexup-examples` (sample decks + `main()` render programs) and `ntexup-test` (programmatic test programs, e.g. `TestStyleSystem`). |
 | `app/` | Thin launcher apps (Nuts entry points) + experimental web viewer. |
 | `documentation/` | This guide, the user guide (`user-guide/`), agent skills (`agents/`), specs (`specifications/`). |
 
@@ -161,6 +161,7 @@ Section 3 of [03-extension-development.md](03-extension-development.md) explains
 | Module | Registers | Output |
 |--------|-----------|--------|
 | `renderers/ntexup-renderer-pdf` | `NTxDocumentRendererFactory` → `PdfDocumentRenderer` (type `"pdf"`) | Rasterizes each compiled page to PNG, embeds into an OpenPDF `PdfPTable` grid; single-node path uses Flying Saucer HTML→PDF |
+| `renderers/ntexup-renderer-image` | `NTxDocumentRendererFactory` → `ImageDocumentRenderer` (type `"image"`) | One image file per selected page (single file or directory output; page range/format configurable via `image.pages` / `image.format`) |
 | `renderers/ntexup-renderer-html` | type `"html"` | `<div class="page">` per page + `images/page-NNN.png` raster images (or a zip) |
 | `renderers/ntexup-renderer-screen` | type `"screen"` | Swing `DocumentView` (JFrame + `PageView` per page), timer-driven auto-refresh when source files change |
 | `renderers/ntexup-renderer-web` | **experimental** Spring Boot app | HTTP PNG service (`/api/document/images?pageNumber=...`), not production-ready |
@@ -177,7 +178,7 @@ A standalone Swing app ("scoreboard"). Not an ntexup extension; it models panels
 
 ### 3.10 `test/ntexup-examples`
 
-Sample `.ntx` decks under `src/ntexup/examples/` plus `main()` programs (`TestPdf`, `NTxExampleFromFile1/2`, `NTxExampleFromFolder`, `NTxExampleByCode1`, `NTxExampleTestBullets`, `NTxExampleTestGrid`, `TestCompareAntennas`). **This is the current de-facto functional-test harness**: there is no JUnit yet. `TestPdf` renders a whole documentation folder to `output.pdf`. See [04-programmatic-api-testing.md](04-programmatic-api-testing.md) for automating this.
+Sample `.ntx` decks under `src/ntexup/examples/` plus `main()` programs (`TestPdf`, `NTxExampleFromFile1/2`, `NTxExampleFromFolder`, `NTxExampleByCode1`, `NTxExampleTestBullets`, `NTxExampleTestGrid`, `Test2`). **This is the current de-facto functional-test harness**: there is no JUnit yet. `TestPdf` renders a whole documentation folder to `output.pdf`. See [04-programmatic-api-testing.md](04-programmatic-api-testing.md) for automating this. `test/ntexup-test` carries additional programmatic test programs (`TestEngine`, `TestStyleSystem`).
 
 ### 3.11 `app/` — launchers
 
@@ -221,7 +222,7 @@ This maps 1:1 to the compiler (`NTxCompiler` fragment/block/group cases) and to 
 This is a **hard rule** (see [03-extension-development.md](03-extension-development.md) §7): extensions never depend on each other. Shared geometry lives in `lib/ntexup-lib-geometry2d` / `lib/ntexup-lib-geometry3d`; the engine's `defaultDependencies()` imports all extensions + both geometry libs so a full engine works out of the box.
 
 ### 4.8 Everything is a "source" that can be fingerprinted & served remotely
-Paths are `NPath`; GitHub paths (`github://user/repo/...`) are cloned lazily into a cache and rate-limited (`NTxGitHelper`). Every compiled artifact accumulates a **fingerprint** of content files + imported dependencies (including which *version* of a theme/ext was used), enabling both the Swing hot-reload (`sourceMonitor()`) and authorship manifests.
+Paths are `NPath`; GitHub paths (`github://user/repo/...`) are cloned lazily into a cache and rate-limited (`NTxGitHelper`). Clone/pull go through a `NTxGitProvider` selected by `NTxGitProviderFactory` — **JGit embedded by default** (no system `git` needed), or the native `git` executable when requested via `--git-provider system`. Every compiled artifact accumulates a **fingerprint** of content files + imported dependencies (including which *version* of a theme/ext was used), enabling both the Swing hot-reload (`sourceMonitor()`) and authorship manifests.
 
 ### 4.9 Authorship & provenance (not sandboxing)
 Signing uses `SHA-256` + ECDSA/EC keys (`secp256r1`), RFC 3161 trusted timestamps (BouncyCastle), and manifests over `(payload, resources, dependencies)` fingerprints. **There is no bytecode sandbox**: imported extensions run with full JVM privileges — the user must `nuts install`/trust the artifact.
@@ -232,7 +233,7 @@ Themes (`classic`, `eniso`, `ibtihel`, `meridian`) live in the `ntexup-templates
 ### 4.11 Simple, observable things (deliberately kept small)
 - No IoC container; one `DefaultNTxEngine` with constructor injection of classloaders.
 - No test framework yet; verification is done by rendering PDFs from sample decks (see §2 of `04-programmatic-api-testing.md`).
-- Config is minimal: `engine.getEnv/setEnv` map (`warnPageCount=1024`, `maxPageCount=65536`), `author.tson`, and the stream-renderer config DTO.
+- Config is minimal: `engine.getEnv/setEnv` map (`warnPageCount=1024`, `maxPageCount=65536`, `git.provider=jgit|system`), `author.tson`, and the stream-renderer config DTO.
 
 ---
 

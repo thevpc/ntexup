@@ -1,9 +1,10 @@
 package net.thevpc.ntexup.engine.eval;
 
 import net.thevpc.ntexup.api.log.NTxLogger;
+import net.thevpc.ntexup.engine.eval.git.NTxGitProvider;
+import net.thevpc.ntexup.engine.eval.git.NTxGitProviderFactory;
 import net.thevpc.nuts.app.NApplication;
 import net.thevpc.nuts.artifact.NId;
-import net.thevpc.nuts.command.NExec;
 import net.thevpc.nuts.core.NSession;
 import net.thevpc.nuts.core.NStoreKey;
 import net.thevpc.nuts.core.NWorkspace;
@@ -16,7 +17,24 @@ import java.time.Instant;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ * Helper that resolves {@code github://user/repo/...} (and equivalent
+ * {@code git@...} / {@code https://github.com/...}) paths by lazily cloning the
+ * repository into the Nuts cache and rate-limiting pulls.
+ *
+ * <p>The actual clone/pull operations are delegated to a {@link NTxGitProvider}
+ * selected by {@link NTxGitProviderFactory}: JGit by default, or the native
+ * {@code git} executable when explicitly requested
+ * ({@code engine.setEnv("git.provider", "system")} / {@code --git-provider system})
+ * and available.</p>
+ */
 public class NTxGitHelper {
+    /**
+     * Engine env key that controls the git provider
+     * ({@code "jgit"} default, {@code "system"} to prefer the native git executable).
+     */
+    public static final String CONFIG_GIT_PROVIDER = "git.provider";
+
     public static boolean isGithubFolder(String sp) {
         return
                 //  github://thevpc/ntexup-templates/myFolder
@@ -26,6 +44,42 @@ public class NTxGitHelper {
                         // https://github.com/thevpc/ntexup-templates.git/myFolder
                         || sp.startsWith("https://github.com/")
                 ;
+    }
+
+    /**
+     * Configure the git provider used by this process. Called by the engine when
+     * {@code engine.setEnv(NTxGitHelper.CONFIG_GIT_PROVIDER, ...)} is invoked.
+     *
+     * @param provider requested provider ({@code "jgit"} or {@code "system"}), or {@code null}
+     * @param messages logger (may be {@code null})
+     */
+    public static void configureGitProvider(String provider, NTxLogger messages) {
+        NTxGitProviderFactory.configure(provider, messages);
+    }
+
+    /**
+     * @return the active {@link NTxGitProvider}.
+     */
+    public static NTxGitProvider gitProvider(NTxLogger messages) {
+        return NTxGitProviderFactory.getProvider(messages);
+    }
+
+    /**
+     * Clone {@code url} into {@code targetRepositoryDirectory} using the active provider.
+     *
+     * @throws RuntimeException when the clone fails
+     */
+    public static void cloneGitRepository(String url, NPath targetRepositoryDirectory, NTxLogger messages) {
+        gitProvider(messages).clone(url, targetRepositoryDirectory);
+    }
+
+    /**
+     * Pull {@code repositoryDirectory} using the active provider.
+     *
+     * @throws RuntimeException when the pull fails
+     */
+    public static void pullGitRepository(NPath repositoryDirectory, NTxLogger messages) {
+        gitProvider(messages).pull(repositoryDirectory);
     }
 
     public static NPath resolveGithubPath(String githubPath, NTxLogger messages) {
@@ -96,10 +150,7 @@ public class NTxGitHelper {
                 if (last == null || now.toEpochMilli() - last.toEpochMilli() > (1000 * 60 * 5)) {
                     pulling = true;
                     messages.log(NMsg.ofC("pull repo at %s", localRepo));
-                    NExec.ofSystem("git", "pull")
-                            .directory(localRepo)
-                            .failFast(true)
-                            .run();
+                    pullGitRepository(localRepo, messages);
                 } else {
                     NMsg message = NMsg.ofC("ignored pull repo %s to %s", NPath.of(githubPaths[0]), localRepo).asWarning();
                     if (messages != null) {
@@ -116,10 +167,7 @@ public class NTxGitHelper {
                     messages.log(NMsg.ofC("cloning repo %s to %s", githubPaths[i], userConfHome.resolve(user)));
                     rex=null;
                     try {
-                        NExec.ofSystem("git", "clone", githubPaths[i])
-                                .directory(userConfHome.resolve(user))
-                                .failFast(true)
-                                .run();
+                        cloneGitRepository(githubPaths[i], localRepo, messages);
                         break;
                     }catch (RuntimeException ex) {
                         rex=ex;

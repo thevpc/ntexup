@@ -1,6 +1,11 @@
 ---
 name: "ntexup-presentation"
-description: "Creates and edits ntexup presentations (.ntx files). Invoke when user wants to build, modify, or manage text-based slide decks using the ntexup declarative generator."
+description: Write or edit .ntx documents using ntexup's TSON syntax and component composition. Use when the user asks to author, modify, or debug a .ntx file, or mentions ntexup document syntax.
+license: MIT
+compatibility: Requires nuts CLI on PATH
+metadata:
+  author: thevpc
+  version: "1.0"
 ---
 
 # NTexup Presentation Builder
@@ -979,7 +984,7 @@ documentColorAccent           // camelCase
 font-size                     // kebab-case — valid!
 font-family                   // kebab-case
 font-bold                     // flag-style identifier (a "naked" TsonName)
-01-styles                     // legal (has letter, doesn't start with digit)
+theme2                        // digits allowed after the first char
 $var                          // dollar-prefixed
 π                             // Unicode letters are fine
 café.menu                     // Unicode + dot fine
@@ -1015,12 +1020,11 @@ Per TSON conventions adopted by ntexup:
 
 Agent convention: copy the convention already in use in a file. Do **not** rewrite all `:=` to `=` in an existing theme file — you will break external overrides.
 
-### 20.8 TSON is a Superset of JSON
+### 20.8 String in TSON
 
-Valid JSON is valid TSON. This means:
-- If an agent or user pastes a JSON snippet into a `.ntx` file, it will parse.
-- `"strings"`, `[arrays]`, `{objects}`, `true/false/null`, numbers all work the same.
-- **Differences that actually matter** (TSON adds, JSON does not have): trailing commas allowed; comments; unquoted identifiers; number suffixes; multiple quote styles; `¶` paragraphs; `^id{}` custom delim; `@annotations`; `:=` operator; tuples via `()`.
+¶¶ Doc-comment paragraph
+(consecutive ¶¶ lines merge;
+typically used before a definition)
 
 ### 20.9 Comments in TSON
 
@@ -1033,9 +1037,6 @@ Three comment styles — use them freely (they are preserved but do not affect r
    can span
    multiple lines */
 
-¶¶ Doc-comment paragraph
-   (consecutive ¶¶ lines merge;
-    typically used before a definition)
 ```
 
 ---

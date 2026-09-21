@@ -151,7 +151,7 @@ Wrap these in a CI script iterating `test-commands.md`'s list; fail if a deck pr
 
 - **PDF and PNG rendering work headless** (no X11) — print rendering never opens a window.
 - Only the **screen renderer** needs a display manager.
-- Document it in your CI notes: the container must include `git` if any deck uses `github://` includes (the engine shells out to git for the cache clone).
+- Document it in your CI notes: `github://` includes use an embedded JGit provider, so the container does **not** need `git` installed. If you prefer the native git executable, pass `--git-provider system` (or set `ntexup.git.provider=system`); it then falls back to JGit when `git` is missing.
 
 Example Docker CI step:
 

@@ -105,6 +105,12 @@ public class NTexupOptionsParser {
                         .when("dump").asFlag(a -> {
                             options.getOrCreate(DumpDocumentOptions.class);
                         })
+                        .when("--git-provider").asEntry(a -> {
+                            options.gitProvider = parseGitProvider(a.stringValue());
+                        })
+                        .when("--prefer-system-git").asTrueFlag(a -> {
+                            options.gitProvider = net.thevpc.ntexup.engine.eval.git.NTxGitProviderFactory.PROVIDER_SYSTEM;
+                        })
                         .whenArg(u -> {
                             if (!u.isOption() && u.isNonOption()) {
                                 String m = u.image();
@@ -145,6 +151,8 @@ public class NTexupOptionsParser {
         while (!cmdLine.isEmpty()) {
             cmdLine.matcher()
                     .when("--dump").asFlag(a -> options.getOrCreate(DumpDocumentOptions.class))
+                    .when("--git-provider").asEntry(a -> options.gitProvider = parseGitProvider(a.stringValue()))
+                    .when("--prefer-system-git").asTrueFlag(a -> options.gitProvider = net.thevpc.ntexup.engine.eval.git.NTxGitProviderFactory.PROVIDER_SYSTEM)
                     .when("--show").asFlag(a -> {
                         options.getOrCreate(NewActionOptions.class).openViewer = true;
                     })
@@ -177,6 +185,8 @@ public class NTexupOptionsParser {
         while (!cmdLine.isEmpty()) {
             cmdLine.matcher()
                     .when("--dump").asFlag(a -> options.getOrCreate(DumpDocumentOptions.class))
+                    .when("--git-provider").asEntry(a -> options.gitProvider = parseGitProvider(a.stringValue()))
+                    .when("--prefer-system-git").asTrueFlag(a -> options.gitProvider = net.thevpc.ntexup.engine.eval.git.NTxGitProviderFactory.PROVIDER_SYSTEM)
                     .when("--documentation").asFlag(a -> {
                         options.getOrCreate(ShowFrameActionOptions.class);
                         options.getOrCreate(ShowActionOptions.class).addPath(NPath.of("https://github.com/thevpc/ntexup-doc-slides.git"));
@@ -192,6 +202,8 @@ public class NTexupOptionsParser {
         while (!cmdLine.isEmpty()) {
             cmdLine.matcher()
                     .when("--dump").asFlag(a -> options.getOrCreate(DumpDocumentOptions.class))
+                    .when("--git-provider").asEntry(a -> options.gitProvider = parseGitProvider(a.stringValue()))
+                    .when("--prefer-system-git").asTrueFlag(a -> options.gitProvider = net.thevpc.ntexup.engine.eval.git.NTxGitProviderFactory.PROVIDER_SYSTEM)
                     .whenNonOption().asArg(a -> options.getOrCreate(BuildRepoActionOptions.class).addPath(NPath.of(a.image())))
                     .withDefaults()
                     .require()
@@ -203,6 +215,8 @@ public class NTexupOptionsParser {
         while (!cmdLine.isEmpty()) {
             cmdLine.matcher()
                     .when("--dump").asFlag(a -> options.getOrCreate(DumpDocumentOptions.class))
+                    .when("--git-provider").asEntry(a -> options.gitProvider = parseGitProvider(a.stringValue()))
+                    .when("--prefer-system-git").asTrueFlag(a -> options.gitProvider = net.thevpc.ntexup.engine.eval.git.NTxGitProviderFactory.PROVIDER_SYSTEM)
                     .withDefaults()
                     .require()
             ;
@@ -295,6 +309,8 @@ public class NTexupOptionsParser {
                         options.getOrCreate(GenerateActionOptions.class).showPageNumber = true;
                     })
                     .when("--dump").asFlag(a -> options.getOrCreate(DumpDocumentOptions.class))
+                    .when("--git-provider").asEntry(a -> options.gitProvider = parseGitProvider(a.stringValue()))
+                    .when("--prefer-system-git").asTrueFlag(a -> options.gitProvider = net.thevpc.ntexup.engine.eval.git.NTxGitProviderFactory.PROVIDER_SYSTEM)
                     .whenArg(a -> a.key().startsWith("--var-")).asEntry(a -> {
                         options.vars.put(a.key().substring("--var-".length()), a.stringValue());
                     })
@@ -375,6 +391,19 @@ public class NTexupOptionsParser {
                 .orElseThrow(() -> new IllegalArgumentException("invalid number value for " + option + ": " + value));
     }
 
+    private String parseGitProvider(String value) {
+        String v = NStringUtils.strip(value);
+        if (v.equalsIgnoreCase(net.thevpc.ntexup.engine.eval.git.NTxGitProviderFactory.PROVIDER_SYSTEM)) {
+            return net.thevpc.ntexup.engine.eval.git.NTxGitProviderFactory.PROVIDER_SYSTEM;
+        }
+        if (v.equalsIgnoreCase(net.thevpc.ntexup.engine.eval.git.NTxGitProviderFactory.PROVIDER_JGIT)) {
+            return net.thevpc.ntexup.engine.eval.git.NTxGitProviderFactory.PROVIDER_JGIT;
+        }
+        throw new IllegalArgumentException("invalid git provider '" + value + "' (supported: "
+                + net.thevpc.ntexup.engine.eval.git.NTxGitProviderFactory.PROVIDER_JGIT + ", "
+                + net.thevpc.ntexup.engine.eval.git.NTxGitProviderFactory.PROVIDER_SYSTEM + ")");
+    }
+
     private void continueParsingShow(NCmdLine cmdLine, Options options) {
         while (!cmdLine.isEmpty()) {
             cmdLine.matcher()
@@ -384,6 +413,8 @@ public class NTexupOptionsParser {
 //                    }).matchEntry(a -> {
 //                        options.vars.put(a.key().substring("--var-".length()), a.stringValue());
 //                    })
+                    .when("--git-provider").asEntry(a -> options.gitProvider = parseGitProvider(a.stringValue()))
+                    .when("--prefer-system-git").asTrueFlag(a -> options.gitProvider = net.thevpc.ntexup.engine.eval.git.NTxGitProviderFactory.PROVIDER_SYSTEM)
                     .whenNonOption().asArg(a -> options.getOrCreate(ShowActionOptions.class).addPath(NPath.of(a.image())))
                     .withDefaults()
                     .require()

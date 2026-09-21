@@ -8,6 +8,7 @@ import net.thevpc.ntexup.api.engine.NTxTemplateInfo;
 import net.thevpc.ntexup.api.renderer.NTxDocumentStreamRenderer;
 import net.thevpc.ntexup.api.renderer.NTxDocumentStreamRendererConfig;
 import net.thevpc.ntexup.cmdline.options.*;
+import net.thevpc.ntexup.engine.eval.NTxGitHelper;
 import net.thevpc.ntexup.engine.repo.RepoBuilderTool;
 import net.thevpc.ntexup.engine.renderer.image.ImageDocumentRenderer;
 import net.thevpc.ntexup.main.MainFrame;
@@ -40,6 +41,9 @@ public class NTexupOptionsProcessor {
         info.options = options;
         info.visitedOptions = new HashSet<>();
         info.engine = engine;
+        if (options.gitProvider != null) {
+            engine.setEnv(NTxGitHelper.CONFIG_GIT_PROVIDER, options.gitProvider);
+        }
         LinkedHashMap<Action, ActionOptions> optionsMap = options.actionOptions.stream().collect(Collectors.toMap(x -> x.action, x -> x, (v1, v2) -> v2, LinkedHashMap::new));
 
         if (optionsMap.remove(Action.DUMP) != null) {

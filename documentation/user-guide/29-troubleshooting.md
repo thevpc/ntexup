@@ -10,12 +10,12 @@
 ### "took Nms to clone repo github.com:thevpc/ntexup-templates"
 
 - **Cause**: the first run clones the templates repository over network.
-- **Fix**: wait; ensure network access and `git` installed. Subsequent runs are faster (cached).
+- **Fix**: wait; ensure network access. The clone uses the embedded JGit provider (no `git` install required). Subsequent runs are faster (cached).
 
 ### Theme not found / `include` fails for `github://` URLs
 
-- **Cause**: no network, no git, or wrong path.
-- **Fix**: check `git --version`; verify the URL matches `<user>/<repo>/<path>`.
+- **Cause**: no network, or wrong path.
+- **Fix**: verify the URL matches `<user>/<repo>/<path>`. If you forced `--git-provider system`, confirm `git` is installed (`git --version`).
 
 ### `nuts ntexup` command not found
 

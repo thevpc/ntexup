@@ -403,6 +403,8 @@ These options can be used with any command:
 - ```sh --gui``` : Force graphical user interface mode
 - ```sh --no-gui``` : Force command-line/terminal mode
 - ```sh --dump``` : Enable debug output and detailed logging
+- ```sh --git-provider=<jgit|system>``` : Git provider for ```github://``` includes (default ```jgit```, embedded; ```system``` prefers the native ```git``` executable and falls back to JGit if it is missing)
+- ```sh --prefer-system-git``` : Shortcut for ```--git-provider=system```
 
 ---
 

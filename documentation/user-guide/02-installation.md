@@ -2,9 +2,11 @@
 
 ## Prerequisites
 
-ntexup has **no strict prerequisites**. Everything below is optional / nice-to-have:
+ntexup is installed via **nuts** package manager. 
 
-- **Git** — used by ntexup to fetch GitHub-hosted templates and includes. Recommended, but not required: remote template support may move to an embedded JGit dependency in the future, and local (offline) projects never need Git.
+Requirements will be provisioned:
+
+- **Git provider** — GitHub-hosted templates and includes are cloned with an **embedded JGit** implementation, so the system `git` tool is *not* required. To instead use the native `git` executable, pass `--git-provider system` (it falls back to JGit when `git` is missing). Local (offline) projects never need Git.
 - **JDK 17** — convenient to have pre-installed, but not required: the Nuts runtime runs on any Java and downloads a suitable JDK 17 itself if none is available.
 
 ## Step 1: Install Nuts Package Manager
@@ -98,7 +100,7 @@ Then inside the container:
 nuts -y ntexup <arguments>
 ```
 
-Only PDF generation works in a headless container — the Swing viewer needs a display manager. Git must be present for GitHub-hosted templates.
+Only PDF generation works in a headless container — the Swing viewer needs a display manager. GitHub-hosted templates are cloned with the embedded JGit provider, so `git` doesn't need to be installed in the container.
 
 ---
 

@@ -98,6 +98,9 @@ net.thevpc.ntexup.extension.tutorials.myshape.NTxMyShapeBuilder
 Add functions with `NTxFunction`:
 
 ```java
+import net.thevpc.ntexup.api.eval.NTxFunctionCallContext;
+import net.thevpc.nuts.elem.NElement;
+
 public class MyFunction implements NTxFunction {
     @Override
     public String name() {
@@ -105,9 +108,9 @@ public class MyFunction implements NTxFunction {
     }
 
     @Override
-    public Object invoke(NTxFunctionCallContext ctx) {
+    public NElement invoke(NTxFunctionCallContext ctx) {
         // read arguments via ctx
-        return "result";
+        return NElement.of("result");
     }
 }
 ```

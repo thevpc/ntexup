@@ -159,7 +159,7 @@ These examples demonstrate NTexUp’s syntax, presentation structure, and integr
 
 NTexUp (and any Nuts-based application) can run directly inside a Docker container or cloud IDEs like Gitpod without needing to build a custom Docker image.
 Note that only pdf generation would work because ntexup viewer need display manager to work.
-besides, you container should include git (for now git is not bundled with texup) if you want to use git hosted templates. 
+Besides, git hosted templates are cloned with an embedded JGit provider, so your container does **not** need `git` installed. You can pass `--git-provider system` to prefer the native `git` executable when it is available. 
 
 ### Step 1: Launch a Docker container with Java
 

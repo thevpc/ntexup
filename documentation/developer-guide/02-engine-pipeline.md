@@ -26,7 +26,7 @@ All class names are `net.thevpc.ntexup.*`. Paths are relative to the repository 
 TSON is read with the Nuts TSON reader, not with a custom tokenizer:
 
 1. `DefaultNTxEngine.loadDocument(NPath)` (`DefaultNTxEngine.java:843`):
-   - GitHub paths (`github://...`) are first resolved by cloning into the Nuts cache (`NTxGitHelper`).
+   - GitHub paths (`github://...`) are first resolved by cloning into the Nuts cache (`NTxGitHelper`). Clone/pull is delegated to a `NTxGitProvider` selected by `NTxGitProviderFactory` — **JGit** by default (embedded, no system `git` needed), or the native `git` executable when requested via `engine.setEnv("git.provider", "system")` / the `--git-provider system` CLI option (falls back to JGit if `git` is missing).
    - A directory is scanned for `*.ntx` (recursively, one level for folder loads via `NTxEngineUtils.isNTexupFile`), `main.ntx` is forced first, then alphabetical order (extension-insensitive comparator). Each file is loaded through `loadNode(...)` and appended to the document root.
    - A single file is parsed by `NTxDocStreamParser`.
 2. `NTxDocStreamParser` (`engine/parser/NTxDocStreamParser.java`) reads the whole file with `NElementReader.ofTson().read(...)` → an `NElement`, tags every element with its **origin file** (`addCompilerDeclarationPathAnnotations`, used later for error reporting), and rewrites `if / elseif / else` sibling chains into a single nested `if{ cond, trueBloc, falseBloc }` control element.

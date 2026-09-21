@@ -472,6 +472,9 @@ public class DefaultNTxEngine implements NTxEngine {
         } else {
             this.env.remove(env);
         }
+        if (NTxGitHelper.CONFIG_GIT_PROVIDER.equals(env)) {
+            NTxGitHelper.configureGitProvider(value == null ? null : String.valueOf(value), log());
+        }
         return this;
     }
 

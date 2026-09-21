@@ -23,7 +23,7 @@ nuts ntexup <command> [options]
 | `build-repo` | Build a local template repository |
 | `list-templates` | List available templates |
 | `pdf` | Render to PDF |
-| `images` | Render to a set of images (PNG per page by default) |
+| `image` | Render to a set of images (PNG per page by default) |
 | `dump` | Dump the parsed document model to the console |
 | `install-editor-syntax` | Install syntax highlighting for editors |
 | `--gui` | Force GUI mode |
@@ -102,12 +102,12 @@ nuts ntexup build-repo path/to/templates
 
 Builds a local template repository from a folder of templates.
 
-## `pdf` / `html` / `images`
+## `pdf` / `html` / `image`
 
 ```bash
 nuts ntexup pdf . -o out.pdf            # render to PDF
-nuts ntexup images . -o target/img       # render every page to an image
-nuts ntexup images . -o page.png --pages=2-5   # render a page range
+nuts ntexup image . -o target/img       # render every page to an image
+nuts ntexup image . -o page.png --pages=2-5   # render a page range
 nuts ntexup pdf . -o out.pdf --page-size=a4
 ```
 
@@ -128,6 +128,13 @@ Common options:
 | `--show-page-number` | Draw page numbers |
 | `--var-<name>=<value>` | Override a document variable |
 | `--dump` | Dump the parsed model instead of rendering |
+
+Global options (any command): `--git-provider=<jgit|system>` and `--prefer-system-git`
+
+- `jgit` (**default**) — clone/pull `github://` includes with the embedded JGit implementation; no system `git` required.
+- `system` — prefer the native `git` executable; falls back to JGit with a warning when `git` is not installed.
+
+The same preference can be set without the flag via the `ntexup.git.provider` system property or the `NTEXUP_GIT_PROVIDER` environment variable.
 
 ## `dump`
 

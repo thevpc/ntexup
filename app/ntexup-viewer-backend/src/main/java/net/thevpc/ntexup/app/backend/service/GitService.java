@@ -3,7 +3,7 @@ package net.thevpc.ntexup.app.backend.service;
 import net.thevpc.ntexup.api.engine.NTxCompiledPage;
 import net.thevpc.ntexup.api.engine.NTxEngine;
 import net.thevpc.ntexup.api.renderer.NTxNodeRendererConfig;
-import net.thevpc.nuts.command.NExec;
+import net.thevpc.ntexup.engine.eval.NTxGitHelper;
 import net.thevpc.nuts.io.NPath;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -31,22 +31,18 @@ public class GitService {
         String localFolderName = n + "-" + url.hashCode();
 
         NPath baseFolder = NPath.ofUserHome().resolve(localFolderName);
-        if (baseFolder.isDirectory()) {
-            NExec.of()
-                    .system()
-                    .directory(baseFolder.resolve(n))
-                    .command("git", "pull")
-                    .failFast(true)
-                    .run();
-        } else {
-            NExec.of()
-                    .system()
-                    .directory(baseFolder)
-                    .command("git", "clone", url)
-                    .failFast(true)
-                    .run();
+        NPath repoFolder = baseFolder.resolve(n);
+        try {
+            if (repoFolder.isDirectory()) {
+                NTxGitHelper.pullGitRepository(repoFolder, null);
+            } else {
+                NTxGitHelper.cloneGitRepository(url, repoFolder, null);
+            }
+        } catch (RuntimeException e) {
+            throw new GitAPIException(e.getMessage(), e) {
+            };
         }
-        return baseFolder.resolve(localFolderName);
+        return repoFolder;
     }
 
     public Git cloneRepository(String url, String cloneDirectoryPath) throws GitAPIException {

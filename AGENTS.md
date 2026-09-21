@@ -21,11 +21,11 @@ Authoritative references (read before/while working):
 
 ## 1. Orientation (30 seconds)
 
-Modules: `core/ntexup-api` (interfaces/SPI — **extensions depend ONLY on this**), `core/ntexup-engine` (the implementation), `lib/ntexup-lib-geometry2d|3d` (shared common libs), `extensions/ntexup-extension-*` (plugins), `renderers/ntexup-renderer-*` (PDF/HTML/screen/web), `tutorials/` (minimal extension), `test/ntexup-examples` (sample decks + `main()` render programs), `app/` (launchers), `companions/` (standalone apps).
+Modules: `core/ntexup-api` (interfaces/SPI — **extensions depend ONLY on this**), `core/ntexup-engine` (the implementation), `core/ntexup-engine-full` (thin aggregator pulling engine + geometry libs), `core/ntexup-desktop` (CLI parsing + Swing authoring GUI), `lib/ntexup-lib-geometry2d|3d` (shared common libs), `extensions/ntexup-extension-*` (plugins), `renderers/ntexup-renderer-*` (PDF/image/HTML/screen/web), `tutorials/` (minimal extension), `test/ntexup-examples` (sample decks + `main()` render programs) and `test/ntexup-test` (programmatic test programs), `app/` (launchers), `companions/` (standalone apps).
 
 Pipeline (three stages):
 ```
-TSON .ntx ──NTxDocStreamParser──▶ NElement (raw, one CtrNTxNodelUncompiled per file)
+TSON .ntx ──NTxDocStreamParser──▶ NElement (raw, one CtrNTxNodeUncompiled per file)
         ──NTxCompiler.compileNode──▶ NTxNode tree → NTxCompiledDocument (pages lazy)
         ──NTxRendererContext / NTxGraphics (AWT Graphics2D)──▶ PNG → PDF/HTML/Screen
 ```
@@ -41,11 +41,11 @@ Key lazy facts you must respect when debugging:
 ## 2. Standard workflow
 
 1. Identify what the user wants:
-   - visual element / component → `NTxNodeBuilder` (§3)
-   - pure function usable in TSON → `NTxFunction` (§4)
-   - inline markup like `[[eq: ...]]` → `renderText()` flavor (§5)
-   - whole new output format → `NTxDocumentRendererFactory` (§6)
-   - image file format → `NTxImageTypeRendererFactory` (§6)
+    - visual element / component → `NTxNodeBuilder` (§3)
+    - pure function usable in TSON → `NTxFunction` (§4)
+    - inline markup like `[[eq: ...]]` → `renderText()` flavor (§5)
+    - whole new output format → `NTxDocumentRendererFactory` (§6)
+    - image file format → `NTxImageTypeRendererFactory` (§6)
 2. **Read the matching section of `documentation/developer-guide/03-extension-development.md`**, then the tutorial module `tutorials/ntexup-extension-tutorial-myshape/` for a working skeleton.
 3. Create/extend the Maven module; follow the common-libraries rule (§7).
 4. **Verify by rendering to PDF** (§8). Never finish without a render check.
@@ -181,7 +181,7 @@ Checklist:
 5. Render to PDF; assert output exists and non-empty.
 6. For visual regressions of a specific page: `byte[] png = e.renderImageBytes(page, new NTxNodeRendererConfig(w, h).withAnimate(false).withPrint(true));`
 
-Headless/CI: PDF+PNG work without a display; screen renderer needs X11; containers need `git` for `github://` includes. To make `import("myext")` resolvable in the test run: `mvn install` then `nuts install net.thevpc.ntexup:ntexup-extension-<name>`.
+Headless/CI: PDF+PNG work without a display; screen renderer needs X11. `github://` includes use an embedded JGit provider (no system `git` required); pass `--git-provider system` to prefer the native `git` when it is available. To make `import("myext")` resolvable in the test run: `mvn install` then `nuts install net.thevpc.ntexup:ntexup-extension-<name>`.
 
 Batch harness idea: iterate every deck in `test-commands.md`, render each to PDF, fail on load/render errors. Optional golden-image checks: SHA-256/pixel-diff of `renderImageBytes` output vs stored goldens.
 

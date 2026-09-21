@@ -114,7 +114,7 @@ return text(md("Rationale: ..."), at: center)
 
 ## Relative Paths
 
-All paths in `include` are relative to the including file (or `main.ntx`), unless prefixed with `github://`, `http://`, or `https://`.
+All paths in `include` are relative to the including file (or `main.ntx`), unless prefixed with `github://`, `git@...`, or `https://github.com/…` (remote repositories).
 
 ## Caching and Updates
 

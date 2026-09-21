@@ -12,6 +12,7 @@
         <maven.compiler.release>17</maven.compiler.release>
         <maven.compiler.parameters>true</maven.compiler.parameters>
         <spring-boot.version>3.4.4</spring-boot.version>
+        <jgit.version>7.8.0.202609011348-r</jgit.version>
     </properties>
     <build>
         <pluginManagement>

@@ -117,7 +117,7 @@ nuts ntexup install-editor-syntax=vscode
 
 ## References
 
-- [Renderer modules](../ntexup/renderers/) — source for pdf, html, screen, web
+- [Renderer modules](../../renderers/) — source for pdf, image, html, screen, web
 - [CLI Reference](25-cli-reference.md)
 
 ## Notes and Limitations

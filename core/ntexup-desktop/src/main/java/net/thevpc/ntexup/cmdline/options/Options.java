@@ -13,6 +13,10 @@ import java.util.Map;
 public class Options {
     public List<ActionOptions> actionOptions = new ArrayList<>();
     public Map<String,String> vars=new LinkedHashMap<>();
+    /**
+     * git provider preference: {@code "jgit"} (default) or {@code "system"}. May be null.
+     */
+    public String gitProvider;
 
     public boolean isEmpty(){
         return actionOptions.isEmpty();

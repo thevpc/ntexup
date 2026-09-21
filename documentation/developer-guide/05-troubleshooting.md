@@ -24,7 +24,7 @@ Errors that come out of rendering are tagged with the **origin file** (the parse
 
 | Symptom | Likely cause | Fix |
 |---------|--------------|-----|
-| `theme not found` / `eitherPath` error | Theme repo not reachable (no git, no network, bad cache) | Use the `github://thevpc/ntexup-templates/...` form (default in scaffolds), or point `alternativeLocalThemeRepository` at a valid clone; ensure `git` is installed in containers. |
+| `theme not found` / `eitherPath` error | Theme repo not reachable (no network, bad cache) | Use the `github://thevpc/ntexup-templates/...` form (default in scaffolds), or point `alternativeLocalThemeRepository` at a valid clone. Clones use the embedded JGit provider (no `git` needed); only `--git-provider system` requires a `git` install. |
 | Equation renders blank / wrong | Over-escaped backslashes (JSON habit) | TSON is literal-first: write `\frac`, never `\\frac`. Drop backslashes first, build up. |
 | `\n` shows literally | TSON does **not** process escape sequences | Press Enter for a real newline; don't rely on `\n`. |
 | Windows path mangled `C:\...` | extra backslashes | Write the path as-is (`C:\Users\x`); no escaping. |
