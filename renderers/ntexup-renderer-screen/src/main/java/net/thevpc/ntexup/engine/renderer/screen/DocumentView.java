@@ -54,6 +54,7 @@ public class DocumentView implements NTxDocumentView {
     NTxDocumentRendererListener listener;
     private NTxDocumentRendererContext rendererContext = new NTxDocumentRendererContextImpl();
     private boolean isShown;
+    private boolean closed;
     public float defaultDocumentRatio = 842.0F / 595.0F;
     public float documentRatio = defaultDocumentRatio;
     public ScreenDocumentRenderer renderer;
@@ -79,7 +80,13 @@ public class DocumentView implements NTxDocumentView {
         frame.setContentPane(contentPane);
         reloadDocumentAsync();
         frame.setSize(PageView.REF_SIZE);
-        frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+        frame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+        frame.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                close();
+            }
+        });
         prepareContentPane();
         resourceMonitorTimer = new Timer("DocumentViewResourcesMonitor", true);
         resourceMonitorTimer.scheduleAtFixedRate(new TimerTask() {
@@ -93,6 +100,10 @@ public class DocumentView implements NTxDocumentView {
 
     @Override
     public void close() {
+        if (closed) {
+            return;
+        }
+        closed = true;
         if (resourceMonitorTimer != null) {
             resourceMonitorTimer.cancel();
         }

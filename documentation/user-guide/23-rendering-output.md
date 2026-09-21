@@ -97,7 +97,7 @@ nuts ntexup list-templates
 ### Create a new project
 
 ```bash
-nuts ntexup new -t=classic-medium
+nuts ntexup new -t=classic:medium
 nuts ntexup new --template=classic --show
 ```
 

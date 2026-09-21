@@ -107,6 +107,13 @@ public class NTxTemplateFilter {
         if (found.isPresent()) {
             return found;
         }
+        found = disambiguate(Arrays.stream(getTemplates()).filter(x ->
+                Objects.equals(NStringUtils.strip(x.name()) + ":" + (x.layout() == null ? "" : x.layout()), word)
+                        || Objects.equals(NStringUtils.strip(x.name()) + "-" + (x.layout() == null ? "" : x.layout()), word)
+        ).collect(Collectors.toList()));
+        if (found.isPresent()) {
+            return found;
+        }
         if (word.startsWith("#")) {
             NOptional<Integer> z = NLiteral.of(word.substring(1).trim()).asInt();
             if (z.isPresent()) {

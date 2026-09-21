@@ -68,8 +68,7 @@ public class NTxServiceHelper {
         this.debugFrame.setOnClose(new Runnable() {
             @Override
             public void run() {
-                //currentMessages.remove(debugFrame.messages());
-                //currListeners.remove(debugFrame.rendererListener());
+                mainFrame.tryEffectiveExit();
             }
         });
     }
@@ -80,6 +79,10 @@ public class NTxServiceHelper {
 
     public void showDebug() {
         debugFrame.run();
+    }
+
+    public boolean isDebugFrameVisible() {
+        return debugFrame != null && debugFrame.isVisible();
     }
 
     public NPath getLatestProjectPath() {

@@ -2,17 +2,17 @@
 
 Templates and themes provide ready-to-use structures and styles. They come from the [ntexup-templates](https://github.com/thevpc/ntexup-templates) repository.
 
-## Available Themes
+## Available Templates
 
-| Theme | Description |
+| Template | Description |
 |-------|-------------|
-| `classic` | Default theme, 12-accent-color palette |
-| `ibtihel` | Alternative theme style |
-| `eniso` | Another themed variant |
+| `classic` | Default template, 12-accent-color palette |
+| `ibtihel` | Alternative template style |
+| `eniso` | Another template variant |
 
-Each theme has three project sizes:
+Each template has three layout variants (a "layout" is the starter file structure):
 
-| Size | Description |
+| Layout | Description |
 |------|-------------|
 | `small` | Single-file project, quick tests |
 | `medium` | Multi-file project, standard split |
@@ -63,25 +63,25 @@ include("github://thevpc/ntexup-templates/${themeName}/v1.0/theme")
 
 ```bash
 # single file
-nuts ntexup new --template=classic-small
+nuts ntexup new --template=classic:small
 
 # multi-file (recommended)
-nuts ntexup new --template=classic-medium
+nuts ntexup new --template=classic:medium
 
 # complex/large
-nuts ntexup new --template=classic-large
+nuts ntexup new --template=classic:large
 ```
 
-With other themes:
+With other templates:
 
 ```bash
-nuts ntexup new --template=ibtihel-medium
-nuts ntexup new --template=eniso-small
+nuts ntexup new --template=ibtihel:medium
+nuts ntexup new --template=eniso:small
 ```
 
 ## The Template Structure
 
-A theme typically provides:
+A template typically provides:
 
 ```
 classic/v1.0/
@@ -196,7 +196,7 @@ Later definitions win.
 
 - **"repository template not found"** — benign warnings on first run.
 - **Theme not found** — network access to GitHub required (the clone uses an embedded JGit provider; the system `git` tool is not needed unless you request `--git-provider system`).
-- **Wrong theme name** — check `nuts ntexup list-templates`.
+- **Wrong template name** — check `nuts ntexup list-templates`.
 
 ## Related
 

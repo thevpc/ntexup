@@ -34,24 +34,29 @@ With no command at all, ntexup opens the viewer on the current directory.
 ## `new`
 
 ```bash
-nuts ntexup new -t=classic-medium
+nuts ntexup new -t=classic:medium
 nuts ntexup new --template=classic
-nuts ntexup new --template=classic-small --show
+nuts ntexup new --template=classic:small --show
 nuts ntexup new --template=classic --documentation
 ```
 
-Supported `-t/--template` values (theme-size):
+Supported `-t/--template` values — a **template** name optionally followed by a **layout** (the project file structure: `small` = single file, `medium` = sections as files, `large` = sections as subfolders):
 
-- `classic-small`, `classic-medium`, `classic-large`
-- `ibtihel-small`, `ibtihel-medium`, `ibtihel-large`
-- `eniso-*` (if available)
+- `classic:small`, `classic:medium`, `classic:large`
+- `ibtihel:small`, `ibtihel:medium`, `ibtihel:large`
+- `eniso:small`, `eniso:medium`, `eniso:large`
+- `meridian:small`, `meridian:medium`, `meridian:large`
+- a bare template name (e.g. `classic`) resolves to the recommended layout (`classic:medium`)
+- a `-` is accepted as an alias separator (`classic-medium` = `classic:medium`); a plain number or `#number` picks by index in `list-templates`; a path (any value with `/` or `\`) is used verbatim
 
-Additional options:
+**What `new` does:** creates a new project folder (the current directory by default) from the template. `--show` / `--documentation` are **post-creation actions that add windows to the viewer** — they do not replace the creation:
 
-- `--show` — open the viewer after creation
-- `documentation` — open the documentation deck after creation
-- `pdf[=<out>]` — render the new project to PDF
-- `documentation-pdf[=<out>]` — render the documentation deck to PDF
+- `--show` — open the newly created project in the viewer after creation
+- `--documentation` — also open the ntexup documentation deck in the viewer
+- `--pdf[=<out>]` — render the new project to PDF instead of showing it
+- `--documentation-pdf[=<out>]` — render the documentation deck to PDF
+
+So `nuts ntexup new -t=classic --show --documentation` creates `./main.ntx` (plus `pages/`), then opens two viewer windows: the new project and the documentation deck.
 
 ## `show`
 

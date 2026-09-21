@@ -116,6 +116,7 @@ public class NTexupOptionsProcessor {
             NSwingUtils.setSharedWorkspaceInstance();
             FlatLightLaf.setup();
             info.mainFrame = new MainFrame(info.engine);
+            info.mainFrame.setAppMode(true);
         }
         ShowFrameActionOptions showFrameActionOptions = info.options.getOrCreate(ShowFrameActionOptions.class);
         if (showFrameActionOptions != null && showFrameActionOptions.viewLog) {

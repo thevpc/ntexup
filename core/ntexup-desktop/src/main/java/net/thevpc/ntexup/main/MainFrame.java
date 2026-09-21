@@ -25,6 +25,7 @@ public class MainFrame extends JFrame implements NTxDocumentViewManager {
 
     private NTxServiceHelper serviceHelper;
     private EntryComponent entryComponent;
+    private boolean appMode;
     private final List<ProgressItem> progressItems = new ArrayList<>();
     private final JProgressBar progressBar = new JProgressBar();
     private java.util.List<NTxDocumentView> openDocuments=new ArrayList<>();
@@ -75,6 +76,20 @@ public class MainFrame extends JFrame implements NTxDocumentViewManager {
         return true;
     }
 
+    public boolean isAppMode() {
+        return appMode;
+    }
+
+    /**
+     * When <code>true</code>, closing the last document (or the manager/debug frames,
+     * with all documents closed) terminates the JVM naturally, without {@link System#exit}.
+     * When <code>false</code> (e.g. embedded as a library), the host application owns the
+     * lifecycle and this frame never terminates it.
+     */
+    public void setAppMode(boolean appMode) {
+        this.appMode = appMode;
+    }
+
     @Override
     public void exit() {
         for (NTxDocumentView openDocument : this.openDocuments.toArray(new NTxDocumentView[0])) {
@@ -84,18 +99,27 @@ public class MainFrame extends JFrame implements NTxDocumentViewManager {
     }
 
     protected void tryEffectiveExit() {
-        if(isVisible()) {
-           return;
+        if (isVisible()) {
+            return;
         }
-        if(!openDocuments.isEmpty()) {
+        if (serviceHelper != null && serviceHelper.isDebugFrameVisible()) {
+            return;
+        }
+        if (!openDocuments.isEmpty()) {
             return;
         }
         effectiveExit();
     }
 
     protected void effectiveExit() {
-        //this should be configurable
-        System.exit(0);
+        if (!appMode) {
+            return;
+        }
+        // terminate the JVM naturally, without System.exit: once every top-level
+        // window is disposed, AWT shuts its event system down and the app exits
+        for (java.awt.Window w : java.awt.Window.getWindows()) {
+            w.dispose();
+        }
     }
 
     public void openDocument(NTxDocumentView view) {

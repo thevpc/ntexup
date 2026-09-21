@@ -1,8 +1,10 @@
 package net.thevpc.ntexup.engine.impl;
 
+import net.thevpc.ntexup.api.engine.NTxEngine;
 import net.thevpc.ntexup.api.engine.NTxTemplateInfo;
 import net.thevpc.ntexup.api.log.NTxLogger;
 import net.thevpc.ntexup.engine.eval.NTxGitHelper;
+import net.thevpc.nuts.artifact.NVersion;
 import net.thevpc.nuts.elem.NElementReader;
 import net.thevpc.nuts.log.NMsgIntent;
 import net.thevpc.nuts.util.NIllegalArgumentException;
@@ -20,22 +22,16 @@ public class NTxTemplateInfoLoader {
     public List<NTxTemplateInfo> loadTemplateInfo(String name, NPath path, NTxLogger log) {
         List<NTxTemplateInfo> allTemplates = new ArrayList<>();
         try {
+            NPath repoRoot = path;
             if (NTxGitHelper.isGithubFolder(path.toString())) {
                 log.log(NMsg.ofC("loading repository template '%s' from %s", name, path).withIntent(NMsgIntent.INIT));
-                NPath nPath1 = NTxGitHelper.resolveGithubPath(path.toString(), log);
-                if (nPath1.resolve("ntexup-repository.tson").isRegularFile()) {
+                repoRoot = NTxGitHelper.resolveGithubPath(path.toString(), log);
+            }
+            if (repoRoot.isLocal()) {
+                NPath repoFile = resolveRepositoryFile(repoRoot);
+                if (repoFile.isRegularFile()) {
                     try {
-                        loadTemplateInfo(NElementReader.ofTson().read(nPath1.resolve("ntexup-repository.tson")), name, path, allTemplates);
-                    } catch (Exception e) {
-                        log.log(NMsg.ofC("unable to parse repository templates '%s' at '%s' : %s", name, path, e).asError());
-                    }
-                } else {
-                    log.log(NMsg.ofC("repository template not found '%s' at '%s'", name, path).asDebug().withIntent(NMsgIntent.INIT));
-                }
-            } else if (path.isLocal()) {
-                if (path.resolve("ntexup-repository.tson").isRegularFile()) {
-                    try {
-                        loadTemplateInfo(NElementReader.ofTson().read(path.resolve("ntexup-repository.tson")), name, path, allTemplates);
+                        loadTemplateInfo(NElementReader.ofTson().read(repoFile), name, path, allTemplates);
                     } catch (Exception e) {
                         log.log(NMsg.ofC("unable to parse repository templates '%s' at '%s' : %s", name, path, e).asError());
                     }
@@ -48,11 +44,50 @@ public class NTxTemplateInfoLoader {
         } catch (Exception e) {
             log.log(NMsg.ofC("unable to load repository '%s' at '%s' : %s", name, path, e).asDebug().withIntent(NMsgIntent.FAIL));
         }
-        return allTemplates;
+        return filterCompatible(allTemplates, log);
+    }
+
+    private NPath resolveRepositoryFile(NPath repoRoot) {
+        NPath partition = repoRoot.resolve("ndoc-repository-" + NTxEngine.CURRENT_VERSION + ".tson");
+        if (partition.isRegularFile()) {
+            return partition;
+        }
+        return repoRoot.resolve("ntexup-repository.tson");
+    }
+
+    private List<NTxTemplateInfo> filterCompatible(List<NTxTemplateInfo> allTemplates, NTxLogger log) {
+        NVersion current = NVersion.of(NTxEngine.CURRENT_VERSION);
+        List<NTxTemplateInfo> result = new ArrayList<>();
+        int skipped = 0;
+        for (NTxTemplateInfo t : allTemplates) {
+            List<String> binaries = t.binaryVersions();
+            boolean ok = binaries.isEmpty();
+            if (!ok) {
+                for (String b : binaries) {
+                    if (NVersion.of(b).toFilter().acceptVersion(current)) {
+                        ok = true;
+                        break;
+                    }
+                }
+            }
+            if (ok) {
+                result.add(t);
+            } else {
+                skipped++;
+            }
+        }
+        if (skipped > 0) {
+            log.log(NMsg.ofC("skipped %s template(s) not compatible with ntexup %s", skipped, NTxEngine.CURRENT_VERSION).asDebug().withIntent(NMsgIntent.READ));
+        }
+        return result;
     }
 
     private void loadTemplateInfo(NElement elem, String repoName, NPath repoPath, List<NTxTemplateInfo> allTemplates) {
-        if (elem.isObject()) {
+        if (elem.isFragment()) {
+            for (NElement child : elem.asFragment().get().children()) {
+                loadTemplateInfo(child, repoName, repoPath, allTemplates);
+            }
+        } else if (elem.isObject()) {
             for (NElement child : elem.asObject().get().children()) {
                 loadTemplateInfo(child, repoName, repoPath, allTemplates);
             }
@@ -156,11 +191,15 @@ public class NTxTemplateInfoLoader {
         } catch (Exception e) {
             log.log(NMsg.ofC("unable to load repository '%s' at '%s' : %s", name, path, e).asError());
         }
-        return allTemplates;
+        return filterCompatible(allTemplates, log);
     }
 
     private void loadTemplateInfoOwn(NElement elem, String repoName, NPath repoPath, List<NTxTemplateInfo> allTemplates,String version,String layout) {
-        if (elem.isNamedTuple("template")) {
+        if (elem.isFragment()) {
+            for (NElement child : elem.asFragment().get().children()) {
+                loadTemplateInfoOwn(child, repoName, repoPath, allTemplates, version, layout);
+            }
+        } else if (elem.isNamedTuple("template")) {
             String name = null;
             List<String> binaries = new ArrayList<>();
             boolean recommended = false;

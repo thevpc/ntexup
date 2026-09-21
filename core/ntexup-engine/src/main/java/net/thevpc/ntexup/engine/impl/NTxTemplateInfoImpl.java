@@ -38,7 +38,7 @@ public class NTxTemplateInfoImpl implements NTxTemplateInfo {
 
     public String id() {
         if (id == null) {
-            return NMsg.ofC("%s:%s-%s#%s", repoName, name, layout, version).toString();
+            return NMsg.ofC("%s:%s:%s#%s", repoName, name, layout, version).toString();
         }
         return id;
     }
