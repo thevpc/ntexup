@@ -14,6 +14,7 @@ import net.thevpc.ntexup.api.renderer.NTxNodeRendererConfig;
 import net.thevpc.ntexup.api.renderer.NTxPageOrientation;
 import net.thevpc.nuts.io.NIOException;
 import net.thevpc.nuts.text.NMsg;
+import org.apache.fontbox.ttf.CmapLookup;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
@@ -28,12 +29,18 @@ import org.apache.pdfbox.util.Matrix;
 
 import java.awt.Font;
 import java.awt.FontFormatException;
+import java.awt.font.TextAttribute;
 import java.awt.geom.AffineTransform;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.Locale;
+import java.text.AttributedCharacterIterator;
+import java.text.AttributedString;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 /**
  * Renders document pages as real PDF vector/text primitives (selectable text,
@@ -80,7 +87,7 @@ public class PdfVectorRenderer {
 
         List<NTxCompiledPage> pages = document.pages();
         try (PDDocument doc = new PDDocument()) {
-            PdfBoxGraphics2DFontTextDrawer fontDrawer = new SafeFontTextDrawer();
+            SafeFontTextDrawer fontDrawer = new SafeFontTextDrawer();
             try {
                 registerSystemFonts(fontDrawer);
                 PDPage currentPdfPage = null;
@@ -174,7 +181,6 @@ public class PdfVectorRenderer {
         } catch (Throwable t) {
             engine.log().log(NMsg.ofC("pdf vector rendering failed for page %s, falling back to raster: %s",
                     page.index() + 1, t));
-            t.printStackTrace(System.err);
             return renderCellRaster(engine, doc, page, cellWidth, cellHeight, config);
         }
     }
@@ -248,10 +254,11 @@ public class PdfVectorRenderer {
         }
     }
 
-    private static void registerSystemFonts(PdfBoxGraphics2DFontTextDrawer drawer) {
+    private static void registerSystemFonts(SafeFontTextDrawer drawer) {
         String[] dirs = {
                 "/usr/share/fonts",
                 System.getProperty("user.home") + "/.fonts",
+                System.getProperty("user.home") + "/.local/share/fonts",
                 "/Library/Fonts",
                 "/System/Library/Fonts",
                 "/Windows/Fonts",
@@ -272,6 +279,7 @@ public class PdfVectorRenderer {
         Face sans = new Face();
         Face serif = new Face();
         Face mono = new Face();
+        List<File> usable = new ArrayList<>();
         int skipped = 0;
         for (File f : all) {
             if (!fontLoadable(f)) {
@@ -284,14 +292,16 @@ public class PdfVectorRenderer {
                 skipped++;
                 continue;
             }
+            usable.add(f);
             String n = f.getName().toLowerCase(Locale.ROOT);
             Face target = null;
-            if (matches(n, "dejavusans", "liberationsans", "notosans", "carlito", "arial", "helvetica", "roboto", "open.?sans", "lato", "ubuntu")) {
-                target = sans;
-            } else if (matches(n, "dejavuserif", "liberationserif", "notoserif", "times", "georgia", "garamond", "palatino", "cambria", "cmr")) {
-                target = serif;
-            } else if (matches(n, "mono", "consolas", "courier", "dejavusansmono", "ubuntu-mono")) {
+            boolean isMono = matches(n, "mono", "mono.?space", "courier", "consolas");
+            if (isMono) {
                 target = mono;
+            } else if (!isNonRegularVariant(n) && matches(n, "dejavusans", "liberationsans", "notosans", "carlito", "arial", "helvetica", "roboto", "open.?sans", "lato", "ubuntu")) {
+                target = sans;
+            } else if (!isNonRegularVariant(n) && matches(n, "dejavuserif", "liberationserif", "notoserif", "times", "georgia", "garamond", "palatino", "cambria", "cmr")) {
+                target = serif;
             }
             if (target != null) {
                 target.put(f, detectVariant(n));
@@ -300,6 +310,7 @@ public class PdfVectorRenderer {
         if (skipped > 0) {
             engineLog("skipped %d unreadable system fonts", skipped);
         }
+        drawer.installFallbackFiles(usable);
         registerLogicalFamily(drawer, "SansSerif", sans);
         registerLogicalFamily(drawer, "Dialog", sans);
         registerLogicalFamily(drawer, "DialogInput", sans);
@@ -309,6 +320,10 @@ public class PdfVectorRenderer {
         registerJlmAlias(drawer, all, "jlm_cmmi10", "cmmi10");
         registerJlmAlias(drawer, all, "jlm_cmsy10", "cmsy10");
         registerJlmAlias(drawer, all, "jlm_cmex10", "cmex10");
+    }
+
+    private static boolean isNonRegularVariant(String n) {
+        return matches(n, "mono", "condensed", "light", "thin", "black", "extra", "semibold", "medium", "book");
     }
 
     private static void registerJlmAlias(PdfBoxGraphics2DFontTextDrawer drawer, List<File> all,
@@ -448,6 +463,167 @@ public class PdfVectorRenderer {
 
     private static class SafeFontTextDrawer extends PdfBoxGraphics2DFontTextDrawer {
         private final java.util.Set<String> degraded = new java.util.HashSet<>();
+        private final java.util.Set<String> warned = new java.util.HashSet<>();
+        private final List<File> usable = new ArrayList<>();
+        private final Map<String, Font> fileFonts = new HashMap<>();
+
+        void installFallbackFiles(List<File> files) {
+            usable.addAll(files);
+        }
+
+        @Override
+        public void drawText(AttributedCharacterIterator iterator, IFontTextDrawerEnv env)
+                throws IOException, FontFormatException {
+            int idx = iterator.getBeginIndex();
+            int end = iterator.getEndIndex();
+            while (idx < end) {
+                iterator.setIndex(idx);
+                int runEnd = iterator.getRunLimit();
+                Map<AttributedCharacterIterator.Attribute, Object> attrs = iterator.getAttributes();
+                Font runFont = (Font) attrs.get(TextAttribute.FONT);
+                if (runFont == null) {
+                    runFont = env.getFont();
+                }
+                drawRun(collectRun(iterator, runEnd), attrs, runFont, env);
+                idx = runEnd;
+            }
+        }
+
+        private void drawRun(String text, Map<AttributedCharacterIterator.Attribute, Object> attrs,
+                             Font runFont, IFontTextDrawerEnv env)
+                throws IOException, FontFormatException {
+            if (text.isEmpty()) {
+                return;
+            }
+            PDFont runPdf = mapFont(runFont, env);
+            if (runPdf != null && containsMissingGlyph(runPdf, text)) {
+                Font alt = findCoveringFont(text, runFont, env);
+                if (alt != null) {
+                    runFont = alt;
+                } else {
+                    text = substituteMissing(text, runPdf);
+                }
+            }
+            AttributedString as = new AttributedString(text, attrs);
+            as.addAttribute(TextAttribute.FONT, runFont, 0, text.length());
+            try {
+                super.drawText(as.getIterator(), env);
+            } catch (Throwable t) {
+                repairOpenTextBlock(env);
+                String key = runFont.getFontName() + ":" + shortText(text);
+                if (warned.add(key)) {
+                    engineLog("text run %s failed (%s), run skipped from vector output", key,
+                            t.getClass().getSimpleName() + ": " + t.getMessage());
+                }
+            }
+        }
+
+        private Font findCoveringFont(String text, Font orig, IFontTextDrawerEnv env)
+                throws IOException, FontFormatException {
+            int[] cps = text.codePoints().toArray();
+            float size = orig.getSize2D();
+            for (File f : usable) {
+                Font awt = fontFor(f);
+                if (awt == null || awt.getFontName().equals(orig.getFontName())) {
+                    continue;
+                }
+                PDFont pdf = mapFont(awt, env);
+                if (!(pdf instanceof PDType0Font)) {
+                    continue;
+                }
+                CmapLookup cmap = ((PDType0Font) pdf).getCmapLookup();
+                if (cmap == null) {
+                    continue;
+                }
+                boolean all = true;
+                for (int cp : cps) {
+                    if (cmap.getGlyphId(cp) <= 0) {
+                        all = false;
+                        break;
+                    }
+                }
+                if (all) {
+                    return awt.deriveFont(size);
+                }
+            }
+            return null;
+        }
+
+        private Font fontFor(File f) {
+            String key = f.getAbsolutePath();
+            Font font = fileFonts.get(key);
+            if (font == null) {
+                try {
+                    font = Font.createFont(Font.TRUETYPE_FONT, f);
+                } catch (Exception ex) {
+                    font = null;
+                }
+                fileFonts.put(key, font);
+            }
+            return font;
+        }
+
+        private static boolean containsMissingGlyph(PDFont font, String text) {
+            CmapLookup cmap = font instanceof PDType0Font ? ((PDType0Font) font).getCmapLookup() : null;
+            if (cmap == null) {
+                return false;
+            }
+            for (int i = 0; i < text.length(); ) {
+                int cp = text.codePointAt(i);
+                i += Character.charCount(cp);
+                if (cmap.getGlyphId(cp) <= 0) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        private static String substituteMissing(String text, PDFont runPdf) {
+            StringBuilder sb = new StringBuilder(text.length());
+            for (int i = 0; i < text.length(); ) {
+                int cp = text.codePointAt(i);
+                i += Character.charCount(cp);
+                if (runPdf instanceof PDType0Font) {
+                    CmapLookup cmap = ((PDType0Font) runPdf).getCmapLookup();
+                    if (cmap != null && cmap.getGlyphId(cp) <= 0) {
+                        char sub = SUBSTITUTE.getOrDefault(cp, '?');
+                        sb.append(sub);
+                        continue;
+                    }
+                }
+                sb.appendCodePoint(cp);
+            }
+            return sb.toString();
+        }
+
+        private static String collectRun(AttributedCharacterIterator iterator, int runEnd) {
+            StringBuilder sb = new StringBuilder();
+            while (iterator.getIndex() < runEnd) {
+                char c = iterator.current();
+                if (c == AttributedCharacterIterator.DONE) {
+                    return sb.toString();
+                }
+                sb.append(c);
+                iterator.next();
+            }
+            return sb.toString();
+        }
+
+        private static void repairOpenTextBlock(IFontTextDrawerEnv env) {
+            try {
+                env.getContentStream().endText();
+            } catch (Exception ex) {
+                return;
+            }
+            try {
+                env.getContentStream().restoreGraphicsState();
+            } catch (Exception ignored) {
+            }
+        }
+
+        private static String shortText(String text) {
+            return text.length() <= 24 ? text : text.substring(0, 24) + "...";
+        }
 
         @Override
         protected PDFont mapFont(Font font, IFontTextDrawerEnv env) throws IOException, FontFormatException {
@@ -461,5 +637,15 @@ public class PdfVectorRenderer {
                 return null;
             }
         }
+    }
+
+    private static final Map<Integer, Character> SUBSTITUTE = new HashMap<>();
+
+    static {
+        SUBSTITUTE.put(0x226A, '«');
+        SUBSTITUTE.put(0x226B, '»');
+        SUBSTITUTE.put(0x2013, '-');
+        SUBSTITUTE.put(0x2014, '-');
+        SUBSTITUTE.put(0x2212, '-');
     }
 }
