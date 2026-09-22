@@ -88,9 +88,6 @@ public class NTexupOptionsParser {
                             }
                             while (!cmdLine.isEmpty()) {
                                 cmdLine.matcher()
-                                        .when("--force","-f").asFlag(aa -> {
-                                            w.setForce(aa.booleanValue());
-                                        })
                                         .whenNonOption().asArg(aa -> {
                                             String ss = NStringUtils.strip(aa.asString().orNull());
                                             if (NStringUtils.strip(ss).equalsIgnoreCase("all")) {
