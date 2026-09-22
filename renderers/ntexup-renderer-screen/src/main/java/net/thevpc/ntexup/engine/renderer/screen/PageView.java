@@ -7,25 +7,33 @@ import net.thevpc.ntexup.api.document.node.NTxNode;
 import net.thevpc.ntexup.api.renderer.NTxNodeRendererConfig;
 import net.thevpc.ntexup.api.renderer.NTxRendererContext;
 import net.thevpc.ntexup.api.util.NTxUtils;
-import net.thevpc.nuts.mon.NChronometer;
 import net.thevpc.nuts.collections.NMaps;
 import net.thevpc.nuts.text.NMsg;
-import net.thevpc.nuts.util.NRef;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
+import java.awt.image.BufferedImage;
 import java.util.UUID;
 
 public class PageView extends JComponent {
     public static Dimension REF_SIZE = new Dimension(1024, 768);
-    private NTxCompiledPage page;
-    private long pageStartTime;
+    private static final int DEFAULT_RENDER_WIDTH = 1024;
+    private final NTxCompiledPage page;
+    private volatile long pageStartTime;
     private String uuid;
-    private NTxEngine engine;
-    private NTxCompiledDocument document;
-    private final NRef<Dimension> lastSize = NRef.ofNull();
+    private final NTxEngine engine;
+    private final NTxCompiledDocument document;
     private final double ratio = 16.0 / 9.0;
-    private volatile boolean dirty = false;
+    private final Object renderLock = new Object();
+    private volatile BufferedImage pageImage;
+    private volatile int renderW = -1;
+    private volatile int renderH = -1;
+    private volatile boolean renderPending;
+    private volatile boolean renderInvalidated;
+    private volatile boolean discarded;
+    private volatile int renderEpoch;
 
     public PageView(
             NTxCompiledDocument document,
@@ -36,6 +44,12 @@ public class PageView extends JComponent {
         this.page = page;
         this.uuid = UUID.randomUUID().toString();
         this.engine = engine;
+        addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentResized(ComponentEvent e) {
+                requestRender();
+            }
+        });
         if (document != null && document.dependencyGraph() != null) {
             document.dependencyGraph().addPageInvalidationListener(pageIndex -> {
                 if (pageIndex == this.page.index() || pageIndex < 0) {
@@ -46,28 +60,46 @@ public class PageView extends JComponent {
     }
 
     public void repaintDirty() {
-        this.dirty = true;
         if (this.page.isCompiled()) {
             NTxNode p = this.page.compiledPage();
             if (p != null) {
                 p.invalidateRenderCache();
             }
         }
-        SwingUtilities.invokeLater(() -> {
-            this.revalidate();
-            this.repaint();
-            Component c = this;
-            while (c != null) {
-                c.revalidate();
-                c.repaint();
-                if (c instanceof Window) {
-                    ((Window) c).validate();
-                    ((Window) c).repaint();
-                    break;
-                }
-                c = c.getParent();
+        synchronized (renderLock) {
+            renderInvalidated = true;
+        }
+        requestRender();
+        SwingUtilities.invokeLater(this::repaintHierarchy);
+    }
+
+    /**
+     * Drops the rendered image cache so the next {@link #requestRender()} re-renders.
+     * Used when the page is far away from the current one to bound memory usage.
+     */
+    public void evictCache() {
+        synchronized (renderLock) {
+            if (discarded) {
+                return;
             }
-        });
+            renderEpoch++;
+            pageImage = null;
+            renderW = -1;
+            renderH = -1;
+            renderInvalidated = true;
+        }
+    }
+
+    /**
+     * Called when the view is discarded (document reload / viewer close).
+     */
+    public void discard() {
+        synchronized (renderLock) {
+            discarded = true;
+            renderEpoch++;
+            pageImage = null;
+            renderInvalidated = false;
+        }
     }
 
     public NTxEngine engine() {
@@ -91,12 +123,133 @@ public class PageView extends JComponent {
     }
 
     synchronized void onShow() {
+        if (discarded) {
+            return;
+        }
         page.compiledPage();
         this.pageStartTime = System.currentTimeMillis();
+        requestRender(true);
+    }
+
+    public void prefetch() {
+        requestRender(false);
+    }
+
+    protected void repaintHierarchy() {
+        this.revalidate();
+        this.repaint();
+        Component c = this;
+        while (c != null) {
+            c.revalidate();
+            c.repaint();
+            if (c instanceof Window) {
+                ((Window) c).validate();
+                ((Window) c).repaint();
+                break;
+            }
+            c = c.getParent();
+        }
+    }
+
+    private Dimension currentRenderSize() {
+        int w = getWidth();
+        int h = getHeight();
+        if (w <= 16 || h <= 16) {
+            w = DEFAULT_RENDER_WIDTH;
+            h = (int) (w / ratio);
+        }
+        return new Dimension(w, h);
+    }
+
+    private void requestRender() {
+        requestRender(true);
+    }
+
+    private void requestRender(boolean priority) {
+        synchronized (renderLock) {
+            if (discarded) {
+                return;
+            }
+            Dimension d = currentRenderSize();
+            boolean sizeOk = pageImage != null && d.width == renderW && d.height == renderH;
+            if (sizeOk && !renderInvalidated) {
+                return;
+            }
+            renderPending = true;
+            renderInvalidated = false;
+            boolean reuse = pageImage != null && d.width == renderW && d.height == renderH;
+            final int tw = d.width;
+            final int th = d.height;
+            final boolean useCache = reuse;
+            final int epoch = ++renderEpoch;
+            DocumentView.submitRender(() -> doRender(tw, th, useCache, epoch), priority);
+        }
+    }
+
+    private void doRender(final int tw, final int th, final boolean useCache, final int epoch) {
+        if (discarded || epoch != renderEpoch) {
+            return;
+        }
+        BufferedImage img = null;
+        Throwable error = null;
+        try {
+            img = new BufferedImage(tw, th, BufferedImage.TYPE_INT_ARGB);
+            Graphics2D g = img.createGraphics();
+            NTxNodeRendererConfig config = new NTxNodeRendererConfig();
+            config.setWidth(tw);
+            config.setHeight(th);
+            config.setCapabilities(NMaps.of(NTxRendererContext.CAPABILITY_ANIMATE, true));
+            config.setStartTime(pageStartTime);
+            config.setUseCache(useCache);
+            engine.renderPage(page, config, g, this, this::onRenderInvalidated);
+            g.dispose();
+        } catch (Throwable t) {
+            error = t;
+        }
+        if (error != null) {
+            engine.log().log(NMsg.ofC("failed to render page %s: %s", page.index() + 1, error));
+        }
+        int cw;
+        int ch;
+        boolean more;
+        synchronized (renderLock) {
+            if (discarded || epoch != renderEpoch) {
+                return;
+            }
+            Dimension d = currentRenderSize();
+            cw = d.width;
+            ch = d.height;
+            if (cw == tw && ch == th && img != null) {
+                pageImage = img;
+                renderW = tw;
+                renderH = th;
+            }
+            renderPending = false;
+            more = renderInvalidated || (cw != tw || ch != th);
+            renderInvalidated = false;
+            if (more) {
+                requestRender(true);
+            }
+        }
+        if (error != null) {
+            engine.log().log(NMsg.ofC("render page %s failed %s", page.index() + 1, error));
+        } else {
+            SwingUtilities.invokeLater(this::repaintHierarchy);
+        }
+    }
+
+    private void onRenderInvalidated() {
+        synchronized (renderLock) {
+            if (discarded) {
+                return;
+            }
+            renderInvalidated = true;
+        }
+        requestRender(true);
     }
 
     public boolean isLoading() {
-        return !page.isCompiled() || !document.isCompiled();
+        return !page.isCompiled() || !document.isCompiled() || renderPending;
     }
 
     @Override
@@ -105,81 +258,25 @@ public class PageView extends JComponent {
     }
 
     @Override
-    public void paintComponent(Graphics g) {
+    protected void paintComponent(Graphics g) {
         super.paintComponent(g);
-        if (page.isCompiled()) {
-            NChronometer c = NChronometer.of();
-            Dimension size = getSize();
-            Dimension lastSize = null;
-            boolean someChange = false;
-            synchronized (this) {
-                lastSize = this.lastSize.get();
-                someChange = !size.equals(lastSize);
-                if (someChange) {
-                    this.lastSize.set(size);
-                }
-                if (dirty) {
-                    dirty = false;
-                    someChange = true;
-                }
+        BufferedImage img = pageImage;
+        if (img == null) {
+            if (page.isCompiled()) {
+                g.setColor(Color.DARK_GRAY);
+                g.fillRect(0, 0, getWidth(), getHeight());
             }
-            Graphics2D g2d = (Graphics2D) g;
-            NRef<NTxNode> pageNode = NRef.ofNull();
-//            if(true) {
-//                int pw = getWidth();
-//                int ph = getHeight();
-//
-//                // 1. compute inner ratio rectangle
-//                int w = pw;
-//                int h = (int) (w / ratio);
-//
-//                if (h > ph) {
-//                    h = ph;
-//                    w = (int) (h * ratio);
-//                }
-//
-//                int x = (pw - w) / 2;
-//                int y = (ph - h) / 2;
-//                // 2. paint boundary
-//                g2d.setColor(Color.DARK_GRAY);  // your letterbox color
-//                g2d.fillRect(0, 0, pw, ph);
-//
-//                // 3. clip to inner rect (optional but cleaner)
-//                Shape oldClip = g2d.getClip();
-//                g2d.setClip(x, y, w, h);
-//
-//                // 4. scale your graphics to fit the inner rectangle
-//                double scaleX = w / REF_SIZE.getWidth();
-//                double scaleY = h / REF_SIZE.getHeight();
-//                double scale = Math.min(scaleX, scaleY);
-//
-//                g2d.translate(x, y);
-//                g2d.scale(scale, scale);
-//                renderPage(g2d, size.getWidth(), size.getHeight(), someChange, pageNode);
-//                g2d.setClip(oldClip);
-//            }else{
-            renderPage(g2d, size.getWidth(), size.getHeight(), someChange, pageNode);
-//            }
-            c.stop();
-            if (someChange) {
-                engine().log().log(NMsg.ofC("[%s] paintComponent (page %s) in %s", NTxUtils.sourceOf(pageNode.get()), page.index() + 1, c));
-//                engine().log().log(NMsg.ofC("[%s] paintComponent %s in %s (%s -> %s)", NTxUtils.sourceOf(pageNode.get()), page.index(), c, lastSize,size));
-            }
+            return;
         }
+        Graphics2D g2d = (Graphics2D) g;
+        Object oldInterpolation = g2d.getRenderingHint(RenderingHints.KEY_INTERPOLATION);
+        Object oldRendering = g2d.getRenderingHint(RenderingHints.KEY_RENDERING);
+        g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+        g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED);
+        g2d.drawImage(img, 0, 0, getWidth(), getHeight(), null);
+        g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, oldInterpolation);
+        g2d.setRenderingHint(RenderingHints.KEY_RENDERING, oldRendering);
     }
-
-    private void renderPage(Graphics2D g2d, double width, double height, boolean someChange, NRef<NTxNode> pageNode) {
-        NTxNodeRendererConfig config = new NTxNodeRendererConfig();
-        config.setWidth(width);
-        config.setHeight(height);
-        config.setCapabilities(NMaps.of(NTxRendererContext.CAPABILITY_ANIMATE, true));
-        config.setStartTime(pageStartTime);
-        config.setUseCache(!someChange);
-        engine.renderPage(page, config, g2d, this, this::repaintDirty);
-        NTxNode p = page.compiledPage();
-        pageNode.set(p);
-    }
-
 
     public Object source() {
         return page.source();

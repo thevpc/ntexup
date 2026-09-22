@@ -1,6 +1,7 @@
 package net.thevpc.ntexup.cmdline.options;
 
 import net.thevpc.ntexup.api.renderer.NTxPageOrientation;
+import net.thevpc.ntexup.api.renderer.NTxPdfMode;
 import net.thevpc.nuts.io.NPath;
 
 import java.util.ArrayList;
@@ -24,6 +25,7 @@ public class GenerateActionOptions extends ActionOptions {
     public Integer pageHeight;
     public NTxPageOrientation orientation;
     public boolean showPageNumber;
+    public NTxPdfMode pdfMode;
 
     public GenerateActionOptions() {
         super(Action.GENERATE);

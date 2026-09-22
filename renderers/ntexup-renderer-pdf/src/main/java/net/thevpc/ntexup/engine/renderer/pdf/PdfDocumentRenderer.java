@@ -68,6 +68,16 @@ public class PdfDocumentRenderer extends NTxDocumentStreamRendererBase implement
 
     public void renderStream(NTxCompiledDocument document, OutputStream stream) {
         NTxDocumentStreamRendererConfig config = engine.tools().validateDocumentStreamRendererConfig(this.config);
+        if (config.getPdfMode() == NTxPdfMode.RASTER) {
+            renderStreamRaster(document, stream);
+        } else {
+            PdfVectorRenderer.renderStream(engine, document, config, stream);
+        }
+    }
+
+
+    public void renderStreamRaster(NTxCompiledDocument document, OutputStream stream) {
+        NTxDocumentStreamRendererConfig config = engine.tools().validateDocumentStreamRendererConfig(this.config);
         Document pdfDocument = new Document();
         try {
             PdfWriter pdfWriter = PdfWriter.getInstance(pdfDocument, stream);

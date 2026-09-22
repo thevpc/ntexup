@@ -16,6 +16,7 @@ public class NTxDocumentStreamRendererConfig implements Serializable, Cloneable 
     private float marginBottom;
     private float marginLeft;
     private float marginRight;
+    private NTxPdfMode pdfMode;
 
     public NTxPageOrientation getOrientation() {
         return orientation;
@@ -131,6 +132,20 @@ public class NTxDocumentStreamRendererConfig implements Serializable, Cloneable 
 
     public NTxDocumentStreamRendererConfig setMarginRight(float marginRight) {
         this.marginRight = marginRight;
+        return this;
+    }
+
+    /**
+     * PDF encoding mode. {@link NTxPdfMode#VECTOR} by default.
+     *
+     * @return pdf mode
+     */
+    public NTxPdfMode getPdfMode() {
+        return pdfMode == null ? NTxPdfMode.VECTOR : pdfMode;
+    }
+
+    public NTxDocumentStreamRendererConfig setPdfMode(NTxPdfMode pdfMode) {
+        this.pdfMode = pdfMode;
         return this;
     }
 

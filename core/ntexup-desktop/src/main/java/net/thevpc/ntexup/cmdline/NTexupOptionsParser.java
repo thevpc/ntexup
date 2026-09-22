@@ -9,6 +9,8 @@ import net.thevpc.nuts.io.NPath;
 import net.thevpc.nuts.util.NLiteral;
 import net.thevpc.nuts.util.NOptional;
 import net.thevpc.nuts.util.NStringUtils;
+import net.thevpc.nuts.util.NIllegalArgumentException;
+import net.thevpc.nuts.text.NMsg;
 
 import java.util.Arrays;
 import java.util.Locale;
@@ -243,6 +245,25 @@ public class NTexupOptionsParser {
                     .when("--dpi").asEntry(a -> {
                         options.getOrCreate(GenerateActionOptions.class).dpi = parseIntEntry(a.stringValue(), "--dpi");
                     })
+                    .when("--pdf-mode").asEntry(a -> {
+                        String v = a.stringValue();
+                        switch (v.toLowerCase()) {
+                            case "vector":
+                            case "native":
+                                options.getOrCreate(GenerateActionOptions.class).pdfMode = net.thevpc.ntexup.api.renderer.NTxPdfMode.VECTOR;
+                                break;
+                            case "raster":
+                            case "image":
+                                options.getOrCreate(GenerateActionOptions.class).pdfMode = net.thevpc.ntexup.api.renderer.NTxPdfMode.RASTER;
+                                break;
+                            default:
+                                throw new NIllegalArgumentException(NMsg.ofC("unsupported --pdf-mode %s (expected 'vector' or 'raster')", v));
+                        }
+                    })
+                    .when("--pdf-vector").asTrueFlag(a ->
+                            options.getOrCreate(GenerateActionOptions.class).pdfMode = net.thevpc.ntexup.api.renderer.NTxPdfMode.VECTOR)
+                    .when("--pdf-raster").asTrueFlag(a ->
+                            options.getOrCreate(GenerateActionOptions.class).pdfMode = net.thevpc.ntexup.api.renderer.NTxPdfMode.RASTER)
                     .when("--type", "--format").asEntry(a -> {
                         options.getOrCreate(GenerateActionOptions.class).imageFormat = a.stringValue();
                     })

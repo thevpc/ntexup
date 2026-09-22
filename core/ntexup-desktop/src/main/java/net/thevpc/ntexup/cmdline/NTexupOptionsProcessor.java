@@ -7,6 +7,7 @@ import net.thevpc.ntexup.api.engine.NTxTemplateFilter;
 import net.thevpc.ntexup.api.engine.NTxTemplateInfo;
 import net.thevpc.ntexup.api.renderer.NTxDocumentStreamRenderer;
 import net.thevpc.ntexup.api.renderer.NTxDocumentStreamRendererConfig;
+import net.thevpc.ntexup.api.renderer.NTxPdfMode;
 import net.thevpc.ntexup.cmdline.options.*;
 import net.thevpc.ntexup.engine.eval.NTxGitHelper;
 import net.thevpc.ntexup.engine.repo.RepoBuilderTool;
@@ -261,6 +262,13 @@ public class NTexupOptionsProcessor {
             c.setDpi(ga.dpi);
             c.setGridX(ga.gridX);
             c.setGridY(ga.gridY);
+            NTxPdfMode pdfMode = ga.pdfMode;
+            if (pdfMode == null && ga.dpi > 0) {
+                pdfMode = NTxPdfMode.RASTER;
+            }
+            if (pdfMode != null) {
+                c.setPdfMode(pdfMode);
+            }
             if (ga.marginTop >= 0) {
                 c.setMarginTop(ga.marginTop);
             }

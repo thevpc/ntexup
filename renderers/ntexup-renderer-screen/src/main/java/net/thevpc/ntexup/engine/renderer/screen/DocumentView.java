@@ -22,10 +22,16 @@ import java.awt.event.*;
 import java.util.*;
 import java.util.List;
 import java.util.Timer;
+import java.util.Comparator;
 
 import net.thevpc.nuts.io.NPath;
 import net.thevpc.nuts.text.NMsg;
 import net.thevpc.nuts.util.NColor;
+
+import java.util.concurrent.PriorityBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class DocumentView implements NTxDocumentView {
 
@@ -48,6 +54,45 @@ public class DocumentView implements NTxDocumentView {
         t.setDaemon(true);
         return t;
     });
+    private static final AtomicLong RENDER_SEQ = new AtomicLong();
+    static final ExecutorService PAGE_RENDER_LOADER =
+            new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS, new PriorityBlockingQueue<>(64, (a, b) -> {
+                if (!(a instanceof RenderTask)) {
+                    return 0;
+                }
+                if (!(b instanceof RenderTask)) {
+                    return 0;
+                }
+                RenderTask ta = (RenderTask) a;
+                RenderTask tb = (RenderTask) b;
+                int c = Integer.compare(tb.priority, ta.priority);
+                return c != 0 ? c : Long.compare(ta.seq, tb.seq);
+            }), r -> {
+                Thread t = new Thread(r, "DocumentView-PageRenderer");
+                t.setDaemon(true);
+                return t;
+            });
+
+    static void submitRender(Runnable r, boolean priority) {
+        PAGE_RENDER_LOADER.execute(new RenderTask(r, priority ? 1 : 0, RENDER_SEQ.incrementAndGet()));
+    }
+
+    private static final class RenderTask implements Runnable {
+        final Runnable delegate;
+        final int priority;
+        final long seq;
+
+        RenderTask(Runnable delegate, int priority, long seq) {
+            this.delegate = delegate;
+            this.priority = priority;
+            this.seq = seq;
+        }
+
+        @Override
+        public void run() {
+            delegate.run();
+        }
+    }
     private boolean inCheckResourcesChanged;
     private boolean inLoadDocument;
     Throwable currentThrowable;
@@ -104,6 +149,9 @@ public class DocumentView implements NTxDocumentView {
             return;
         }
         closed = true;
+        for (PageView pv : pageViews) {
+            pv.discard();
+        }
         if (resourceMonitorTimer != null) {
             resourceMonitorTimer.cancel();
         }
@@ -450,6 +498,9 @@ public class DocumentView implements NTxDocumentView {
             listener.onChangedCompiledDocument(compiledDocument);
 
             compiledDocument.sourceMonitor().save();
+            for (PageView pv : pageViews) {
+                pv.discard();
+            }
             pageViews.clear();
             contentPane.removeAll();
             pagesMapById.clear();
@@ -519,6 +570,7 @@ public class DocumentView implements NTxDocumentView {
             if (pv != null) {
                 listener.onChangedPage(pv.page());
                 pv.onShow();
+                refreshPageCache(pv.index());
                 SwingUtilities.invokeLater(() -> contentPane.doShow(pv.id()));
             } else {
                 listener.onChangedPage(null);
@@ -556,6 +608,24 @@ public class DocumentView implements NTxDocumentView {
         }
         PageView pageView = pageViews.get(index);
         this.showPage(pageView);
+    }
+
+    private void refreshPageCache(int centerIndex) {
+        int evictRadius = 4;
+        int prefetchRadius = 3;
+        List<PageView> prefetch = new ArrayList<>();
+        for (PageView pv : pageViews) {
+            int d = Math.abs(pv.index() - centerIndex);
+            if (d > evictRadius) {
+                pv.evictCache();
+            } else if (d > 0 && d <= prefetchRadius) {
+                prefetch.add(pv);
+            }
+        }
+        prefetch.sort(Comparator.comparingInt(pv -> Math.abs(pv.index() - centerIndex)));
+        for (PageView pv : prefetch) {
+            pv.prefetch();
+        }
     }
 
     public NTxEngine engine() {
