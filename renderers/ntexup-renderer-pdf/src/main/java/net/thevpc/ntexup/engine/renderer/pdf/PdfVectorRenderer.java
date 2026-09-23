@@ -474,6 +474,8 @@ public class PdfVectorRenderer {
         @Override
         public void drawText(AttributedCharacterIterator iterator, IFontTextDrawerEnv env)
                 throws IOException, FontFormatException {
+            StringBuilder all = new StringBuilder();
+            List<Object[]> runs = new ArrayList<>();
             int idx = iterator.getBeginIndex();
             int end = iterator.getEndIndex();
             while (idx < end) {
@@ -484,35 +486,47 @@ public class PdfVectorRenderer {
                 if (runFont == null) {
                     runFont = env.getFont();
                 }
-                drawRun(collectRun(iterator, runEnd), attrs, runFont, env);
+                String part = collectRun(iterator, runEnd);
+                Font finalFont = runFont;
+                PDFont pdf = mapFont(runFont, env);
+                if (pdf != null && containsMissingGlyph(pdf, part)) {
+                    Font alt = findCoveringFont(part, runFont, env);
+                    if (alt != null) {
+                        finalFont = alt;
+                    } else {
+                        part = substituteMissing(part, pdf);
+                    }
+                }
+                int s = all.length();
+                all.append(part);
+                runs.add(new Object[]{s, s + part.length(), finalFont, attrs});
                 idx = runEnd;
             }
-        }
-
-        private void drawRun(String text, Map<AttributedCharacterIterator.Attribute, Object> attrs,
-                             Font runFont, IFontTextDrawerEnv env)
-                throws IOException, FontFormatException {
-            if (text.isEmpty()) {
+            if (all.length() == 0) {
                 return;
             }
-            PDFont runPdf = mapFont(runFont, env);
-            if (runPdf != null && containsMissingGlyph(runPdf, text)) {
-                Font alt = findCoveringFont(text, runFont, env);
-                if (alt != null) {
-                    runFont = alt;
-                } else {
-                    text = substituteMissing(text, runPdf);
+            AttributedString as = new AttributedString(all.toString());
+            for (Object[] run : runs) {
+                int s = (Integer) run[0];
+                int e = (Integer) run[1];
+                Font font = (Font) run[2];
+                @SuppressWarnings("unchecked")
+                Map<AttributedCharacterIterator.Attribute, Object> attrs =
+                        (Map<AttributedCharacterIterator.Attribute, Object>) run[3];
+                for (Map.Entry<AttributedCharacterIterator.Attribute, Object> en : attrs.entrySet()) {
+                    if (en.getKey() != TextAttribute.FONT) {
+                        as.addAttribute(en.getKey(), en.getValue(), s, e);
+                    }
                 }
+                as.addAttribute(TextAttribute.FONT, font, s, e);
             }
-            AttributedString as = new AttributedString(text, attrs);
-            as.addAttribute(TextAttribute.FONT, runFont, 0, text.length());
             try {
                 super.drawText(as.getIterator(), env);
             } catch (Throwable t) {
                 repairOpenTextBlock(env);
-                String key = runFont.getFontName() + ":" + shortText(text);
+                String key = all.length() <= 64 ? all.toString() : shortText(all.toString());
                 if (warned.add(key)) {
-                    engineLog("text run %s failed (%s), run skipped from vector output", key,
+                    engineLog("text block failed (%s), block skipped from vector output",
                             t.getClass().getSimpleName() + ": " + t.getMessage());
                 }
             }
