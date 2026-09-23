@@ -7,6 +7,8 @@ description: "Develops and extends the ntexup codebase itself: adds Java extensi
 
 This skill supports an agent doing **developer work on the ntexup repository** (not authoring decks — for decks use the `ntexup-presentation` skill). It lets you add new components/functions/flavors, navigate the engine, and verify everything by **rendering a PDF automatically**.
 
+Workspace note: this repo usually sits in a multi-project workspace alongside `../ntexup-doc-slides/` (doc deck) and `../ntexup-templates/` (themes); the parent folder's `AGENTS.md` documents render/build commands across all three.
+
 Authoritative references (read before/while working):
 - `$ntexup_repository_root/documentation/developer-guide/00-index.md`
 - `$ntexup_repository_root/documentation/developer-guide/01-repository-architecture.md`
