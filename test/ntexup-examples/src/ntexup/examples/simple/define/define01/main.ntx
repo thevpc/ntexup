@@ -1,7 +1,7 @@
 @define my-custom(str){
     page{
         text(str,font-size:20,color:Biscuit)
-        body
+        slot
     }
 }
 

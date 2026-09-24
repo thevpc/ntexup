@@ -13,7 +13,7 @@ documentColors:=arrayLeftRotate(["#26355D","#AF47D2","#DE3163","#1d8147","#FF8F0
 
 @define content-slide(title){
     page{
-        body
+        slot
     }
 }
 
@@ -63,7 +63,7 @@ documentColors:=arrayLeftRotate(["#26355D","#AF47D2","#DE3163","#1d8147","#FF8F0
 //                if(themeShowPalette){
 //                    Palette()
 //                }
-//                body
+//                slot
 //            }
 //        }
 //
@@ -91,7 +91,7 @@ documentColors:=arrayLeftRotate(["#26355D","#AF47D2","#DE3163","#1d8147","#FF8F0
 //                    stroke:zigzag(amplitude:5,wavelength:5,basic(width:4))
 //                )
 //                image("images/error.png", position:(95,-40),size:(10,80))
-//                body
+//                slot
 //            }
 //        }
 //        @define body{
@@ -108,7 +108,7 @@ documentColors:=arrayLeftRotate(["#26355D","#AF47D2","#DE3163","#1d8147","#FF8F0
 //                        foreground-color:dark-gray
 //                    }
 //                }
-//                body
+//                slot
 //            }
 //        }
 //        @define body2a{
@@ -124,7 +124,7 @@ documentColors:=arrayLeftRotate(["#26355D","#AF47D2","#DE3163","#1d8147","#FF8F0
 //                        foreground-color:dark-gray
 //                    }
 //                }
-//                body
+//                slot
 //            }
 //        }
 //        @define body2b{
@@ -141,7 +141,7 @@ documentColors:=arrayLeftRotate(["#26355D","#AF47D2","#DE3163","#1d8147","#FF8F0
 //                        foreground-color:dark-gray
 //                    }
 //                }
-//                body
+//                slot
 //            }
 //        }
 //        @define body3a{
@@ -158,7 +158,7 @@ documentColors:=arrayLeftRotate(["#26355D","#AF47D2","#DE3163","#1d8147","#FF8F0
 //                        foreground-color:dark-gray
 //                    }
 //                }
-//                body
+//                slot
 //            }
 //        }
 //        @define body3b{
@@ -175,7 +175,7 @@ documentColors:=arrayLeftRotate(["#26355D","#AF47D2","#DE3163","#1d8147","#FF8F0
 //                        foreground-color:dark-gray
 //                    }
 //                }
-//                body
+//                slot
 //            }
 //        }
 //        @define body3c{
@@ -191,7 +191,7 @@ documentColors:=arrayLeftRotate(["#26355D","#AF47D2","#DE3163","#1d8147","#FF8F0
 //                        foreground-color:dark-gray
 //                    }
 //                }
-//                body
+//                slot
 //            }
 //        }
 //       rectangle(
@@ -200,20 +200,20 @@ documentColors:=arrayLeftRotate(["#26355D","#AF47D2","#DE3163","#1d8147","#FF8F0
 //        header {
 //            text("${title}"),
 //        }
-//        body
+//        slot
 //    }
 //}
 
 //@define miniPage{
 //    group(background-color:white,draw-contour,size:(50,50),at:center){
-//        body
+//        slot
 //    }
 //}
 
 //
 //@define miniCode{
 //    group(background-color:Gray89,draw-contour,margin:5){
-//        body
+//        slot
 //    }
 //}
 
