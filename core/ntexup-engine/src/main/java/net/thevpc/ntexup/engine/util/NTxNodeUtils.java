@@ -11,7 +11,7 @@ import java.util.List;
 
 public class NTxNodeUtils {
     public static boolean isComponentBody(NTxNode child) {
-        return (child instanceof CtrlNTxNodeName && NTxUtils.isComponentBody(((CtrlNTxNodeName)child).getVarName().asStringValue().get()));
+        return (child instanceof CtrlNTxNodeName && NTxUtils.isComponentSlot(((CtrlNTxNodeName)child).getVarName().asStringValue().get()));
     }
     public static NTxItem ofNTxItem(List<? extends NTxItem> any) {
         if (any == null) {
