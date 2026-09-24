@@ -29,6 +29,7 @@ import org.apache.pdfbox.util.Matrix;
 
 import java.awt.Font;
 import java.awt.FontFormatException;
+import java.awt.FontMetrics;
 import java.awt.font.TextAttribute;
 import java.awt.geom.AffineTransform;
 import java.io.File;
@@ -464,11 +465,74 @@ public class PdfVectorRenderer {
     private static class SafeFontTextDrawer extends PdfBoxGraphics2DFontTextDrawer {
         private final java.util.Set<String> degraded = new java.util.HashSet<>();
         private final java.util.Set<String> warned = new java.util.HashSet<>();
+        private final java.util.Set<String> metricsWarned = new java.util.HashSet<>();
+        private final java.util.Map<String, FontMetrics> fontMetricsCache = new java.util.HashMap<>();
         private final List<File> usable = new ArrayList<>();
         private final Map<String, Font> fileFonts = new HashMap<>();
 
         void installFallbackFiles(List<File> files) {
             usable.addAll(files);
+        }
+
+        @Override
+        public FontMetrics getFontMetrics(Font font, IFontTextDrawerEnv env)
+                throws IOException, FontFormatException {
+            FontMetrics base = super.getFontMetrics(font, env);
+            if (base == null) {
+                return null;
+            }
+            final String kim = font.getFamily() + "." + font.getStyle();
+            try {
+                final PDFont pdf = mapFont(font, env);
+                if (pdf == null) {
+                    return base;
+                }
+                
+if (metricsWarned.add(kim)) {
+    engineLog("SEAM getFontMetrics: use embedded %s (%s) for %s",
+            kim, pdf.getName(), font.getFamily());
+}
+fontMetricsCache.put(kim, new PdfConsistentFontMetrics(font, pdf, base));
+                return fontMetricsCache.get(kim);
+            } catch (IOException | FontFormatException e) {
+                return base;
+            }
+        }
+
+        static class PdfConsistentFontMetrics extends FontMetrics {
+            private final PDFont pdf;
+            private final FontMetrics base;
+
+            PdfConsistentFontMetrics(Font font, PDFont pdf, FontMetrics base) {
+                super(font);
+                this.pdf = pdf;
+                this.base = base;
+            }
+
+            private int em(String s) {
+                try {
+                    return (int) Math.round(pdf.getStringWidth(s) * font.getSize2D() / 1000.0);
+                } catch (IOException e) {
+                    return base.stringWidth(s);
+                }
+            }
+
+            @Override public int stringWidth(String str) { return em(str == null ? "" : str); }
+            @Override public int charsWidth(char[] data, int off, int len) { return em(new String(data, off, len)); }
+            @Override public int charWidth(char ch) { return em(String.valueOf(ch)); }
+            @Override public int charWidth(int codePoint) { return em(new String(Character.toChars(codePoint))); }
+            @Override public int getAscent() { return base.getAscent(); }
+            @Override public int getDescent() { return base.getDescent(); }
+            @Override public int getLeading() { return base.getLeading(); }
+            @Override public int getHeight() { return base.getHeight(); }
+            @Override public int getMaxAscent() { return base.getMaxAscent(); }
+            @Override public int getMaxDescent() { return base.getMaxDescent(); }
+            @Override public int getMaxAdvance() { return base.getMaxAdvance(); }
+            @Override
+            public java.awt.geom.Rectangle2D getStringBounds(String str, java.awt.Graphics context) {
+                int w = em(str == null ? "" : str);
+                return new java.awt.geom.Rectangle2D.Float(0, -getAscent(), w, getHeight());
+            }
         }
 
         @Override
