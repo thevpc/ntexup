@@ -409,7 +409,7 @@ public class NTxCompiler {
                     }
                 });
             }
-        } else if (NTxUtils.isComponentBody(name)) {
+        } else if (NTxUtils.isComponentSlot(name)) {
             //new DispatchCompileNodeVisitor(visitor).visitItem(node,context);
             visitor.visitNode(node, context);
         } else {
@@ -436,7 +436,7 @@ public class NTxCompiler {
                 assigns.add(DefaultNTxNode.ofAssign(expectedParam.name(), expectedParam.value(), context.source()));
             }
         }
-        assigns.add(DefaultNTxNode.ofAssign(NTxUtils.COMPONENT_BODY_VAR_NAME, NElement.ofArray(c.getCallBody().toArray(new NElement[0])), context.source()));
+        assigns.add(DefaultNTxNode.ofAssign(NTxUtils.COMPONENT_SLOT_VAR_NAME, NElement.ofArray(c.getCallBody().toArray(new NElement[0])), context.source()));
 
         List<NElement> callArgs = c.getCallArgs();
 

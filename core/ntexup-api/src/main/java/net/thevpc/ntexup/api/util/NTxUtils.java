@@ -21,7 +21,7 @@ import java.util.List;
 
 public class NTxUtils {
 
-    public static final String COMPONENT_BODY_VAR_NAME = "body";
+    public static final String COMPONENT_SLOT_VAR_NAME = "slot";
     public static final String COMPILER_DECLARATION_PATH = "CompilerDeclarationPath";
 
     public static boolean isOneIndexed(NElement element) {
@@ -570,9 +570,8 @@ public class NTxUtils {
 //        }
     }
 
-    public static boolean isComponentBody(String name) {
-        return NNameFormat.equalsIgnoreFormat(COMPONENT_BODY_VAR_NAME, name)
-                ;
+    public static boolean isComponentSlot(String name) {
+        return NNameFormat.equalsIgnoreFormat(COMPONENT_SLOT_VAR_NAME, name);
     }
 
     public static NTxNode findRootNode(NTxItem bullet) {
