@@ -25,6 +25,11 @@ public class NtxGraphics3DImpl implements NtxGraphics3D {
     private final NTxLight3DImpl light3D = new NTxLight3DImpl();
     private NTxCamera3D camera = NTxCamera3DImpl.defaultCamera();
     private NTx3DMesh mesh = new DefaultNTx3DMesh();
+    private double viewportWidth = -1;
+    private double viewportHeight = -1;
+    private double projectionScale = 1.0;
+    private double projectionCenterX = 0;
+    private double projectionCenterY = 0;
     private final boolean meshEnabled = false;
     private final boolean frontFacingEnabled = false;
     private final boolean frontFacingColouringEnabled = false;
@@ -61,6 +66,66 @@ public class NtxGraphics3DImpl implements NtxGraphics3D {
     public NtxGraphics3DImpl setMesh(NTx3DMesh mesh) {
         this.mesh = mesh == null ? new DefaultNTx3DMesh() : mesh;
         return this;
+    }
+
+    /**
+     * Declares the size of the area the 3D scene is drawn into. When set, the
+     * projected geometry is uniformly scaled about {@code screenOrigin} so that
+     * it fits that area. Without this, world units are mapped 1:1 to canvas
+     * units, which renders millimetre-scale scenes as sub-pixel dots.
+     */
+    public NtxGraphics3DImpl setViewportSize(double width, double height) {
+        this.viewportWidth = width;
+        this.viewportHeight = height;
+        return this;
+    }
+
+    /**
+     * Projects world points to canvas coordinates, centring and uniformly
+     * scaling the scene so that it fits the declared viewport.
+     */
+    private NTxPoint2D[] project(NTxPoint3D[] pts3d, NTxPoint2D origin) {
+        NTxPoint2D[] ret = new NTxPoint2D[pts3d.length];
+        NTxMatrix3D viewMatrix = camera.getViewMatrix();
+        double ox = origin == null ? 0 : origin.x;
+        double oy = origin == null ? 0 : origin.y;
+        for (int i = 0; i < pts3d.length; i++) {
+            NTxPoint3D pCam = viewMatrix.multiplyPoint(pts3d[i]);
+            ret[i] = new NTxPoint2D(
+                    ox + (pCam.x - projectionCenterX) * projectionScale,
+                    oy - (pCam.y - projectionCenterY) * projectionScale
+            );
+        }
+        return ret;
+    }
+
+    /**
+     * Computes the uniform scale and camera-space centre that fit the given
+     * camera-space extent into the declared viewport. Without a declared
+     * viewport size the identity mapping is used, which maps world units 1:1 to
+     * canvas units.
+     */
+    private void computeProjection(double minX, double maxX, double minY, double maxY) {
+        projectionScale = 1.0;
+        projectionCenterX = 0;
+        projectionCenterY = 0;
+        if (viewportWidth <= 0 || viewportHeight <= 0 || minX > maxX || minY > maxY) {
+            return;
+        }
+        double w = maxX - minX;
+        double h = maxY - minY;
+        double s = Double.MAX_VALUE;
+        if (w > 0) {
+            s = Math.min(s, viewportWidth / w);
+        }
+        if (h > 0) {
+            s = Math.min(s, viewportHeight / h);
+        }
+        if (s > 0 && Double.isFinite(s)) {
+            projectionScale = s;
+        }
+        projectionCenterX = (minX + maxX) / 2;
+        projectionCenterY = (minY + maxY) / 2;
     }
 
     @Override
@@ -164,7 +229,11 @@ public class NtxGraphics3DImpl implements NtxGraphics3D {
     public void draw3D(NtxElement3D element3D, NTxPoint2D origin) {
         NTx3DMesh oldMesh = mesh;
         NtxElement3DPrimitive[] primitives = toPrimitives(element3D);
+        double oldScale = projectionScale;
+        double oldCenterX = projectionCenterX;
+        double oldCenterY = projectionCenterY;
         //NTxMatrix3D old = getTransform3D() == null ? NTxMatrix3D.identity() : getTransform3D();
+        final double[] ext = {Double.MAX_VALUE, -Double.MAX_VALUE, Double.MAX_VALUE, -Double.MAX_VALUE};
         DrawCommand[] commands = Arrays.stream(primitives).map(primitive -> {
                     DrawCommand c = new DrawCommand();
                     c.primitive = primitive;
@@ -175,6 +244,12 @@ public class NtxGraphics3DImpl implements NtxGraphics3D {
                         NTxPoint3D pCam = camera.getViewMatrix().multiplyPoint(pWorld);
                         return pCam;
                     }).toArray(NTxPoint3D[]::new);
+                    for (NTxPoint3D pCam : newPoints) {
+                        ext[0] = Math.min(ext[0], pCam.x);
+                        ext[1] = Math.max(ext[1], pCam.x);
+                        ext[2] = Math.min(ext[2], pCam.y);
+                        ext[3] = Math.max(ext[3], pCam.y);
+                    }
                     c.depth = Arrays.stream(newPoints)
                             .mapToDouble(p -> p.z)
                             .min()
@@ -188,6 +263,7 @@ public class NtxGraphics3DImpl implements NtxGraphics3D {
                     }
                 })
                 .toArray(DrawCommand[]::new);
+        computeProjection(ext[0], ext[1], ext[2], ext[3]);
         for (DrawCommand cmd : commands) {
             switch (cmd.primitive.type()) {
                 case LINE: {
@@ -214,6 +290,9 @@ public class NtxGraphics3DImpl implements NtxGraphics3D {
             }
         }
         setMesh(oldMesh);
+        projectionScale = oldScale;
+        projectionCenterX = oldCenterX;
+        projectionCenterY = oldCenterY;
     }
 
 
@@ -231,7 +310,7 @@ public class NtxGraphics3DImpl implements NtxGraphics3D {
 
     private void draw3DElement3DLine(NtxElement3DLine pr, NTxPoint2D origin, DrawCommand cmd) {
         NTxPoint3D[] pts3d = applyTransform(new NTxPoint3D[]{pr.getFrom(), pr.getTo()}, cmd);
-        NTxPoint2D[] pts2d = camera.projectFromWorldToScreen(pts3d, origin);
+        NTxPoint2D[] pts2d = project(pts3d, origin);
         Paint lp = NUtils.firstNonNull(pr.getLinePaint(), pr.getForegroundPaint(), Color.BLACK);
         graphics.draw2D(
                 new NtxElement2DLine(pts2d[0], pts2d[1])
@@ -259,7 +338,7 @@ public class NtxGraphics3DImpl implements NtxGraphics3D {
             double bx3d = p1_3d.x + (p2_3d.x - p1_3d.x) * t + lbl.getOffset3d().x;
             double by3d = p1_3d.y + (p2_3d.y - p1_3d.y) * t + lbl.getOffset3d().y;
             double bz3d = p1_3d.z + (p2_3d.z - p1_3d.z) * t + lbl.getOffset3d().z;
-            NTxPoint2D[] proj = camera.projectFromWorldToScreen(new NTxPoint3D[]{new NTxPoint3D(bx3d, by3d, bz3d)}, origin);
+            NTxPoint2D[] proj = project(new NTxPoint3D[]{new NTxPoint3D(bx3d, by3d, bz3d)}, origin);
             lx = proj[0].x;
             ly = proj[0].y;
         } else {
@@ -450,7 +529,7 @@ public class NtxGraphics3DImpl implements NtxGraphics3D {
         double x = origin.x;
         double y = origin.y;
         NTxPoint3D[] pts3d = applyTransform(new NTxPoint3D[]{pr.getFrom(), pr.getTo()}, cmd);
-        NTxPoint2D[] pts2d = camera.projectFromWorldToScreen(pts3d, origin);
+        NTxPoint2D[] pts2d = project(pts3d, origin);
 
         NTxPoint2D point1 = pts2d[0];
         NTxPoint2D point2 = pts2d[1];
@@ -482,7 +561,7 @@ public class NtxGraphics3DImpl implements NtxGraphics3D {
         NTx3DMesh oldMesh = mesh;
         setMesh(oldMesh.configureElement(pr));
         NTxPoint3D[] pts3d = applyTransform(pr.points(), cmd);
-        NTxPoint2D[] pts2d = camera.projectFromWorldToScreen(pts3d, origin);
+        NTxPoint2D[] pts2d = project(pts3d, origin);
         double[] xx = new double[pts2d.length];
         double[] yy = new double[pts2d.length];
         for (int i = 0; i < xx.length; i++) {
@@ -562,7 +641,7 @@ public class NtxGraphics3DImpl implements NtxGraphics3D {
 
     private void draw3DElement3DPolyline(NtxElement3DPolyline pr, NTxPoint2D origin, DrawCommand cmd) {
         NTxPoint3D[] pts3d = applyTransform(pr.points(), cmd);
-        NTxPoint2D[] pts2d = camera.projectFromWorldToScreen(pts3d, origin);
+        NTxPoint2D[] pts2d = project(pts3d, origin);
         double[] xx = new double[pts3d.length];
         double[] yy = new double[pts3d.length];
         for (int i = 0; i < xx.length; i++) {
@@ -588,7 +667,7 @@ public class NtxGraphics3DImpl implements NtxGraphics3D {
         NTx3DMesh oldMesh = mesh;
         setMesh(oldMesh.configureElement(pr));
         NTxPoint3D[] pts3d = applyTransform(pr.points(), cmd);
-        NTxPoint2D[] pts2d = camera.projectFromWorldToScreen(pts3d, origin);
+        NTxPoint2D[] pts2d = project(pts3d, origin);
         double[] xx = new double[3];
         double[] yy = new double[3];
 

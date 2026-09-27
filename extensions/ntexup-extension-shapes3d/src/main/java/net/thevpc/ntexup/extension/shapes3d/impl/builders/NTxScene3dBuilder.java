@@ -220,6 +220,10 @@ public class NTxScene3dBuilder implements NTxNodeBuilder {
         g3.setCamera(camera);
         double originX = bounds2D.centerX() != null ? bounds2D.centerX() : bounds2D.minX();
         double originY = bounds2D.centerY() != null ? bounds2D.centerY() : bounds2D.minY();
+        if (bounds2D != null && bounds2D.minX() != null && bounds2D.minY() != null
+                && bounds2D.maxX() != null && bounds2D.maxY() != null) {
+            g3.setViewportSize(bounds2D.maxX() - bounds2D.minX(), bounds2D.maxY() - bounds2D.minY());
+        }
         g3.draw3D(g, new NTxPoint2D(originX, originY));
     }
 
