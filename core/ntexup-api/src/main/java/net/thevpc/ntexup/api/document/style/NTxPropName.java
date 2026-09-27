@@ -75,8 +75,68 @@ public class NTxPropName {
     public static final String WRAP="wrap";
     public static final String TEXT_ALIGN="text-align";
     public static final String TEXT_HALIGN="text-halign";
+    /**
+     * Vertical alignment of a bullet marker in its row: {@code center} (default) or {@code top}.
+     * Useful when items are taller than one line, eg {@code bullet-align: top}.
+     */
     public static final String BULLET_ALIGN="bullet-align";
 
+    /**
+     * Shape of the marker of an {@code ul} list. One of {@code circle} (default), {@code square},
+     * {@code rectangle}, {@code round-rectangle}, {@code triangle}, {@code diamond},
+     * {@code hexagon}, {@code pentagon}, {@code octagon}, {@code image} or {@code none}.
+     * <p>Any other registered node type name is accepted as well, eg {@code star}.</p>
+     * <p>Can be defined per nesting level with a {@code -<level>} suffix,
+     * eg {@code bullet-shape-2: square}.</p>
+     */
+    public static final String BULLET_SHAPE="bullet-shape";
+    /**
+     * Image used by bullets of shape {@code image}. Accepts the same values as the
+     * {@code image} node ({@code value} property). Can be defined per nesting level with a
+     * {@code -<level>} suffix, eg {@code bullet-image-3: "icon.png"}.
+     */
+    public static final String BULLET_IMAGE="bullet-image";
+    /**
+     * Size of a bullet marker. A plain number, {@code em} and {@code %} are a ratio of the font
+     * size of the item ({@code 0.4} means 40% of the text height), while an absolute unit
+     * ({@code %P}, {@code px}, {@code pt}, {@code in}, {@code mm} ...) is used as is.
+     * <p>Can be defined per nesting level with a {@code -<level>} suffix,
+     * eg {@code bullet-size-2: 0.3}.</p>
+     */
+    public static final String BULLET_SIZE="bullet-size";
+    /**
+     * Color of a bullet marker, any color expression. Defaults to the text color of the list, so
+     * that markers look like part of the text rather than a foreign accent.
+     * <p>Can be defined per nesting level with a {@code -<level>} suffix,
+     * eg {@code bullet-color-2: red}.</p>
+     */
+    public static final String BULLET_COLOR="bullet-color";
+    /**
+     * Corner radius ratio of a {@code round-rectangle} bullet, between {@code 0} (sharp corners)
+     * and {@code 0.5} (fully rounded ends). Defaults to {@code 0.42}.
+     * <p>Can be defined per nesting level with a {@code -<level>} suffix,
+     * eg {@code bullet-round-2: 0.1}.</p>
+     */
+    public static final String BULLET_ROUND="bullet-round";
+    /**
+     * Marker styles of an {@code ol} list, one per nesting level. Each style is a string of
+     * modes, eg {@code "V1a1"} (default: upper roman, arabic, lower alphabetic) or a list of
+     * styles eg {@code numbering: ["1", "a", "i"]}. A mode is one of {@code 1} (arabic),
+     * {@code a} (lower alphabetic), {@code A} (upper alphabetic), {@code i} (lower roman),
+     * {@code I} or {@code V} (upper roman). Can be defined per nesting level with a
+     * {@code -<level>} suffix, eg {@code numbering-2: "1"}.
+     */
+    public static final String NUMBERING="numbering";
+    /**
+     * When {@code true}, nested markers of an {@code ol} list include the index of their parent
+     * item, eg {@code 1.1} instead of {@code 1}. Defaults to {@code false}.
+     */
+    public static final String NUMBERING_PARENT="numbering-parent";
+    /**
+     * When {@code true}, the items of a list are spread over the available height instead of
+     * being packed at the top.
+     */
+    public static final String DISTRIBUTE="distribute";
 
     public static final String FONT_FAMILY="font-family";
     public static final String FONT_SIZE="font-size";

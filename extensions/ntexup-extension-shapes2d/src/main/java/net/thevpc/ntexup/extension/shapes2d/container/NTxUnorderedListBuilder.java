@@ -26,6 +26,7 @@ public class NTxUnorderedListBuilder implements NTxNodeBuilder {
     public void build(NTxNodeBuilderContext builderContext) {
         builderContext.id(NTxNodeType.UNORDERED_LIST)
                 .alias("ul")
+                .parseParam(NTxListHelper::parseListParams)
                 .selfBounds2D(this::selfBounds)
                 .renderComponent(this::renderMain)
         ;
@@ -67,9 +68,11 @@ public class NTxUnorderedListBuilder implements NTxNodeBuilder {
         List<NTxListHelper.NodeWithIndent> all = NTxListHelper.build(rendererContext.node(), false, rendererContext);
         for (int i = 0; i < all.size(); i++) {
             NTxListHelper.NodeWithIndent a = all.get(i);
-            a.bullet.invalidateRenderCache();
             a.child.invalidateRenderCache();
-            rendererContext.resolveNode(a.bullet, a.bulletBounds).render();
+            if (a.bullet != null) {
+                a.bullet.invalidateRenderCache();
+                rendererContext.resolveNode(a.bullet, a.bulletBounds).render();
+            }
             rendererContext.resolveNode(a.child, a.childBounds).render();
         }
         if (!rendererContext.isDry()) {
