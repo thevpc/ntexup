@@ -167,7 +167,7 @@ docker run --rm eclipse-temurin:17-jre \
 
 ## 4. Pinning your test to a fixed engine version
 
-Engine version is `NTxEngine.CURRENT_VERSION` (`"1.0.0.0"`). When running tests against a local build:
+Engine version is `NTxEngine.CURRENT_VERSION` (`"1.1.0.0"`). When running tests against a local build:
 
 ```bash
 mvn install                                  # installs ntexup-api + engine into ~/.m2

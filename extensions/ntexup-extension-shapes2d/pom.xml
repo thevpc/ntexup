@@ -3,12 +3,12 @@
     <parent>
         <groupId>net.thevpc.xprojects.builders</groupId>
         <artifactId>ntexup-builder</artifactId>
-        <version>1.0.0.0</version>
+        <version>1.1.0.0</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
     <groupId>net.thevpc.ntexup</groupId>
     <artifactId>ntexup-extension-shapes2d</artifactId>
-    <version>1.0.0.0</version>
+    <version>1.1.0.0</version>
     <packaging>jar</packaging>
     <name>ntexup :: Extension Shapes 2D OBJ</name>
     <description>SVG</description>
@@ -55,8 +55,8 @@
     </licenses>
 
     <dependencies>
-        <dependency><groupId>net.thevpc.ntexup</groupId><artifactId>ntexup-api</artifactId><version>1.0.0.0</version></dependency>
-        <dependency><groupId>net.thevpc.ntexup</groupId><artifactId>ntexup-lib-geometry2d</artifactId><version>1.0.0.0</version></dependency>
+        <dependency><groupId>net.thevpc.ntexup</groupId><artifactId>ntexup-api</artifactId><version>1.1.0.0</version></dependency>
+        <dependency><groupId>net.thevpc.ntexup</groupId><artifactId>ntexup-lib-geometry2d</artifactId><version>1.1.0.0</version></dependency>
     </dependencies>
     <build>
         <plugins>

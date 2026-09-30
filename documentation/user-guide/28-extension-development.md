@@ -78,17 +78,17 @@ net.thevpc.ntexup.extension.tutorials.myshape.NTxMyShapeBuilder
 <parent>
     <groupId>net.thevpc.xprojects.builders</groupId>
     <artifactId>ntexup-builder</artifactId>
-    <version>1.0.0.0</version>
+    <version>1.1.0.0</version>
     <relativePath>../../pom.xml</relativePath>
 </parent>
 <groupId>net.thevpc.ntexup</groupId>
 <artifactId>ntexup-extension-tutorial-myshape</artifactId>
-<version>1.0.0.0</version>
+<version>1.1.0.0</version>
 <dependencies>
     <dependency>
         <groupId>net.thevpc.ntexup</groupId>
         <artifactId>ntexup-api</artifactId>
-        <version>1.0.0.0</version>
+        <version>1.1.0.0</version>
     </dependency>
 </dependencies>
 ```
@@ -154,7 +154,7 @@ nuts install net.thevpc.ntexup:ntexup-extension-tutorial-myshape
 
 ## Packaging & Versioning
 
-- Target the module version `1.0.0.0` (matching the ntexup API).
+- Target the module version `1.1.0.0` (matching the ntexup API).
 - Declare the module in the root `pom.xml` `<modules>`.
 - Use the `net.thevpc.ntexup` group and the `/Office/ntexup` Nuts category.
 

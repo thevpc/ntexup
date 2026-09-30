@@ -176,7 +176,7 @@ documentAuthorEmail = "https://github.com/thevpc/ntexup"
 documentAuthorAffiliation = "Open Source Community"
 documentChapter = "Chapter 1"
 documentDate = "2026-09-13"
-documentVersion = "v1.0.0.0"
+documentVersion = "v1.1.0.0"
 
 // (B) Load styles (includes the theme + local custom definitions)
 include("01-styles")

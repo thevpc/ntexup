@@ -47,7 +47,7 @@ documentTitle = "ntexup"
 documentSubtitle = "A declarative, text-based document & presentation generator"
 documentAuthor = "thevpc"
 documentDate = "2026-09-13"
-documentVersion = "v1.0.0.0"
+documentVersion = "v1.1.0.0"
 ```
 
 ### Content Slide

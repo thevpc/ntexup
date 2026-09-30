@@ -53,7 +53,7 @@ Top-level directory (`ntexup/`):
 
 | Path | Contents |
 |------|----------|
-| `pom.xml` | Reactor root, parent `net.thevpc.xprojects.builders:ntexup-builder:1.0.0.0`, lists every module. **Add new modules here.** |
+| `pom.xml` | Reactor root, parent `net.thevpc.xprojects.builders:ntexup-builder:1.1.0.0`, lists every module. **Add new modules here.** |
 | `core/` | Engine + API + desktop UI/CLI |
 | `lib/` | **Neutral shared libraries** (geometry). Nothing depends on extensions here. |
 | `extensions/` | Java plugins (`ntexup-extension-*`) loaded at runtime via `import()`. |
@@ -64,7 +64,7 @@ Top-level directory (`ntexup/`):
 | `app/` | Thin launcher apps (Nuts entry points) + experimental web viewer. |
 | `documentation/` | This guide, the user guide (`user-guide/`), agent skills (`agents/`), specs (`specifications/`). |
 
-All released artifacts share the version **`1.0.0.0`**. The enforced build baseline is **Java 17** (`maven.compiler.release`). Build the whole reactor with `mvn verify`.
+All released artifacts share the version **`1.1.0.0`**. The enforced build baseline is **Java 17** (`maven.compiler.release`). Build the whole reactor with `mvn verify`.
 
 ---
 

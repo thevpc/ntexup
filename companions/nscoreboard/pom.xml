@@ -3,19 +3,19 @@
     <parent>
         <groupId>net.thevpc.xprojects.builders</groupId>
         <artifactId>ntexup-builder</artifactId>
-        <version>1.0.0.0</version>
+        <version>1.1.0.0</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
     <groupId>net.thevpc.net</groupId>
     <artifactId>nscoreboard</artifactId>
-    <version>1.0.0.0</version>
+    <version>1.1.0.0</version>
     <packaging>jar</packaging>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <exec.mainClass>net.thevpc.net.nscoreboard.NScoreboard</exec.mainClass>
     </properties>
     <dependencies>
-        <dependency><groupId>net.thevpc.nuts</groupId><artifactId>nuts</artifactId><version>1.0.0</version></dependency>
+        <dependency><groupId>net.thevpc.nuts</groupId><artifactId>nuts</artifactId><version>1.1.0</version></dependency>
     </dependencies>
 
 </project>

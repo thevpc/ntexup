@@ -200,7 +200,7 @@ Groups: geometry/layout (`at`, `position`, `size`, `origin`, `margin`, `padding`
 ## 10. Golden rules
 
 1. Extensions depend on `ntexup-api` (+ 3rd-party). Never on another extension. Put shared code in `lib/`.
-2. Every new module goes in the root `pom.xml` `<modules>`; version stays `1.0.0.0`.
+2. Every new module goes in the root `pom.xml` `<modules>`; version stays `1.1.0.0`.
 3. New visual elements use `NTxNodeBuilder` — don't hand-write parser+renderer pairs.
 4. Use `NTxValue`/`NTxValueByName` for property coercion; use `selfBounds2D()` for geometry, never hardcoded pixels.
 5. Respect lazy compilation: syntax errors inside a `page{}` may not surface until that page renders — tests must walk all pages.

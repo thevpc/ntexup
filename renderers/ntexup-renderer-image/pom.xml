@@ -3,12 +3,12 @@
     <parent>
         <groupId>net.thevpc.xprojects.builders</groupId>
         <artifactId>ntexup-builder</artifactId>
-        <version>1.0.0.0</version>
+        <version>1.1.0.0</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
     <groupId>net.thevpc.ntexup</groupId>
     <artifactId>ntexup-renderer-image</artifactId>
-    <version>1.0.0.0</version>
+    <version>1.1.0.0</version>
     <packaging>jar</packaging>
     <name>ntexup :: Renderer Image</name>
     <properties>
@@ -54,7 +54,7 @@
     </licenses>
 
     <dependencies>
-        <dependency><groupId>net.thevpc.ntexup</groupId><artifactId>ntexup-api</artifactId><version>1.0.0.0</version></dependency>
+        <dependency><groupId>net.thevpc.ntexup</groupId><artifactId>ntexup-api</artifactId><version>1.1.0.0</version></dependency>
     </dependencies>
     <build>
         <plugins>

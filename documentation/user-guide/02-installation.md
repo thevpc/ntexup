@@ -65,8 +65,8 @@ The resolved coordinate is then downloaded at runtime by ntexup **through the Nu
 > For reproducibility, prefer the full coordinate. Artifacts are versioned; pinning them archives your document against future changes:
 
 ```tson
-import("net.thevpc.ntexup:ntexup-extension-common-functions:1.0.0.0")
-import("net.thevpc.ntexup:ntexup-extension-shapes2d:1.0.0.0")
+import("net.thevpc.ntexup:ntexup-extension-common-functions:1.1.0.0")
+import("net.thevpc.ntexup:ntexup-extension-shapes2d:1.1.0.0")
 ```
 
 Common extension names: `common-functions` (color functions), `shapes2d`, `shapes3d`, `plantuml`, `plot2d`, `latex`, `svg` (SVG rasterization), `animated-gif` (animated GIFs), `presenters`.

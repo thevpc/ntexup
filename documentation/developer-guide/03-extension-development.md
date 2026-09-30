@@ -55,18 +55,18 @@ extensions/ntexup-extension-<name>/
 <parent>
     <groupId>net.thevpc.xprojects.builders</groupId>
     <artifactId>ntexup-builder</artifactId>
-    <version>1.0.0.0</version>
+    <version>1.1.0.0</version>
     <relativePath>../../pom.xml</relativePath>
 </parent>
 <groupId>net.thevpc.ntexup</groupId>
 <artifactId>ntexup-extension-myfeature</artifactId>
-<version>1.0.0.0</version>
+<version>1.1.0.0</version>
 <dependencies>
     <!-- ONLY the API. Never another extension. -->
     <dependency>
         <groupId>net.thevpc.ntexup</groupId>
         <artifactId>ntexup-api</artifactId>
-        <version>1.0.0.0</version>
+        <version>1.1.0.0</version>
     </dependency>
     <!-- + third-party libs you need (plantuml, jfreechart, ...) -->
 </dependencies>

@@ -64,7 +64,7 @@ documentSubtitle = """
                  """
 documentAuthor = "thevpc"
 documentDate = "2026-09-13"
-documentVersion = "v1.0.0.0"
+documentVersion = "v1.1.0.0"
 
 include("01-styles")
 include("02-pages")
