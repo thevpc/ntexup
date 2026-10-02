@@ -3,6 +3,7 @@ package net.thevpc.ntexup.engine.base.nodes.text;
 import net.thevpc.ntexup.api.engine.NTxNodeBuilderContext;
 import net.thevpc.ntexup.api.renderer.NTxRendererContext;
 import net.thevpc.ntexup.api.renderer.text.*;
+import net.thevpc.ntexup.api.util.NTxColors;
 import net.thevpc.nuts.collections.NCharQueue;
 import net.thevpc.nuts.util.NStringUtils;
 
@@ -15,8 +16,10 @@ class NTxTextTokenParseHelper {
     private NTxTextRendererFlavorParseContext parseContext;
     private Set<String> parsePrefixes;
     private int parsePrefixesMaxLength;
+    private NTxRendererContext rendererContext;
 
     public NTxTextTokenParseHelper(NTxRendererContext rendererContext, NCharQueue cq, NTxNodeBuilderContext builderContext) {
+        this.rendererContext = rendererContext;
         this.flavors = rendererContext.engine().textRendererFlavors();
         this.builderContext = builderContext;
         this.parseContext = new MyNTxTextRendererFlavorParseContext(rendererContext, cq);
@@ -24,6 +27,7 @@ class NTxTextTokenParseHelper {
     }
 
     public NTxTextTokenParseHelper(NTxTextRendererFlavorParseContext parseContext, NTxNodeBuilderContext builderContext) {
+        rendererContext=parseContext.rendererContext();
         this.flavors = parseContext.rendererContext().engine().textRendererFlavors();
         this.builderContext = builderContext;
         this.parseContext = parseContext;
@@ -103,6 +107,9 @@ class NTxTextTokenParseHelper {
                     }
                     break;
                 }
+                case '`': {
+                    return readBackTick();
+                }
                 case '_': {
                     if (parseContext.peek(2).equals("__")) {
                         return readItalic();
@@ -153,8 +160,17 @@ class NTxTextTokenParseHelper {
         String bounds = NStringUtils.repeat('#', col);
         return readBounded(bounds, new String[]{bounds + "#"}, tt -> {
             NTxTextOptions o = tt.options();
-            if (o.foregroundColorIndex == null) {
-                o.foregroundColorIndex = col-1;
+            if (o.foregroundColor == null) {
+                o.foregroundColor = NTxColors.resolveDefaultColorByIndex(col, null, rendererContext);
+            }
+        });
+    }
+
+    private List<NTxTextToken> readBackTick() {
+        return readBounded("`",  tt -> {
+            NTxTextOptions o = tt.options();
+            if (o.foregroundColor == null) {
+                o.foregroundColor = NTxColors.resolveDefaultColorByIndex(3, null, rendererContext);
             }
         });
     }
@@ -210,7 +226,9 @@ class NTxTextTokenParseHelper {
                 String p2 = parseContext.peek(2);
                 if (p2.equals("[[") || p2.equals("\\(") || p2.equals("##") || p2.equals("**") || p2.equals("__")) {
                     stop = true;
-                } else {
+                }else if (p2.startsWith("`")) {
+                    stop = true;
+                }else{
                     sb.append(parseContext.read());
                 }
             }

@@ -16,8 +16,6 @@ import java.text.AttributedString;
 public class NTxTextOptions implements Cloneable, NBlankable {
     public NtxFontInfo defaultFont;
     public Paint backgroundColor;
-    public Integer foregroundColorIndex;
-    public Integer backgroundColorIndex;
     public Paint foregroundColor;
     public Boolean bold;
     public Boolean italic;
@@ -33,63 +31,9 @@ public class NTxTextOptions implements Cloneable, NBlankable {
 
     @Override
     public boolean isBlank() {
-        if (backgroundColor != null) {
-            return false;
-        }
-        if (foregroundColorIndex != null) {
-            return false;
-        }
-        if (backgroundColorIndex != null) {
-            return false;
-        }
-        if (bold != null) {
-            return false;
-        }
-        if (italic != null) {
-            return false;
-        }
-        if (fontSize != null) {
-            return false;
-        }
-        if (fontFamily != null) {
-            return false;
-        }
-        if (underlined != null) {
-            return false;
-        }
-        if (strikeThrough != null) {
-            return false;
-        }
-        if (baseFont != null) {
-            return false;
-        }
-        if (shadow != null) {
-            return false;
-        }
-        if (stroke != null) {
-            return false;
-        }
-
-        return true;
+        return !isStyled();
     }
 
-    public Integer getBackgroundColorIndex() {
-        return backgroundColorIndex;
-    }
-
-    public NTxTextOptions setBackgroundColorIndex(Integer backgroundColorIndex) {
-        this.backgroundColorIndex = backgroundColorIndex;
-        return this;
-    }
-
-    public Integer getForegroundColorIndex() {
-        return foregroundColorIndex;
-    }
-
-    public NTxTextOptions setForegroundColorIndex(Integer foregroundColorIndex) {
-        this.foregroundColorIndex = foregroundColorIndex;
-        return this;
-    }
 
     public Boolean getBold() {
         return bold;
@@ -202,13 +146,10 @@ public class NTxTextOptions implements Cloneable, NBlankable {
         if (strikeThrough != null) {
             return true;
         }
-        if (foregroundColorIndex != null) {
-            return true;
-        }
-        if (backgroundColorIndex != null) {
-            return true;
-        }
         if (foregroundColor != null) {
+            return true;
+        }
+        if (backgroundColor != null) {
             return true;
         }
         if (bold != null) {
@@ -223,10 +164,13 @@ public class NTxTextOptions implements Cloneable, NBlankable {
         if (fontFamily != null) {
             return true;
         }
-        if (backgroundColor != null) {
+        if (shadow != null) {
             return true;
         }
-        if (shadow != null) {
+        if (baseFont != null) {
+            return true;
+        }
+        if (stroke != null) {
             return true;
         }
         return false;

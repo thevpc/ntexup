@@ -27,6 +27,7 @@ public class NTxUtils {
     public static boolean isOneIndexed(NElement element) {
         return false;
     }
+
     public static boolean hasCompilerDeclarationPath(NElement element) {
         return getCompilerDeclarationPath(element) != null;
     }
@@ -272,7 +273,7 @@ public class NTxUtils {
     }
 
     public static Double addDouble(Number a, Number b) {
-        if (a == null && b==null) {
+        if (a == null && b == null) {
             return null;
         }
         if (a == null) {
@@ -405,10 +406,10 @@ public class NTxUtils {
     }
 
     public static String uid(NElement id) {
-        if(id==null){
+        if (id == null) {
             return "";
         }
-        return  uid(id.asStringValue().orElse(""));
+        return uid(id.asStringValue().orElse(""));
     }
 
     public static String uid(String id) {
@@ -423,9 +424,7 @@ public class NTxUtils {
     }
 
     public static Paint resolveForegroundColor(NTxTextOptions options, NTxRendererContext ctx) {
-        if (options.foregroundColorIndex != null) {
-            return NTxColors.resolveDefaultColorByIndex(options.foregroundColorIndex, null, ctx);
-        } else if (options.foregroundColor instanceof Color) {
+        if (options.foregroundColor instanceof Color) {
             return options.foregroundColor;
         }
         return null;

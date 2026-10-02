@@ -237,12 +237,6 @@ public class NTxEquationBuilder implements NTxNodeBuilder {
         float size = (float) (fontSize);
         TeXIcon icon = formula.createTeXIcon(TeXConstants.STYLE_DISPLAY, size);
         icon.setInsets(new Insets(0, 0, 0, 0));
-        Color foregroundColor = null;
-        if (options.foregroundColorIndex != null) {
-            foregroundColor = NTxColors.resolveDefaultColorByIndex(options.foregroundColorIndex, null, ctx);
-        } else if (options.foregroundColor instanceof Color) {
-            foregroundColor = (Color) options.foregroundColor;
-        }
         Color fg = NTxUtils.paintAsColor(NTxUtils.resolveForegroundColor(options, ctx));
         if (fg == null) {
             fg = NTxUtils.paintAsColor(ctx.getForegroundColor(true));
