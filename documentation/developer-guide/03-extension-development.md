@@ -364,7 +364,7 @@ Ground truth in this repo:
 
 And the negative list — cross-extension `pom.xml` facts (verified):
 - `animated-gif` depends only on `ntexup-api` + `animated-gif-lib`
-- `common-functions` → `ntexup-api` only (pure)
+- `stdlib` → `ntexup-api` only (pure)
 - `latex` → `ntexup-api` + jlatexmath
 - `plantuml` → `ntexup-api` + plantuml + guava
 - `plot2d` → `ntexup-api` + jfreechart

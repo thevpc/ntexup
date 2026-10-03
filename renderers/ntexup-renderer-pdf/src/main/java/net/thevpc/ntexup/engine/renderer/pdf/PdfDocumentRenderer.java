@@ -4,10 +4,6 @@
  */
 package net.thevpc.ntexup.engine.renderer.pdf;
 
-import com.itextpdf.text.Rectangle;
-import com.lowagie.text.*;
-import com.lowagie.text.Image;
-import com.lowagie.text.pdf.*;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -30,6 +26,8 @@ import net.thevpc.nuts.util.NIllegalArgumentException;
 import net.thevpc.nuts.io.NIOException;
 import net.thevpc.nuts.io.NPath;
 import net.thevpc.nuts.text.NMsg;
+import org.openpdf.text.*;
+import org.openpdf.text.pdf.*;
 import org.xhtmlrenderer.pdf.ITextRenderer;
 
 /**
@@ -96,7 +94,7 @@ public class PdfDocumentRenderer extends NTxDocumentStreamRendererBase implement
             float marginTop = config.getMarginTop() >= 0 ? config.getMarginTop() : 0;
             float marginBottom = config.getMarginBottom() >= 0 ? config.getMarginBottom() : 0;
 
-            com.lowagie.text.Rectangle pdfPageSize = resolvePageSize(config);
+            Rectangle pdfPageSize = resolvePageSize(config);
             float usableWidth = pdfPageSize.getWidth() - marginLeft - marginRight - 10f;
             float usableHeight = pdfPageSize.getHeight() - marginTop - marginBottom - 10f;
 
@@ -202,7 +200,6 @@ public class PdfDocumentRenderer extends NTxDocumentStreamRendererBase implement
             }
 
         } catch (Exception ex) {
-            ex.printStackTrace();
             throw new NIOException(ex);
         } finally {
             if (pdfDocument.isOpen()) {
@@ -214,10 +211,10 @@ public class PdfDocumentRenderer extends NTxDocumentStreamRendererBase implement
         }
     }
 
-    private com.lowagie.text.Rectangle resolvePageSize(NTxDocumentStreamRendererConfig config) {
-        com.lowagie.text.Rectangle base;
+    private Rectangle resolvePageSize(NTxDocumentStreamRendererConfig config) {
+        Rectangle base;
         if (config.getPageWidth() > 0 && config.getPageHeight() > 0) {
-            base = new com.lowagie.text.Rectangle(config.getPageWidth(), config.getPageHeight());
+            base = new Rectangle(config.getPageWidth(), config.getPageHeight());
         } else {
             base = PageSize.A4;
         }

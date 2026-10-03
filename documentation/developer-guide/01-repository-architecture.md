@@ -151,7 +151,7 @@ Nine plugin modules. Each is a Maven module depending on `ntexup-api` (only `sha
 | `ntexup-extension-latex` | `eq`/`equation` builder with inline `[[ eq: ... ]]` text flavor | jlatexmath |
 | `ntexup-extension-svg` | `NTxImageTypeRendererFactory` for SVG images (Salamander rasterizer) | svg-salamander |
 | `ntexup-extension-animated-gif` | `NTxImageTypeRendererFactory` for animated GIFs | animated-gif-lib |
-| `ntexup-extension-common-functions` | 15 `NTxFunction`s (color transforms, array rotations) | none |
+| `ntexup-extension-stdlib` | 15 `NTxFunction`s (color transforms, array rotations) | none |
 | `ntexup-extension-presenters` | `ScoreBoardBuilder` (tournament/score presenter) | none |
 
 Section 3 of [03-extension-development.md](03-extension-development.md) explains module structure and the **complete list of SPI files**.

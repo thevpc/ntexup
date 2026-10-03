@@ -41,4 +41,16 @@ public class NTxPoint {
                 (root ? NTxYLen.ofRoot(y) : NTxYLen.ofParent(y)).value(parentBounds, screenBounds)
         );
     }
+
+    public double x() {
+        return x;
+    }
+
+    public double y() {
+        return y;
+    }
+
+    public boolean root() {
+        return root;
+    }
 }

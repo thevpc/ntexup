@@ -78,7 +78,7 @@ documentColorAccent = 1   // 0..11
 
 ## Color Functions
 
-From the `common-functions` extension (`import("common-functions")`):
+From the `stdlib` extension (`import("stdlib")`):
 
 | Function | Usage |
 |----------|-------|

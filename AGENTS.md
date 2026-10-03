@@ -106,7 +106,7 @@ public class MyFunction implements NTxFunction {
 
 Context API: `size()`, `arg(i)`, `evalArg(i)`, `evalArg(i, converter, name, errSupplier)`, `checkTooFewArgs/TooManyArgs`, `scopedContext()`, `log(...)`.
 Register: `META-INF/services/net.thevpc.ntexup.api.extension.NTxFunction`.
-Reference: `NTxFunctionEither` and the color functions in `ntexup-extension-common-functions`.
+Reference: `NTxFunctionEither` and the color functions in `ntexup-extension-stdlib`.
 Do **not** re-implement control flow (`include/import/for/if/define`) as functions — that's the compiler's job.
 
 ---

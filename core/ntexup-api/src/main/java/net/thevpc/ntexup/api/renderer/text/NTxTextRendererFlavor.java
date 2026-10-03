@@ -15,7 +15,9 @@ public interface NTxTextRendererFlavor {
 
     void buildText(String text, NTxTextOptions options, NTxRendererContext ctx, NTxTextRendererBuilder builder);
 
-    List<String> getParsePrefixes();
+    List<String> parsePrefixes();
 
     List<NTxTextToken> parseTokens(NTxTextRendererFlavorParseContext ctx);
+
+    String parseSuffix(String prefix);
 }

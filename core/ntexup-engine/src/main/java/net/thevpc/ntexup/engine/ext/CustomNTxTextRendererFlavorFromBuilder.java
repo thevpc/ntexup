@@ -42,7 +42,7 @@ class CustomNTxTextRendererFlavorFromBuilder implements NTxTextRendererFlavor {
 
 
     @Override
-    public List<String> getParsePrefixes() {
+    public List<String> parsePrefixes() {
         return parsePrefixes;
     }
 
@@ -55,6 +55,11 @@ class CustomNTxTextRendererFlavorFromBuilder implements NTxTextRendererFlavor {
             }
         }
         return ctx.parseDefault(this.ctx.idAndAliases(), new String[0], null);
+    }
+
+    @Override
+    public String parseSuffix(String prefix) {
+        return "]]";
     }
 
     @Override

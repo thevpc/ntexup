@@ -666,7 +666,7 @@ Agent convention for path hygiene:
 Modern themes already import these at the top of the theme `.ntx` file. You do NOT need to re-import unless writing a theme from scratch:
 
 ```tson
-import("common-functions")
+import("stdlib")
 import("plantuml")
 import("animated-gif")
 import("svg")

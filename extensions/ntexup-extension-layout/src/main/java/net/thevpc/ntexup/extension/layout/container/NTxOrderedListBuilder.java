@@ -1,0 +1,82 @@
+/*
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
+ */
+package net.thevpc.ntexup.extension.layout.container;
+
+import net.thevpc.ntexup.api.document.elem2d.NTxBounds2D;
+import net.thevpc.ntexup.api.document.node.NTxNode;
+import net.thevpc.ntexup.api.document.node.NTxNodeType;
+import net.thevpc.ntexup.api.document.style.NTxProperties;
+import net.thevpc.ntexup.api.eval.NTxValueByName;
+import net.thevpc.ntexup.api.extension.NTxNodeBuilder;
+import net.thevpc.ntexup.api.engine.NTxNodeBuilderContext;
+import net.thevpc.ntexup.api.renderer.NTxRendererContext;
+import net.thevpc.ntexup.extension.layout.container.util.NTxListHelper;
+
+import java.util.List;
+
+/**
+ * @author vpc
+ */
+public class NTxOrderedListBuilder implements NTxNodeBuilder {
+    NTxProperties defaultStyles = new NTxProperties();
+    @Override
+    public void build(NTxNodeBuilderContext builderContext) {
+        builderContext.id(NTxNodeType.ORDERED_LIST)
+                .alias("ol")
+                .parseParam(NTxListHelper::parseListParams)
+                .selfBounds2D(this::selfBounds)
+                .renderComponent(this::renderMain)
+                ;
+    }
+
+    public NTxBounds2D selfBounds(NTxRendererContext rendererContext) {
+        rendererContext = rendererContext.withDefaultStyles(defaultStyles);
+        NTxNode node = rendererContext.node();
+        List<NTxListHelper.NodeWithIndent> all = NTxListHelper.build(node, true, rendererContext);
+        NTxBounds2D expectedBounds = null;
+        for (NTxListHelper.NodeWithIndent a : all) {
+            if (expectedBounds == null) {
+                expectedBounds = a.rowBounds;
+            } else {
+                expectedBounds = expectedBounds.expand(a.rowBounds);
+            }
+        }
+        if (expectedBounds == null) {
+            expectedBounds = rendererContext.defaultSelfBounds2D();
+        }
+        net.thevpc.ntexup.api.document.elem2d.NTxMargin padding = NTxValueByName.getPadding(rendererContext);
+        if (padding != null && !padding.isZero()) {
+            expectedBounds = NTxBounds2D.ofWidth(
+                    expectedBounds.minX() - padding.getLeft(),
+                    expectedBounds.minY() - padding.getTop(),
+                    expectedBounds.widthX() + padding.getLeft() + padding.getRight(),
+                    expectedBounds.widthY() + padding.getTop() + padding.getBottom()
+            );
+        }
+        return expectedBounds;
+    }
+
+    public void renderMain(NTxRendererContext rendererContext) {
+        rendererContext = rendererContext.withDefaultStyles(defaultStyles);
+        NTxBounds2D selfBounds = rendererContext.selfBounds2D();
+        if (!rendererContext.isDry()) {
+            rendererContext.paintBackground(selfBounds);
+        }
+        List<NTxListHelper.NodeWithIndent> all = NTxListHelper.build(rendererContext.node(),true, rendererContext);
+        for (int i = 0; i < all.size(); i++) {
+            NTxListHelper.NodeWithIndent a = all.get(i);
+            a.child.invalidateRenderCache();
+            if (a.bullet != null) {
+                a.bullet.invalidateRenderCache();
+                rendererContext.resolveNode(a.bullet, a.bulletBounds).render();
+            }
+            rendererContext.resolveNode(a.child, a.childBounds).render();
+        }
+        if (!rendererContext.isDry()) {
+            rendererContext.paintBorderLine(selfBounds);
+        }
+    }
+
+}

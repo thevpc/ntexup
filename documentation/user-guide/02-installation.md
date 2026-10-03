@@ -46,7 +46,7 @@ This compiles and displays the full ntexup documentation slide deck.
 Extensions are loaded with `import(...)`:
 
 ```tson
-import("common-functions", "shapes2d", "plantuml")
+import("stdlib", "shapes2d", "plantuml")
 ```
 
 `import` accepts a **dependency coordinate (GAV)** — `groupId:artifactId:version` — or a shorthand. The shorthand is resolved with these rules (from `DefaultNTxEngine`):
@@ -56,8 +56,8 @@ import("common-functions", "shapes2d", "plantuml")
 3. **Missing version** → defaults to ntexup's own current version.
 
 ```tson
-import("common-functions")
-// resolves to  net.thevpc.ntexup:ntexup-extension-common-functions:<version>
+import("stdlib")
+// resolves to  net.thevpc.ntexup:ntexup-extension-stdlib:<version>
 ```
 
 The resolved coordinate is then downloaded at runtime by ntexup **through the Nuts package manager** (via its dynamic classloader) in the current workspace.
@@ -65,11 +65,11 @@ The resolved coordinate is then downloaded at runtime by ntexup **through the Nu
 > For reproducibility, prefer the full coordinate. Artifacts are versioned; pinning them archives your document against future changes:
 
 ```tson
-import("net.thevpc.ntexup:ntexup-extension-common-functions:1.1.0.0")
+import("net.thevpc.ntexup:ntexup-extension-stdlib:1.1.0.0")
 import("net.thevpc.ntexup:ntexup-extension-shapes2d:1.1.0.0")
 ```
 
-Common extension names: `common-functions` (color functions), `shapes2d`, `shapes3d`, `plantuml`, `plot2d`, `latex`, `svg` (SVG rasterization), `animated-gif` (animated GIFs), `presenters`.
+Common extension names: `stdlib` (color functions), `shapes2d`, `shapes3d`, `plantuml`, `plot2d`, `latex`, `svg` (SVG rasterization), `animated-gif` (animated GIFs), `presenters`.
 
 > Building ntexup itself from source requires Maven + JDK 17 and is covered in the **developer documentation**, not this guide.
 

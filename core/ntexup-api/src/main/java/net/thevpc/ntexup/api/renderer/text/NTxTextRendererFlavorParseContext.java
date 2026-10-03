@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.function.Function;
 
 public interface NTxTextRendererFlavorParseContext {
+    NTxTextRendererFlavorParseContext withText(String newText);
+
     NTxRendererContext rendererContext();
 
     boolean hasNext();

@@ -91,7 +91,7 @@ public class NTxSize implements NToElement {
         return new NTxSize(Type.PAGE, size, 0);
     }
 
-    private NTxSize(Type type, double value, double value2) {
+    public NTxSize(Type type, double value, double value2) {
         this.type = type;
         this.value = value;
         this.value2 = value2;
@@ -104,6 +104,11 @@ public class NTxSize implements NToElement {
     public double value() {
         return value;
     }
+
+    public double value2() {
+        return value2;
+    }
+
     public double percent() {
         switch (type) {
             case PARENT:

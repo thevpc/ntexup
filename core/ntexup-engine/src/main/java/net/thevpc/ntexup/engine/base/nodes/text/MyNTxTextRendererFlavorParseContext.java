@@ -23,6 +23,11 @@ class MyNTxTextRendererFlavorParseContext implements NTxTextRendererFlavorParseC
     }
 
     @Override
+    public NTxTextRendererFlavorParseContext withText(String newText) {
+        return new MyNTxTextRendererFlavorParseContext(rendererContext, NCharQueue.of(newText.toCharArray()));
+    }
+
+    @Override
     public NTxRendererContext rendererContext() {
         return rendererContext;
     }

@@ -104,7 +104,7 @@ background: (ok ? "green" : "red")
 | `either(a, b)` | first non-null argument |
 | `min`, `max` | numeric helpers |
 
-### Color functions (`import("common-functions")`)
+### Color functions (`import("stdlib")`)
 
 | Function | Description |
 |----------|-------------|

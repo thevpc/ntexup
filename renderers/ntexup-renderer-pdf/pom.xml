@@ -56,8 +56,8 @@
     <dependencies>
         <dependency><groupId>net.thevpc.ntexup</groupId><artifactId>ntexup-api</artifactId><version>1.1.0.0</version></dependency>
         <dependency><groupId>net.thevpc.ntexup</groupId><artifactId>ntexup-renderer-html</artifactId><version>1.1.0.0</version></dependency>
-        <dependency><groupId>org.xhtmlrenderer</groupId><artifactId>flying-saucer-core</artifactId><version>9.1.22</version></dependency>
-        <dependency><groupId>org.xhtmlrenderer</groupId><artifactId>flying-saucer-pdf</artifactId><version>9.1.22</version></dependency>
+        <dependency><groupId>org.xhtmlrenderer</groupId><artifactId>flying-saucer-core</artifactId><version>10.5.0</version></dependency>
+        <dependency><groupId>org.xhtmlrenderer</groupId><artifactId>flying-saucer-pdf</artifactId><version>10.5.0</version></dependency>
 
         <dependency><groupId>com.itextpdf</groupId><artifactId>itextpdf</artifactId><version>5.5.13.4</version></dependency>
         <dependency>

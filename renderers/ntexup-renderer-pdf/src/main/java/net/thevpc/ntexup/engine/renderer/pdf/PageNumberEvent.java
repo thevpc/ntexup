@@ -1,10 +1,16 @@
 package net.thevpc.ntexup.engine.renderer.pdf;
 
-import com.lowagie.text.pdf.PdfPageEventHelper;
-import com.lowagie.text.pdf.PdfWriter;
-import com.lowagie.text.pdf.PdfContentByte;
-import com.lowagie.text.pdf.BaseFont;
-import com.lowagie.text.Document;
+//import com.lowagie.text.pdf.PdfPageEventHelper;
+//import com.lowagie.text.pdf.PdfWriter;
+//import com.lowagie.text.pdf.PdfContentByte;
+//import com.lowagie.text.pdf.BaseFont;
+//import com.lowagie.text.Document;
+
+import org.openpdf.text.Document;
+import org.openpdf.text.pdf.BaseFont;
+import org.openpdf.text.pdf.PdfContentByte;
+import org.openpdf.text.pdf.PdfPageEventHelper;
+import org.openpdf.text.pdf.PdfWriter;
 
 public class PageNumberEvent extends PdfPageEventHelper {
     private BaseFont baseFont;

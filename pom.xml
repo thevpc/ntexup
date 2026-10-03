@@ -83,6 +83,9 @@
         <module>lib/ntexup-lib-geometry2d</module>
         <module>lib/ntexup-lib-geometry3d</module>
         <module>core/ntexup-engine</module>
+        <module>extensions/ntexup-extension-layout</module>
+        <module>extensions/ntexup-extension-text</module>
+        <module>extensions/ntexup-extension-image</module>
         <module>extensions/ntexup-extension-plantuml</module>
         <module>extensions/ntexup-extension-animated-gif</module>
         <module>extensions/ntexup-extension-svg</module>
@@ -92,7 +95,7 @@
         <module>extensions/ntexup-extension-latex</module>
         <module>extensions/ntexup-extension-presenters</module>
         <module>extensions/ntexup-extension-progress</module>
-        <module>extensions/ntexup-extension-common-functions</module>
+        <module>extensions/ntexup-extension-stdlib</module>
         <module>extensions/ntexup-extension-table</module>
         <module>tutorials/ntexup-extension-tutorial-myshape</module>
         <module>companions/nscoreboard</module>

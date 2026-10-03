@@ -1,5 +1,5 @@
 import(
-    common-functions
+    stdlib
     plantuml
     animated-gif
     svg

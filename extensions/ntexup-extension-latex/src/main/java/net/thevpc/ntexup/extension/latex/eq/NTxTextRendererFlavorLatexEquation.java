@@ -41,7 +41,7 @@ public class NTxTextRendererFlavorLatexEquation implements NTxTextRendererFlavor
     }
 
     @Override
-    public List<String> getParsePrefixes() {
+    public List<String> parsePrefixes() {
         return Arrays.asList(
                 "[[eq:",
                 "[[equation:",
@@ -66,6 +66,10 @@ public class NTxTextRendererFlavorLatexEquation implements NTxTextRendererFlavor
         });
     }
 
+    @Override
+    public String parseSuffix(String prefix) {
+        return "]]";
+    }
 
     public NTxTextRendererBuilder.ImagePainter createLatex(String tex, double fontSize, NTxTextOptions options, NTxRendererContext ctx) {
         TeXFormula formula;

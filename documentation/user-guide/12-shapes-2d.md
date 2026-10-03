@@ -155,7 +155,7 @@ text("Elevated Text", font-bold, at: center, font-size: 3%P,
      color: documentColors[1], shadow: { distance: (3,3), radius: 4, color: gray })
 ```
 
-## Gradient Colors (from `common-functions`)
+## Gradient Colors (from `stdlib`)
 
 ```tson
 rectangle(size: (35, 25),

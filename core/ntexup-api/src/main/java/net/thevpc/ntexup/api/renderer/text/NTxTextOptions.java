@@ -1,5 +1,6 @@
 package net.thevpc.ntexup.api.renderer.text;
 
+import net.thevpc.ntexup.api.document.elem2d.NTxPoint;
 import net.thevpc.ntexup.api.document.elem2d.NTxPoint2D;
 import net.thevpc.ntexup.api.document.elem2d.NTxShadow;
 import net.thevpc.ntexup.api.document.elem2d.NTxSize;
@@ -19,6 +20,7 @@ public class NTxTextOptions implements Cloneable, NBlankable {
     public Paint foregroundColor;
     public Boolean bold;
     public Boolean italic;
+    public NTxPoint fontSizeMultiplier;
     public NTxSize fontSize;
     public String fontFamily;
     public Boolean underlined;
@@ -173,6 +175,9 @@ public class NTxTextOptions implements Cloneable, NBlankable {
         if (stroke != null) {
             return true;
         }
+        if (fontSizeMultiplier != null) {
+            return true;
+        }
         return false;
     }
 
@@ -245,6 +250,16 @@ public class NTxTextOptions implements Cloneable, NBlankable {
         if (size == null) {
             size = defaultFont.size;
         }
+        double fsmx = this.fontSizeMultiplier==null?0:this.fontSizeMultiplier.x();
+        double fsmy = this.fontSizeMultiplier==null?0:this.fontSizeMultiplier.y();
+        if (this.fontSizeMultiplier != null
+                && (fsmx > 0 || fsmy > 0)
+        ) {
+            size = new NTxSize(size.type(),
+                    fsmx > 0 ? (size.value() * fsmx) : size.value(),
+                    fsmy > 0 ? (size.value2() * fsmy) : size.value2()
+            );
+        }
         double w = sr.x(size).orElse(16.0);
         double h = sr.y(size).orElse(16.0);
         int newStyle = Font.PLAIN | (italic ? Font.ITALIC : 0) | (bold ? Font.BOLD : 0);
@@ -314,6 +329,9 @@ public class NTxTextOptions implements Cloneable, NBlankable {
             }
             if (other.shadow != null) {
                 this.shadow = other.shadow;
+            }
+            if (other.fontSizeMultiplier != null) {
+                this.fontSizeMultiplier = other.fontSizeMultiplier;
             }
         }
         return this;
