@@ -20,6 +20,9 @@
             /Development
             /Settings/PackageManager/Nuts
         </nuts.categories>
+        <maven.compiler.source>25</maven.compiler.source>
+        <maven.compiler.target>25</maven.compiler.target>
+        <java.version>25</java.version>
     </properties>
 
     <organization>
@@ -59,6 +62,33 @@
     <build>
         <plugins>
             <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-jar-plugin</artifactId><version>3.4.2</version></plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>3.8.0</version>
+                <configuration>
+                    <tags>
+                        <tag>
+                            <name>app.category</name>
+                            <placement>a</placement>
+                            <head>Category:</head>
+                        </tag>
+                    </tags>
+                    <debug>true</debug>
+                    <jdkToolchain>
+                        <version>25</version>
+                    </jdkToolchain>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>attach-javadocs</id>
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
 
