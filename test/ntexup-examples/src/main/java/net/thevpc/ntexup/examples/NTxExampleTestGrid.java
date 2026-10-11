@@ -23,7 +23,7 @@ import java.awt.*;
 public class NTxExampleTestGrid {
 
     public static void main(String[] args) {
-        Nuts.openWorkspace().share();
+        Nuts.require();
         NTxEngine e = new DefaultNTxEngine();
         NTxDocumentFactory f = e.documentFactory();
         NTxDocument d = f.ofDocument(null)

@@ -14,7 +14,7 @@ import net.thevpc.ntexup.api.renderer.NTxDocumentStreamRenderer;
 import net.thevpc.nuts.Nuts;
 import net.thevpc.nuts.io.NPath;
 
-Nuts.openWorkspace().share();                          // 1. Nuts must be initialized
+Nuts.require();         // 1. Nuts must be initialized
 NTxEngine e = new DefaultNTxEngine();                  // 2. engine (loads base services)
 NTxCompiledDocument doc = e.loadDocument(NPath.of("slides.ntx"));  // 3. parse + bootstrap
 NTxDocumentStreamRenderer pdf = e.newPdfRenderer().get();          // 4. "pdf" renderer
@@ -22,7 +22,7 @@ pdf.setOutput(NPath.of("out.pdf"));
 pdf.render(doc);                                       // 5. lazy per-page render
 ```
 
-That's the whole skeleton — it is exactly what `test/ntexup-examples/.../TestPdf.java` and `NTxExampleFromFile1.java` do. `Nuts.openWorkspace()` is required because renderer/extension resolution rides on the Nuts workspace + repository.
+That's the whole skeleton — it is exactly what `test/ntexup-examples/.../TestPdf.java` and `NTxExampleFromFile1.java` do. `Nuts.require()` is required because renderer/extension resolution rides on the Nuts workspace + repository.
 
 ### 1.1 Loading variants
 
@@ -83,7 +83,7 @@ import net.thevpc.ntexup.engine.impl.NTxCompiledDocumentImpl;
 import net.thevpc.nuts.Nuts;
 import net.thevpc.nuts.io.NPath;
 
-Nuts.openWorkspace().share();
+Nuts.require();         // 1. Nuts must be initialized
 NTxEngine e = new DefaultNTxEngine();
 List<NPath> decks = List.of(
     NPath.of("test/ntexup-examples/src/ntexup/examples/curr"),
@@ -198,7 +198,7 @@ class RenderToPdfTest {
 
     @BeforeAll
     static void init() {
-        Nuts.openWorkspace().share();
+        Nuts.require();
         engine = new DefaultNTxEngine();
     }
 

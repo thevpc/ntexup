@@ -10,7 +10,7 @@ import net.thevpc.nuts.io.NPath;
 
 public class TestPdf {
     public static void main(String[] args) {
-        Nuts.openWorkspace().share();
+        Nuts.require();
         NTxEngine e = new DefaultNTxEngine();
         NPath file = NPath.of("documentation/ntexup-doc").toAbsolute().normalize();
         NTxCompiledDocument doc = e.loadDocument(file);

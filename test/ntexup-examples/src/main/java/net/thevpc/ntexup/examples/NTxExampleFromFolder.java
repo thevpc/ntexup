@@ -15,7 +15,7 @@ import net.thevpc.nuts.io.NPath;
 public class NTxExampleFromFolder {
 
     public static void main(String[] args) {
-        Nuts.openWorkspace().share();
+        Nuts.require();
         NTxEngine e = new DefaultNTxEngine();
         NPath file = NPath.of("C:\\Users\\ibtih\\IdeaProjects\\ntexup\\test\\ndoc-examples\\src\\ndoc\\ibtihel").toAbsolute().normalize();
         e.newScreenRenderer().get().renderPath(file);

@@ -50,7 +50,7 @@ public class TestStyleSystem {
 
     public static void main(String[] args) {
         try {
-            Nuts.openWorkspace().share();
+            Nuts.require();
 
             testSingleBaseInheritance();
             testMultiBaseLastWins();

@@ -165,7 +165,7 @@ import net.thevpc.ntexup.api.renderer.NTxDocumentStreamRenderer;
 import net.thevpc.nuts.Nuts;
 import net.thevpc.nuts.io.NPath;
 
-Nuts.openWorkspace().share();
+Nuts.require();
 NTxEngine e = new DefaultNTxEngine();
 NTxCompiledDocument doc = e.loadDocument(NPath.of(".../deck-path"));
 if (!((NTxCompiledDocumentImpl) doc).isSuccessfullyLoaded()) throw new AssertionError("load failed");
@@ -176,7 +176,7 @@ pdf.render(doc);                                                 // throws on re
 ```
 
 Checklist:
-1. `Nuts.openWorkspace().share()` first; create `new DefaultNTxEngine()`.
+1. `Nuts.require()` first; create `new DefaultNTxEngine()`.
 2. `loadDocument` a folder (auto `*.ntx`, `main.ntx` first) or a file.
 3. Assert `successfullyLoaded()` — catches TSON/compile errors.
 4. Walk `doc.pages()` — forces the lazy `readMore()` path and surfaces page-level errors.

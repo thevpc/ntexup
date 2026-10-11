@@ -11,7 +11,7 @@ import java.io.ByteArrayInputStream;
 
 public class TestEngine {
     public static void main(String[] args) {
-        Nuts.openWorkspace().share();
+        Nuts.require();
         NTxEngine e=new DefaultNTxEngine();
         String document="\n" +
                 "$a=1\n" +

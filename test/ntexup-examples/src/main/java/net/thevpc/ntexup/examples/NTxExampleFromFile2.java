@@ -16,7 +16,7 @@ import net.thevpc.nuts.io.NPath;
 public class NTxExampleFromFile2 {
 
     public static void main(String[] args) {
-        Nuts.openWorkspace().share();
+        Nuts.require();
         NTxEngine e = new DefaultNTxEngine();
         NPath file = NPath.of("src/ntexup/test1.ndoc").toAbsolute().normalize();
         NTxCompiledDocument doc = e.loadDocument(file);

@@ -17,7 +17,7 @@ import net.thevpc.nuts.io.NPath;
 public class NTxExampleFromFile1 {
 
     public static void main(String[] args) {
-        Nuts.openWorkspace().share();
+        Nuts.require();
         NTxEngine e = new DefaultNTxEngine();
         NPath file = NPath.of("/home/mohamed/Desktop/stage/ntexup/documentation/tson-doc/main.ndoc").toAbsolute().normalize();
         System.out.println(file);

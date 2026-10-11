@@ -19,7 +19,7 @@ import net.thevpc.nuts.Nuts;
 public class NTxExampleByCode1 {
 
     public static void main(String[] args) {
-        Nuts.openWorkspace().share();
+        Nuts.require();
         NTxEngine e = new DefaultNTxEngine();
         NTxDocumentFactory f = e.documentFactory();
         NTxDocument d = f.ofDocument(null)

@@ -172,7 +172,7 @@ When the compiler reaches a `CTRL_INCLUDE` node (created by the include parser):
 ## 7. NTxEngine programmatic recipe (the five-line summary)
 
 ```java
-Nuts.openWorkspace().share();                 // 1. init Nuts (required)
+Nuts.require(); // 1. init Nuts (required)
 NTxEngine e = new DefaultNTxEngine();         // 2. create engine (loads base services)
 NTxCompiledDocument doc = e.loadDocument(NPath.of("slides.ntx")); // 3. parse + bootstrap compilation
 NTxDocumentStreamRenderer r = e.newPdfRenderer().get();          // 4. pick renderer
