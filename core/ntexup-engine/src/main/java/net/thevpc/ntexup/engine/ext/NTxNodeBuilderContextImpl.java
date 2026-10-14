@@ -50,6 +50,8 @@ public class NTxNodeBuilderContextImpl implements NTxNodeBuilderContext {
     ProcessChildrenAction processChildren;
     CompileNodeAction compileNodeAction;
     InitializeNodeAction initializeNodeAction;
+    PageLifecycleAction onPageShowAction;
+    PageLifecycleAction onPageHideAction;
 
     public NTxNodeBuilderContextImpl(NTxNodeBuilder builder, NTxEngine engine) {
         this.builder = builder;
@@ -280,6 +282,20 @@ public class NTxNodeBuilderContextImpl implements NTxNodeBuilderContext {
     @Override
     public NTxNodeBuilderContext initializeNodeAction(InitializeNodeAction e) {
         this.initializeNodeAction = e;
+        return this;
+    }
+
+    @Override
+    public NTxNodeBuilderContext onPageShow(PageLifecycleAction action) {
+        requireNonCompiled();
+        this.onPageShowAction = action;
+        return this;
+    }
+
+    @Override
+    public NTxNodeBuilderContext onPageHide(PageLifecycleAction action) {
+        requireNonCompiled();
+        this.onPageHideAction = action;
         return this;
     }
 

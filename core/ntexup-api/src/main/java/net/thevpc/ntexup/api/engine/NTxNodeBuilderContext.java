@@ -11,6 +11,7 @@ import net.thevpc.ntexup.api.log.NTxLogger;
 import net.thevpc.ntexup.api.parser.NTxAllArgumentReader;
 import net.thevpc.ntexup.api.parser.NTxArgumentReader;
 import net.thevpc.ntexup.api.renderer.NTxRendererContext;
+import net.thevpc.ntexup.api.renderer.NtxPageLifecycleEvent;
 import net.thevpc.ntexup.api.renderer.text.NTxTextRendererFlavorParseContext;
 import net.thevpc.ntexup.api.renderer.text.NTxTextToken;
 import net.thevpc.ntexup.api.renderer.text.NTxTextOptions;
@@ -70,6 +71,19 @@ public interface NTxNodeBuilderContext extends NLogger {
     NTxNodeBuilderContext compileNode(CompileNodeAction e);
 
     NTxNodeBuilderContext initializeNodeAction(InitializeNodeAction e);
+
+    /**
+     * Registers an action fired when the page containing this node starts being
+     * shown (screen renderer only). Use it for exactly-once side effects;
+     * combine with {@link NTxRendererContext#requestFrame()} for animation.
+     */
+    NTxNodeBuilderContext onPageShow(PageLifecycleAction action);
+
+    /**
+     * Registers an action fired when the page containing this node stops being
+     * shown (screen renderer only).
+     */
+    NTxNodeBuilderContext onPageHide(PageLifecycleAction action);
 
     NTxLogger log();
 
@@ -206,5 +220,9 @@ public interface NTxNodeBuilderContext extends NLogger {
 
     interface CompileNodeAction {
         void compileNode(NTxNode node, NTxResolutionContext context);
+    }
+
+    interface PageLifecycleAction {
+        void run(NtxPageLifecycleEvent event);
     }
 }

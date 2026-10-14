@@ -15,4 +15,20 @@ public interface NTxNodeRenderer {
     void render(NTxRendererContext rendererContext);
 
     String[] types();
+
+    /**
+     * Called when the page containing the node starts being shown. Default is a
+     * no-op; override (typically via
+     * {@code NTxNodeBuilderContext.onPageShow(...)}) for exactly-once
+     * side effects around a slide transition.
+     */
+    default void onPageShow(NtxPageLifecycleEvent event) {
+    }
+
+    /**
+     * Called when the page containing the node stops being shown. Default is a
+     * no-op.
+     */
+    default void onPageHide(NtxPageLifecycleEvent event) {
+    }
 }

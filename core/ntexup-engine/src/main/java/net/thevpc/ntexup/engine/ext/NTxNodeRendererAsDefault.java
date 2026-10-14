@@ -5,6 +5,7 @@ import net.thevpc.ntexup.api.document.NTxSizeRequirements;
 import net.thevpc.ntexup.api.document.elem2d.NTxBounds3D;
 import net.thevpc.ntexup.engine.renderer.NTxNodeRendererBase;
 import net.thevpc.ntexup.api.renderer.NTxRendererContext;
+import net.thevpc.ntexup.api.renderer.NtxPageLifecycleEvent;
 
 class NTxNodeRendererAsDefault extends NTxNodeRendererBase {
     private final NTxNodeBuilderContextImpl ctx;
@@ -52,5 +53,19 @@ class NTxNodeRendererAsDefault extends NTxNodeRendererBase {
             }
         }
         return super.selfBounds3D(ctx);
+    }
+
+    @Override
+    public void onPageShow(NtxPageLifecycleEvent event) {
+        if (this.ctx.onPageShowAction != null) {
+            this.ctx.onPageShowAction.run(event);
+        }
+    }
+
+    @Override
+    public void onPageHide(NtxPageLifecycleEvent event) {
+        if (this.ctx.onPageHideAction != null) {
+            this.ctx.onPageHideAction.run(event);
+        }
     }
 }

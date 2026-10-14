@@ -82,6 +82,14 @@ public class DefaultNTxRendererContext extends NTxResolutionContextImpl implemen
             NTxBounds2D nTxBounds2 = DefaultNTxRendererContext.this.selfBounds2D();
             return NTxUtils.toElement(nTxBounds2);
         });
+        // Render-context implicit variables. They let decks say, for example,
+        //   wave-field(visible: animated)   // shown only when really animating
+        //   image(visible: static)          // static fallback for PDF/print
+        // without any dedicated filter property.
+        setVar("animated", () -> NElement.ofBoolean(isAnimate()));
+        setVar("static", () -> NElement.ofBoolean(!isAnimate()));
+        setVar("print", () -> NElement.ofBoolean(isPrint()));
+        setVar("screen", () -> NElement.ofBoolean(!isPrint()));
 
         this.selfBounds2D = selfBounds2D;
         this.parentBounds2D = parentBounds2D;

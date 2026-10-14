@@ -190,7 +190,12 @@ public class NTxValueByName {
     }
 
     public static boolean isVisible(NTxRendererContext ctx) {
-        return (boolean) ctx.node().getAndSetRenderCache("visible", AUTO_FORCE,
+        // The visibility expression may reference the render-context implicit
+        // variables (animated/static/print/screen), so the cached value must be
+        // scoped to the current render mode; otherwise a screen (animated) result
+        // would leak into a later PDF/image (static) render of the same node.
+        String cacheKey = "visible:" + (ctx.isAnimate() ? "a" : "-") + (ctx.isPrint() ? "p" : "-");
+        return (boolean) ctx.node().getAndSetRenderCache(cacheKey, AUTO_FORCE,
                 () -> {
                     NOptional<Boolean> b = NTxValueByType.getBoolean(ctx, NTxPropName.HIDE);
                     if (b.isPresent()) {
