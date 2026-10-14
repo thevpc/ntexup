@@ -156,7 +156,7 @@ Declarative registration; see `core/ntexup-api/.../api/engine/NTxNodeBuilderCont
 - `createRenderer()` → `NTxNodeRendererAsDefault` (delegates `sizeRequirements`/`selfBounds2D/3D`/`renderMain`) or `NTxNodeRendererAsText` / `NTxNodeRendererAsConverter` depending on which hook you used.
 - `createTextFlavor()` → `CustomNTxTextRendererFlavorFromBuilder` (only when `renderText()` used).
 
-Generic rendering machinery (rotation, shadow, visibility, debug box) is applied for free by `NTxNodeRendererBase` — your `renderMain` only draws the actual content.
+Generic rendering machinery (rotation, shadow, visibility, debug box, `overflow` cropping) is applied for free by `NTxNodeRendererBase` — your `renderMain` only draws the actual content.
 
 ### 4.4 Minimal component (reference tutorial)
 
@@ -230,9 +230,10 @@ What a `renderMain(NTxRendererContext)` sees:
 | Capabilities | `CAPABILITY_PRINT`/"print", `CAPABILITY_ANIMATE`/"animate", `isPrint()`, `isAnimate()`, `getCapability/hasCapability/isCapability` |
 | Dry runs | `isDry()` (measure-only pass — **do not cache inside dry runs**), `dryMode()` |
 | Drawing | `graphics()` → `NTxGraphics`: `g.draw(Shape)`, `g.fill(Shape)`, `g.drawOval/drawRect/drawLine/drawArc`, `g.drawImage(NPath,...)`, `g.drawString(...)`, `createShape(NElement)`, transforms (`rotate/scale/setTransform`), color/paint/stroke/composite setters |
+| Clip | `withinClip(NTxBounds2D\|Shape, body)` (scoped, auto-disposed), `clippedGraphics(NTxBounds2D\|Shape)` (returns a copy you must `dispose()`) |
 | Font | `getFont()`, `getFontFamily()`, `getFontSize()`, `isFontBold/Italic/Underlined/Strike`, `applyFont()` |
 | Paint | `getForegroundColor(force)`, `getLineColor(force)`, `getColorProperty(name)`, `resolveBackgroundColor()`, `resolveStroke()`, `applyBackgroundColor()`, `applyContourColor(force)`, `applyForeground(force)`, `paintBackground(bounds)`, `paintBorderLine(bounds)`, `withStroke(Runnable)`, `drawContour()` |
-| Structure | `isDrawContour()`, `isVisible()`, `getOrigin(...)`, `getPosition(...)`, `getColSpan()/getRowSpan()`, `getColumns()/getRows()`, `getRoundCornerArcs()`, `readStyleAsShadow(...)` |
+| Structure | `isDrawContour()`, `isVisible()`, `getOrigin(...)`, `getPosition(...)`, `getColSpan()/getRowSpan()`, `getColumns()/getRows()`, `getRoundCornerArcs()`, `readStyleAsShadow(...)`, `readStyleAsOverflow(...)` |
 | Composition | `isSomeChange()`, `withDefaultStyles(props)`, `withBuilderContext(...)`, `resolveNode(node, parentBounds)`, `pushNode/node/popNode`, `renderDetachedNode(child, relBounds)`, `compiledPage()`, `compiledDocument()`, `render()`, `sizeRequirementsOf()` |
 | Values | `computePropertyValue(name, synonyms)`, `computeProperties()`, `NTxValue` coercions |
 
@@ -443,14 +444,45 @@ Handles a new raster/vector file type for `image()` and `drawImage(...)`, resolv
 Two sources of truth:
 
 1. `NTxStyleParser` (`engine/parser/NTxStyleParser.java`) — the working sets used at parse time:
-   - `COMMON_STYLE_PROPS` — stroke, shadow, position, origin, size, name, columns, rows, colspan, col-span, rowspan, row-span, colweight, col-weight, rowweight, row-weight, grid-color, line-color, rotate, padding, margin, font-size, debug, debug-color, font-family, raised, font-bold, font-italic, font-underlined, font-strike, background-color, foreground-color, fill-background, disabled, draw-grid, columns-weight, rows-weight, preserve-aspect-ratio, threed, draw-contour, class, at, component-name, content-origin, content-position, align, width, height, text-wrap, wrap, text-align, text-halign, bullet-align + per-text-style-token colors (`source-<id>-color`, ...) + aliases (color, background, foreground, bg, fg, show, visible, fill, contour, w, h)
-   - `COMMON_FLAG_STYLE_PROPS` — shadow, debug, raised, font-bold, font-italic, font-underlined, font-strike, fill-background, disabled, draw-grid, preserve-aspect-ratio, threed, draw-contour (+ show/visible/fill/contour)
+   - `COMMON_STYLE_PROPS` — stroke, shadow, position, origin, size, name, columns, rows, colspan, col-span, rowspan, row-span, colweight, col-weight, rowweight, row-weight, grid-color, line-color, rotate, padding, margin, font-size, debug, debug-color, font-family, raised, font-bold, font-italic, font-underlined, font-strike, background-color, foreground-color, fill-background, disabled, draw-grid, columns-weight, rows-weight, preserve-aspect-ratio, threed, draw-contour, overflow, overflow-margin, overflow-fade, class, at, component-name, content-origin, content-position, align, width, height, text-wrap, wrap, text-align, text-halign, bullet-align + per-text-style-token colors (`source-<id>-color`, ...) + aliases (color, background, foreground, bg, fg, show, visible, fill, contour, w, h)
+   - `COMMON_FLAG_STYLE_PROPS` — shadow, debug, raised, font-bold, font-italic, font-underlined, font-strike, fill-background, disabled, draw-grid, preserve-aspect-ratio, threed, draw-contour, overflow (+ show/visible/fill/contour)
    - `NTxParserUtils.isCommonStyleProperty(...)` / `isCommonStyleFlagProperty(...)` match these (normalized via `uid()`).
 2. `NTxPropName` (`api/document/style/NTxPropName.java`) — canonical constants: geometry/layout (`WIDTH`, `HEIGHT`, `POSITION`, `SIZE`, `ORIGIN`, `AT`, `PADDING`, `MARGIN`, `ROTATE`, `COLSPAN/ROWSPAN`, `COLUMNS/ROWS`, `COL_WEIGHT/ROW_WEIGHT`, ...), colors/strokes (`COLOR`, `BACKGROUND_COLOR`, `LINE_COLOR`, `CONTOUR_COLOR`, `STROKE`, `DASH`, `SHADOW`, `DRAW_CONTOUR`, `ROUND_CORNER`, ...), text (`FONT_FAMILY/SIZE/BOLD/ITALIC/...`), shapes (`INNER_RADIUS`, `START_ANGLE`, `EXTENT_ANGLE`, `START_ARROW`, `END_ARROW`, `PRESERVE_ASPECT_RATIO`, ...), ctrl (`NAME`, `VALUE`, `FILE`, `LANG`, `FROM`, `TO`, `DEBUG`...).
 
 Behavior: any named pair or bare name whose key is a common style prop is **automatically consumed and stored as a node property** by `NTxNodeParserBase.defaultProcessArgument` — including when your builder uses the fallback (`CustomNTxNodeParserFromBuilder`). Bare flags become `true`. So `rectangle(color: red, draw-contour, at: center)` works without any special parsing in your builder.
 
 > Builder tip: when you declare `.matchesNamedPair(...)` for your *own* props, remaining common props still fall through to the default handler. Use `.matchesNonCommonFlags()` / `asFlags()` to control flag-like parsing, and `NTxValue` to coerce the stored `NElement`.
+
+### 9.1 Cropping overflow — the `overflow` property and `withinClip`
+
+By default a node paints wherever its code draws, even outside `selfBounds2D()` (unlike Swing, where each `JPanel.paintComponent` is clipped to its rectangle). Two mechanisms let you crop:
+
+**Declarative `overflow`** — applied centrally by `NTxNodeRendererBase`, so *every* node type gets it for free, no per-component code:
+
+```tson
+overflow: visible | hidden | clip | fade   // default visible (no crop); true/false alias hidden/visible
+overflow-margin: <size>                    // inflate(+) / inset(-) the crop box; CSS 1/2/3/4 sizes
+overflow-fade: <size>                      // feather width for `fade`
+```
+
+The crop box is `selfBounds` inflated by `overflow-margin`. `hidden`/`clip` hard-crop at the crop box; `fade` additionally dissolves content near the crop edge over `overflow-fade` px. With `overflow: fade, overflow-margin: 8, overflow-fade: 8` the feather lies entirely *outside* the node bounds (content inside stays fully opaque). Overflow is purely visual — it never changes measurement/layout and is skipped in `dry` passes. A rotated node is cropped in its own rotated space.
+
+**Imperative `withinClip`** — reusable from any extension that depends only on `ntexup-api`:
+
+```java
+rendererContext.withinClip(bounds, clipped -> {
+    // paint here; anything outside `bounds` is discarded
+});
+// or, when you must also draw something unclipped afterwards (e.g. the contour):
+NTxGraphics g = rendererContext.clippedGraphics(bounds);
+try {
+    // paint with `g` ...
+} finally {
+    g.dispose();
+}
+```
+
+`withinClip(bounds|Shape, body)` runs `body` with a context whose graphics clip is intersected with the shape on a private copy, then disposes it — sibling nodes are never affected. The antenna panels use this to guarantee their rays and wavefronts never leave their box, **independently** of the `overflow` property (a component that must always clamp should call `withinClip` directly rather than rely on a deck-supplied default).
 
 ---
 

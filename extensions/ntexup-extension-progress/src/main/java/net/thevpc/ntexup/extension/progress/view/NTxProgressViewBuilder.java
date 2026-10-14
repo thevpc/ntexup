@@ -11,9 +11,6 @@ import net.thevpc.ntexup.extension.progress.NTxProgressSkin;
 import net.thevpc.ntexup.extension.progress.skin.NTxProgressSkinRegistry;
 import net.thevpc.nuts.time.NDuration;
 
-import javax.swing.*;
-import java.util.concurrent.atomic.AtomicBoolean;
-
 /**
  * progress-view: standalone presentational component.
  * No dependency on futures or registry — renders whatever progress-like state it is given.
@@ -65,10 +62,10 @@ public class NTxProgressViewBuilder implements NTxNodeBuilder {
             return;
         }
 
-        // Animation tick for indeterminate mode
-        AtomicBoolean animating = new AtomicBoolean(indeterminate);
+        // Animation tick for indeterminate mode: ask the hosting view for a frame;
+        // the view owns a single throttled driver, and this is a no-op in static renders.
         if (indeterminate) {
-            startAnimationTick(rendererContext, animating);
+            rendererContext.requestFrame();
         }
 
         // Completion handling
@@ -86,7 +83,7 @@ public class NTxProgressViewBuilder implements NTxNodeBuilder {
             }
         }
 
-        renderSkin(rendererContext, bounds, progress, animating.get());
+        renderSkin(rendererContext, bounds, progress, indeterminate);
     }
 
     private void renderSkin(NTxRendererContext rendererContext, NTxBounds2D bounds,
@@ -97,22 +94,6 @@ public class NTxProgressViewBuilder implements NTxNodeBuilder {
         if (skin != null) {
             skin.render(rendererContext.graphics(), bounds, progress, animating);
         }
-    }
-
-    /**
-     * Start a lightweight animation tick that calls repaint() on the renderer context.
-     * Does NOT trigger a full page re-layout — just repaints this component.
-     */
-    private void startAnimationTick(NTxRendererContext rendererContext, AtomicBoolean running) {
-        javax.swing.Timer timer = new javax.swing.Timer(40, e -> {
-            if (running.get()) {
-                rendererContext.repaint();
-            } else {
-                ((Timer) e.getSource()).stop();
-            }
-        });
-        timer.setCoalesce(true);
-        timer.start();
     }
 
     // --- Property readers ---

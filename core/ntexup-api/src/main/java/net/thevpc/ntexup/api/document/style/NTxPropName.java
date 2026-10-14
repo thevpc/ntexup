@@ -203,6 +203,30 @@ public class NTxPropName {
     public static final String ROTATE="rotate";
     public static final String SHADOW="shadow";
 
+    /**
+     * What happens to the parts of a node's painting that leave its own layout
+     * box: {@code visible} (default, no crop), {@code hidden}/{@code clip}
+     * (hard crop at the box, optionally inflated by {@link #OVERFLOW_MARGIN})
+     * or {@code fade} (crop with a soft alpha feather described by
+     * {@link #OVERFLOW_FADE}). Purely visual: it never affects layout.
+     *
+     * @see NTxOverflow
+     */
+    public static final String OVERFLOW="overflow";
+    /**
+     * Extra (positive) or reduced (negative) margin applied to the overflow crop
+     * box, relative to the node's own bounds. Accepts 1, 2 or 4 sizes like the
+     * CSS margin shorthand.
+     */
+    public static final String OVERFLOW_MARGIN="overflow-margin";
+    /**
+     * Width of the soft alpha feather used when {@link #OVERFLOW} is
+     * {@code fade}. The feather sits at the outer edge of the crop box (so with
+     * a large enough {@link #OVERFLOW_MARGIN} it lies outside the node bounds).
+     * Accepts 1, 2 or 4 sizes like the CSS margin shorthand.
+     */
+    public static final String OVERFLOW_FADE="overflow-fade";
+
     public static final String DEBUG = "debug";
     public static final String DEBUG_COLOR="debug-color";
     public static final String ELLIPSE_H = "ellipse-height" ;

@@ -73,7 +73,10 @@ public class NTxStyleParser {
                 NTxPropName.WRAP,
                 NTxPropName.TEXT_ALIGN,
                 NTxPropName.TEXT_HALIGN,
-                NTxPropName.BULLET_ALIGN
+                NTxPropName.BULLET_ALIGN,
+                NTxPropName.OVERFLOW,
+                NTxPropName.OVERFLOW_MARGIN,
+                NTxPropName.OVERFLOW_FADE
         ));
 
         COMMON_FLAG_STYLE_PROPS.addAll(Arrays.asList(
@@ -89,7 +92,8 @@ public class NTxStyleParser {
                 NTxPropName.DRAW_GRID,
                 NTxPropName.PRESERVE_ASPECT_RATIO,
                 NTxPropName.THREED,
-                NTxPropName.DRAW_CONTOUR
+                NTxPropName.DRAW_CONTOUR,
+                NTxPropName.OVERFLOW
         ));
 
         for (NTextStyleType z : NTextStyleType.values()) {

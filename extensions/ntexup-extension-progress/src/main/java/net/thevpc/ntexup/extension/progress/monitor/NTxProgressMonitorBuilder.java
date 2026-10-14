@@ -17,7 +17,6 @@ import net.thevpc.ntexup.extension.progress.registry.NTxProgressSelect;
 import net.thevpc.ntexup.extension.progress.NTxProgressSkin;
 import net.thevpc.ntexup.extension.progress.skin.NTxProgressSkinRegistry;
 
-import javax.swing.*;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -104,9 +103,10 @@ public class NTxProgressMonitorBuilder implements NTxNodeBuilder {
             renderPerUnit(rendererContext, bounds, bindings, weights, node);
         }
 
-        // Start repaint timer if any binding is still pending
+        // Ask the hosting view for another frame while any binding is still pending;
+        // a single page-level driver throttles all such requests.
         if (!allDone) {
-            startRepaintTick(rendererContext);
+            rendererContext.requestFrame();
         }
     }
 
@@ -168,12 +168,6 @@ public class NTxProgressMonitorBuilder implements NTxNodeBuilder {
     private void renderIdle(NTxRendererContext rendererContext, NTxBounds2D bounds) {
         NTxProgress idle = NTxProgress.INDETERMINATE;
         renderAsSkin(rendererContext, bounds, idle, rendererContext.node());
-    }
-
-    private void startRepaintTick(NTxRendererContext rendererContext) {
-        Timer timer = new Timer(40, e -> rendererContext.repaint());
-        timer.setCoalesce(true);
-        timer.start();
     }
 
     // --- Property readers ---

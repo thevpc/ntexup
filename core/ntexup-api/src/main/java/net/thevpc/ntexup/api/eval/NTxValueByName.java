@@ -687,6 +687,110 @@ public class NTxValueByName {
         return NOptional.ofNamedEmpty("shadow");
     }
 
+    /**
+     * Resolves the {@link NTxPropName#OVERFLOW} policy of the current node,
+     * including the {@link NTxPropName#OVERFLOW_MARGIN} and
+     * {@link NTxPropName#OVERFLOW_FADE} modifiers. Never returns {@code null};
+     * an unset property resolves to {@link NTxOverflow#VISIBLE}.
+     */
+    public static NTxOverflow readStyleAsOverflow(NTxRendererContext ctx) {
+        if (ctx == null) {
+            return NTxOverflow.VISIBLE;
+        }
+        NTxOverflow.Mode mode = NTxOverflow.Mode.VISIBLE;
+        Object sv = ctx.computePropertyValue(NTxPropName.OVERFLOW).orNull();
+        if (sv != null) {
+            NTxValue v = NTxValue.of(sv);
+            NOptional<Boolean> b = v.asBoolean();
+            if (b.isPresent()) {
+                mode = b.get() ? NTxOverflow.Mode.HIDDEN : NTxOverflow.Mode.VISIBLE;
+            } else {
+                NOptional<String> s = v.asStringOrName();
+                if (s.isPresent()) {
+                    mode = NTxOverflow.Mode.of(s.get());
+                } else {
+                    // a bare size is a shorthand for "hidden with that outer margin"
+                    NOptional<Double> d = v.asDouble();
+                    if (d.isPresent()) {
+                        double m = d.get();
+                        return new NTxOverflow(NTxOverflow.Mode.HIDDEN, m, m, m, m, 0, 0, 0, 0);
+                    }
+                }
+            }
+        }
+        if (mode == NTxOverflow.Mode.VISIBLE) {
+            return NTxOverflow.VISIBLE;
+        }
+
+        double[] margins = readOverflowSizes(ctx, NTxPropName.OVERFLOW_MARGIN);
+        double[] fades = readOverflowSizes(ctx, NTxPropName.OVERFLOW_FADE);
+        boolean marginSet = margins != null;
+        boolean fadeSet = fades != null;
+        if (margins == null) {
+            margins = new double[]{0, 0, 0, 0};
+        }
+        if (fades == null) {
+            fades = new double[]{0, 0, 0, 0};
+        }
+
+        double mt = margins[0];
+        double mr = margins[1];
+        double mb = margins[2];
+        double ml = margins[3];
+
+        if (mode == NTxOverflow.Mode.FADE) {
+            double ft;
+            double fr;
+            double fb;
+            double fl;
+            if (fadeSet) {
+                ft = fades[0];
+                fr = fades[1];
+                fb = fades[2];
+                fl = fades[3];
+            } else {
+                // default the feather to the margin, or to a small band
+                double d = marginSet ? Math.max(0, Math.max(Math.max(mt, mr), Math.max(mb, ml))) : 8;
+                ft = fr = fb = fl = d;
+            }
+            if (!marginSet) {
+                // by default the feather lives outside the bounds
+                mt = ft;
+                mr = fr;
+                mb = fb;
+                ml = fl;
+            }
+            return new NTxOverflow(NTxOverflow.Mode.FADE, mt, mr, mb, ml, ft, fr, fb, fl);
+        }
+        return new NTxOverflow(mode, mt, mr, mb, ml, 0, 0, 0, 0);
+    }
+
+    /**
+     * Reads a 1/2/4-size property as top/right/bottom/left (CSS margin order).
+     * Returns {@code null} when the property is absent.
+     */
+    private static double[] readOverflowSizes(NTxRendererContext ctx, String propName) {
+        Object sv = ctx.computePropertyValue(propName).orNull();
+        if (sv == null) {
+            return null;
+        }
+        NOptional<double[]> a = NTxValue.of(sv).asDoubleArrayOrDouble();
+        if (!a.isPresent()) {
+            return null;
+        }
+        double[] v = a.get();
+        switch (v.length) {
+            case 1:
+                return new double[]{v[0], v[0], v[0], v[0]};
+            case 2:
+                return new double[]{v[0], v[1], v[0], v[1]};
+            case 3:
+                return new double[]{v[0], v[1], v[2], v[1]};
+            default:
+                return new double[]{v[0], v[1], v[2], v[3]};
+        }
+    }
+
     public static Paint getForegroundColor(NTxRendererContext ctx, boolean force) {
         Paint c = getNodeCommonCache(ctx).foregroundColor;
         if (force && c == null) {

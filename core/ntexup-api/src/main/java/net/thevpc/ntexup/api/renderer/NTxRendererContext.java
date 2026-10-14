@@ -17,8 +17,10 @@ import net.thevpc.nuts.text.NText;
 import net.thevpc.nuts.util.NOptional;
 
 import java.awt.*;
+import java.awt.geom.Rectangle2D;
 import java.awt.image.ImageObserver;
 import java.util.List;
+import java.util.function.Consumer;
 
 public interface NTxRendererContext extends NTxResolutionContext {
     String CAPABILITY_PRINT = "print";
@@ -130,6 +132,65 @@ public interface NTxRendererContext extends NTxResolutionContext {
     default NtxAnimationTimer newTimer(long periodMs, Runnable tick) {
         NtxPageLifecycle l = pageLifecycle().orNull();
         return l == null ? NtxAnimationTimer.NONE : l.newTimer(node(), periodMs, tick);
+    }
+
+    /**
+     * Returns a disposable copy of the current graphics whose clip is
+     * intersected with {@code bounds}. The caller is responsible for calling
+     * {@link NTxGraphics#dispose()} on the result. Prefer {@link #withinClip}
+     * which does it automatically.
+     *
+     * <p>This is the reusable low-level primitive behind the
+     * {@link net.thevpc.ntexup.api.document.style.NTxPropName#OVERFLOW} policy
+     * and the manual crop used by components (for example the antenna panels)
+     * that must never paint outside their own box.</p>
+     */
+    default NTxGraphics clippedGraphics(NTxBounds2D bounds) {
+        NTxGraphics g = graphics().copy();
+        g.graphics2D().clip(new Rectangle2D.Double(
+                bounds.minX(), bounds.minY(), bounds.widthX(), bounds.widthY()));
+        return g;
+    }
+
+    /**
+     * Returns a disposable copy of the current graphics whose clip is
+     * intersected with {@code shape}; see {@link #clippedGraphics(NTxBounds2D)}.
+     */
+    default NTxGraphics clippedGraphics(Shape shape) {
+        NTxGraphics g = graphics().copy();
+        g.graphics2D().clip(shape);
+        return g;
+    }
+
+    /**
+     * Runs {@code body} with a renderer context whose graphics is clipped to
+     * {@code bounds}, then restores (disposes) the clip. The current context is
+     * left untouched, so sibling nodes are never affected by the crop.
+     *
+     * <p>The clip is applied to a private copy of the graphics; anything the
+     * component paints outside {@code bounds} is discarded, exactly like a Swing
+     * {@code JPanel} painting into its own rectangle.</p>
+     */
+    default void withinClip(NTxBounds2D bounds, Consumer<NTxRendererContext> body) {
+        NTxGraphics g = clippedGraphics(bounds);
+        try {
+            body.accept(withGraphics(g));
+        } finally {
+            g.dispose();
+        }
+    }
+
+    /**
+     * Same as {@link #withinClip(NTxBounds2D, Consumer)} but clips to an
+     * arbitrary shape.
+     */
+    default void withinClip(Shape shape, Consumer<NTxRendererContext> body) {
+        NTxGraphics g = clippedGraphics(shape);
+        try {
+            body.accept(withGraphics(g));
+        } finally {
+            g.dispose();
+        }
     }
 
     NTxNodeBuilderContext buildContext();

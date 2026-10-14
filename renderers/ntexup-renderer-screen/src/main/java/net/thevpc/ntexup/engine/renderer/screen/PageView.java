@@ -4,10 +4,13 @@ import net.thevpc.ntexup.api.engine.NTxCompiledDocument;
 import net.thevpc.ntexup.api.engine.NTxCompiledPage;
 import net.thevpc.ntexup.api.engine.NTxEngine;
 import net.thevpc.ntexup.api.document.node.NTxNode;
+import net.thevpc.ntexup.api.renderer.NTxNodeRenderer;
 import net.thevpc.ntexup.api.renderer.NTxNodeRendererConfig;
 import net.thevpc.ntexup.api.renderer.NTxRendererContext;
+import net.thevpc.ntexup.api.renderer.NtxAnimationTimer;
+import net.thevpc.ntexup.api.renderer.NtxPageLifecycle;
+import net.thevpc.ntexup.api.renderer.NtxPageLifecycleEvent;
 import net.thevpc.ntexup.api.util.NTxUtils;
-import net.thevpc.nuts.collections.NMaps;
 import net.thevpc.nuts.text.NMsg;
 
 import javax.swing.*;
@@ -15,13 +18,30 @@ import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.image.BufferedImage;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.IdentityHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 public class PageView extends JComponent {
     public static Dimension REF_SIZE = new Dimension(1024, 768);
     private static final int DEFAULT_RENDER_WIDTH = 1024;
+    private static final int FRAME_PERIOD_MS = 40;
+    private static final int MIN_TIMER_PERIOD_MS = 5;
     private final NTxCompiledPage page;
     private volatile long pageStartTime;
+    private volatile boolean showing;
+    private volatile boolean frameRequested;
+    private javax.swing.Timer frameTimer;
+    private final NtxPageLifecycle lifecycle = new Lifecycle();
+    // Page-owned animation timers, grouped by period so ticks that share a speed
+    // are driven by a single underlying Swing timer.
+    private final Object timerLock = new Object();
+    private final IdentityHashMap<Object, TimerHandle> timersByOwner = new IdentityHashMap<>();
+    private final Map<Long, TimerGroup> timerGroups = new HashMap<>();
     private String uuid;
     private final NTxEngine engine;
     private final NTxCompiledDocument document;
@@ -94,11 +114,19 @@ public class PageView extends JComponent {
      * Called when the view is discarded (document reload / viewer close).
      */
     public void discard() {
+        boolean wasShowing = showing;
+        showing = false;
+        frameRequested = false;
+        stopFrameTimer();
+        stopAndClearTimers();
         synchronized (renderLock) {
             discarded = true;
             renderEpoch++;
             pageImage = null;
             renderInvalidated = false;
+        }
+        if (wasShowing) {
+            firePageLifecycle(false);
         }
     }
 
@@ -119,7 +147,14 @@ public class PageView extends JComponent {
     }
 
     void onHide() {
-
+        boolean wasShowing = showing;
+        showing = false;
+        frameRequested = false;
+        stopFrameTimer();
+        applyTimerState();
+        if (wasShowing) {
+            firePageLifecycle(false);
+        }
     }
 
     synchronized void onShow() {
@@ -128,11 +163,352 @@ public class PageView extends JComponent {
         }
         page.compiledPage();
         this.pageStartTime = System.currentTimeMillis();
-        requestRender(true);
+        this.showing = true;
+        applyTimerState();
+        firePageLifecycle(true);
+        forceRender();
     }
 
     public void prefetch() {
         requestRender(false);
+    }
+
+    /**
+     * Triggers a render even when the cached image is still considered valid, so
+     * a transition (page shown, animation frame) always recomputes content.
+     */
+    private void forceRender() {
+        synchronized (renderLock) {
+            if (discarded) {
+                return;
+            }
+            renderInvalidated = true;
+        }
+        requestRender(true);
+    }
+
+    // ------------------------------------------------------------------
+    // Page lifecycle (visibility + single throttled frame driver)
+    // ------------------------------------------------------------------
+
+    private class Lifecycle implements NtxPageLifecycle {
+        @Override
+        public int pageIndex() {
+            return page.index();
+        }
+
+        @Override
+        public boolean isShowing() {
+            return showing;
+        }
+
+        @Override
+        public long showStartTime() {
+            return pageStartTime;
+        }
+
+        @Override
+        public void requestFrame() {
+            frameRequested = true;
+            if (SwingUtilities.isEventDispatchThread()) {
+                ensureFrameTimer();
+            } else {
+                SwingUtilities.invokeLater(PageView.this::ensureFrameTimer);
+            }
+        }
+
+        @Override
+        public NtxAnimationTimer newTimer(Object owner, long periodMs, Runnable tick) {
+            return registerTimer(owner, periodMs, tick);
+        }
+    }
+
+    private void ensureFrameTimer() {
+        if (discarded || !showing) {
+            return;
+        }
+        if (frameTimer == null) {
+            frameTimer = new javax.swing.Timer(FRAME_PERIOD_MS, e -> tickFrame());
+            frameTimer.setCoalesce(true);
+        }
+        if (!frameTimer.isRunning()) {
+            frameTimer.start();
+        }
+    }
+
+    private void tickFrame() {
+        if (discarded || !showing) {
+            stopFrameTimer();
+            return;
+        }
+        if (frameRequested) {
+            frameRequested = false;
+            forceRender();
+        } else {
+            // nothing wants to animate right now: idle until asked again
+            stopFrameTimer();
+        }
+    }
+
+    private void stopFrameTimer() {
+        javax.swing.Timer t = frameTimer;
+        if (t != null && t.isRunning()) {
+            if (SwingUtilities.isEventDispatchThread()) {
+                t.stop();
+            } else {
+                SwingUtilities.invokeLater(t::stop);
+            }
+        }
+    }
+
+    // ------------------------------------------------------------------
+    // Page-owned, period-grouped animation timers
+    // ------------------------------------------------------------------
+
+    private NtxAnimationTimer registerTimer(Object owner, long periodMs, Runnable tick) {
+        if (owner == null || tick == null) {
+            return NtxAnimationTimer.NONE;
+        }
+        long p = Math.max(MIN_TIMER_PERIOD_MS, periodMs);
+        TimerHandle h;
+        synchronized (timerLock) {
+            if (discarded) {
+                return NtxAnimationTimer.NONE;
+            }
+            h = timersByOwner.get(owner);
+            if (h == null) {
+                h = new TimerHandle(owner, p, tick);
+                timersByOwner.put(owner, h);
+                TimerGroup g = groupOf(p);
+                g.handles.add(h);
+                h.group = g;
+            } else {
+                h.tick = tick;
+                if (h.periodMs != p) {
+                    TimerGroup old = h.group;
+                    if (old != null) {
+                        old.handles.remove(h);
+                        if (old.handles.isEmpty()) {
+                            dropGroup(old);
+                        }
+                    }
+                    h.periodMs = p;
+                    TimerGroup g = groupOf(p);
+                    g.handles.add(h);
+                    h.group = g;
+                }
+            }
+        }
+        runOnUi(this::applyTimerState);
+        return h;
+    }
+
+    private void cancelTimer(TimerHandle h) {
+        if (h == null) {
+            return;
+        }
+        synchronized (timerLock) {
+            if (h.cancelled) {
+                return;
+            }
+            h.cancelled = true;
+            timersByOwner.remove(h.owner);
+            TimerGroup g = h.group;
+            if (g != null) {
+                g.handles.remove(h);
+                if (g.handles.isEmpty()) {
+                    dropGroup(g);
+                }
+            }
+        }
+    }
+
+    /** starts/stops every group according to the current visibility state. */
+    private void applyTimerState() {
+        List<TimerGroup> groups;
+        boolean run;
+        synchronized (timerLock) {
+            groups = new ArrayList<>(timerGroups.values());
+            run = showing && !discarded;
+        }
+        for (TimerGroup g : groups) {
+            if (run) {
+                g.start();
+            } else {
+                g.stop();
+            }
+        }
+    }
+
+    private void stopAndClearTimers() {
+        List<TimerGroup> groups;
+        synchronized (timerLock) {
+            groups = new ArrayList<>(timerGroups.values());
+            timerGroups.clear();
+            timersByOwner.clear();
+        }
+        for (TimerGroup g : groups) {
+            g.handles.clear();
+            g.stop();
+        }
+    }
+
+    /** caller must hold {@link #timerLock}. */
+    private TimerGroup groupOf(long periodMs) {
+        TimerGroup g = timerGroups.get(periodMs);
+        if (g == null) {
+            g = new TimerGroup(periodMs);
+            timerGroups.put(periodMs, g);
+        }
+        return g;
+    }
+
+    /** caller must hold {@link #timerLock}. */
+    private void dropGroup(TimerGroup g) {
+        timerGroups.remove(g.periodMs);
+        g.stop();
+    }
+
+    private void runOnUi(Runnable r) {
+        if (SwingUtilities.isEventDispatchThread()) {
+            r.run();
+        } else {
+            SwingUtilities.invokeLater(r);
+        }
+    }
+
+    private class TimerGroup {
+        final long periodMs;
+        final LinkedHashSet<TimerHandle> handles = new LinkedHashSet<>();
+        javax.swing.Timer timer;
+
+        TimerGroup(long periodMs) {
+            this.periodMs = periodMs;
+        }
+
+        void start() {
+            if (timer == null) {
+                int d = (int) Math.max(MIN_TIMER_PERIOD_MS, Math.min(Integer.MAX_VALUE, periodMs));
+                timer = new javax.swing.Timer(d, e -> fire());
+                timer.setCoalesce(true);
+            }
+            if (!timer.isRunning()) {
+                timer.start();
+            }
+        }
+
+        void stop() {
+            javax.swing.Timer t = timer;
+            if (t != null && t.isRunning()) {
+                t.stop();
+            }
+        }
+
+        boolean isRunning() {
+            javax.swing.Timer t = timer;
+            return t != null && t.isRunning();
+        }
+
+        void fire() {
+            List<TimerHandle> snapshot;
+            synchronized (timerLock) {
+                if (handles.isEmpty()) {
+                    stop();
+                    return;
+                }
+                snapshot = new ArrayList<>(handles);
+            }
+            for (TimerHandle h : snapshot) {
+                if (h.cancelled) {
+                    continue;
+                }
+                try {
+                    h.tick.run();
+                } catch (Throwable ex) {
+                    if (engine != null) {
+                        engine.log().log(NMsg.ofC("animation timer tick failed: %s", ex));
+                    }
+                }
+            }
+        }
+    }
+
+    private class TimerHandle implements NtxAnimationTimer {
+        final Object owner;
+        volatile long periodMs;
+        volatile Runnable tick;
+        volatile TimerGroup group;
+        volatile boolean cancelled;
+
+        TimerHandle(Object owner, long periodMs, Runnable tick) {
+            this.owner = owner;
+            this.periodMs = periodMs;
+            this.tick = tick;
+        }
+
+        @Override
+        public long periodMillis() {
+            return periodMs;
+        }
+
+        @Override
+        public boolean isRunning() {
+            TimerGroup g = group;
+            return !cancelled && g != null && g.isRunning();
+        }
+
+        @Override
+        public void cancel() {
+            cancelTimer(this);
+        }
+    }
+
+    private void firePageLifecycle(boolean show) {
+        NTxNode root;
+        try {
+            root = page.compiledPage();
+        } catch (Throwable ignored) {
+            return;
+        }
+        firePageLifecycleNode(root, show);
+    }
+
+    private void firePageLifecycleNode(NTxNode node, boolean show) {
+        if (node == null) {
+            return;
+        }
+        if (engine != null) {
+            NTxNodeRenderer r = engine.getRenderer(node.type()).orNull();
+            if (r != null) {
+                NtxPageLifecycleEvent event = new PageLifecycleEvent(node);
+                if (show) {
+                    r.onPageShow(event);
+                } else {
+                    r.onPageHide(event);
+                }
+            }
+        }
+        for (NTxNode child : node.children()) {
+            firePageLifecycleNode(child, show);
+        }
+    }
+
+    private class PageLifecycleEvent implements NtxPageLifecycleEvent {
+        private final NTxNode node;
+
+        PageLifecycleEvent(NTxNode node) {
+            this.node = node;
+        }
+
+        @Override
+        public NTxNode node() {
+            return node;
+        }
+
+        @Override
+        public NtxPageLifecycle lifecycle() {
+            return lifecycle;
+        }
     }
 
     protected void repaintHierarchy() {
@@ -198,7 +574,8 @@ public class PageView extends JComponent {
             NTxNodeRendererConfig config = new NTxNodeRendererConfig();
             config.setWidth(tw);
             config.setHeight(th);
-            config.setCapabilities(NMaps.of(NTxRendererContext.CAPABILITY_ANIMATE, true));
+            config.setCapability(NTxRendererContext.CAPABILITY_ANIMATE, true);
+            config.setCapability(NtxPageLifecycle.CAPABILITY_PAGE_LIFECYCLE, lifecycle);
             config.setStartTime(pageStartTime);
             config.setUseCache(useCache);
             engine.renderPage(page, config, g, this, this::onRenderInvalidated);
@@ -249,7 +626,14 @@ public class PageView extends JComponent {
     }
 
     public boolean isLoading() {
-        return !page.isCompiled() || !document.isCompiled() || renderPending;
+        if (!page.isCompiled() || !document.isCompiled()) {
+            return true;
+        }
+        // `renderPending` is set again on every animation frame (and on resize/invalidation),
+        // so it is true almost permanently on an animated page. It must not raise the "loading"
+        // indicator: the page already has a frame to show. Only report loading until this page
+        // has produced its first image.
+        return renderPending && pageImage == null;
     }
 
     @Override
