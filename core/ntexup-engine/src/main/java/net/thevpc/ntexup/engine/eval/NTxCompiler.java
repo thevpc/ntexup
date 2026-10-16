@@ -569,9 +569,11 @@ public class NTxCompiler {
                             NTxUtils.setNodeParent(item, context.parent());
                             ((NTxCompiledDocumentImpl)context.compiledDocument()).addMonitoredSource(nPath);
                             new DispatchCompileNodeVisitor(visitor).visitItem(item, context);
-                        } else {
-                            se = engine.loadNode(node, nPath, context.compiledDocument());
+                        } else if(se.isError()){
+//                            se = engine.loadNode(node, nPath, context.compiledDocument());
                             context.log(NMsg.ofC("invalid include. error loading : %s", nPath).asSevere(), NTxUtils.sourceOf(node));
+                        } else {
+                            //just ignore...
                         }
                     } else {
                         context.log(NMsg.ofC("invalid include. file not found : %s", nPath).asWarning(), NTxUtils.sourceOf(node));

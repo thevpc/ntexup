@@ -492,6 +492,9 @@ public class NTxUtils {
         if (NBlankable.isBlank(source)) {
             return yy;
         }
+        if (yy==null) {
+            return yy;
+        }
         return yy.transform(new NElementTransform() {
             @Override
             public List<NElement> postTransform(NElementTransformContext context) {

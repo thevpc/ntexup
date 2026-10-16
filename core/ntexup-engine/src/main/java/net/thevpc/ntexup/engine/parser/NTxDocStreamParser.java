@@ -336,6 +336,15 @@ public class NTxDocStreamParser {
         NElement u;
         try {
             u = NElementReader.ofTson().read(is);
+        } catch (Exception ex) {
+            NMsg msg = NMsg.ofC("error loading tson document %s", is).asError();
+            engine.log().log(msg, source);
+            return NOptional.ofNamedError(msg, ex);
+        }
+        if (u == null) {
+            return NOptional.ofEmpty(NMsg.ofC("input is empty : %s", is));
+        }
+        try {
             u = NTxUtils.addCompilerDeclarationPathAnnotations(u, source.path().map(NPath::toString).orNull());
         } catch (Exception ex) {
             NMsg msg = NMsg.ofC("error loading tson document %s", is).asError();
@@ -349,6 +358,15 @@ public class NTxDocStreamParser {
         NElement u;
         try {
             u = NElementReader.ofTson().read(path);
+        } catch (Exception ex) {
+            NMsg msg = NMsg.ofC("error loading tson document %s : %s", path, ex).asError();
+            engine.log().log(msg, source);
+            return NOptional.ofNamedError(msg, ex);
+        }
+        if (u == null) {
+            return NOptional.ofEmpty(NMsg.ofC("path is empty : %s", path));
+        }
+        try {
             u = NTxUtils.addCompilerDeclarationPathAnnotations(u, source.path().map(NPath::toString).orNull());
         } catch (Exception ex) {
             NMsg msg = NMsg.ofC("error loading tson document %s : %s", path, ex).asError();
