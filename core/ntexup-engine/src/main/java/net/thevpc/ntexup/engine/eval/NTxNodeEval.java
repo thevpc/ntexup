@@ -330,6 +330,15 @@ public class NTxNodeEval implements NTxObjectEvalContext {
 
     private NElement _evalBinaryOperator(NBinaryOperatorElement elem) {
         switch (elem.operatorSymbol()) {
+            case EQ:
+            case COLON_EQ: {
+                // An assignment reached in expression position (typically when the raw
+                // body elements of a component slot are packed as an array and evaluated).
+                // It must be preserved as-is so it can later be compiled as a CTRL_ASSIGN /
+                // CTRL_ASSIGN_DEFAULT node instead of being corrupted to null. This allows
+                // variable definitions at any nesting level inside node bodies.
+                return elem;
+            }
             case MINUS: {
                 NElement a = eval(elem.firstOperand());
                 NElement b = eval(elem.secondOperand());

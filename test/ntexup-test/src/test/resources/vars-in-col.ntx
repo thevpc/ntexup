@@ -1,0 +1,8 @@
+import("layout" "shapes2d")
+page{
+    col{
+        w := 14mm
+        h := 6mm
+        rectangle(size:(w, h), background-color:red)
+    }
+}

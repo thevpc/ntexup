@@ -1,0 +1,30 @@
+page{
+    // emphasis and inline separators
+    text("hello *world [[probe: X1]]* tail"),
+    text("hello **bold [[probe: X2]] bold** tail"),
+    text("sep \( X3 \) done"),
+    text("emph *see \( X4 \) now* end"),
+    text("plain [[probe: X6]] no emphasis"),
+
+    // color / palette / heading styles
+    text("color ##{1:red [[probe: X5]] text##} done"),
+    text("h2 ##head [[probe: B3]]## tail"),
+    text("h3 ###head [[probe: B4]]### tail"),
+    text("palette ##:p1 [[probe: B5]]## tail"),
+    text("italic ##:/ it [[probe: B6]]## tail"),
+
+    // combined markup
+    text("bold+color **##{1:red [[probe: B7]] t##}** tail"),
+    text("bold+italic ***mix [[probe: B8]]*** tail"),
+
+    // the flavor payload must stay verbatim even when it holds markup characters
+    text("payload *it [[probe: B9 * _ # **]]* tail"),
+
+    // markers mtf does not implement: the text stays literal, but the flavor still renders
+    text("literal __it [[probe: B10]]__ tail"),
+    text("literal #it [[probe: B11]]# tail"),
+
+    // regions that must stay literal (never reach the flavor)
+    text("code `[[probe: Z1]]` end"),
+    text("escaped \[[probe: Z2]] literal"),
+}

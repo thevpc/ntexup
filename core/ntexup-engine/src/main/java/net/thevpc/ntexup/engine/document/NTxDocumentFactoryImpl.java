@@ -110,7 +110,9 @@ public class NTxDocumentFactoryImpl implements NTxDocumentFactory {
 
     @Override
     public NTxNode ofAssign() {
-        return of(NTxNodeType.CTRL_ASSIGN);
+        // assignments are void statements: they must never take space in any layout
+        return of(NTxNodeType.CTRL_ASSIGN)
+                .setProperty(NTxPropName.LAYOUT, NElement.ofString("none"));
     }
 
     @Override

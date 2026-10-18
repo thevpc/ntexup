@@ -31,6 +31,23 @@ import java.util.function.Consumer;
  * Placeholders are restored while converting the nuts {@link NText} tree back to tokens.
  * A language that no ntexup flavor supports is kept as plain text, brackets included.
  *
+ * <p>Two nuts facts make this pre-processing necessary, and neither is a nuts defect:
+ * <ul>
+ *   <li>the flavor separators that are not an {@code [[lang: ...]]} block (typically the LaTeX
+ *       {@code \(}...{@code \)} pair) are not known to the {@code mtf} parser at all, so ntexup
+ *       must recognize them itself;</li>
+ *   <li>the nuts {@code normalize()} transform, which ntexup needs because it is what resolves
+ *       theme/palette style references (for example {@code ##:p1 text##} becomes a concrete
+ *       color), flattens the tree to render primitives and turns nested {@code NTextCode} nodes
+ *       (the {@code [[lang: ...]]} flavors) into plain text, dropping the qualifier that selects
+ *       the flavor.</li>
+ * </ul>
+ * Masking the regions before {@code mtf} and restoring them afterwards keeps the flavor nodes
+ * out of {@code normalize()}'s flattening while still letting it resolve the surrounding styles.
+ * The {@code mtf} parser itself already keeps an {@code [[lang: ...]]} region (as an
+ * {@code NTextCode} node) correctly nested inside any markup, so no change is needed on the nuts
+ * side.
+ *
  * <p>When the {@code mtf} code highlighter is not available (nuts-runtime is resolved at
  * runtime by the nuts boot class loader and may be missing), the legacy hand written
  * tokenizer is used as a fallback.
@@ -38,6 +55,8 @@ import java.util.function.Consumer;
 class NTxTextTokenParseHelper {
 
     private static final String MTF_FORMAT = "mtf";
+    private static final int PLACEHOLDER_BASE = 0xE000;
+    private static final int PLACEHOLDER_MAX = 0xF8FF;
 
     private List<NTxTextRendererFlavor> flavors;
     private NTxNodeBuilderContext builderContext;
@@ -46,6 +65,7 @@ class NTxTextTokenParseHelper {
     private int parsePrefixesMaxLength;
     private NTxRendererContext rendererContext;
     private boolean warnedMissingMtf;
+    private final List<Placeholder> placeholders = new ArrayList<>();
     private NTextTransformConfig nconfig = new NTextTransformConfig().applyTheme(true).normalize(true).basicTrueStyles(true);
 
     public NTxTextTokenParseHelper(NTxRendererContext rendererContext, NCharQueue cq, NTxNodeBuilderContext builderContext) {
@@ -109,9 +129,147 @@ class NTxTextTokenParseHelper {
             }
         }
         List<NTxTextToken> tokens = new ArrayList<>();
-        NText nt = mtf.stringToText(sb.toString());
+        String raw = sb.toString();
+        String masked = maskFlavorRegions(raw);
+        NText nt = mtf.stringToText(masked);
         collect(nt, new NTxTextOptions(), tokens);
         return tokens;
+    }
+
+    /**
+     * Replaces every flavor region (such as {@code [[eq: ...]]} or {@code \(...\)}) by an inert
+     * private use placeholder before the remaining text is handed over to nuts. This lets markup
+     * span a language region (as in {@code *italic [[eq: x]] italic*}), because nuts never sees the
+     * brackets. The extracted tokens are restored (with the inherited markup applied) by
+     * {@link #appendPlain(String, NTxTextOptions, List)} while collecting the nuts text tree.
+     * A region escaped with a backslash and a region inside a verbatim code span are kept literal.
+     */
+    private String maskFlavorRegions(String raw) {
+        placeholders.clear();
+        StringBuilder out = new StringBuilder(raw.length());
+        int n = raw.length();
+        int i = 0;
+        while (i < n) {
+            int codeEnd = codeSpanEnd(raw, i);
+            if (codeEnd >= 0) {
+                out.append(raw, i, codeEnd);
+                i = codeEnd;
+                continue;
+            }
+            Placeholder ph = null;
+            if (!isEscaped(raw, i) && (PLACEHOLDER_BASE + placeholders.size()) <= PLACEHOLDER_MAX) {
+                for (NTxTextRendererFlavor flavor : flavors) {
+                    if (Objects.equals(flavor.type(), builderContext == null ? null : builderContext.id())) {
+                        continue;
+                    }
+                    if (matchingPrefix(raw, i, flavor) == null) {
+                        continue;
+                    }
+                    NTxTextRendererFlavorParseContext sub = parseContext.withText(raw.substring(i));
+                    int before = sub.length();
+                    List<NTxTextToken> parsed = flavor.parseTokens(sub);
+                    int used = before - sub.length();
+                    if (parsed != null && !parsed.isEmpty() && used > 0) {
+                        ph = new Placeholder(raw.substring(i, i + used), parsed);
+                        break;
+                    }
+                }
+            }
+            if (ph != null) {
+                placeholders.add(ph);
+                out.append((char) (PLACEHOLDER_BASE + placeholders.size() - 1));
+                i += ph.source.length();
+            } else {
+                out.append(raw.charAt(i));
+                i++;
+            }
+        }
+        return out.toString();
+    }
+
+    private String matchingPrefix(String text, int offset, NTxTextRendererFlavor flavor) {
+        for (String p : flavor.parsePrefixes()) {
+            if (!p.isEmpty() && text.startsWith(p, offset)) {
+                return p;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * The end (exclusive) of a backtick delimited code span starting at {@code start}, or
+     * {@code -1} when there is no code span there. Flavor regions inside code spans are literal.
+     */
+    private int codeSpanEnd(String raw, int start) {
+        if (raw.charAt(start) != '`') {
+            return -1;
+        }
+        int run = 1;
+        while (start + run < raw.length() && raw.charAt(start + run) == '`') {
+            run++;
+        }
+        int close = raw.indexOf(NStringUtils.repeat('`', run), start + run);
+        return close < 0 ? raw.length() : close + run;
+    }
+
+    private boolean isEscaped(String raw, int at) {
+        int backslashes = 0;
+        for (int i = at - 1; i >= 0 && raw.charAt(i) == '\\'; i--) {
+            backslashes++;
+        }
+        return (backslashes % 2) == 1;
+    }
+
+    private int placeholderIndex(char c) {
+        int i = c - PLACEHOLDER_BASE;
+        return (i >= 0 && i < placeholders.size()) ? i : -1;
+    }
+
+    /**
+     * Emits the tokens of {@code value}, restoring any flavor placeholder with the inherited
+     * markup options (emphasis, color, ...) applied on top of the flavor's own options.
+     */
+    private void appendPlain(String value, NTxTextOptions options, List<NTxTextToken> tokens) {
+        if (value == null || value.isEmpty()) {
+            return;
+        }
+        int start = 0;
+        for (int i = 0; i < value.length(); i++) {
+            int index = placeholderIndex(value.charAt(i));
+            if (index < 0) {
+                continue;
+            }
+            if (i > start) {
+                addText(value.substring(start, i), options, tokens);
+            }
+            for (NTxTextToken t : placeholders.get(index).tokens) {
+                t.options().copyNonNullFrom(options);
+                tokens.add(t);
+            }
+            start = i + 1;
+        }
+        if (start < value.length()) {
+            addText(value.substring(start), options, tokens);
+        }
+    }
+
+    private void addText(String value, NTxTextOptions options, List<NTxTextToken> tokens) {
+        if (value == null || value.isEmpty()) {
+            return;
+        }
+        NTxTextTokenText e = new NTxTextTokenText(value);
+        e.options().copyNonNullFrom(options);
+        tokens.add(e);
+    }
+
+    private static final class Placeholder {
+        final String source;
+        final List<NTxTextToken> tokens;
+
+        Placeholder(String source, List<NTxTextToken> tokens) {
+            this.source = source;
+            this.tokens = tokens;
+        }
     }
 
     /**
@@ -190,12 +348,18 @@ class NTxTextTokenParseHelper {
                 String q = nt.qualifier();
                 NTxTextRendererFlavor f = resolveFlavor(q);
                 if (f != null) {
-                    tokens.addAll(f.parseTokens(parseContext.withText(
+                    List<NTxTextToken> flavored = f.parseTokens(parseContext.withText(
                             f.parsePrefixes().get(0)
                             +value
                             +f.parseSuffix(f.parsePrefixes().get(0))
 
-                    )));
+                    ));
+                    if (flavored != null) {
+                        for (NTxTextToken t : flavored) {
+                            t.options().copyNonNullFrom(options);
+                            tokens.add(t);
+                        }
+                    }
                     return;
                 }
             }
@@ -203,12 +367,10 @@ class NTxTextTokenParseHelper {
             return;
         }
         if (node instanceof NTextPlain) {
-            NTxTextTokenText e = new NTxTextTokenText(((NTextPlain) node).value());
-            e.options().copyNonNullFrom(options);
-            tokens.add(e);
+            appendPlain(((NTextPlain) node).value(), options, tokens);
             return;
         }
-        tokens.add(new NTxTextTokenText(node.filteredText()));
+        appendPlain(node.filteredText(), options, tokens);
     }
 
     private boolean isRepeated(String s) {
