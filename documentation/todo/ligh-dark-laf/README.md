@@ -17,8 +17,9 @@ Do not assume structure. First:
 ## Requirements
 
 ### 1. Theme support
-- Two themes: **light** and **dark**, with a single source of truth (a small `Theme`/`ViewerTheme` abstraction or equivalent) that the whole viewer reads from.
+- Two themes: **light** and **dark**, with a single source of truth (a small `ViewerTheme` abstraction or equivalent) that the whole viewer reads from.
 - Switchable at runtime (menu entry and/or shortcut, plus a way to set the initial theme programmatically/CLI/config, whichever fits the existing conventions). Switching must update all open windows live, without restart (`SwingUtilities.updateComponentTreeUI` or the LAF library's equivalent on every open window).
+- If you are to use flatlaf theming, then hardcoded colors sould be reselected from themes colors in all dialogs
 - Persist the choice if the viewer already has a preferences mechanism; otherwise don't invent a new one, just expose the setting cleanly.
 
 ### 2. Everything follows the theme
@@ -29,8 +30,6 @@ Do not assume structure. First:
 - No component may keep a hardcoded light-only (or dark-only) color. Replace hardcoded colors with `UIManager` keys or theme tokens. Custom-painted components must read colors from the theme at paint time (not cache them at construction), so live switching works.
 - Rendered **document content** (slides/pages) is a separate concern from UI chrome: do not recolor the document itself unless it already has a notion of viewer background. State clearly in your summary what you did there.
 
-### 2.b GoTo
-Change Goto to be able to list slides (show indexed titles, donnow if titles are resolvable, and how)
 
 ### 3. Dialogs must look the same as the main viewer
 - The dialogs should be **headerless / undecorated** (no native OS title bar) so they match the viewer's styling instead of showing a native light title bar over a dark UI. I'm not sure whether "headless" in my notes meant undecorated windows or something else: treat undecorated, theme-styled dialogs as the intent, and verify against how the viewer's main window is decorated.
