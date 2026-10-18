@@ -71,6 +71,9 @@ public class DocumentPopupMenu {
                 documentView.showPage(v - 1);
             }
         });
+        popupMenu.addMenuItem("Find... (Ctrl+F)", ev -> {
+            documentView.openFindDialog();
+        });
 
         JMenu sizeMenu = new JMenu("Size");
         for (String s : new String[]{

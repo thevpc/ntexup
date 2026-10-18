@@ -1,7 +1,9 @@
 package net.thevpc.ntexup.engine.renderer.text;
 
 import net.thevpc.ntexup.api.document.elem2d.*;
+import net.thevpc.ntexup.api.document.node.NTxHighlights;
 import net.thevpc.ntexup.api.document.node.NTxNode;
+import net.thevpc.ntexup.api.document.node.NTxNodeHighlight;
 import net.thevpc.ntexup.api.document.style.NTxPropName;
 import net.thevpc.ntexup.api.engine.NTxEngine;
 import net.thevpc.ntexup.api.eval.NTxValue;
@@ -452,6 +454,7 @@ public class NTxTextRendererBuilderImpl implements NTxTextRendererBuilder {
         double padLeft = padding == null ? 0 : padding.getLeft();
         double padTop = padding == null ? 0 : padding.getTop();
         if (tp == null) {
+            paintSearchHighlights(p, rendererContext, selfBounds, padLeft, padTop, textOptions, fontInfo);
             for (NTxRichTextRow row : this.rows) {
                 double baselineY = (y + padTop + row.yOffset) + (row.maxAscent > 0 ? row.maxAscent : 0);
                 for (NTxRichTextToken col : row.tokens) {
@@ -539,6 +542,81 @@ public class NTxTextRendererBuilderImpl implements NTxTextRendererBuilder {
             }
         }
         rendererContext.drawContour();
+    }
+
+    /**
+     * MVC search highlights (TOKENS mode): paints one rounded translucent
+     * rectangle behind each token range matching a {@link NTxNodeHighlight}
+     * needle bound to the node. The model is read fresh at paint time (a
+     * single user-object lookup when no search is active) and nothing is
+     * painted unless the host enabled the
+     * {@link NTxRendererContext#CAPABILITY_SEARCH_HIGHLIGHTS} capability
+     * (screen viewer; PDF/HTML/image exports stay clean).
+     */
+    private void paintSearchHighlights(NTxNode p, NTxRendererContext rendererContext, NTxBounds2D selfBounds,
+                                       double padLeft, double padTop, NTxTextOptions baseOptions, NtxFontInfo fontInfo) {
+        List<NTxNodeHighlight> highlights = NTxHighlights.get(p);
+        if (highlights.isEmpty() || !rendererContext.isCapability(NTxRendererContext.CAPABILITY_SEARCH_HIGHLIGHTS)) {
+            return;
+        }
+        NTxGraphics g0 = rendererContext.graphics();
+        Font oldFont = g0.getFont();
+        double originX = selfBounds.minX() + padLeft;
+        double originY = selfBounds.minY() + padTop;
+        try {
+            for (NTxRichTextRow row : this.rows) {
+                if (row.tokens.isEmpty() || row.maxAscent <= 0) {
+                    continue;
+                }
+                double rectY = originY + row.yOffset;
+                double rectH = row.maxAscent + Math.max(0, row.maxDescent);
+                for (NTxRichTextToken col : row.tokens) {
+                    if (col.text == null || col.text.trim().isEmpty() || col.bounds == null) {
+                        continue;
+                    }
+                    double tokenX = originX + col.xOffset;
+                    double tokenW = col.bounds.getWidth();
+                    boolean imageToken = col.type == NTxRichTextTokenType.IMAGE_PAINTER;
+                    Font tokenFont = null;
+                    for (NTxNodeHighlight h : highlights) {
+                        if (h.isWholeNode() || h.getColor() == null) {
+                            continue;
+                        }
+                        for (String needle : h.getNeedles()) {
+                            if (needle.isEmpty()) {
+                                continue;
+                            }
+                            for (int[] range : NTxHighlights.findMatches(col.text, needle)) {
+                                double sx;
+                                double sw;
+                                if (imageToken) {
+                                    // inline equation: token text is the raw tex,
+                                    // map chars proportionally onto the painted image
+                                    double len = Math.max(1, col.text.length());
+                                    sx = tokenW * range[0] / len;
+                                    sw = tokenW * (range[1] - range[0]) / len;
+                                } else {
+                                    if (tokenFont == null) {
+                                        NTxTextOptions options2 = baseOptions.copy().copyNonNullFrom(col.textOptions);
+                                        options2.defaultFont = fontInfo;
+                                        options2.sr = baseOptions.sr;
+                                        tokenFont = options2.resolveFont(g0, true);
+                                    }
+                                    double x0 = g0.getStringBounds(col.text.substring(0, range[0])).getWidth();
+                                    double x1 = g0.getStringBounds(col.text.substring(0, range[1])).getWidth();
+                                    sx = x0;
+                                    sw = Math.max(1, x1 - x0);
+                                }
+                                g0.setColor(h.getColor());
+                                g0.fillRoundRect(tokenX + sx, rectY, sw, rectH, 2, 2);
+                            }
+                        }
+                    }
+                }
+            }
+        } finally {
+            g0.setFont(oldFont);
+        }
     }
 
     public void renderRowAlongCurve(NTxRichTextRow row, List<Point2D> curvePoints, List<Double> segmentLengths, NTxTextOptions baseOptions, NTxRendererContext rendererContext, NtxFontInfo fontInfo, NTxTextAlign textAlign) {

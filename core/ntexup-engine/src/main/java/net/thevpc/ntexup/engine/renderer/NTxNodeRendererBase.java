@@ -121,6 +121,11 @@ public abstract class NTxNodeRendererBase implements NTxNodeRenderer {
                         renderMain(c);
                     }
                     NTxNodeRendererUtils.drawDebugBox(c, c.graphics(), c.selfBounds2D());
+                    // MVC search highlights: whole-node spans (equations and
+                    // other non-text content) are painted by the node renderer
+                    // itself; no-op unless the host enabled the
+                    // CAPABILITY_SEARCH_HIGHLIGHTS capability (screen viewer)
+                    NTxHighlights.paintWholeNode(node, c);
                 };
 
                 NTxOverflow overflow = NTxValueByName.readStyleAsOverflow(rendererContext);

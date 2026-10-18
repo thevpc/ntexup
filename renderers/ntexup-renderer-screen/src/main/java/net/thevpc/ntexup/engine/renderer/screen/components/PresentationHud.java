@@ -18,6 +18,7 @@ public class PresentationHud extends JPanel {
     private final JButton nextBtn = createHudButton("▶", "Next Slide (Right / Down / Space / PageDown)");
     private final JButton lastBtn = createHudButton("▶|", "Last Slide (End)");
     private final JButton fullscreenBtn = createHudButton("⛶", "Fullscreen (F11)");
+    private final JButton searchBtn = createHudButton("🔍", "Find in Slides (Ctrl+F)");
     private final JButton pdfBtn = createHudButton("PDF", "Export to PDF");
     private final Timer autoHideTimer;
     private boolean mouseInside = false;
@@ -30,28 +31,38 @@ public class PresentationHud extends JPanel {
 
         firstBtn.addActionListener(e -> {
             documentView.firstPage();
+            documentView.requestContentPaneFocus();
             ping();
         });
         prevBtn.addActionListener(e -> {
             documentView.previousPage();
+            documentView.requestContentPaneFocus();
             ping();
         });
         nextBtn.addActionListener(e -> {
             documentView.nextPage();
+            documentView.requestContentPaneFocus();
             ping();
         });
         lastBtn.addActionListener(e -> {
             documentView.lastPage();
+            documentView.requestContentPaneFocus();
             ping();
         });
         fullscreenBtn.addActionListener(e -> {
             documentView.toggleFullScreen();
+            documentView.requestContentPaneFocus();
+            ping();
+        });
+        searchBtn.addActionListener(e -> {
+            documentView.openFindDialog();
             ping();
         });
         pdfBtn.addActionListener(e -> {
             Frame owner = (Frame) SwingUtilities.getWindowAncestor(this);
             PdfConfigDialog configDialog = new PdfConfigDialog(owner, documentView);
             configDialog.setVisible(true);
+            documentView.requestContentPaneFocus();
         });
 
         pageLabel.setForeground(Color.WHITE);
@@ -78,6 +89,7 @@ public class PresentationHud extends JPanel {
         add(lastBtn);
         add(createSeparator());
         add(fullscreenBtn);
+        add(searchBtn);
         add(pdfBtn);
 
         autoHideTimer = new Timer(2500, e -> {
@@ -122,6 +134,11 @@ public class PresentationHud extends JPanel {
                 BorderFactory.createEmptyBorder(3, 8, 3, 8)
         ));
         btn.setFocusPainted(false);
+        // never grab keyboard focus: otherwise a click would leave the HUD
+        // button focused and the deck shortcuts would stop reaching the
+        // content pane / root pane
+        btn.setFocusable(false);
+        btn.setRequestFocusEnabled(false);
         btn.setContentAreaFilled(false);
         btn.setOpaque(false);
         btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
