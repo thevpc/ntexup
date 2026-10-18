@@ -5,7 +5,6 @@ import net.thevpc.ntexup.engine.renderer.screen.utils.JPopupMenuHelper;
 import net.thevpc.nuts.io.NPath;
 import net.thevpc.nuts.log.NLog;
 import net.thevpc.nuts.text.NMsg;
-import net.thevpc.nuts.util.NLiteral;
 
 import javax.swing.*;
 import java.awt.*;
@@ -64,12 +63,8 @@ public class DocumentPopupMenu {
         popupMenu.addMenuItem("Last Page", ev -> {
             documentView.lastPage();
         });
-        popupMenu.addMenuItem("Goto Page...", ev -> {
-            String s = JOptionPane.showInputDialog("Page Number?");
-            Integer v = NLiteral.of(s).asInt().orElse(-1);
-            if (v > 0) {
-                documentView.showPage(v - 1);
-            }
+        popupMenu.addMenuItem("Go to Slide... (Ctrl+G)", ev -> {
+            documentView.openGotoDialog();
         });
         popupMenu.addMenuItem("Find... (Ctrl+F)", ev -> {
             documentView.openFindDialog();

@@ -2,7 +2,6 @@ package net.thevpc.ntexup.engine.renderer.screen.components;
 
 import net.thevpc.ntexup.engine.renderer.screen.DocumentView;
 import net.thevpc.ntexup.engine.renderer.screen.PdfConfigDialog;
-import net.thevpc.nuts.util.NLiteral;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -68,17 +67,11 @@ public class PresentationHud extends JPanel {
         pageLabel.setForeground(Color.WHITE);
         pageLabel.setFont(new Font("SansSerif", Font.BOLD, 13));
         pageLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        pageLabel.setToolTipText("Click to jump to page");
+        pageLabel.setToolTipText("Click to go to a slide");
         pageLabel.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                String input = JOptionPane.showInputDialog(documentView.getFrame(), "Go to page number:", documentView.getPageUserIndex());
-                if (input != null && !input.trim().isEmpty()) {
-                    int p = NLiteral.of(input.trim()).asInt().orElse(-1);
-                    if (p > 0) {
-                        documentView.showPage(p - 1);
-                    }
-                }
+                documentView.openGotoDialog();
             }
         });
 

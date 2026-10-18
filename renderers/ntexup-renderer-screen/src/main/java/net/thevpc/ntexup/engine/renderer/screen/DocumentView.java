@@ -16,6 +16,8 @@ import net.thevpc.ntexup.engine.renderer.screen.components.PresentationHud;
 import net.thevpc.ntexup.engine.renderer.screen.search.NTxSlideIndex;
 import net.thevpc.ntexup.engine.renderer.screen.search.SlideHighlightManager;
 import net.thevpc.ntexup.engine.renderer.screen.search.SlideSearchDialog;
+import net.thevpc.ntexup.engine.renderer.screen.navigation.NTxSlideTitleIndex;
+import net.thevpc.ntexup.engine.renderer.screen.navigation.SlideGotoDialog;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -113,6 +115,11 @@ public class DocumentView implements NTxDocumentView {
     private SlideSearchDialog findDialog;
     private long findDialogDismissedAt;
     private boolean searchIndexBuilding;
+    // ---- Go to Slide (Ctrl+G): static slide outline + navigator dialog ----
+    private NTxSlideTitleIndex slideTitleIndex;
+    private SlideGotoDialog gotoDialog;
+    private long gotoDialogDismissedAt;
+    private boolean slideTitleIndexBuilding;
 
     public DocumentView(NTxDocumentRendererSupplier documentSupplier,
                         NTxEngine engine, NTxDocumentRendererListener listener, ScreenDocumentRenderer renderer) {
@@ -163,6 +170,10 @@ public class DocumentView implements NTxDocumentView {
         if (findDialog != null) {
             findDialog.dispose();
             findDialog = null;
+        }
+        if (gotoDialog != null) {
+            gotoDialog.dispose();
+            gotoDialog = null;
         }
         if (resourceMonitorTimer != null) {
             resourceMonitorTimer.cancel();
@@ -479,6 +490,106 @@ public class DocumentView implements NTxDocumentView {
         }
     }
 
+    // ------------------------------------------------------------------
+    // Go to Slide
+    // ------------------------------------------------------------------
+
+    /**
+     * Opens the frameless "Go to slide" navigator (Ctrl+G / Cmd+G, HUD slide
+     * counter, popup item). Builds the static slide outline on the async
+     * loader thread the first time.
+     */
+    public void openGotoDialog() {
+        if (closed) {
+            return;
+        }
+        if (gotoDialog == null) {
+            gotoDialog = new SlideGotoDialog(frame, this);
+        }
+        ensureSlideTitleIndexAsync();
+        gotoDialog.open();
+        if (hud != null) {
+            hud.ping();
+        }
+    }
+
+    /** the cached static slide outline (titles + sections), or null */
+    public NTxSlideTitleIndex slideTitleIndex() {
+        return slideTitleIndex;
+    }
+
+    /**
+     * Builds (once) the slide outline on the async loader thread — the same
+     * single-thread executor as reloads and the find index, so the three
+     * serialize. Titles are resolved statically from the compiled page nodes,
+     * never by rendering.
+     */
+    private void ensureSlideTitleIndexAsync() {
+        synchronized (this) {
+            if (slideTitleIndex != null || slideTitleIndexBuilding) {
+                return;
+            }
+            slideTitleIndexBuilding = true;
+        }
+        ASYNC_LOADER.submit(() -> {
+            NTxSlideTitleIndex built = null;
+            try {
+                NTxCompiledDocument d = compiledDocument;
+                if (d != null) {
+                    built = NTxSlideTitleIndex.build(d);
+                }
+            } catch (Throwable ex) {
+                engine.log().log(NMsg.ofC("slide title index build failed: %s", ex).asFinestFail(ex));
+            }
+            final NTxSlideTitleIndex index = built;
+            SwingUtilities.invokeLater(() -> {
+                synchronized (DocumentView.this) {
+                    slideTitleIndexBuilding = false;
+                }
+                if (closed) {
+                    return;
+                }
+                if (index != null) {
+                    slideTitleIndex = index;
+                }
+                if (gotoDialog != null && gotoDialog.isShowing()) {
+                    gotoDialog.onIndexReady();
+                }
+            });
+        });
+    }
+
+    /**
+     * Called by the navigator when it closes: records the dismissal time so
+     * the click that dismissed it does not also navigate, and restores focus.
+     */
+    public void onGotoDialogClosed() {
+        gotoDialogDismissedAt = System.currentTimeMillis();
+        if (contentPane != null) {
+            contentPane.requestFocusInWindow();
+        }
+    }
+
+    /** True while a find/goto dialog is open or was just dismissed. */
+    private boolean dialogOpenOrJustDismissed() {
+        long now = System.currentTimeMillis();
+        return (findDialog != null && (findDialog.isShowing() || now - findDialogDismissedAt < 400))
+                || (gotoDialog != null && (gotoDialog.isShowing() || now - gotoDialogDismissedAt < 400));
+    }
+
+    /**
+     * After a document reload the outline is stale: drop it, update an open
+     * dialog and rebuild when needed.
+     */
+    private void onDocumentReloadedForGoto() {
+        slideTitleIndex = null;
+        boolean dialogOpen = gotoDialog != null && gotoDialog.isShowing();
+        if (dialogOpen) {
+            gotoDialog.onDocumentReloaded();
+            ensureSlideTitleIndexAsync();
+        }
+    }
+
     public void prepareContentPane() {
         hud = new PresentationHud(this);
         frame.getLayeredPane().add(hud, Integer.valueOf(JLayeredPane.POPUP_LAYER));
@@ -493,10 +604,9 @@ public class DocumentView implements NTxDocumentView {
             @Override
             public void mouseClicked(MouseEvent e) {
                 if (SwingUtilities.isLeftMouseButton(e)) {
-                    // a click that just dismissed the Find dialog (or lands
+                    // a click that just dismissed a find/goto dialog (or lands
                     // outside it) must not navigate the deck as well
-                    if (findDialog != null && (findDialog.isShowing()
-                            || System.currentTimeMillis() - findDialogDismissedAt < 400)) {
+                    if (dialogOpenOrJustDismissed()) {
                         return;
                     }
                     nextPage();
@@ -529,7 +639,9 @@ public class DocumentView implements NTxDocumentView {
         frame.addWindowFocusListener(new WindowAdapter() {
             @Override
             public void windowGainedFocus(WindowEvent e) {
-                if (findDialog == null || !findDialog.isShowing()) {
+                boolean dialogShowing = (findDialog != null && findDialog.isShowing())
+                        || (gotoDialog != null && gotoDialog.isShowing());
+                if (!dialogShowing) {
                     contentPane.requestFocusInWindow();
                 }
             }
@@ -574,6 +686,10 @@ public class DocumentView implements NTxDocumentView {
         bindShortcut(im, am, "ntexup.find", this::openFindDialog,
                 KeyStroke.getKeyStroke(KeyEvent.VK_F, InputEvent.CTRL_DOWN_MASK),
                 KeyStroke.getKeyStroke(KeyEvent.VK_F, InputEvent.META_DOWN_MASK));
+        // Go to Slide (Ctrl+G / Cmd+G)
+        bindShortcut(im, am, "ntexup.goto", this::openGotoDialog,
+                KeyStroke.getKeyStroke(KeyEvent.VK_G, InputEvent.CTRL_DOWN_MASK),
+                KeyStroke.getKeyStroke(KeyEvent.VK_G, InputEvent.META_DOWN_MASK));
         // Fullscreen
         bindShortcut(im, am, "ntexup.fullscreen", this::toggleFullScreen,
                 KeyStroke.getKeyStroke(KeyEvent.VK_F11, 0));
@@ -620,10 +736,15 @@ public class DocumentView implements NTxDocumentView {
     }
 
     /**
-     * ESC, most specific first: close an open Find dialog (keeping the
-     * highlights), then clear active highlights, then leave fullscreen.
+     * ESC, most specific first: close an open Goto navigator, then an open
+     * Find dialog (keeping the highlights), then clear active highlights, then
+     * leave fullscreen.
      */
     private void onEscapeKey() {
+        if (gotoDialog != null && gotoDialog.isShowing()) {
+            gotoDialog.closeDialog();
+            return;
+        }
         if (findDialog != null && findDialog.isShowing()) {
             findDialog.closeDialog();
             return;
@@ -720,6 +841,9 @@ public class DocumentView implements NTxDocumentView {
             listener.onEndLoadingDocument();
             if (highlightManager != null) {
                 SwingUtilities.invokeLater(this::onDocumentReloadedForSearch);
+            }
+            if (slideTitleIndex != null || gotoDialog != null) {
+                SwingUtilities.invokeLater(this::onDocumentReloadedForGoto);
             }
         }
         return true;
