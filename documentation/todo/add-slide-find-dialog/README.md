@@ -189,6 +189,7 @@ contentPane.addKeyListener(new KeyAdapter() {
    - Verify that occurrences of `"feed"` are highlighted in Color #2 (e.g. Emerald), while `"patch"` stays highlighted in Amber.
 4. **LaTeX / Math Dialect Test**:
    - Type math query like `\lambda`, `lambda`, `epsilon`, `fr`.
+   - Search must be intelligent to understand that `\lambda` and  `λ` are comparable (and other symbols)
    - Verify slides containing equations or math notation are found and highlighted.
 5. **Jump Test**:
    - Use Arrow Down + Enter or click a result.
