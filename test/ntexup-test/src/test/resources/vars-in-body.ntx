@@ -1,0 +1,20 @@
+import("layout" "shapes2d")
+
+@define content-slide(title){
+    page{
+        @define body{
+            group(){
+                slot
+            }
+        }
+        slot
+    }
+}
+
+content-slide(title:"Variables in body"){
+    body {
+        x = 10mm
+        y = 20mm
+        rectangle(size:(x, y), background-color:red)
+    }
+}

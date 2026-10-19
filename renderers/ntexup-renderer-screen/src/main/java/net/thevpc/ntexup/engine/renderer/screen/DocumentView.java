@@ -13,6 +13,11 @@ import net.thevpc.ntexup.engine.renderer.screen.components.RatioPanel;
 import net.thevpc.ntexup.api.util.NTxUtilsImages;
 
 import net.thevpc.ntexup.engine.renderer.screen.components.PresentationHud;
+import net.thevpc.ntexup.engine.renderer.screen.search.NTxSlideIndex;
+import net.thevpc.ntexup.engine.renderer.screen.search.SlideHighlightManager;
+import net.thevpc.ntexup.engine.renderer.screen.search.SlideSearchDialog;
+import net.thevpc.ntexup.engine.renderer.screen.navigation.NTxSlideTitleIndex;
+import net.thevpc.ntexup.engine.renderer.screen.navigation.SlideGotoDialog;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -105,6 +110,16 @@ public class DocumentView implements NTxDocumentView {
     public ScreenDocumentRenderer renderer;
     public NTxDocumentViewManager documentViewManager;
     public List<NTxDocumentViewListener> listeners = new ArrayList<>();
+    // ---- Find in Slides (Ctrl+F): MVC highlight model + dialog ----
+    private SlideHighlightManager highlightManager;
+    private SlideSearchDialog findDialog;
+    private long findDialogDismissedAt;
+    private boolean searchIndexBuilding;
+    // ---- Go to Slide (Ctrl+G): static slide outline + navigator dialog ----
+    private NTxSlideTitleIndex slideTitleIndex;
+    private SlideGotoDialog gotoDialog;
+    private long gotoDialogDismissedAt;
+    private boolean slideTitleIndexBuilding;
 
     public DocumentView(NTxDocumentRendererSupplier documentSupplier,
                         NTxEngine engine, NTxDocumentRendererListener listener, ScreenDocumentRenderer renderer) {
@@ -151,6 +166,14 @@ public class DocumentView implements NTxDocumentView {
         closed = true;
         for (PageView pv : pageViews) {
             pv.discard();
+        }
+        if (findDialog != null) {
+            findDialog.dispose();
+            findDialog = null;
+        }
+        if (gotoDialog != null) {
+            gotoDialog.dispose();
+            gotoDialog = null;
         }
         if (resourceMonitorTimer != null) {
             resourceMonitorTimer.cancel();
@@ -350,6 +373,223 @@ public class DocumentView implements NTxDocumentView {
         return frame;
     }
 
+    // ------------------------------------------------------------------
+    // Find in Slides
+    // ------------------------------------------------------------------
+
+    /**
+     * Opens the frameless Find dialog (Ctrl+F / Cmd+F, HUD 🔍 button,
+     * popup "Find..." item). Builds the slide index on the async loader
+     * thread the first time.
+     */
+    public void openFindDialog() {
+        if (closed) {
+            return;
+        }
+        if (highlightManager == null) {
+            highlightManager = new SlideHighlightManager(this);
+        }
+        if (findDialog == null) {
+            findDialog = new SlideSearchDialog(frame, this);
+        }
+        ensureSearchIndexAsync();
+        findDialog.open();
+        if (hud != null) {
+            hud.ping();
+        }
+    }
+
+    public SlideHighlightManager highlightManager() {
+        return highlightManager;
+    }
+
+    /**
+     * Builds (once) the full-text slide index on the async loader thread —
+     * the same single-thread executor as reloads, so the two serialize —
+     * then re-applies active highlights and refreshes an open dialog.
+     */
+    private void ensureSearchIndexAsync() {
+        synchronized (this) {
+            if (highlightManager == null || highlightManager.getIndex() != null || searchIndexBuilding) {
+                return;
+            }
+            searchIndexBuilding = true;
+        }
+        ASYNC_LOADER.submit(() -> {
+            NTxSlideIndex built = null;
+            try {
+                NTxCompiledDocument d = compiledDocument;
+                if (d != null) {
+                    built = NTxSlideIndex.build(engine, d);
+                }
+            } catch (Throwable ex) {
+                engine.log().log(NMsg.ofC("slide search index build failed: %s", ex).asFinestFail(ex));
+            }
+            final NTxSlideIndex index = built;
+            SwingUtilities.invokeLater(() -> {
+                synchronized (DocumentView.this) {
+                    searchIndexBuilding = false;
+                }
+                if (closed || highlightManager == null) {
+                    return;
+                }
+                if (index != null) {
+                    highlightManager.setIndex(index);
+                }
+                if (highlightManager.hasActiveQueries()) {
+                    highlightManager.applyToDocument();
+                }
+                if (findDialog != null && findDialog.isShowing()) {
+                    findDialog.onIndexReady();
+                }
+            });
+        });
+    }
+
+    /**
+     * Repaints the visible page after a highlight-model change. Off-screen
+     * pages pick the model up on their next render (navigation forces one).
+     */
+    public void repaintCurrentPage() {
+        PageView pv = currentShowingPage;
+        if (pv != null) {
+            pv.repaintDirty();
+        }
+        if (contentPane != null) {
+            contentPane.repaint();
+        }
+    }
+
+    /**
+     * Called by the dialog when it closes: records the dismissal time so the
+     * click that dismissed it does not also navigate, and restores focus.
+     */
+    public void onFindDialogClosed() {
+        findDialogDismissedAt = System.currentTimeMillis();
+        if (contentPane != null) {
+            contentPane.requestFocusInWindow();
+        }
+    }
+
+    /**
+     * After a document reload all nodes are new (no highlight spans): drop
+     * the stale index, update an open dialog, and rebuild + re-apply when
+     * a dialog is open or highlights are active.
+     */
+    private void onDocumentReloadedForSearch() {
+        if (highlightManager == null) {
+            return;
+        }
+        highlightManager.setIndex(null);
+        boolean dialogOpen = findDialog != null && findDialog.isShowing();
+        if (dialogOpen) {
+            findDialog.onDocumentReloaded();
+        }
+        if (dialogOpen || highlightManager.hasActiveQueries()) {
+            ensureSearchIndexAsync();
+        }
+    }
+
+    // ------------------------------------------------------------------
+    // Go to Slide
+    // ------------------------------------------------------------------
+
+    /**
+     * Opens the frameless "Go to slide" navigator (Ctrl+G / Cmd+G, HUD slide
+     * counter, popup item). Builds the static slide outline on the async
+     * loader thread the first time.
+     */
+    public void openGotoDialog() {
+        if (closed) {
+            return;
+        }
+        if (gotoDialog == null) {
+            gotoDialog = new SlideGotoDialog(frame, this);
+        }
+        ensureSlideTitleIndexAsync();
+        gotoDialog.open();
+        if (hud != null) {
+            hud.ping();
+        }
+    }
+
+    /** the cached static slide outline (titles + sections), or null */
+    public NTxSlideTitleIndex slideTitleIndex() {
+        return slideTitleIndex;
+    }
+
+    /**
+     * Builds (once) the slide outline on the async loader thread — the same
+     * single-thread executor as reloads and the find index, so the three
+     * serialize. Titles are resolved statically from the compiled page nodes,
+     * never by rendering.
+     */
+    private void ensureSlideTitleIndexAsync() {
+        synchronized (this) {
+            if (slideTitleIndex != null || slideTitleIndexBuilding) {
+                return;
+            }
+            slideTitleIndexBuilding = true;
+        }
+        ASYNC_LOADER.submit(() -> {
+            NTxSlideTitleIndex built = null;
+            try {
+                NTxCompiledDocument d = compiledDocument;
+                if (d != null) {
+                    built = NTxSlideTitleIndex.build(d);
+                }
+            } catch (Throwable ex) {
+                engine.log().log(NMsg.ofC("slide title index build failed: %s", ex).asFinestFail(ex));
+            }
+            final NTxSlideTitleIndex index = built;
+            SwingUtilities.invokeLater(() -> {
+                synchronized (DocumentView.this) {
+                    slideTitleIndexBuilding = false;
+                }
+                if (closed) {
+                    return;
+                }
+                if (index != null) {
+                    slideTitleIndex = index;
+                }
+                if (gotoDialog != null && gotoDialog.isShowing()) {
+                    gotoDialog.onIndexReady();
+                }
+            });
+        });
+    }
+
+    /**
+     * Called by the navigator when it closes: records the dismissal time so
+     * the click that dismissed it does not also navigate, and restores focus.
+     */
+    public void onGotoDialogClosed() {
+        gotoDialogDismissedAt = System.currentTimeMillis();
+        if (contentPane != null) {
+            contentPane.requestFocusInWindow();
+        }
+    }
+
+    /** True while a find/goto dialog is open or was just dismissed. */
+    private boolean dialogOpenOrJustDismissed() {
+        long now = System.currentTimeMillis();
+        return (findDialog != null && (findDialog.isShowing() || now - findDialogDismissedAt < 400))
+                || (gotoDialog != null && (gotoDialog.isShowing() || now - gotoDialogDismissedAt < 400));
+    }
+
+    /**
+     * After a document reload the outline is stale: drop it, update an open
+     * dialog and rebuild when needed.
+     */
+    private void onDocumentReloadedForGoto() {
+        slideTitleIndex = null;
+        boolean dialogOpen = gotoDialog != null && gotoDialog.isShowing();
+        if (dialogOpen) {
+            gotoDialog.onDocumentReloaded();
+            ensureSlideTitleIndexAsync();
+        }
+    }
+
     public void prepareContentPane() {
         hud = new PresentationHud(this);
         frame.getLayeredPane().add(hud, Integer.valueOf(JLayeredPane.POPUP_LAYER));
@@ -364,6 +604,11 @@ public class DocumentView implements NTxDocumentView {
             @Override
             public void mouseClicked(MouseEvent e) {
                 if (SwingUtilities.isLeftMouseButton(e)) {
+                    // a click that just dismissed a find/goto dialog (or lands
+                    // outside it) must not navigate the deck as well
+                    if (dialogOpenOrJustDismissed()) {
+                        return;
+                    }
                     nextPage();
                     if (hud != null) {
                         hud.ping();
@@ -385,71 +630,132 @@ public class DocumentView implements NTxDocumentView {
 
         contentPane.setFocusTraversalKeysEnabled(false);
         contentPane.setFocusable(true);
-        contentPane.requestFocus();
-//        this.requestFocusInWindow();
-        contentPane.addKeyListener(new KeyAdapter() {
+        contentPane.requestFocusInWindow();
+
+        // Make sure the deck keeps focus when the window is re-activated
+        // (returning from the Find dialog, a popup, ...). Without this the
+        // shortcuts below would still work, but focus would drift to
+        // whatever was last clicked.
+        frame.addWindowFocusListener(new WindowAdapter() {
             @Override
-            public void keyPressed(KeyEvent e) {
-                switch (e.getKeyCode()) {
-                    case KeyEvent.VK_F11: {
-                        toggleFullScreen();
-                        break;
-                    }
-                    case KeyEvent.VK_ESCAPE: {
-                        if (isFullScreen) {
-                            setFullScreen(false);
-                        }
-                        break;
-                    }
-                    case KeyEvent.VK_HOME: {
-                        firstPage();
-                        break;
-                    }
-                    case KeyEvent.VK_END: {
-                        lastPage();
-                        break;
-                    }
-                    case KeyEvent.VK_PAGE_UP: {
-                        previousPage();
-                        break;
-                    }
-                    case KeyEvent.VK_PAGE_DOWN: {
-                        nextPage();
-                        break;
-                    }
-                    case KeyEvent.VK_SPACE:
-                    case KeyEvent.VK_RIGHT:
-                    case KeyEvent.VK_DOWN: {
-                        if (e.isControlDown()) {
-                            lastPage();
-                        } else {
-                            nextPage();
-                        }
-                        break;
-                    }
-                    case KeyEvent.VK_F5: {
-                        reloadDocumentAsync();
-                        break;
-                    }
-                    case KeyEvent.VK_LEFT:
-                    case KeyEvent.VK_UP: {
-                        if (e.isControlDown()) {
-                            firstPage();
-                        } else {
-                            previousPage();
-                        }
-                        break;
-                    }
+            public void windowGainedFocus(WindowEvent e) {
+                boolean dialogShowing = (findDialog != null && findDialog.isShowing())
+                        || (gotoDialog != null && gotoDialog.isShowing());
+                if (!dialogShowing) {
+                    contentPane.requestFocusInWindow();
                 }
+            }
+        });
+
+        // Shortcuts live on the frame's root pane with WHEN_IN_FOCUSED_WINDOW
+        // instead of as a KeyListener on the content pane: a KeyListener only
+        // fired while the content pane owned the keyboard focus, so as soon as
+        // a HUD button was clicked (and had itself focused) Ctrl+F and the
+        // other shortcuts appeared to stop working.
+        installShortcuts();
+    }
+
+    /**
+     * Registers the viewer shortcuts on the root pane with
+     * {@link JComponent#WHEN_IN_FOCUSED_WINDOW}, so they fire no matter
+     * which component inside the window owns the keyboard focus.
+     */
+    /**
+     * Requests that the content pane regain keyboard focus. This is called
+     * by HUD buttons after they perform their action, so navigation shortcuts
+     * (including Ctrl+F) keep working even if a button was transiently
+     * focused.
+     */
+    public void requestContentPaneFocus() {
+        if (closed || contentPane == null) {
+            return;
+        }
+        SwingUtilities.invokeLater(() -> {
+            if (!closed && contentPane != null) {
+                contentPane.requestFocusInWindow();
+            }
+        });
+    }
+
+    private void installShortcuts() {
+        JRootPane root = frame.getRootPane();
+        InputMap im = root.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+        ActionMap am = root.getActionMap();
+
+        // Find in Slides (Ctrl+F / Cmd+F)
+        bindShortcut(im, am, "ntexup.find", this::openFindDialog,
+                KeyStroke.getKeyStroke(KeyEvent.VK_F, InputEvent.CTRL_DOWN_MASK),
+                KeyStroke.getKeyStroke(KeyEvent.VK_F, InputEvent.META_DOWN_MASK));
+        // Go to Slide (Ctrl+G / Cmd+G)
+        bindShortcut(im, am, "ntexup.goto", this::openGotoDialog,
+                KeyStroke.getKeyStroke(KeyEvent.VK_G, InputEvent.CTRL_DOWN_MASK),
+                KeyStroke.getKeyStroke(KeyEvent.VK_G, InputEvent.META_DOWN_MASK));
+        // Fullscreen
+        bindShortcut(im, am, "ntexup.fullscreen", this::toggleFullScreen,
+                KeyStroke.getKeyStroke(KeyEvent.VK_F11, 0));
+        // ESC: close Find / clear highlights / leave fullscreen
+        bindShortcut(im, am, "ntexup.escape", this::onEscapeKey,
+                KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0));
+        // Navigation
+        bindShortcut(im, am, "ntexup.first", this::firstPage,
+                KeyStroke.getKeyStroke(KeyEvent.VK_HOME, 0),
+                KeyStroke.getKeyStroke(KeyEvent.VK_UP, InputEvent.CTRL_DOWN_MASK),
+                KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, InputEvent.CTRL_DOWN_MASK));
+        bindShortcut(im, am, "ntexup.last", this::lastPage,
+                KeyStroke.getKeyStroke(KeyEvent.VK_END, 0),
+                KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, InputEvent.CTRL_DOWN_MASK),
+                KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, InputEvent.CTRL_DOWN_MASK),
+                KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, InputEvent.CTRL_DOWN_MASK));
+        bindShortcut(im, am, "ntexup.previous", this::previousPage,
+                KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_UP, 0),
+                KeyStroke.getKeyStroke(KeyEvent.VK_UP, 0),
+                KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, 0));
+        bindShortcut(im, am, "ntexup.next", this::nextPage,
+                KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_DOWN, 0),
+                KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0),
+                KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0),
+                KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0));
+        // Reload
+        bindShortcut(im, am, "ntexup.reload", this::reloadDocumentAsync,
+                KeyStroke.getKeyStroke(KeyEvent.VK_F5, 0));
+    }
+
+    private void bindShortcut(InputMap im, ActionMap am, String key, Runnable action, KeyStroke... strokes) {
+        for (KeyStroke stroke : strokes) {
+            im.put(stroke, key);
+        }
+        am.put(key, new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
                 if (hud != null) {
                     hud.ping();
                 }
-            }
-
-            @Override
-            public void keyTyped(KeyEvent e) {
+                action.run();
             }
         });
+    }
+
+    /**
+     * ESC, most specific first: close an open Goto navigator, then an open
+     * Find dialog (keeping the highlights), then clear active highlights, then
+     * leave fullscreen.
+     */
+    private void onEscapeKey() {
+        if (gotoDialog != null && gotoDialog.isShowing()) {
+            gotoDialog.closeDialog();
+            return;
+        }
+        if (findDialog != null && findDialog.isShowing()) {
+            findDialog.closeDialog();
+            return;
+        }
+        if (highlightManager != null && highlightManager.hasActiveQueries()) {
+            highlightManager.clearAll();
+            return;
+        }
+        if (isFullScreen) {
+            setFullScreen(false);
+        }
     }
 
 
@@ -533,6 +839,12 @@ public class DocumentView implements NTxDocumentView {
             this.inLoadDocument = false;
             stopLoadingAnimation();
             listener.onEndLoadingDocument();
+            if (highlightManager != null) {
+                SwingUtilities.invokeLater(this::onDocumentReloadedForSearch);
+            }
+            if (slideTitleIndex != null || gotoDialog != null) {
+                SwingUtilities.invokeLater(this::onDocumentReloadedForGoto);
+            }
         }
         return true;
     }

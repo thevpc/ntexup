@@ -1,0 +1,8 @@
+import("shapes3d")
+page{
+    scene3d{
+        w = 10mm
+        h = 20mm
+        box(size:(w, w, h))
+    }
+}

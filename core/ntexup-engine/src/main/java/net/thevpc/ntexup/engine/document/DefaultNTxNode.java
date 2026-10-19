@@ -45,6 +45,9 @@ public class DefaultNTxNode implements NTxNode, Cloneable{
         DefaultNTxNode t = new DefaultNTxNode(NTxNodeType.CTRL_ASSIGN, source);
         t.setProperty(NTxPropName.NAME, NTxUtils.addCompilerDeclarationPath(NElement.ofString(name), source));
         t.setProperty(NTxPropName.VALUE, NTxUtils.addCompilerDeclarationPath(value, source));
+        // assignments are void statements: they must never take space in any layout
+        // (grid/flex cells, size requirements, ...)
+        t.setProperty(NTxPropName.LAYOUT, NElement.ofString("none"));
         t.setRaw(NElement.ofBinaryInfixOperator(NOperatorSymbol.EQ, NElement.ofString(name), value));
         return t;
     }
@@ -56,6 +59,9 @@ public class DefaultNTxNode implements NTxNode, Cloneable{
         DefaultNTxNode t = new DefaultNTxNode(NTxNodeType.CTRL_ASSIGN_DEFAULT, source);
         t.setProperty(NTxPropName.NAME, NTxUtils.addCompilerDeclarationPath(NElement.ofString(name), source));
         t.setProperty(NTxPropName.VALUE, NTxUtils.addCompilerDeclarationPath(value, source));
+        // assignments are void statements: they must never take space in any layout
+        // (grid/flex cells, size requirements, ...)
+        t.setProperty(NTxPropName.LAYOUT, NElement.ofString("none"));
         t.setRaw(NElement.ofBinaryInfixOperator(NOperatorSymbol.COLON_EQ, NElement.ofString(name), value));
         return t;
     }

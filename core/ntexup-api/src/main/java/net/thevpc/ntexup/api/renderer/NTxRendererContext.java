@@ -25,6 +25,11 @@ import java.util.function.Consumer;
 public interface NTxRendererContext extends NTxResolutionContext {
     String CAPABILITY_PRINT = "print";
     String CAPABILITY_ANIMATE = "animate";
+    /**
+     * Host paints on-canvas search highlights (screen viewer); absent in
+     * PDF/HTML/image exports so they never appear there.
+     */
+    String CAPABILITY_SEARCH_HIGHLIGHTS = "search-highlights";
 
     default NTxSizeRequirements sizeRequirementsOf() {
         return engine().getRenderer(node().type()).get().sizeRequirements(this);

@@ -575,6 +575,7 @@ public class PageView extends JComponent {
             config.setWidth(tw);
             config.setHeight(th);
             config.setCapability(NTxRendererContext.CAPABILITY_ANIMATE, true);
+            config.setCapability(NTxRendererContext.CAPABILITY_SEARCH_HIGHLIGHTS, true);
             config.setCapability(NtxPageLifecycle.CAPABILITY_PAGE_LIFECYCLE, lifecycle);
             config.setStartTime(pageStartTime);
             config.setUseCache(useCache);
