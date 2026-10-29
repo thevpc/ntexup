@@ -52,8 +52,14 @@ public class PageView extends JComponent {
     private volatile int renderH = -1;
     private volatile boolean renderPending;
     private volatile boolean renderInvalidated;
+    private volatile boolean renderCacheDirty;
     private volatile boolean discarded;
     private volatile int renderEpoch;
+    /**
+     * Serialises paint passes of this page: the render pool is multi-threaded, so
+     * two passes can otherwise mutate the same node render cache at once.
+     */
+    private final Object pageRenderLock = new Object();
 
     public PageView(
             NTxCompiledDocument document,
@@ -80,13 +86,15 @@ public class PageView extends JComponent {
     }
 
     public void repaintDirty() {
-        if (this.page.isCompiled()) {
-            NTxNode p = this.page.compiledPage();
-            if (p != null) {
-                p.invalidateRenderCache();
-            }
-        }
+        // The cache is never dropped here: a solver thread that invalidates the
+        // page while the render pool is painting it leaves a node half-populated,
+        // and the next pass repaints a stale (pending) draw context. Mark it and
+        // let doRender clear it on the thread that owns the node tree.
         synchronized (renderLock) {
+            if (discarded) {
+                return;
+            }
+            renderCacheDirty = true;
             renderInvalidated = true;
         }
         requestRender();
@@ -566,53 +574,67 @@ public class PageView extends JComponent {
         if (discarded || epoch != renderEpoch) {
             return;
         }
-        BufferedImage img = null;
-        Throwable error = null;
-        try {
-            img = new BufferedImage(tw, th, BufferedImage.TYPE_INT_ARGB);
-            Graphics2D g = img.createGraphics();
-            NTxNodeRendererConfig config = new NTxNodeRendererConfig();
-            config.setWidth(tw);
-            config.setHeight(th);
-            config.setCapability(NTxRendererContext.CAPABILITY_ANIMATE, true);
-            config.setCapability(NTxRendererContext.CAPABILITY_SEARCH_HIGHLIGHTS, true);
-            config.setCapability(NtxPageLifecycle.CAPABILITY_PAGE_LIFECYCLE, lifecycle);
-            config.setStartTime(pageStartTime);
-            config.setUseCache(useCache);
-            engine.renderPage(page, config, g, this, this::onRenderInvalidated);
-            g.dispose();
-        } catch (Throwable t) {
-            error = t;
-        }
-        if (error != null) {
-            engine.log().log(NMsg.ofC("failed to render page %s: %s", page.index() + 1, error));
-        }
-        int cw;
-        int ch;
-        boolean more;
-        synchronized (renderLock) {
+        synchronized (pageRenderLock) {
             if (discarded || epoch != renderEpoch) {
                 return;
             }
-            Dimension d = currentRenderSize();
-            cw = d.width;
-            ch = d.height;
-            if (cw == tw && ch == th && img != null) {
-                pageImage = img;
-                renderW = tw;
-                renderH = th;
+            if (renderCacheDirty) {
+                renderCacheDirty = false;
+                if (page.isCompiled()) {
+                    NTxNode p = page.compiledPage();
+                    if (p != null) {
+                        p.invalidateRenderCache();
+                    }
+                }
             }
-            renderPending = false;
-            more = renderInvalidated || (cw != tw || ch != th);
-            renderInvalidated = false;
-            if (more) {
-                requestRender(true);
+            BufferedImage img = null;
+            Throwable error = null;
+            try {
+                img = new BufferedImage(tw, th, BufferedImage.TYPE_INT_ARGB);
+                Graphics2D g = img.createGraphics();
+                NTxNodeRendererConfig config = new NTxNodeRendererConfig();
+                config.setWidth(tw);
+                config.setHeight(th);
+                config.setCapability(NTxRendererContext.CAPABILITY_ANIMATE, true);
+                config.setCapability(NTxRendererContext.CAPABILITY_SEARCH_HIGHLIGHTS, true);
+                config.setCapability(NtxPageLifecycle.CAPABILITY_PAGE_LIFECYCLE, lifecycle);
+                config.setStartTime(pageStartTime);
+                config.setUseCache(useCache);
+                engine.renderPage(page, config, g, this, this::onRenderInvalidated);
+                g.dispose();
+            } catch (Throwable t) {
+                error = t;
             }
-        }
-        if (error != null) {
-            engine.log().log(NMsg.ofC("render page %s failed %s", page.index() + 1, error));
-        } else {
-            SwingUtilities.invokeLater(this::repaintHierarchy);
+            if (error != null) {
+                engine.log().log(NMsg.ofC("failed to render page %s: %s", page.index() + 1, error));
+            }
+            int cw;
+            int ch;
+            boolean more;
+            synchronized (renderLock) {
+                if (discarded || epoch != renderEpoch) {
+                    return;
+                }
+                Dimension d = currentRenderSize();
+                cw = d.width;
+                ch = d.height;
+                if (cw == tw && ch == th && img != null) {
+                    pageImage = img;
+                    renderW = tw;
+                    renderH = th;
+                }
+                renderPending = false;
+                more = renderInvalidated || (cw != tw || ch != th);
+                renderInvalidated = false;
+                if (more) {
+                    requestRender(true);
+                }
+            }
+            if (error != null) {
+                engine.log().log(NMsg.ofC("render page %s failed %s", page.index() + 1, error));
+            } else {
+                SwingUtilities.invokeLater(this::repaintHierarchy);
+            }
         }
     }
 
@@ -622,6 +644,7 @@ public class PageView extends JComponent {
                 return;
             }
             renderInvalidated = true;
+            renderCacheDirty = true;
         }
         requestRender(true);
     }

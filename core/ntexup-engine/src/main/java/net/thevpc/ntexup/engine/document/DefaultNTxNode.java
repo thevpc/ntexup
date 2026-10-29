@@ -799,7 +799,7 @@ public class DefaultNTxNode implements NTxNode, Cloneable{
     }
 
     @Override
-    protected NTxNode clone() {
+    protected synchronized NTxNode clone() {
         DefaultNTxNode c = null;
         try {
             c = (DefaultNTxNode) super.clone();
@@ -1011,7 +1011,7 @@ public class DefaultNTxNode implements NTxNode, Cloneable{
 
 
     @Override
-    public NTxNode setRenderCache(String name, Object value) {
+    public synchronized NTxNode setRenderCache(String name, Object value) {
         if (value == null) {
             if (renderCache != null) {
                 renderCache.remove(name);
@@ -1026,7 +1026,7 @@ public class DefaultNTxNode implements NTxNode, Cloneable{
     }
 
     @Override
-    public NOptional<Object> getRenderCache(String property) {
+    public synchronized NOptional<Object> getRenderCache(String property) {
         if (renderCache != null) {
             Object u = renderCache.get(property);
             if (u != null) {
@@ -1058,7 +1058,8 @@ public class DefaultNTxNode implements NTxNode, Cloneable{
         return getAndSetRenderCache(property.getName(), force, defaultValue);
     }
 
-    public void invalidateRenderCache() {
+    @Override
+    public synchronized void invalidateRenderCache() {
         renderCache = null;
         if (children != null) {
             for (NTxNode child : children) {

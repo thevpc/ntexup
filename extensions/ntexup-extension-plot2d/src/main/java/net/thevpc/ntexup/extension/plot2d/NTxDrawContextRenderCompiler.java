@@ -116,7 +116,11 @@ class NTxDrawContextRenderCompiler {
                             drawContext.allData.add(pd);
 
                             Runnable repaintOnReady = () -> {
-                                rendererContext.node().invalidateRenderCache();
+                                // Only ask for a repaint: this runs on the solver
+                                // thread, and dropping the node cache here would
+                                // race with the pass that is painting it. The
+                                // renderer clears the cache on its own thread
+                                // before the next pass.
                                 rendererContext.repaint();
                             };
                             if (isYPending) {
