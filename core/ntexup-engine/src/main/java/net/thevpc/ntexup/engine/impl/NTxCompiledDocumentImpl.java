@@ -52,7 +52,7 @@ public class NTxCompiledDocumentImpl implements NTxCompiledDocument {
     private final NTxSourceMonitor resources = new NTxSourceMonitored();
     private boolean successfullyLoaded = true;
     private final FingerprintBuilder fingerPrintBuilder = new FingerprintBuilder();
-    private final Map<String, NTxObj> globalObjects = new HashMap<>();
+    private final Map<String, NTxObj> globalObjects = new ConcurrentHashMap<>();
     private final NTxDependencyGraph dependencyGraph = new net.thevpc.ntexup.engine.eval.DefaultNTxDependencyGraph();
     private final Set<Object> registeredFutures = Collections.newSetFromMap(new ConcurrentHashMap<>());
     private NTxProgressBindingHandler progressBindingHandler;

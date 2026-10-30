@@ -4,15 +4,19 @@ import net.thevpc.ntexup.api.renderer.NTxGraphics;
 import net.thevpc.nuts.util.NBlankable;
 
 import java.awt.*;
-import java.awt.geom.Rectangle2D;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class NTxFontBySizeResolver {
     public static final NTxFontBySizeResolver INSTANCE=new NTxFontBySizeResolver();
 
-    private Map<Key, Font> cache = new HashMap<>();
+    /**
+     * Shared by every renderer thread: a plain HashMap here corrupts itself under
+     * concurrent computeIfAbsent, which shows up as a swallowed ConcurrentModificationException
+     * (page renders blank) or as a render thread stuck inside the map forever.
+     */
+    private final Map<Key, Font> cache = new ConcurrentHashMap<>();
 
     private static class Key {
         String name;

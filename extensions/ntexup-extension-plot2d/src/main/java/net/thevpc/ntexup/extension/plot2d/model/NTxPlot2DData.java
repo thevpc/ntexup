@@ -1,5 +1,6 @@
 package net.thevpc.ntexup.extension.plot2d.model;
 
+import net.thevpc.ntexup.api.renderer.NtxPageLifecycle;
 import net.thevpc.ntexup.api.renderer.NTxRendererContext;
 import net.thevpc.nuts.math.NDoubleRange;
 import net.thevpc.nuts.math.NDoubleFunction;
@@ -34,21 +35,22 @@ public class NTxPlot2DData {
     }
 
     public double[] animatedYY(NTxRendererContext rendererContext) {
-        double[] xx = this.xx;
         double[] yy = this.yy;
-        boolean animate = rendererContext.isAnimate();
-        long pageStartTime = rendererContext.pageStartTime();
-        long now = System.currentTimeMillis();
-        long max=500;
+        // 500ms reveal driven by the page clock so that the page's single frame
+        // driver owns the repaint: reading System.currentTimeMillis() without
+        // requesting a frame left the page painted on the t~0 frame, where every
+        // value is scaled to nearly zero, until something else repainted it.
+        long revealMillis = 500;
         double td = 1;
-        if(animate && pageStartTime>0){
-            long t=now-pageStartTime;
-            if(t<=0) {
-                t = max;
-            }else if(t>=max){
-                t=max;
+        if (rendererContext.isAnimate()) {
+            NtxPageLifecycle lifecycle = rendererContext.pageLifecycle().orNull();
+            if (lifecycle != null && lifecycle.isShowing()) {
+                long t = lifecycle.showElapsedMillis();
+                if (t < revealMillis) {
+                    td = t / (double) revealMillis;
+                    rendererContext.requestFrame();
+                }
             }
-            td=t/(double)max;
         }
         double[] yy2 = new double[yy.length];
         for (int i = 0; i < yy.length; i++) {
