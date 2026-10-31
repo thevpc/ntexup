@@ -27,5 +27,6 @@ net.thevpc.ntexup.extension.shapes2d.line.NTxCubicCurveBuilder
 net.thevpc.ntexup.extension.shapes2d.line.NTxLineBuilder
 net.thevpc.ntexup.extension.shapes2d.line.NTxQuadCurveBuilder
 net.thevpc.ntexup.extension.shapes2d.line.NTxPolylineBuilder
+net.thevpc.ntexup.extension.shapes2d.line.NTxConnectorBuilder
 
 

@@ -1,0 +1,74 @@
+page{
+    text("connector: anchors, sides, via", at:(5,4), font-size:6)
+    rectangle(name:"a", at:(8,18), size:(20,10), background-color:white, draw-contour){ text("A", at:center) }
+    rectangle(name:"b", at:(68,42), size:(20,10), background-color:white, draw-contour){ text("B", at:center) }
+
+    connector("a", "b", end-arrow:simple(), label:"auto")
+    connector(from:"a@right", to:"b@top", end-arrow:triangle(), label:{"right to top",position:40})
+    connector(from:"a@bottom", to:"b@left", start-arrow:oval(), end-arrow:oval(), stroke:dashed)
+    connector(from:"b@top-left", to:"a@bottom-right", end-arrow:simple(), label:"corner")
+    connector(from:"a", to:"b", via:((45,18),(45,47)), end-arrow:simple(), label:"via")
+}
+page{
+    text("connector: hidden targets, free points, flow", at:(5,4), font-size:6)
+    rectangle(name:"src", at:(8,12), size:(16,8), background-color:white, draw-contour){ text("SRC", at:center) }
+    rectangle(name:"hidden", at:(70,12), size:(16,8), background-color:white, visible:false)
+    connector("src", "hidden", end-arrow:simple())
+
+    connector(from:(8,35), to:(72,35), start-arrow:simple(), end-arrow:simple(), label:"free points")
+    connector("src", (72,50), end-arrow:simple(), label:"mixed")
+
+    line(from:(8,72), to:(72,72), end-arrow:simple(), flow:dots(count:4,size:1,period:3), label:"line flow")
+    connector("src", (72,82), end-arrow:simple(), flow:dots(count:3,size:1.5,period:2), label:"connector flow")
+}
+page{
+    text("connector: block scope and dotted names", at:(5,4), font-size:6)
+    group(name:"left", at:(5,12), size:(40,40), draw-contour){
+        rectangle(name:"x", at:(8,15), size:(35,20), background-color:white, draw-contour){ text("x", at:center) }
+        rectangle(name:"y", at:(50,55), size:(35,20), background-color:white, draw-contour){ text("y", at:center) }
+        connector("x", "y", end-arrow:simple(), label:"inner")
+    }
+    group(name:"right", at:(55,12), size:(40,40), draw-contour){
+        rectangle(name:"x", at:(8,15), size:(35,20), background-color:white, draw-contour){ text("x", at:center) }
+        rectangle(name:"y", at:(50,55), size:(35,20), background-color:white, draw-contour){ text("y", at:center) }
+    }
+    connector("right.x", "right.y", end-arrow:simple(), label:"right")
+    connector("left.x", "right.x", end-arrow:simple(), label:"cross")
+
+    grid(2, 1, name:"cells", at:(5,62), size:(90,28)){
+        rectangle(name:"p1", background-color:white, draw-contour, at:center, size:(35,35)){ text("p1", at:center) }
+        rectangle(name:"p2", background-color:white, draw-contour, at:center, size:(35,35)){ text("p2", at:center) }
+    }
+    connector("cells.p1", "cells.p2", end-arrow:simple(), label:"grid")
+}
+page{
+    text("connector: rotated shapes and groups", at:(5,4), font-size:6)
+    rectangle(name:"box_rot", at:(15,20), size:(25,12), background-color:white, draw-contour, rotate:25){ text("rot25", at:center) }
+    group(name:"grp_rot", at:(65,30), size:(30,30), rotate:-20, draw-contour){
+        rectangle(name:"inner", at:(20,20), size:(20,12), background-color:white, draw-contour){ text("inner", at:center) }
+    }
+    connector("box_rot", "grp_rot.inner", end-arrow:simple(), label:"rot to rot")
+    connector(from:"box_rot@right", to:"grp_rot.inner@left", end-arrow:triangle(), stroke:dashed)
+}
+page{
+    text("connector: grid and ul layout (no layout footprint)", at:(5,4), font-size:6)
+    ul(at:(5,12), size:(40,60)){
+        rectangle(name:"item1", size:(25,8), background-color:white, draw-contour){ text("Item 1", at:center) }
+        rectangle(name:"item2", size:(25,8), background-color:white, draw-contour){ text("Item 2", at:center) }
+        rectangle(name:"item3", size:(25,8), background-color:white, draw-contour){ text("Item 3", at:center) }
+    }
+    connector("item1", "item2", end-arrow:simple(), label:"a")
+    connector("item2", "item3", end-arrow:simple(), label:"b")
+    connector("item1", "item3", end-arrow:simple(), label:"skip")
+
+    grid(2, 1, name:"cells2", at:(55,12), size:(40,28)){
+        rectangle(name:"ga", background-color:white, draw-contour, at:center, size:(30,20)){ text("G1", at:center) }
+        rectangle(name:"gb", background-color:white, draw-contour, at:center, size:(30,20)){ text("G2", at:center) }
+    }
+    connector("cells2.ga", "cells2.gb", end-arrow:simple(), label:"grid")
+}
+page{
+    text("connector: unresolved target (warns, draws nothing)", at:(5,4), font-size:6)
+    rectangle(name:"known", at:(8,12), size:(18,8), background-color:white, draw-contour){ text("known", at:center) }
+    connector("known", "missing", end-arrow:simple(), label:"unresolved")
+}

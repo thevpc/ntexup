@@ -58,6 +58,7 @@ public class NTxNodeType {
     public static final String POLYLINE="polyline";
     public static final String SCENE3D="scene3d";
     public static final String LINE="line";
+    public static final String CONNECTOR="connector";
     public static final String QUAD_CURVE="quad-curve";
     public static final String CUBIC_CURVE="cubic-curve";
     public static final String ARC="arc";
