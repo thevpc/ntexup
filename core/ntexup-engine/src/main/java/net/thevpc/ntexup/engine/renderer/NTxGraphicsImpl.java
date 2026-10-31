@@ -846,19 +846,75 @@ public class NTxGraphicsImpl implements NTxGraphics {
             setStroke(pr.getLineStroke());
         }
         NTxPoint2D[] nodes = pr.getNodes();
-        int[] xx = new int[nodes.length];
-        int[] yy = new int[nodes.length];
+        NTxArrow startArrow = pr.getStartArrow();
+        NTxArrow endArrow = pr.getEndArrow();
+
+        NTxPoint2D[] drawNodes = nodes;
+        if (nodes != null && nodes.length >= 2) {
+            boolean hasStart = startArrow != null && startArrow.getType() != null;
+            boolean hasEnd = endArrow != null && endArrow.getType() != null;
+
+            // the arrow is sized against the adjacent segment (same rule as line)
+            double lenStart = Math.hypot(nodes[1].x - nodes[0].x, nodes[1].y - nodes[0].y);
+            double lenEnd = Math.hypot(nodes[nodes.length - 1].x - nodes[nodes.length - 2].x,
+                    nodes[nodes.length - 1].y - nodes[nodes.length - 2].y);
+            double ratio = (hasStart && hasEnd) ? 0.3 : 0.45;
+            if (hasStart) {
+                startArrow = scaleArrow(startArrow, lenStart, ratio);
+            }
+            if (hasEnd) {
+                endArrow = scaleArrow(endArrow, lenEnd, ratio);
+            }
+
+            // pull each end back by the arrow's setback distance
+            double setbackA = hasStart ? computeArrowSetback(startArrow) : 0;
+            double setbackB = hasEnd ? computeArrowSetback(endArrow) : 0;
+            if (nodes.length == 2 && setbackA + setbackB > lenStart) {
+                // both arrows share one segment: keep the same rule as line
+                double scale = lenStart > 0 ? lenStart / (setbackA + setbackB) : 0;
+                setbackA *= scale;
+                setbackB *= scale;
+            } else {
+                setbackA = Math.min(setbackA, lenStart);
+                setbackB = Math.min(setbackB, lenEnd);
+            }
+            drawNodes = java.util.Arrays.copyOf(nodes, nodes.length);
+            if (hasStart && lenStart > 1e-9) {
+                NTxPoint2D a = nodes[0];
+                NTxPoint2D b = nodes[1];
+                drawNodes[0] = new NTxPoint2D(a.x + (b.x - a.x) / lenStart * setbackA,
+                        a.y + (b.y - a.y) / lenStart * setbackA);
+            }
+            if (hasEnd && lenEnd > 1e-9) {
+                NTxPoint2D a = nodes[nodes.length - 2];
+                NTxPoint2D b = nodes[nodes.length - 1];
+                drawNodes[nodes.length - 1] = new NTxPoint2D(b.x - (b.x - a.x) / lenEnd * setbackB,
+                        b.y - (b.y - a.y) / lenEnd * setbackB);
+            }
+        }
+
+        int[] xx = new int[drawNodes.length];
+        int[] yy = new int[drawNodes.length];
         for (int i = 0; i < xx.length; i++) {
-            NTxPoint2D pp = nodes[i];
+            NTxPoint2D pp = drawNodes[i];
             xx[i] = (int) (pp.x);
             yy[i] = (int) (pp.y);
         }
-
         g.drawPolyline(xx, yy, xx.length);
-        //restore default stroke?
+
         setStroke(oldStroke);
-//                    drawArrayHead(a, a.minus(b).asVector(), 5, 5, pr.getStartType());
-//                    drawArrayHead(b, b.minus(a).asVector(), 5, 5, pr.getEndType());
+        if (nodes != null && nodes.length >= 2) {
+            if (startArrow != null && startArrow.getType() != null) {
+                NTxPoint2D a = nodes[0];
+                NTxPoint2D b = nodes[1];
+                drawArrayHead(a, a.minus(b).asVector(), startArrow);
+            }
+            if (endArrow != null && endArrow.getType() != null) {
+                NTxPoint2D a = nodes[nodes.length - 2];
+                NTxPoint2D b = nodes[nodes.length - 1];
+                drawArrayHead(b, b.minus(a).asVector(), endArrow);
+            }
+        }
         setPaint(oldPaint);
         setStroke(oldStroke);
     }

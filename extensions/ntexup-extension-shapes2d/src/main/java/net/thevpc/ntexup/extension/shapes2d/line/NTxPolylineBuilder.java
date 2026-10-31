@@ -1,5 +1,6 @@
 package net.thevpc.ntexup.extension.shapes2d.line;
 
+import net.thevpc.ntexup.api.document.NTxArrow;
 import net.thevpc.ntexup.api.document.elem2d.NTxBounds2D;
 import net.thevpc.ntexup.api.document.elem2d.NTxPoint2D;
 import net.thevpc.ntexup.api.document.node.NTxNode;
@@ -9,9 +10,11 @@ import net.thevpc.ntexup.api.document.style.NTxProperties;
 import net.thevpc.ntexup.api.engine.NTxEngineTools;
 import net.thevpc.ntexup.api.engine.NTxNodeBuilderContext;
 import net.thevpc.ntexup.api.eval.NTxValue;
+import net.thevpc.ntexup.api.eval.NTxValueByType;
 import net.thevpc.ntexup.api.extension.NTxNodeBuilder;
 import net.thevpc.ntexup.api.renderer.NTxGraphics;
 import net.thevpc.ntexup.api.renderer.NTxRendererContext;
+import net.thevpc.ntexup.api.document.elem2d.primitives.NtxElement2DPolyline;
 import net.thevpc.ntexup.lib.geometry2d.NTxElement2DFactory;
 import net.thevpc.nuts.elem.NElement;
 import net.thevpc.nuts.elem.NPairElement;
@@ -100,6 +103,7 @@ public class NTxPolylineBuilder implements NTxNodeBuilder {
                     }
                     return false;
                 })
+                .parseParam().matchesNamedPair(NTxPropName.START_ARROW, NTxPropName.END_ARROW, "arrow", "label", "flow").then()
                 .renderComponent(this::render);
     }
 
@@ -112,9 +116,26 @@ public class NTxPolylineBuilder implements NTxNodeBuilder {
         NTxPoint2D[] points = NTxValue.ofProp(node, NTxPropName.POINTS).asPoint2DArray().get();
         if (!rendererContext.isDry()) {
             Paint fc = rendererContext.getLineColor(true);
-            g.draw2D(NTxElement2DFactory.polyline(points)
+            NtxElement2DPolyline pl = (NtxElement2DPolyline) NTxElement2DFactory.polyline(points)
                     .setLineStroke(rendererContext.resolveStroke())
-                    .setLinePaint(fc));
+                    .setLinePaint(fc);
+            NTxArrow darrow = NTxValueByType.getArrow(rendererContext, "arrow").orNull();
+            NTxArrow sa = NTxValueByType.getArrow(rendererContext, NTxPropName.START_ARROW).orNull();
+            NTxArrow ea = NTxValueByType.getArrow(rendererContext, NTxPropName.END_ARROW).orNull();
+            if (darrow != null) {
+                if (sa == null) sa = darrow;
+                if (ea == null) ea = darrow;
+            }
+            pl.setStartArrow(sa);
+            pl.setEndArrow(ea);
+            g.draw2D(pl);
+
+            NTxRoutedPath _path = new NTxPolylineRoutedPath(java.util.Arrays.asList(points));
+            NTxLabelDecorator.draw(rendererContext, g, _path);
+            NTxFlow _flow = NTxFlow.parse(node.getPropertyValue("flow").orNull(), rendererContext);
+            if (_flow != null) {
+                NTxFlowDecorator.draw(rendererContext, g, _path, _flow);
+            }
         }
         rendererContext.drawContour();
     }
