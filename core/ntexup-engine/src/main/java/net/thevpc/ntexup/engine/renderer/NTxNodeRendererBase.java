@@ -8,6 +8,7 @@ import net.thevpc.ntexup.api.document.style.NTxPropName;
 import net.thevpc.ntexup.api.eval.NTxValueByName;
 import net.thevpc.ntexup.api.document.NTxSizeRequirements;
 import net.thevpc.ntexup.api.eval.NTxValue;
+import net.thevpc.ntexup.api.renderer.NTxGeometryIndex;
 import net.thevpc.ntexup.api.renderer.NTxGraphics;
 import net.thevpc.ntexup.api.renderer.NTxNodeRenderer;
 import net.thevpc.ntexup.api.renderer.NTxRendererContext;
@@ -61,17 +62,16 @@ public abstract class NTxNodeRendererBase implements NTxNodeRenderer {
     public void render(NTxRendererContext rendererContext) {
         NTxNode node = rendererContext.node();
         boolean v = NTxValueByName.isVisible(rendererContext);
-        if (!v) {
-            return;
-        }
-
         NTxBounds2D selfBounds = rendererContext.selfBounds2D();
+        NTxGeometryIndex gi = rendererContext.session().geometry();
         NTxGraphics nv = null;
         double rotationAngle = 0;
         double rotX = 0;
         double rotY = 0;
+        boolean entered = false;
+        boolean dry = rendererContext.isDry();
         try {
-            if (!rendererContext.isDry()) {
+            if (!dry) {
                 NTxRotation rotation = NTxValueByName.getRotation(rendererContext);
                 if (rotation != null) {
                     double angle = NTxValue.of(rotation.getAngle()).asDouble().orElse(0.0);
@@ -80,14 +80,12 @@ public abstract class NTxNodeRendererBase implements NTxNodeRenderer {
                         if (angle != 0) {
                             NTxGraphics g = rendererContext.graphics();
                             nv = g.copy();
-                            ///HSizeRef sr=new HSizeRef();
                             rotX = NTxValue.of(rotation.getX()).asDouble().get() / 100.0 * selfBounds.widthX() + selfBounds.minX();
                             rotY = NTxValue.of(rotation.getY()).asDouble().get() / 100.0 * selfBounds.widthY() + selfBounds.minY();
                             if (rendererContext.isDebug()) {
                                 g.setColor(NTxValueByName.getDebugColor(rendererContext));
                                 g.drawRect(selfBounds);
                                 g.fillRect(rotX - 3, rotY - 3, 6, 6);
-//                            g.drawString(rotX + "," + rotY+" : "+p, 100, 100);
                             }
                             nv.rotate(
                                     angle,
@@ -99,6 +97,18 @@ public abstract class NTxNodeRendererBase implements NTxNodeRenderer {
                         }
                     }
                 }
+
+                String name = nameOf(rendererContext);
+
+                if (!v) {
+                    gi.enter(node, selfBounds, rotationAngle, rotX, rotY, name);
+                    entered = true;
+                    gi.markHidden(node);
+                    return;
+                }
+
+                gi.enter(node, selfBounds, rotationAngle, rotX, rotY, name);
+                entered = true;
 
                 NOptional<NTxProp> pendingProp = node.getProperty(NTxPropName.PENDING);
                 if (pendingProp.isPresent() && !pendingProp.get().getValue().isNull()) {
@@ -149,6 +159,9 @@ public abstract class NTxNodeRendererBase implements NTxNodeRenderer {
         } catch (Exception ex){
             rendererContext.engine().log().log(NMsg.ofC("unable to render %s : %s",node.type(),ex).asFineFail(ex));
         } finally {
+            if (entered) {
+                gi.exit(node);
+            }
             if (nv != null) {
                 nv.dispose();
             }
@@ -293,6 +306,27 @@ public abstract class NTxNodeRendererBase implements NTxNodeRenderer {
         g.setColor(new Color(120, 130, 140));
         g.setFont(new Font("SansSerif", Font.PLAIN, 12));
         g.drawString("Loading...", bounds.centerX() - 25, bounds.centerY());
+    }
+
+    protected String nameOf(NTxRendererContext ctx) {
+        try {
+            NOptional<NTxProp> p = ctx.node().getProperty(NTxPropName.NAME);
+            if (!p.isPresent()) {
+                return null;
+            }
+            NElement v = ctx.evalExpression(p.get().getValue()).orElse(p.get().getValue());
+            if (v == null) {
+                return null;
+            }
+            String s = v.asStringValue().orNull();
+            if (s == null) {
+                return null;
+            }
+            s = s.trim();
+            return s.isEmpty() ? null : s;
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     public abstract void renderMain(NTxRendererContext ctx);

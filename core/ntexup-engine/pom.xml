@@ -63,6 +63,7 @@
         <dependency><groupId>net.thevpc.nuts</groupId><artifactId>nuts</artifactId><version>1.1.0</version></dependency>
         <dependency><groupId>org.bouncycastle</groupId><artifactId>bcpkix-jdk18on</artifactId><version>1.86</version></dependency>
         <dependency><groupId>org.eclipse.jgit</groupId><artifactId>org.eclipse.jgit</artifactId><version>${jgit.version}</version></dependency>
+        <dependency><groupId>org.junit.jupiter</groupId><artifactId>junit-jupiter</artifactId><version>5.10.5</version><scope>test</scope></dependency>
     </dependencies>
     <build>
         <plugins>

@@ -46,6 +46,8 @@ import net.thevpc.ntexup.api.util.NTxUtils;
 import net.thevpc.ntexup.engine.parser.ctrlnodes.CtrNTxNodeUncompiled;
 import net.thevpc.ntexup.engine.parser.nodeparsers.StylesSpecialParser;
 import net.thevpc.ntexup.engine.renderer.DefaultNTxRendererContext;
+import net.thevpc.ntexup.engine.renderer.NTxRenderSessionImpl;
+import net.thevpc.ntexup.api.renderer.NTxRenderSession;
 import net.thevpc.ntexup.engine.ext.NTxNodeBuilderContextImpl;
 import net.thevpc.ntexup.engine.log.NTxMessageList;
 import net.thevpc.ntexup.engine.log.SilentNTxLogger;
@@ -1405,6 +1407,7 @@ public class DefaultNTxEngine implements NTxEngine {
         g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
 
         NTxGraphics hg = this.createGraphics(g);
+        NTxRenderSession session = new NTxRenderSessionImpl(hg);
         NTxNodeRenderer renderer = getRenderer(node.type()).get();
         NTxBounds2D bounds2D = NTxBounds2D.ofWidth(0, 0, sizeWidth, sizeHeight);
         NTxBounds3D bounds3D = NTxBounds3D.ofFull();
@@ -1449,12 +1452,14 @@ public class DefaultNTxEngine implements NTxEngine {
                 page.document(),
                 page,
                 page.pageContext(),
-                itemParser()
+                itemParser(),
+                session
         );
         if (someChange) {
             node.invalidateRenderCache();
         }
         renderer.render(context);
+        session.drainDeferred();
     }
 
     @Override

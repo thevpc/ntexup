@@ -141,6 +141,9 @@ public class NTxNodeRendererUtils {
         if (ctx.isDry()) {
             return;
         }
+        if ("connector".equals(ctx.node().type())) {
+            return;
+        }
         if (force || NTxValueByName.isDebug(ctx)) {
             g.setColor(NTxValueByName.getDebugColor(ctx));
             g.drawRect(a);
@@ -155,6 +158,30 @@ public class NTxNodeRendererUtils {
                     x - originSize / 2, y - originSize / 2,
                     originSize, originSize
             );
+            net.thevpc.ntexup.api.renderer.NTxRenderSession session = ctx.session();
+            if (session != null) {
+                net.thevpc.nuts.util.NOptional<net.thevpc.ntexup.api.document.style.NTxProp> nameProp = ctx.node().getProperty(net.thevpc.ntexup.api.document.style.NTxPropName.NAME);
+                if (nameProp.isPresent() && !nameProp.get().getValue().isNull()) {
+                    String name = ctx.evalExpression(nameProp.get().getValue())
+                            .orElse(nameProp.get().getValue()).asStringValue().orNull();
+                    if (name != null && !name.trim().isEmpty()) {
+                        name = name.trim();
+                        net.thevpc.ntexup.api.renderer.NTxPlaced placed = session.geometry().placed().stream()
+                                .filter(p -> p.node == ctx.node())
+                                .findFirst().orElse(null);
+                        if (placed != null) {
+                            NTxGraphics pg = session.pageGraphics();
+                            if (pg != null) {
+                                pg.setColor(NTxValueByName.getDebugColor(ctx));
+                                java.awt.Shape outline = placed.outline();
+                                pg.draw(outline);
+                                java.awt.geom.Rectangle2D ob = outline.getBounds2D();
+                                pg.drawString(name, ob.getMinX(), ob.getMinY() - 2);
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 

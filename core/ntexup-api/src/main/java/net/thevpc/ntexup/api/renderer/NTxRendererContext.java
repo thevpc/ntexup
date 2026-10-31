@@ -234,6 +234,10 @@ public interface NTxRendererContext extends NTxResolutionContext {
 
     boolean isDry();
 
+    default NTxRenderSession session() {
+        return NTxRenderSessionNoOp.INSTANCE;
+    }
+
 
     NTxGraphics graphics();
 

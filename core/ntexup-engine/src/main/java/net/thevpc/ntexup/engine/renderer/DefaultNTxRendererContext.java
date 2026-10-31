@@ -20,6 +20,8 @@ import net.thevpc.ntexup.api.renderer.text.NTxTextRendererBuilder;
 import net.thevpc.ntexup.api.source.NTxSourceMonitor;
 import net.thevpc.ntexup.api.util.NTxUtils;
 import net.thevpc.ntexup.api.renderer.NTxGraphics;
+import net.thevpc.ntexup.api.renderer.NTxRenderSession;
+import net.thevpc.ntexup.api.renderer.NTxRenderSessionNoOp;
 import net.thevpc.ntexup.api.renderer.NTxRendererContext;
 import net.thevpc.ntexup.api.util.NTxSizeRef;
 import net.thevpc.ntexup.engine.eval.DispatchCompileNodeVisitor;
@@ -55,6 +57,7 @@ public class DefaultNTxRendererContext extends NTxResolutionContextImpl implemen
     private final NTxNodeBuilderContext buildContext;
     private final ImageObserver imageObserver;
     private final NTxGraphics g3;
+    private final NTxRenderSession session;
     private final Map<String, Object> capabilities;
     private final long pageStartTime;
     private final boolean someChange;
@@ -75,7 +78,8 @@ public class DefaultNTxRendererContext extends NTxResolutionContextImpl implemen
                                      NTxCompiledDocument compiledDocument,
                                      NTxCompiledPage compiledPage,
                                      NTxResolutionContext parentContext,
-                                     NTxItemParser itemParser
+                                     NTxItemParser itemParser,
+                                     NTxRenderSession session
     ) {
         super(path, element, def, true, engine, document, vars, definitions, functions, compiledDocument, compiledPage, parentContext, itemParser);
         setVar("selfBounds", () -> {
@@ -113,6 +117,7 @@ public class DefaultNTxRendererContext extends NTxResolutionContextImpl implemen
         this.defaultStyles = defaultStyles;
         this.dry = dry;
         this.buildContext = buildContext;
+        this.session = session == null ? NTxRenderSessionNoOp.INSTANCE : session;
     }
 
     @Override
@@ -215,7 +220,7 @@ public class DefaultNTxRendererContext extends NTxResolutionContextImpl implemen
         return copyAsRenderer(path, engine, g3,
                 selfBounds2D, parentBounds2D, globalBound2D, realBounds2D, realGlobalBounds2D,
                 selfBounds3D, parentBounds3D, globalBounds3D, realBounds3D, realGlobalBounds3D,
-                someChange, pageStartTime, capabilities, imageObserver, repainter, defaultStyles, dry, buildContext, element, def, document, vars, definitions, functions, compiledDocument, compiledPage, parentContext, itemParser);
+                someChange, pageStartTime, capabilities, imageObserver, repainter, defaultStyles, dry, buildContext, element, def, document, vars, definitions, functions, compiledDocument, compiledPage, parentContext, itemParser, session);
     }
 
     @Override
@@ -223,7 +228,7 @@ public class DefaultNTxRendererContext extends NTxResolutionContextImpl implemen
         return copyAsRenderer(path, engine, g3,
                 null, parentBounds2D == null ? selfBounds2D() : parentBounds2D, globalBound2D, realBounds2D, realGlobalBounds2D,
                 selfBounds3D, parentBounds3D, globalBounds3D, realBounds3D, realGlobalBounds3D,
-                someChange, pageStartTime, capabilities, imageObserver, repainter, defaultStyles, dry, builderContext, element, def, document, vars, definitions, functions, compiledDocument, compiledPage, parentContext, itemParser);
+                someChange, pageStartTime, capabilities, imageObserver, repainter, defaultStyles, dry, builderContext, element, def, document, vars, definitions, functions, compiledDocument, compiledPage, parentContext, itemParser, session);
     }
 
     @Override
@@ -233,7 +238,7 @@ public class DefaultNTxRendererContext extends NTxResolutionContextImpl implemen
         return copyAsRenderer(all.toArray(new NTxNode[0]), engine, g3,
                 null, parentBounds == null ? selfBounds2D() : parentBounds, globalBound2D, realBounds2D, realGlobalBounds2D,
                 selfBounds3D, parentBounds3D, globalBounds3D, realBounds3D, realGlobalBounds3D,
-                someChange, pageStartTime, capabilities, imageObserver, repainter, defaultStyles, dry, buildContext, element, def, document, vars, definitions, functions, compiledDocument, compiledPage, this, itemParser);
+                someChange, pageStartTime, capabilities, imageObserver, repainter, defaultStyles, dry, buildContext, element, def, document, vars, definitions, functions, compiledDocument, compiledPage, this, itemParser, session);
     }
 
     @Override
@@ -244,7 +249,7 @@ public class DefaultNTxRendererContext extends NTxResolutionContextImpl implemen
         return copyAsRenderer(path, engine, g3,
                 selfBounds2D, parentBounds, globalBound2D, realBounds2D, realGlobalBounds2D,
                 selfBounds3D, parentBounds3D, globalBounds3D, realBounds3D, realGlobalBounds3D,
-                someChange, pageStartTime, capabilities, imageObserver, repainter, defaultStyles, dry, buildContext, element, def, document, vars, definitions, functions, compiledDocument, compiledPage, parentContext, itemParser);
+                someChange, pageStartTime, capabilities, imageObserver, repainter, defaultStyles, dry, buildContext, element, def, document, vars, definitions, functions, compiledDocument, compiledPage, parentContext, itemParser, session);
     }
 
     @Override
@@ -260,7 +265,7 @@ public class DefaultNTxRendererContext extends NTxResolutionContextImpl implemen
                 someChange, pageStartTime, capabilities, imageObserver, repainter, defaultStyles, dry, buildContext, element, def, document, vars, definitions, functions,
                 compiledDocument,
                 compiledPage,
-                parentContext, itemParser);
+                parentContext, itemParser, session);
     }
 
     @Override
@@ -271,7 +276,7 @@ public class DefaultNTxRendererContext extends NTxResolutionContextImpl implemen
         return copyAsRenderer(path, engine, g3,
                 selfBounds2D, parentBounds2D, globalBound2D, realBounds2D, realGlobalBounds2D,
                 selfBounds3D, parentBounds3D, globalBounds3D, realBounds3D, realGlobalBounds3D,
-                someChange, pageStartTime, capabilities, imageObserver, repainter, defaultStyles, true, buildContext, element, def, document, vars, definitions, functions, compiledDocument, compiledPage, parentContext, itemParser);
+                someChange, pageStartTime, capabilities, imageObserver, repainter, defaultStyles, true, buildContext, element, def, document, vars, definitions, functions, compiledDocument, compiledPage, parentContext, itemParser, session);
     }
 
     @Override
@@ -282,7 +287,7 @@ public class DefaultNTxRendererContext extends NTxResolutionContextImpl implemen
         return copyAsRenderer(path, engine, graphics,
                 selfBounds2D, parentBounds2D, globalBound2D, realBounds2D, realGlobalBounds2D,
                 selfBounds3D, parentBounds3D, globalBounds3D, realBounds3D, realGlobalBounds3D,
-                someChange, pageStartTime, capabilities, imageObserver, repainter, defaultStyles, dry, buildContext, element, def, document, vars, definitions, functions, compiledDocument, compiledPage, parentContext, itemParser);
+                someChange, pageStartTime, capabilities, imageObserver, repainter, defaultStyles, dry, buildContext, element, def, document, vars, definitions, functions, compiledDocument, compiledPage, parentContext, itemParser, session);
     }
 
     @Override
@@ -293,7 +298,7 @@ public class DefaultNTxRendererContext extends NTxResolutionContextImpl implemen
         return copyAsRenderer(path, engine, g3,
                 selfBounds2D, parentBounds2D, globalBound2D, realBounds2D, realGlobalBounds2D,
                 selfBounds3D, parentBounds3D, globalBounds3D, realBounds3D, realGlobalBounds3D,
-                someChange, pageStartTime, capabilities, imageObserver, repainter, defaultStyles, dry, buildContext, element, def, document, vars, definitions, functions, compiledDocument, compiledPage, parentContext, itemParser);
+                someChange, pageStartTime, capabilities, imageObserver, repainter, defaultStyles, dry, buildContext, element, def, document, vars, definitions, functions, compiledDocument, compiledPage, parentContext, itemParser, session);
     }
 
     @Override
@@ -304,7 +309,7 @@ public class DefaultNTxRendererContext extends NTxResolutionContextImpl implemen
         return copyAsRenderer(path, engine, g3,
                 selfBounds2D, parentBounds2D, globalBound2D, realBounds2D, realGlobalBounds2D,
                 selfBounds3D, parentBounds3D, globalBounds3D, realBounds3D, realGlobalBounds3D,
-                someChange, pageStartTime, capabilities, imageObserver, repainter, defaultStyles, dry, buildContext, element, def, document, vars, definitions, functions, compiledDocument, compiledPage, parentContext, itemParser);
+                someChange, pageStartTime, capabilities, imageObserver, repainter, defaultStyles, dry, buildContext, element, def, document, vars, definitions, functions, compiledDocument, compiledPage, parentContext, itemParser, session);
     }
 
     @Override
@@ -421,7 +426,7 @@ public class DefaultNTxRendererContext extends NTxResolutionContextImpl implemen
             NTxRendererContext d2 = copyAsRenderer(all.toArray(new NTxNode[0]), engine(), graphics(),
                     sb, pb, globalBounds2D(), realBounds2D, realGlobalBounds2D,
                     selfBounds3D, parentBounds3D, globalBounds3D, realBounds3D, realGlobalBounds3D,
-                    isSomeChange(), pageStartTime(), capabilities, imageObserver, repainter, null, false, buildContext, element, def, document, vars, definitions, functions, compiledDocument, compiledPage, parentContext, itemParser);
+                    isSomeChange(), pageStartTime(), capabilities, imageObserver, repainter, null, false, buildContext, element, def, document, vars, definitions, functions, compiledDocument, compiledPage, parentContext, itemParser, session);
             renderer.get().render(d2);
         } else {
             engine().log().log(NMsg.ofC("%s for %s", renderer.message().get(), NTxUtils.snippet(childNode)).asError(), NTxUtils.sourceOf(node()));
@@ -769,6 +774,11 @@ public class DefaultNTxRendererContext extends NTxResolutionContextImpl implemen
         return g3;
     }
 
+    @Override
+    public NTxRenderSession session() {
+        return session == null ? net.thevpc.ntexup.api.renderer.NTxRenderSessionNoOp.INSTANCE : session;
+    }
+
     public NTxBounds2D globalBounds2D() {
         return globalBound2D;
     }
@@ -847,7 +857,8 @@ public class DefaultNTxRendererContext extends NTxResolutionContextImpl implemen
                                                 NTxCompiledDocument compiledDocument,
                                                 NTxCompiledPage compiledPage,
                                                 NTxResolutionContext parentContext,
-                                                NTxItemParser itemParser
+                                                NTxItemParser itemParser,
+                                                NTxRenderSession session
     ) {
         return new DefaultNTxRendererContext(
                 path, engine, g,
@@ -856,7 +867,8 @@ public class DefaultNTxRendererContext extends NTxResolutionContextImpl implemen
                 someChange, pageStartTime, capabilities, imageObserver, repainter,
                 defaultStyles, dry,
                 buildContext,
-                element, def, document, vars, definitions, functions, compiledDocument, compiledPage, parentContext, itemParser
+                element, def, document, vars, definitions, functions, compiledDocument, compiledPage, parentContext, itemParser,
+                session
         );
     }
 }

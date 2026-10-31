@@ -1,0 +1,7 @@
+page {
+    group(name: "grp", at: (20, 20), size: (60, 60), rotate: 15, debug: true, draw-contour) {
+        rectangle(name: "child", at: (10, 10), size: (30, 20), rotate: 30, debug: true, draw-contour, background-color: lightgray) {
+            text("Rotated", at: center)
+        }
+    }
+}
