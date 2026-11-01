@@ -1392,21 +1392,23 @@ public class DefaultNTxEngine implements NTxEngine {
                            ImageObserver imageObserver, Runnable repainter
     ) {
         initializeComponents();
+        applyRenderingHints(g);
+        renderPage(page, config, this.createGraphics(g), imageObserver, repainter);
+    }
+
+    @Override
+    public void renderPage(NTxCompiledPage page, NTxNodeRendererConfig config,
+                           NTxGraphics hg,
+                           ImageObserver imageObserver, Runnable repainter
+    ) {
+        initializeComponents();
+        applyRenderingHints(hg.graphics2D());
         NTxNode node = page.compiledPage();
         long startTime = config.getStartTime();
         double sizeWidth = config.getWidth();
         double sizeHeight = config.getHeight();
         Map<String, Object> capabilities = config.getCapabilities();
 
-        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
-        g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-        g.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_ON);
-        g.setRenderingHint(RenderingHints.KEY_COLOR_RENDERING, RenderingHints.VALUE_COLOR_RENDER_QUALITY);
-        g.setRenderingHint(RenderingHints.KEY_DITHERING, RenderingHints.VALUE_DITHER_ENABLE);
-        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
-
-        NTxGraphics hg = this.createGraphics(g);
         NTxRenderSession session = new NTxRenderSessionImpl(hg);
         NTxNodeRenderer renderer = getRenderer(node.type()).get();
         NTxBounds2D bounds2D = NTxBounds2D.ofWidth(0, 0, sizeWidth, sizeHeight);
@@ -1460,6 +1462,16 @@ public class DefaultNTxEngine implements NTxEngine {
         }
         renderer.render(context);
         session.drainDeferred();
+    }
+
+    private void applyRenderingHints(Graphics2D g) {
+        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+        g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+        g.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_ON);
+        g.setRenderingHint(RenderingHints.KEY_COLOR_RENDERING, RenderingHints.VALUE_COLOR_RENDER_QUALITY);
+        g.setRenderingHint(RenderingHints.KEY_DITHERING, RenderingHints.VALUE_DITHER_ENABLE);
+        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
     }
 
     @Override

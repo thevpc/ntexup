@@ -11,6 +11,7 @@ import net.thevpc.ntexup.api.renderer.NTxPdfMode;
 import net.thevpc.ntexup.cmdline.options.*;
 import net.thevpc.ntexup.engine.eval.NTxGitHelper;
 import net.thevpc.ntexup.engine.repo.RepoBuilderTool;
+import net.thevpc.ntexup.engine.renderer.dump.DumpDocumentRenderer;
 import net.thevpc.ntexup.engine.renderer.image.ImageDocumentRenderer;
 import net.thevpc.ntexup.main.MainFrame;
 import net.thevpc.nuts.artifact.NId;
@@ -48,7 +49,9 @@ public class NTexupOptionsProcessor {
         LinkedHashMap<Action, ActionOptions> optionsMap = options.actionOptions.stream().collect(Collectors.toMap(x -> x.action, x -> x, (v1, v2) -> v2, LinkedHashMap::new));
 
         if (optionsMap.remove(Action.DUMP) != null) {
-            if (info.visitedOptions.add(Action.DUMP)) {
+            if (optionsMap.containsKey(Action.GENERATE)) {
+                //rendered primitives dump is produced by the generate action itself
+            } else if (info.visitedOptions.add(Action.DUMP)) {
                 engine.dump();
             }
         }
@@ -210,6 +213,8 @@ public class NTexupOptionsProcessor {
         }
         GenerateActionOptions ga = info.options.get(GenerateActionOptions.class);
         boolean image = ga != null && ga.outputFormat == OutputFormat.IMAGE;
+        DumpDocumentOptions dumpOptions = info.options.get(DumpDocumentOptions.class);
+        boolean dump = dumpOptions != null;
         NTxDocumentStreamRendererConfig renderConfig = createStreamRendererConfig(ga);
         for (NPath path : paths) {
             NChronometer ch = NChronometer.of();
@@ -218,7 +223,9 @@ public class NTexupOptionsProcessor {
                 info.engine.log().log(NMsg.ofC("no pages to render : %s", path.normalize().toAbsolute()).asError());
                 return;
             }
-            NTxDocumentStreamRenderer renderer = image
+            NTxDocumentStreamRenderer renderer = dump
+                    ? info.engine.newStreamRenderer("dump").get()
+                    : image
                     ? info.engine.newImageRenderer().get()
                     : info.engine.newPdfRenderer().get();
             renderer.setStreamRendererConfig(renderConfig);
@@ -226,16 +233,30 @@ public class NTexupOptionsProcessor {
                 renderer.setProperty(ImageDocumentRenderer.PROP_PAGES, ga == null ? null : ga.pages);
                 renderer.setProperty(ImageDocumentRenderer.PROP_FORMAT, ga == null ? null : ga.imageFormat);
             }
+            if (dump) {
+                renderer.setProperty(DumpDocumentRenderer.PROP_PAGES, ga == null ? null : ga.pages);
+                renderer.setProperty(DumpDocumentRenderer.PROP_LEVEL, dumpOptions.level);
+                if (dumpOptions.withImage) {
+                    renderer.setProperty(DumpDocumentRenderer.PROP_WITH_IMAGE, Boolean.TRUE);
+                }
+                if (dumpOptions.noInfos) {
+                    renderer.setProperty(DumpDocumentRenderer.PROP_INFOS, Boolean.FALSE);
+                }
+            }
             NPath output;
             if (paths.size() == 1) {
                 if (expecteOutput.isDirectory() || (image && ga != null && ga.outputDirectory)) {
                     if (image) {
                         output = expecteOutput.mkdirs();
+                    } else if (dump) {
+                        output = expecteOutput.mkdirs().resolve(path.name()).resolveSibling(NPathRenameOptions.ofExtension("tson"));
                     } else {
                         output = expecteOutput.resolve(path.name()).resolveSibling(NPathRenameOptions.ofExtension("pdf"));
                     }
                 } else {
                     if (image) {
+                        output = expecteOutput;
+                    } else if (dump) {
                         output = expecteOutput;
                     } else {
                         output = expecteOutput.resolveSibling(NPathRenameOptions.ofExtension("pdf"));
@@ -244,6 +265,8 @@ public class NTexupOptionsProcessor {
             } else {
                 if (image) {
                     output = expecteOutput.resolve(path.name());
+                } else if (dump) {
+                    output = expecteOutput.resolve(path.name()).resolveSibling(NPathRenameOptions.ofExtension("tson"));
                 } else {
                     output = expecteOutput.resolve(path.name()).resolveSibling(NPathRenameOptions.ofExtension("pdf"));
                 }

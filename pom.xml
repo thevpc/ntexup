@@ -101,6 +101,7 @@
         <module>companions/nscoreboard</module>
         <module>renderers/ntexup-renderer-pdf</module>
         <module>renderers/ntexup-renderer-image</module>
+        <module>renderers/ntexup-renderer-dump</module>
         <module>renderers/ntexup-renderer-html</module>
         <module>renderers/ntexup-renderer-screen</module>
         <module>renderers/ntexup-renderer-web</module>

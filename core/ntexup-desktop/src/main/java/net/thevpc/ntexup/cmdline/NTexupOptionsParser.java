@@ -327,6 +327,13 @@ public class NTexupOptionsParser {
                         options.getOrCreate(GenerateActionOptions.class).showPageNumber = true;
                     })
                     .when("--dump").asFlag(a -> options.getOrCreate(DumpDocumentOptions.class))
+                    .when("--dump-level").asEntry(a -> {
+                        String v = a.stringValue();
+                        DumpDocumentOptions d = options.getOrCreate(DumpDocumentOptions.class);
+                        d.level = v;
+                    })
+                    .when("--dump-image").asTrueFlag(a -> options.getOrCreate(DumpDocumentOptions.class).withImage = true)
+                    .when("--dump-no-infos").asTrueFlag(a -> options.getOrCreate(DumpDocumentOptions.class).noInfos = true)
                     .when("--git-provider").asEntry(a -> options.gitProvider = parseGitProvider(a.stringValue()))
                     .when("--prefer-system-git").asTrueFlag(a -> options.gitProvider = net.thevpc.ntexup.engine.eval.git.NTxGitProviderFactory.PROVIDER_SYSTEM)
                     .whenArg(a -> a.key().startsWith("--var-")).asEntry(a -> {

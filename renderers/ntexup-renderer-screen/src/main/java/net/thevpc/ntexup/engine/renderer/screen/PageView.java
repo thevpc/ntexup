@@ -52,6 +52,8 @@ public class PageView extends JComponent {
     private volatile int renderH = -1;
     private volatile boolean renderPending;
     private volatile boolean renderInvalidated;
+    private int pendingW = -1;
+    private int pendingH = -1;
     private volatile boolean renderCacheDirty;
     private volatile boolean discarded;
     private volatile int renderEpoch;
@@ -559,8 +561,21 @@ public class PageView extends JComponent {
             if (sizeOk && !renderInvalidated) {
                 return;
             }
+            if (renderPending && d.width == pendingW && d.height == pendingH) {
+                //A render at this exact size is already in flight: coalesce this
+                //request into it (the in-flight pass will schedule the follow-up
+                //through the trailing `more` check) instead of bumping the epoch
+                //and killing the pass. Without coalescing, the 40ms animation tick
+                //discards every frame of a page whose render is slower than the
+                //tick, leaving stale images: the animation looks frozen or moves
+                //in huge steps, and gets worse while resizing (slower passes).
+                renderInvalidated = true;
+                return;
+            }
             renderPending = true;
             renderInvalidated = false;
+            pendingW = d.width;
+            pendingH = d.height;
             boolean reuse = pageImage != null && d.width == renderW && d.height == renderH;
             final int tw = d.width;
             final int th = d.height;

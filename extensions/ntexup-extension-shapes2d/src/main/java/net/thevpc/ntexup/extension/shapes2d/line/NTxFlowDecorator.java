@@ -35,18 +35,19 @@ public class NTxFlowDecorator {
         double elapsed = computeElapsedSeconds(ctx);
         double len = path.length();
         int count = Math.max(1, flow.count);
-        double size = flow.size;
-        if (size <= 0) {
-            java.awt.Stroke st = ctx.resolveStroke();
-            if (st instanceof java.awt.BasicStroke) {
-                size = Math.max(2.0, ((java.awt.BasicStroke) st).getLineWidth() * 1.5);
-            } else {
-                size = 2.0;
-            }
-        }
         Paint paint = flow.color != null ? flow.color : ctx.getLineColor(true);
         Color oldColor = g.getColor();
         g.setColor(paint instanceof Color ? (Color) paint : Color.BLACK);
+        double lineWidth = 1.0;
+        java.awt.Stroke st = ctx.resolveStroke();
+        if (st instanceof java.awt.BasicStroke) {
+            lineWidth = ((java.awt.BasicStroke) st).getLineWidth();
+        }
+        //A dot must read as a dot: at least 1.5x the width of the line it rides on,
+        //and never below a couple of device pixels (anti-aliasing would make a
+        //sub-pixel oval vanish entirely at small page zooms).
+        double minSize = Math.max(2.5, lineWidth * 1.5);
+        double size = flow.size > 0 ? Math.max(flow.size, minSize) : minSize;
         for (int i = 0; i < count; i++) {
             double u = phase(elapsed, flow.period, i, count, flow.reverse);
             NTxPoint2D p = path.pointAt(u * len);

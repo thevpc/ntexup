@@ -51,6 +51,24 @@ public interface NTxRendererContext extends NTxResolutionContext {
     }
 
     /**
+     * The active TSON dump sink, when the current render is produced by the
+     * dump renderer. Components whose visual output cannot express their
+     * semantic content (charts, images generated from a model...) should use
+     * it to contribute the underlying data so validation agents can inspect
+     * it. Returns an empty optional for PDF/image/screen/HTML rendering and
+     * the call is therefore always safe to make but should stay cheap.
+     *
+     * @see NTxRenderDump
+     */
+    default NOptional<NTxRenderDump> renderDump() {
+        Object v = getCapability(NTxRenderDump.CAPABILITY);
+        if (v instanceof NTxRenderDump) {
+            return NOptional.of((NTxRenderDump) v);
+        }
+        return NOptional.ofNamedEmpty("renderDump");
+    }
+
+    /**
      * Whether the page being rendered is currently shown to the user. When the
      * host does not track page visibility (PDF/image/HTML or an ad-hoc render)
      * this returns {@code true} so components keep their usual behaviour.

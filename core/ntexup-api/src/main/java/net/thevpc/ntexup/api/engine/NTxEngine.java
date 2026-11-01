@@ -144,6 +144,20 @@ public interface NTxEngine {
                     ImageObserver imageObserver, Runnable repainter
     );
 
+    /**
+     * Paint a compiled page through a custom {@link NTxGraphics} implementation,
+     * bypassing the engine graphics wrapper. The default implementation simply
+     * paints on the underlying {@code java2d} surface; engines that support
+     * recording or replacing the high level graphics (renderers, debuggers...)
+     * should override this method.
+     */
+    default void renderPage(NTxCompiledPage page, NTxNodeRendererConfig config,
+                            NTxGraphics g,
+                            ImageObserver imageObserver, Runnable repainter
+    ) {
+        renderPage(page, config, g.graphics2D(), imageObserver, repainter);
+    }
+
     byte[] renderImageBytes(NTxCompiledPage page, NTxNodeRendererConfig config);
 
     NOptional<NTxNodeRenderer> getRenderer(String type);
