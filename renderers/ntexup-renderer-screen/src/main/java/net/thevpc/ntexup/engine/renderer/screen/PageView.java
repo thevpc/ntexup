@@ -112,12 +112,26 @@ public class PageView extends JComponent {
             if (discarded) {
                 return;
             }
-            renderEpoch++;
+            cancelInFlightRender();
             pageImage = null;
-            renderW = -1;
-            renderH = -1;
             renderInvalidated = true;
         }
+    }
+
+    /**
+     * Invalidates the render pass in flight so {@link #requestRender(boolean)} cannot
+     * coalesce a later request into it. Must be called with {@code renderLock} held.
+     * Without the {@code renderPending} reset, the killed pass leaves the flag set and
+     * every subsequent request at the same size is swallowed: the page keeps
+     * {@code pageImage == null} and reports "loading" forever.
+     */
+    private void cancelInFlightRender() {
+        renderEpoch++;
+        renderPending = false;
+        pendingW = -1;
+        pendingH = -1;
+        renderW = -1;
+        renderH = -1;
     }
 
     /**
@@ -131,7 +145,7 @@ public class PageView extends JComponent {
         stopAndClearTimers();
         synchronized (renderLock) {
             discarded = true;
-            renderEpoch++;
+            cancelInFlightRender();
             pageImage = null;
             renderInvalidated = false;
         }
