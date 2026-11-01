@@ -15,6 +15,9 @@ public class DocumentViewContentPanel extends JPanel {
     private final DocumentView documentView;
     CardLayout cardLayout;
     List<NTxDocumentLayer> layers = new ArrayList<>();
+    private static final int TASKS_PERIOD_MS = 66;
+    private Timer tasksTimer;
+    private boolean tasksActive;
 
     public DocumentViewContentPanel(DocumentView documentView) {
         this.documentView = documentView;
@@ -24,6 +27,31 @@ public class DocumentViewContentPanel extends JPanel {
         layers.add(new PageIndexSimpleLayer());
         layers.add(new SourceNameSimpleLayer());
         layers.add(new RuntimeProgressLayer());
+        layers.add(new RuntimeTasksLayer());
+    }
+
+    @Override
+    public void addNotify() {
+        super.addNotify();
+        if (tasksTimer == null) {
+            tasksTimer = new Timer(TASKS_PERIOD_MS, e -> {
+                boolean active = RuntimeTasksLayer.isActive(documentView);
+                // One extra repaint after the last task ends, to clear the badge
+                if (active || tasksActive) {
+                    repaint();
+                }
+                tasksActive = active;
+            });
+        }
+        tasksTimer.start();
+    }
+
+    @Override
+    public void removeNotify() {
+        if (tasksTimer != null) {
+            tasksTimer.stop();
+        }
+        super.removeNotify();
     }
 
     @Override

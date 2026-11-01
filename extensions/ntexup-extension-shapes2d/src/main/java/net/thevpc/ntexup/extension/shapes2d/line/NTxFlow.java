@@ -9,13 +9,15 @@ import net.thevpc.nuts.elem.NParamOrChild;
 import java.awt.Paint;
 
 /**
- * Parsed {@code flow: dots(count:3, size:2, period:4, reverse, color:red)}
+ * Parsed {@code flow: dots(count:3, size:2, period:4, speed:20, reverse, color:red)}
  * decoration. A bare {@code flow} flag is accepted too (one dot per period).
  */
 public class NTxFlow {
     public int count = 1;
     public double size = 0; // 0 means derived
     public double period = 4;
+    /** Page units per second; 0 means "use {@link #period}". */
+    public double speed = 0;
     public boolean reverse = false;
     public Paint color = null;
     public String shape = "circle";
@@ -48,6 +50,8 @@ public class NTxFlow {
                         f.size = val.asDoubleValue().orElse(0.0);
                     } else if ("period".equals(key)) {
                         f.period = val.asDoubleValue().orElse(4.0);
+                    } else if ("speed".equals(key)) {
+                        f.speed = val.asDoubleValue().orElse(0.0);
                     } else if ("reverse".equals(key)) {
                         f.reverse = val.isBoolean() ? val.asBooleanValue().orElse(true) : true;
                     } else if ("color".equals(key)) {

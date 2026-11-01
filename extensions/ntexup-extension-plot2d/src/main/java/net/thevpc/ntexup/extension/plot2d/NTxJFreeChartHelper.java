@@ -16,6 +16,8 @@ import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
 
 import java.awt.geom.Rectangle2D;
+import java.util.ArrayList;
+import java.util.List;
 
 public class NTxJFreeChartHelper {
     static void drawCurves(NTxNode p, NTxRendererContext rendererContext, NTxDrawContext drawContext){
@@ -116,6 +118,29 @@ public class NTxJFreeChartHelper {
         chart.setBackgroundPaint(null);      // chart area
 
         chart.draw(rendererContext.graphics().graphics2D(), new Rectangle2D.Double(bounds.minX(),bounds.minY(),bounds.widthX(),bounds.widthY()));
+        drawPendingNotice(rendererContext, drawContext);
+    }
+
+    /**
+     * A curve still waiting on its solver has no points, and its legend entry alone is
+     * too small to tell a running solver from a broken one, so say so over the plot.
+     */
+    private static void drawPendingNotice(NTxRendererContext rendererContext, NTxDrawContext drawContext) {
+        boolean anyPending = false;
+        List<String> names = new ArrayList<>();
+        for (NTxPlot2DData pd : drawContext.allData) {
+            if (pd.pending) {
+                anyPending = true;
+                String name = pd.title == null ? "" : pd.title.replace("(pending...)", "").replace("pending...", "").trim();
+                if (!name.isEmpty()) {
+                    names.add(name);
+                }
+            }
+        }
+        if (!anyPending) {
+            return;
+        }
+        rendererContext.drawPendingLabel(names.isEmpty() ? "Computing..." : "Computing " + String.join(", ", names) + "...");
     }
 
 }

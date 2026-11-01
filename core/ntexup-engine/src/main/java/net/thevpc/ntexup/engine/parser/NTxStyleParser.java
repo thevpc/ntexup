@@ -76,7 +76,11 @@ public class NTxStyleParser {
                 NTxPropName.BULLET_ALIGN,
                 NTxPropName.OVERFLOW,
                 NTxPropName.OVERFLOW_MARGIN,
-                NTxPropName.OVERFLOW_FADE
+                NTxPropName.OVERFLOW_FADE,
+                NTxPropName.PENDING,
+                NTxPropName.PENDING_TEXT,
+                NTxPropName.PENDING_COLOR,
+                NTxPropName.PENDING_BACKGROUND
         ));
 
         COMMON_FLAG_STYLE_PROPS.addAll(Arrays.asList(

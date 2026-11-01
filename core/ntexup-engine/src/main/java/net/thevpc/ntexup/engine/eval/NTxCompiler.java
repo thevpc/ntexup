@@ -371,6 +371,10 @@ public class NTxCompiler {
         NElement varExpr = node.getProperty(NTxPropName.VALUE).get().getValue();
         NElement evaluatedExpr = context.evalExpression(varExpr).orNull();
         context.setVar(varName, NTxVar.ofEvaluatedExpression(evaluatedExpr));
+        // The screen renderer has no resolution context to read this one from
+        if (NTxCompiledDocument.VAR_SHOW_RUNNING_TASKS.equals(varName) && context.compiledDocument() != null) {
+            context.compiledDocument().setGlobalObject(varName, net.thevpc.ntexup.api.eval.NTxObjs.elem(evaluatedExpr));
+        }
         visitor.visitNode(node, context);
     }
 

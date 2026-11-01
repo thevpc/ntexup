@@ -55,6 +55,7 @@ public class NTxCompiledDocumentImpl implements NTxCompiledDocument {
     private final Map<String, NTxObj> globalObjects = new ConcurrentHashMap<>();
     private final NTxDependencyGraph dependencyGraph = new net.thevpc.ntexup.engine.eval.DefaultNTxDependencyGraph();
     private final Set<Object> registeredFutures = Collections.newSetFromMap(new ConcurrentHashMap<>());
+    private final Map<Object, NTxPendingTask> pendingTasks = new ConcurrentHashMap<>();
     private NTxProgressBindingHandler progressBindingHandler;
     private boolean progressBindingHandlerResolved = false;
 
@@ -241,6 +242,22 @@ public class NTxCompiledDocumentImpl implements NTxCompiledDocument {
                 registeredFutures.add(future);
             }
         }
+    }
+
+    @Override
+    public void registerTask(String name, Object future) {
+        registerFuture(future);
+        if (future != null && name != null && !net.thevpc.ntexup.api.eval.NTxFutureUtils.isReady(future)) {
+            pendingTasks.computeIfAbsent(future, f -> new NTxPendingTask(name, f));
+        }
+    }
+
+    @Override
+    public List<NTxPendingTask> pendingTasks() {
+        pendingTasks.values().removeIf(NTxPendingTask::isDone);
+        List<NTxPendingTask> tasks = new ArrayList<>(pendingTasks.values());
+        tasks.sort(Comparator.comparingLong(NTxPendingTask::elapsedMillis).reversed());
+        return tasks;
     }
 
     @Override

@@ -5,6 +5,7 @@ import net.thevpc.ntexup.api.document.node.*;
 import net.thevpc.ntexup.api.document.style.NTxOverflow;
 import net.thevpc.ntexup.api.document.style.NTxProp;
 import net.thevpc.ntexup.api.document.style.NTxPropName;
+import net.thevpc.ntexup.api.eval.NTxFutureUtils;
 import net.thevpc.ntexup.api.eval.NTxValueByName;
 import net.thevpc.ntexup.api.document.NTxSizeRequirements;
 import net.thevpc.ntexup.api.eval.NTxValue;
@@ -113,7 +114,11 @@ public abstract class NTxNodeRendererBase implements NTxNodeRenderer {
                 NOptional<NTxProp> pendingProp = node.getProperty(NTxPropName.PENDING);
                 if (pendingProp.isPresent() && !pendingProp.get().getValue().isNull()) {
                     NElement pe = pendingProp.get().getValue();
-                    if ((pe.isBoolean() && pe.asBooleanValue().orElse(false)) || !pe.isBoolean()) {
+                    if (isWaitingOnBinding(pe)) {
+                        if (renderPendingBinding(rendererContext, pe)) {
+                            return;
+                        }
+                    } else if ((pe.isBoolean() && pe.asBooleanValue().orElse(false)) || !pe.isBoolean()) {
                         renderPending(rendererContext);
                         return;
                     }
@@ -274,6 +279,42 @@ public abstract class NTxNodeRendererBase implements NTxNodeRenderer {
         cg.setComposite(AlphaComposite.DstIn);
         cg.drawImage(mask, 0, 0, null);
         cg.dispose();
+    }
+
+    /**
+     * {@code pending: someResult} names the computation the node waits on, whereas
+     * a boolean, string or object value is a static placeholder.
+     */
+    private boolean isWaitingOnBinding(NElement pendingValue) {
+        return pendingValue.isName() && !pendingValue.isBoolean();
+    }
+
+    /**
+     * @return true when the node is still waiting and its content must not be painted
+     */
+    private boolean renderPendingBinding(NTxRendererContext rendererContext, NElement pendingValue) {
+        NElement value = rendererContext.evalExpression(pendingValue).orNull();
+        boolean unbound = value == null || value.isNull() || value.equals(pendingValue);
+        if (!unbound && !NTxFutureUtils.isFuture(value)) {
+            return false;
+        }
+        if (!unbound && NTxFutureUtils.isReady(value)) {
+            return false;
+        }
+        if (!rendererContext.isAnimate()) {
+            if (!unbound) {
+                NTxFutureUtils.await(value);
+            }
+            return false;
+        }
+        NTxBounds2D bounds = rendererContext.selfBounds2D();
+        NTxGraphics g = rendererContext.graphics();
+        g.setColor(new Color(245, 247, 250, 200));
+        g.fillRect(bounds);
+        g.setColor(new Color(200, 210, 220));
+        g.drawRect(bounds);
+        rendererContext.drawPendingLabel("Computing " + pendingValue.asStringValue().orElse("") + "...");
+        return true;
     }
 
     public void renderPending(NTxRendererContext rendererContext) {

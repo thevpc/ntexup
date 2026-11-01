@@ -123,11 +123,18 @@ class NTxDrawContextRenderCompiler {
                                 // before the next pass.
                                 rendererContext.repaint();
                             };
-                            if (isYPending) {
-                                net.thevpc.ntexup.api.eval.NTxFutureUtils.addListener(yElem, repaintOnReady);
-                            }
-                            if (isXPending) {
-                                net.thevpc.ntexup.api.eval.NTxFutureUtils.addListener(xElem, repaintOnReady);
+                            // A pending plot re-renders on every animation frame (see
+                            // NTxJFreeChartHelper), so register per curve only once or
+                            // the listeners pile up for as long as the solver runs.
+                            String listenerKey = "plot2d-repaint-on-ready-" + drawContext.allData.size();
+                            if (!rendererContext.node().getUserObject(listenerKey).isPresent()) {
+                                rendererContext.node().setUserObject(listenerKey, Boolean.TRUE);
+                                if (isYPending) {
+                                    net.thevpc.ntexup.api.eval.NTxFutureUtils.addListener(yElem, repaintOnReady);
+                                }
+                                if (isXPending) {
+                                    net.thevpc.ntexup.api.eval.NTxFutureUtils.addListener(xElem, repaintOnReady);
+                                }
                             }
                             continue;
                         }

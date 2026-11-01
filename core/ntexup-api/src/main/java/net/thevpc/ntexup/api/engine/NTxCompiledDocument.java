@@ -50,6 +50,27 @@ public interface NTxCompiledDocument {
 
     boolean hasPendingFutures();
 
+    /**
+     * Same as {@link #registerFuture(Object)}, and also lists the future by name
+     * in {@link #pendingTasks()} until it completes. Registering a future again
+     * keeps its original name and start time.
+     *
+     * @param name   name to report the task under
+     * @param future the future to track
+     */
+    void registerTask(String name, Object future);
+
+    /**
+     * Document variable that hides the screen renderer's running-tasks badge when false.
+     */
+    String VAR_SHOW_RUNNING_TASKS = "documentShowRunningTasks";
+
+    /**
+     * @return the named tasks still running or queued, oldest first. Futures
+     * registered without a name count for {@link #hasPendingFutures()} only.
+     */
+    java.util.List<NTxPendingTask> pendingTasks();
+
     void awaitFutures();
 
     void awaitFutures(long timeout, java.util.concurrent.TimeUnit unit);

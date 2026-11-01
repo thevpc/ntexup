@@ -244,4 +244,7 @@ public class NTxPropName {
     public static final String ARGS = "args";
     public static final String LAYOUT = "layout";
     public static final String PENDING = "pending";
+    public static final String PENDING_TEXT = "pending-text";
+    public static final String PENDING_COLOR = "pending-color";
+    public static final String PENDING_BACKGROUND = "pending-background";
 }

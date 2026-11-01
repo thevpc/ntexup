@@ -118,7 +118,7 @@ The complete list of node properties observed in ntexup.
 | `via` | connector intermediate points, in percent of the parent area |
 | `route` | connector routing; only `straight` is implemented (others warn and fall back) |
 | `label` | line/polyline/connector label: string or `{text, position, offset, color, font-size, bold, italic, font-family}` |
-| `flow` | flow animation: `dots(count, size, period, reverse, color, static: hide)` |
+| `flow` | flow animation: `dots(count, size, period, speed, reverse, color, static: hide)` |
 
 ## Connector
 
@@ -150,6 +150,17 @@ Hidden endpoints suppress the connector silently; unresolved names log a warning
 | `@for` | loop |
 | `@if` | conditional |
 
+## Async Computation
+
+| Property | Description |
+|----------|-------------|
+| `pending` | `true` or a string/object: static placeholder instead of the node. A name, as in `pending: myResult`: shows an animated label until that computation finishes, then the node |
+| `pending-text` | text of the animated label, or `false` to hide it |
+| `pending-color` | text color of the animated label |
+| `pending-background` | background of the animated label |
+
+A plot waiting on a solver shows this label by itself. In `show`, a corner badge also lists what is still running, on every slide.
+
 ## Document/Theme Variables
 
 | Variable | Description |
@@ -159,3 +170,4 @@ Hidden endpoints suppress the connector silently; unresolved names log a warning
 | `documentSurface` | panel color |
 | `documentLine` | line color |
 | `documentTitle` / `documentSubtitle` / `documentAuthor` / `documentDate` / `documentVersion` | cover metadata |
+| `documentShowRunningTasks` | `false` hides the running-tasks badge in `show` |

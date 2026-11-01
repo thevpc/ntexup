@@ -86,20 +86,35 @@ line(from: (10, 60), to: (90, 60), end-arrow: simple(),
      flow: dots(count: 4, size: 3, period: 3))
 
 line(from: (10, 90), to: (90, 90), flow: dots(count: 2, reverse, color: red))
+
+// same rate on connectors of different length
+line(from: (10, 30), to: (40, 30), flow: dots(count: 3, speed: 20))
+line(from: (50, 30), to: (95, 30), flow: dots(count: 5, speed: 20))
 ```
 
 | Option | Meaning |
 |--------|---------|
 | `count` | number of dots (default `1`) |
-| `size` | dot radius in points (default `2`) |
+| `size` | dot head radius in device pixels; never smaller than twice the line width |
 | `period` | seconds for one dot to travel the full path (default `4`) |
+| `speed` | page units per second; overrides `period` so the crossing time grows with the path |
 | `reverse` | travel from end to start |
 | `color` | dot color (defaults to the line color) |
 | `static: hide` | omit the flow in static (PDF/image/print) output |
 
+`period` fixes how long a crossing takes, so a short connector shows its dots crawling and a
+long one shows them racing. `speed` instead fixes the rate — a dot at `speed: 20` crosses a
+28-unit connector in 1.4s and a 66-unit one in 3.3s — and is what to use when several
+connectors of different lengths must look like one flow.
+
+Each dot is drawn as a round head with a short trail tapering behind it, so the direction of
+travel is legible even on a still frame. The trail never reaches past the anchor the dot came
+from. Dots also fade in and out over the first and last 12% of the path rather than popping
+into existence on the node border or under the arrowhead.
+
 Flow uses the shared page animation clock, so all animated elements on a page are driven by
 one frame loop. Static output (PDF, PNG, print) renders the dots at evenly spaced phase-0
-positions.
+positions, offset by half a spacing so none of them sits on an anchor.
 
 ## Connector
 

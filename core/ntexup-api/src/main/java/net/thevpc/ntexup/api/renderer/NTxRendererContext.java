@@ -137,6 +137,19 @@ public interface NTxRendererContext extends NTxResolutionContext {
     }
 
     /**
+     * Draws the animated "still computing" label centered over this node and asks
+     * for the next frame. Call it once per render while the node waits on a
+     * background computation. The node's {@code pending-text} property overrides
+     * {@code defaultText}, or hides the label when false; {@code pending-color}
+     * and {@code pending-background} restyle it.
+     *
+     * @param defaultText text shown when the node sets no {@code pending-text}
+     */
+    default void drawPendingLabel(String defaultText) {
+        NTxPendingLabel.draw(this, defaultText);
+    }
+
+    /**
      * Registers a page-owned periodic animation tick for the current node; see
      * {@link NtxPageLifecycle#newTimer(Object, long, Runnable)}. The tick runs on
      * the UI thread every {@code periodMs} while the page is showing, and is
