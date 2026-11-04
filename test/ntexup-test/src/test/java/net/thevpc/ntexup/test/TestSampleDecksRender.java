@@ -10,9 +10,7 @@ import net.thevpc.nuts.io.NPath;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
-import java.security.MessageDigest;
-import java.util.ArrayList;
-import java.util.HexFormat;
+import java.awt.image.BufferedImage;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -48,7 +46,6 @@ public class TestSampleDecksRender {
             base = "test/ntexup-examples/src/ntexup/";
         }
 
-        MessageDigest md5 = MessageDigest.getInstance("SHA-256");
         for (String rel : deckRelatives) {
             NPath p = NPath.of(base).resolve(rel);
             if (!p.exists()) {
@@ -59,11 +56,22 @@ public class TestSampleDecksRender {
             List<NTxCompiledPage> pages = doc.pages();
             assertTrue(pages.size() > 0, "No pages in " + rel);
             for (int i = 0; i < pages.size(); i++) {
-                byte[] bytes = engine.renderImageBytes(pages.get(i),
+                BufferedImage img = engine.renderImage(pages.get(i),
                         new NTxNodeRendererConfig(1024, 768).withAnimate(false).withPrint(true));
-                assertNotNull(bytes);
-                assertTrue(bytes.length > 0);
+                assertNotNull(img);
+                GoldenImages.assertMatches(goldenName(rel, i), img);
             }
         }
+    }
+
+    static String goldenName(String deckRelative, int pageIndex) {
+        String safe = deckRelative.replace('\\', '/').replaceAll("[^a-zA-Z0-9]+", "-");
+        while (safe.startsWith("-")) {
+            safe = safe.substring(1);
+        }
+        while (safe.endsWith("-")) {
+            safe = safe.substring(0, safe.length() - 1);
+        }
+        return safe + "-p" + (pageIndex + 1);
     }
 }

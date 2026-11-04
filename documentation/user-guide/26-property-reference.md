@@ -117,7 +117,7 @@ The complete list of node properties observed in ntexup.
 | `points` | polyline points in absolute page units (`((x1,y1), (x2,y2), ...)`) |
 | `via` | connector intermediate points, in percent of the parent area |
 | `route` | connector routing; only `straight` is implemented (others warn and fall back) |
-| `label` | line/polyline/connector label: string or `{text, position, offset, color, font-size, bold, italic, font-family}` |
+| `label` | line/polyline/curve/connector label: string or `{text, position, offset, color, font-size, bold, italic, font-family}` |
 | `flow` | flow animation: `dots(count, size, period, speed, reverse, color, static: hide)` |
 
 ## Connector

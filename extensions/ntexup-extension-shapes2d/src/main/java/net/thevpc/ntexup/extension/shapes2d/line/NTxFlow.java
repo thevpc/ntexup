@@ -3,9 +3,11 @@ package net.thevpc.ntexup.extension.shapes2d.line;
 import net.thevpc.ntexup.api.eval.NTxValue;
 import net.thevpc.ntexup.api.renderer.NTxRendererContext;
 import net.thevpc.nuts.elem.NElement;
+import net.thevpc.nuts.elem.NObjectElementBuilder;
 import net.thevpc.nuts.elem.NPairElement;
 import net.thevpc.nuts.elem.NParamOrChild;
 
+import java.awt.Color;
 import java.awt.Paint;
 
 /**
@@ -82,5 +84,40 @@ public class NTxFlow {
             return null; // omit in static renders
         }
         return f;
+    }
+
+    /**
+     * Semantic dump of the parsed flow, recorded by the TSON renderer so a
+     * validated deck shows the animation parameters, not only the painted dots.
+     */
+    public NElement toDumpElement() {
+        NObjectElementBuilder ob = NElement.ofObjectBuilder("flow");
+        ob.add("count", NElement.of(count));
+        ob.add("period", NElement.of(period));
+        ob.add("reverse", NElement.of(reverse));
+        ob.add("shape", NElement.of(shape == null ? "circle" : shape));
+        if (size > 0) {
+            ob.add("size", NElement.of(size));
+        }
+        if (speed > 0) {
+            ob.add("speed", NElement.of(speed));
+        }
+        if (color != null) {
+            ob.add("color", NElement.of(colorString(color)));
+        }
+        if (staticHide) {
+            ob.add("staticHide", NElement.of(true));
+        }
+        return ob.build();
+    }
+
+    private static String colorString(Paint paint) {
+        if (paint instanceof Color c) {
+            if (c.getAlpha() == 255) {
+                return String.format("#%02x%02x%02x", c.getRed(), c.getGreen(), c.getBlue());
+            }
+            return String.format("#%02x%02x%02x%02x", c.getRed(), c.getGreen(), c.getBlue(), c.getAlpha());
+        }
+        return String.valueOf(paint);
     }
 }

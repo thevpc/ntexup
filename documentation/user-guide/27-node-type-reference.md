@@ -62,8 +62,8 @@ Complete catalog of element (node) types recognized by ntexup, organized by cate
 | `polyline` | connected segments (`points`) with arrowheads, label, flow |
 | `connector` | line between named nodes, clipped to their outlines (`from`, `to`, `via`) |
 | `arc` | arc between angles (`from`, `to` degrees) |
-| `quad-curve` | quadratic Bezier (`ctrl`) |
-| `cubic-curve` | cubic Bezier (`ctrl1`, `ctrl2`) |
+| `quad-curve` | quadratic Bezier (`ctrl`) with arrowheads, label, flow |
+| `cubic-curve` | cubic Bezier (`ctrl1`, `ctrl2`) with arrowheads, label, flow |
 | `arrow` | arrow shape |
 
 ## Text

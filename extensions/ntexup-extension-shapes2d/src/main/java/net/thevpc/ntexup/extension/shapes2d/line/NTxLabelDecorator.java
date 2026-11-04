@@ -35,9 +35,9 @@ public class NTxLabelDecorator {
         labelElem = rendererContext.evalExpression(labelElem).orElse(labelElem);
         String text = null;
         double position = 50.0;
+        boolean positionSpecified = false;
         Double offsetPerp = null;
         NTxSize offsetPerpSize = null;
-        NTxPoint2D offset2d = null;
         NTxSize fontSize = null;
         Paint fg = null;
         Boolean bold = null;
@@ -69,6 +69,7 @@ public class NTxLabelDecorator {
                         case "position":
                         case "pos":
                             position = pval.asDoubleValue().orElse(50.0);
+                            positionSpecified = true;
                             break;
                         case "offset": {
                             if (pval.isNumber()) {
@@ -90,6 +91,7 @@ public class NTxLabelDecorator {
                                     NElement e1 = items.get(1).element();
                                     if (e0.isNumber()) {
                                         position = e0.asDoubleValue().orElse(50.0);
+                                        positionSpecified = true;
                                     }
                                     try {
                                         offsetPerpSize = NTxSize.ofElement(e1);
@@ -130,15 +132,15 @@ public class NTxLabelDecorator {
             }
         }
 
-        // fix: resolve line-label-position before computing anchor; keep the
-        // old precedence so an explicit label position wins
-        if (position == 50.0 && rendererContext != null) {
+        // resolve inherited line-label-position only when the label did not
+        // specify one explicitly (an explicit position always wins)
+        if (!positionSpecified && rendererContext != null) {
             NElement pe = rendererContext.computePropertyValue("line-label-position", "label-position", "label-pos").orNull();
             if (pe != null && pe.isNumber()) {
                 position = pe.asDoubleValue().orElse(position);
             }
         }
-        if (offsetPerpSize == null && offset2d == null && offsetPerp == null && rendererContext != null) {
+        if (offsetPerpSize == null && offsetPerp == null && rendererContext != null) {
             NElement oe = rendererContext.computePropertyValue("line-label-offset", "label-offset").orNull();
             if (oe != null && oe.isNumber()) {
                 try {
@@ -243,10 +245,7 @@ public class NTxLabelDecorator {
             dPerp = offsetPerp;
         }
 
-        if (offset2d != null) {
-            lx += offset2d.x;
-            ly += offset2d.y;
-        } else if (hasOffsetPerp) {
+        if (hasOffsetPerp) {
             lx += nrm.x * dPerp;
             ly += nrm.y * dPerp;
         } else {

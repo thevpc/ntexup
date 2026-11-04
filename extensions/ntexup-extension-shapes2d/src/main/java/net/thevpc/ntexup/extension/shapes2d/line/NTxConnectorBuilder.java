@@ -3,6 +3,8 @@ package net.thevpc.ntexup.extension.shapes2d.line;
 import net.thevpc.ntexup.api.document.NTxArrow;
 import net.thevpc.ntexup.api.document.elem2d.NTxBounds2D;
 import net.thevpc.ntexup.api.document.elem2d.NTxPoint2D;
+import net.thevpc.ntexup.api.document.elem2d.NtxElement2DPrimitive;
+import net.thevpc.ntexup.api.document.elem2d.primitives.NtxElement2DLine;
 import net.thevpc.ntexup.api.document.elem2d.primitives.NtxElement2DPolyline;
 import net.thevpc.ntexup.api.document.node.NTxNode;
 import net.thevpc.ntexup.api.document.node.NTxNodeType;
@@ -18,7 +20,9 @@ import net.thevpc.ntexup.api.renderer.NTxPlaced;
 import net.thevpc.ntexup.api.renderer.NTxRenderSession;
 import net.thevpc.ntexup.api.renderer.NTxRendererContext;
 import net.thevpc.ntexup.lib.geometry2d.NTxElement2DFactory;
+import net.thevpc.nuts.elem.NArrayElementBuilder;
 import net.thevpc.nuts.elem.NElement;
+import net.thevpc.nuts.elem.NObjectElementBuilder;
 import net.thevpc.nuts.elem.NParamOrChild;
 import net.thevpc.nuts.text.NMsg;
 import net.thevpc.nuts.util.NOptional;
@@ -98,11 +102,19 @@ public class NTxConnectorBuilder implements NTxNodeBuilder {
 
         NTxGraphics g = ctx.graphics();
         Paint linePaint = ctx.getLineColor(true);
-        NtxElement2DPolyline polyline = (NtxElement2DPolyline) NTxElement2DFactory.polyline(pts.toArray(new NTxPoint2D[0]))
+        NtxElement2DPrimitive primitive;
+        if (pts.size() > 2) {
+            NtxElement2DPolyline polyline = (NtxElement2DPolyline) NTxElement2DFactory.polyline(pts.toArray(new NTxPoint2D[0]));
+            applyArrows(ctx, polyline);
+            primitive = polyline;
+        } else {
+            NtxElement2DLine line = (NtxElement2DLine) NTxElement2DFactory.line(pts.get(0), pts.get(1));
+            applyArrows(ctx, line);
+            primitive = line;
+        }
+        g.draw2D(primitive
                 .setLineStroke(g.createStroke(ctx.getStroke()))
-                .setLinePaint(linePaint);
-        applyArrows(ctx, polyline);
-        g.draw2D(polyline);
+                .setLinePaint(linePaint));
 
         NTxRoutedPath path = new NTxPolylineRoutedPath(pts);
         NTxLabelDecorator.draw(ctx, g, path);
@@ -110,6 +122,7 @@ public class NTxConnectorBuilder implements NTxNodeBuilder {
         if (flow != null) {
             NTxFlowDecorator.draw(ctx, g, path, flow);
         }
+        dumpConnector(ctx, from, to, fromAnchor, toAnchor, pts, flow);
 
         if (NTxValueByName.isDebug(ctx)) {
             double minX = Double.MAX_VALUE;
@@ -229,6 +242,18 @@ public class NTxConnectorBuilder implements NTxNodeBuilder {
     }
 
     private void applyArrows(NTxRendererContext ctx, NtxElement2DPolyline polyline) {
+        NTxArrow[] arrows = resolveArrows(ctx);
+        polyline.setStartArrow(arrows[0]);
+        polyline.setEndArrow(arrows[1]);
+    }
+
+    private void applyArrows(NTxRendererContext ctx, NtxElement2DLine line) {
+        NTxArrow[] arrows = resolveArrows(ctx);
+        line.setStartArrow(arrows[0]);
+        line.setEndArrow(arrows[1]);
+    }
+
+    private NTxArrow[] resolveArrows(NTxRendererContext ctx) {
         NTxArrow arrow = NTxValueByType.getArrow(ctx, "arrow").orNull();
         NTxArrow start = NTxValueByType.getArrow(ctx, NTxPropName.START_ARROW).orNull();
         NTxArrow end = NTxValueByType.getArrow(ctx, NTxPropName.END_ARROW).orNull();
@@ -240,8 +265,71 @@ public class NTxConnectorBuilder implements NTxNodeBuilder {
                 end = arrow;
             }
         }
-        polyline.setStartArrow(start);
-        polyline.setEndArrow(end);
+        return new NTxArrow[]{start, end};
+    }
+
+    /**
+     * Records the resolved connector route next to the painted primitive. The
+     * geometry registry already lists the endpoints; this payload keeps the
+     * relationship (which nodes/ports, which waypoints) explicit.
+     */
+    private void dumpConnector(NTxRendererContext ctx, Endpoint from, Endpoint to,
+                               NTxPoint2D fromAnchor, NTxPoint2D toAnchor,
+                               List<NTxPoint2D> pts, NTxFlow flow) {
+        ctx.renderDump().ifPresent(d -> {
+            NObjectElementBuilder ob = NElement.ofObjectBuilder("connector");
+            ob.add("from", endpointElement(from, fromAnchor));
+            ob.add("to", endpointElement(to, toAnchor));
+            ob.add("route", NElement.of(pts.size() > 2 ? "polyline" : "straight"));
+            NArrayElementBuilder via = NElement.ofArrayBuilder();
+            int viaCount = 0;
+            for (int i = 1; i < pts.size() - 1; i++) {
+                via.add(pointElement(pts.get(i)));
+                viaCount++;
+            }
+            if (viaCount > 0) {
+                ob.add("via", via.build());
+            }
+            NArrayElementBuilder points = NElement.ofArrayBuilder();
+            for (NTxPoint2D p : pts) {
+                points.add(pointElement(p));
+            }
+            ob.add("points", points.build());
+            if (flow != null) {
+                ob.add("flow", flow.toDumpElement());
+            }
+            d.dump(ctx, "connector", ob.build());
+        });
+    }
+
+    private NElement endpointElement(Endpoint e, NTxPoint2D anchor) {
+        NObjectElementBuilder ob = NElement.ofObjectBuilder("endpoint");
+        if (e.ref != null) {
+            ob.add("ref", NElement.of(e.ref));
+        }
+        if (e.side != null) {
+            ob.add("side", NElement.of(e.side));
+        }
+        if (e.placed != null) {
+            ob.add("type", NElement.of(e.placed.node.type()));
+            if (e.placed.name != null) {
+                ob.add("name", NElement.of(e.placed.name));
+            }
+        }
+        if (anchor != null) {
+            ob.add("point", pointElement(anchor));
+        }
+        if (e.hidden) {
+            ob.add("hidden", NElement.of(true));
+        }
+        return ob.build();
+    }
+
+    private NElement pointElement(NTxPoint2D p) {
+        return NElement.ofArrayBuilder()
+                .add(NElement.of(p.x))
+                .add(NElement.of(p.y))
+                .build();
     }
 
     private void warnUnsupportedRoute(NTxRendererContext ctx, NTxNode node) {

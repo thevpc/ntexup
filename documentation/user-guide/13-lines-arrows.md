@@ -51,10 +51,10 @@ Points may also be written one per argument:
 polyline((20, 80), (80, 40), (140, 90), end-arrow: simple())
 ```
 
-## Line and polyline labels
+## Line, polyline, curve and connector labels
 
-`line`, `polyline`, and `connector` accept a `label` (or `text`) property. The value can be
-a plain string or a tuple with label options:
+`line`, `polyline`, `quad-curve`, `cubic-curve`, and `connector` accept a `label` (or `text`)
+property. The value can be a plain string or a tuple with label options:
 
 ```tson
 line(from: (10, 10), to: (90, 10), label: "distance")
@@ -78,8 +78,8 @@ The document-level properties `line-label-position`, `line-label-offset`,
 
 ## Flow animation
 
-`flow` animates dots travelling along a line, polyline, or connector. A bare `flow` flag
-draws a single dot; use `dots(...)` to configure it:
+`flow` animates dots travelling along a line, polyline, curve, or connector. A bare `flow`
+flag draws a single dot; use `dots(...)` to configure it:
 
 ```tson
 line(from: (10, 60), to: (90, 60), end-arrow: simple(),
@@ -147,8 +147,9 @@ connector(from: "api", to: (75, 75), end-arrow: simple())
 connector("api", "db", via: ((50, 30), (50, 70)), end-arrow: simple())
 ```
 
-`via` adds intermediate points and draws a polyline; `label`, `flow`, `start-arrow`,
-`end-arrow`, `arrow`, `stroke`, `dash`, and the usual line/color properties apply.
+`via` adds intermediate points and draws a polyline; without `via` the connector draws a
+straight line. `label`, `flow`, `start-arrow`, `end-arrow`, `arrow`, `stroke`, `dash`, and
+the usual line/color properties apply to both forms.
 
 ### Name scoping
 
@@ -193,13 +194,20 @@ Note: the arc element uses `from`/`to` for the **angles** (start/end degrees).
 
 ```tson
 quad-curve(from: (10, 10), ctrl: (60, 30), to: (80, 90), color: red, stroke: 3)
+quad-curve(from: (10, 10), ctrl: (60, 30), to: (80, 90),
+           end-arrow: simple(), label: "quad", flow: dots(count: 2))
 ```
+
+Like lines and polylines, curves accept `label` and `flow`; the label anchor and flow
+particles follow the curve rather than its chord.
 
 ## Cubic Curve
 
 ```tson
 cubic-curve(from: (10, 10), ctrl1: (60, 30), ctrl2: (30, 60),
             to: (80, 90), color: red, stroke: 3)
+cubic-curve(from: (10, 10), ctrl1: (60, 30), ctrl2: (30, 60),
+            to: (80, 90), end-arrow: simple(), label: "cubic")
 ```
 
 ## Arrow

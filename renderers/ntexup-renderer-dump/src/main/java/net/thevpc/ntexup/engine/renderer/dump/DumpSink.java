@@ -6,6 +6,8 @@ import net.thevpc.nuts.util.NBlankable;
 import net.thevpc.ntexup.api.document.elem2d.NTxBounds2D;
 import net.thevpc.ntexup.api.renderer.NTxGraphics;
 import net.thevpc.ntexup.api.renderer.NTxRenderDump;
+import net.thevpc.ntexup.api.renderer.NTxRenderSession;
+import net.thevpc.ntexup.api.renderer.NTxRenderSessionListener;
 import net.thevpc.ntexup.api.renderer.NTxRendererContext;
 
 import java.util.Collections;
@@ -25,10 +27,11 @@ import java.util.WeakHashMap;
  * is not recognized (detached rendering, dry pass, foreign graphics) the
  * operation falls back to the page root group.
  */
-public class DumpSink implements NTxRenderDump {
+public class DumpSink implements NTxRenderDump, NTxRenderSessionListener {
 
     private final Map<Object, DumpRecorder> scopes = Collections.synchronizedMap(new WeakHashMap<>());
     private volatile DumpRecorder pageRoot;
+    private volatile NTxRenderSession session;
 
     public void bind(Object graphics, DumpRecorder recorder) {
         if (graphics != null && recorder != null) {
@@ -38,6 +41,26 @@ public class DumpSink implements NTxRenderDump {
 
     public void setPageRoot(DumpRecorder recorder) {
         this.pageRoot = recorder;
+    }
+
+    /**
+     * Clears the session captured for the previous page.
+     */
+    public void resetSession() {
+        this.session = null;
+    }
+
+    /**
+     * Completed session of the page just rendered, or {@code null} when no page
+     * has completed yet.
+     */
+    public NTxRenderSession session() {
+        return session;
+    }
+
+    @Override
+    public void onRenderSession(NTxRenderSession session) {
+        this.session = session;
     }
 
     @Override

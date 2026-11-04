@@ -26,7 +26,7 @@ public class NTxCubicCurveBuilder implements NTxNodeBuilder {
     public void build(NTxNodeBuilderContext builderContext) {
         builderContext
                 .id(NTxNodeType.CUBIC_CURVE)
-                .parseParam().matchesNamedPair(NTxPropName.FROM, NTxPropName.TO, NTxPropName.START_ARROW, NTxPropName.END_ARROW, NTxPropName.CTRL1, NTxPropName.CTRL2).then()
+                .parseParam().matchesNamedPair(NTxPropName.FROM, NTxPropName.TO, NTxPropName.START_ARROW, NTxPropName.END_ARROW, NTxPropName.CTRL1, NTxPropName.CTRL2, "label", "flow").then()
                 .renderComponent(this::renderMain)
         ;
     }
@@ -58,12 +58,18 @@ public class NTxCubicCurveBuilder implements NTxNodeBuilder {
                     .setLineStroke(g.createStroke(rendererContext.getStroke()))
                     .setLinePaint(fc)
             );
+
+            NTxRoutedPath path = NTxBezierRoutedPath.cubic(from, ctrl1, ctrl2, to);
+            NTxLabelDecorator.draw(rendererContext, g, path);
+            NTxFlow flow = NTxFlow.parse(node.getPropertyValue("flow").orNull(), rendererContext);
+            if (flow != null) {
+                NTxFlowDecorator.draw(rendererContext, g, path, flow);
+                var dumpSink = rendererContext.renderDump().orNull();
+                if (dumpSink != null) {
+                    dumpSink.dump(rendererContext, "flow", flow.toDumpElement());
+                }
+            }
         }
-        double minx = Math.min(from.getX(), to.getX());
-        double miny = Math.min(from.getY(), to.getY());
-        double maxX = Math.max(from.getX(), to.getX());
-        double maxY = Math.max(from.getY(), to.getY());
-        NTxBounds2D b2 = NTxBounds2D.of(minx, maxX, miny, maxY);
         rendererContext.drawContour();
     }
 

@@ -116,14 +116,13 @@ public class NTxLineBuilder implements NTxNodeBuilder {
             NTxFlow _flow = NTxFlow.parse(node.getPropertyValue("flow").orNull(), rendererContext);
             if (_flow != null) {
                 NTxFlowDecorator.draw(rendererContext, g, _path, _flow);
+                var dumpSink = rendererContext.renderDump().orNull();
+                if (dumpSink != null) {
+                    dumpSink.dump(rendererContext, "flow", _flow.toDumpElement());
+                }
             }
         }
 
-        double minx = Math.min(from.getX(), to.getX());
-        double miny = Math.min(from.getY(), to.getY());
-        double maxX = Math.max(from.getX(), to.getX());
-        double maxY = Math.max(from.getY(), to.getY());
-        NTxBounds2D b2 = NTxBounds2D.of(minx, maxX, miny, maxY);
         rendererContext.drawContour();
     }
 }

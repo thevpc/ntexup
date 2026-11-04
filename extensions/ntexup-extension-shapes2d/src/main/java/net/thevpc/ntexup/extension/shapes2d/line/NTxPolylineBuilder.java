@@ -135,6 +135,10 @@ public class NTxPolylineBuilder implements NTxNodeBuilder {
             NTxFlow _flow = NTxFlow.parse(node.getPropertyValue("flow").orNull(), rendererContext);
             if (_flow != null) {
                 NTxFlowDecorator.draw(rendererContext, g, _path, _flow);
+                var dumpSink = rendererContext.renderDump().orNull();
+                if (dumpSink != null) {
+                    dumpSink.dump(rendererContext, "flow", _flow.toDumpElement());
+                }
             }
         }
         rendererContext.drawContour();

@@ -1462,6 +1462,12 @@ public class DefaultNTxEngine implements NTxEngine {
         }
         renderer.render(context);
         session.drainDeferred();
+        if (capabilities != null) {
+            Object listener = capabilities.get(NTxRenderSessionListener.CAPABILITY);
+            if (listener instanceof NTxRenderSessionListener) {
+                ((NTxRenderSessionListener) listener).onRenderSession(session);
+            }
+        }
     }
 
     private void applyRenderingHints(Graphics2D g) {

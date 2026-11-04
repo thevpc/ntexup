@@ -21,7 +21,10 @@ import net.thevpc.ntexup.api.renderer.NTxDocumentStreamRendererConfig;
 import net.thevpc.ntexup.api.renderer.NTxDocumentView;
 import net.thevpc.ntexup.api.renderer.NTxNodeRendererConfig;
 import net.thevpc.ntexup.api.renderer.NTxPageOrientation;
+import net.thevpc.ntexup.api.renderer.NTxPlaced;
 import net.thevpc.ntexup.api.renderer.NTxRenderDump;
+import net.thevpc.ntexup.api.renderer.NTxRenderSession;
+import net.thevpc.ntexup.api.renderer.NTxRenderSessionListener;
 
 import javax.imageio.ImageIO;
 import java.awt.Graphics2D;
@@ -122,6 +125,8 @@ public class DumpDocumentRenderer extends NTxDocumentStreamRendererBase implemen
             //offer the dump sink to node renderers (ctx.renderDump()) so extensions
             //can attach semantic payloads (chart models, diagrams...) to the tree
             renderConfig.setCapability(NTxRenderDump.CAPABILITY, sink);
+            //and let it observe the final per-page geometry registry
+            renderConfig.setCapability(NTxRenderSessionListener.CAPABILITY, sink);
         }
         Set<Integer> wanted = new HashSet<>();
         int maxIndex = 0;
@@ -161,6 +166,7 @@ public class DumpDocumentRenderer extends NTxDocumentStreamRendererBase implemen
         Graphics2D base = img.createGraphics();
         DumpRecorder recorder = new DumpRecorder();
         if (sink != null) {
+            sink.resetSession();
             sink.setPageRoot(recorder);
         }
         paintOnce(page, renderConfig, base, recorder, pixelWidth, pixelHeight, level, sink);
@@ -171,6 +177,7 @@ public class DumpDocumentRenderer extends NTxDocumentStreamRendererBase implemen
             page.compiledPage().invalidateRenderCache();
             recorder = new DumpRecorder();
             if (sink != null) {
+                sink.resetSession();
                 sink.setPageRoot(recorder);
             }
             paintOnce(page, renderConfig, base, recorder, pixelWidth, pixelHeight, level, sink);
@@ -183,8 +190,46 @@ public class DumpDocumentRenderer extends NTxDocumentStreamRendererBase implemen
         if (withImage) {
             ob.add("image", DumpFormat.op("png").add("sha256", NElement.of(sha256Of(img))).build());
         }
+        if (sink != null) {
+            NTxRenderSession session = sink.session();
+            if (session != null) {
+                ob.add("layout", layoutElement(session));
+            }
+        }
         ob.add("ops", recorder.opsElement());
         return ob.build();
+    }
+
+    /**
+     * Serializes the final geometry registry of a page: every named node that
+     * was placed, with its bounds in the page frame and its anchor transform.
+     */
+    private NElement layoutElement(NTxRenderSession session) {
+        NArrayElementBuilder nodes = NElement.ofArrayBuilder();
+        for (NTxPlaced placed : session.geometry().placed()) {
+            NObjectElementBuilder ob = DumpFormat.op("placed");
+            ob.add("name", NElement.of(placed.name == null ? "" : placed.name));
+            ob.add("type", NElement.of(placed.node.type() == null ? "" : placed.node.type()));
+            ob.add("bounds", DumpFormat.rectArray(
+                    placed.bounds.minX(),
+                    placed.bounds.minY(),
+                    placed.bounds.widthX(),
+                    placed.bounds.widthY()));
+            if (placed.toRoot != null && !placed.toRoot.isIdentity()) {
+                ob.add("transform", DumpFormat.matrix(placed.toRoot));
+            }
+            if (placed.hidden) {
+                ob.add("hidden", NElement.of(true));
+            }
+            if (placed.container) {
+                ob.add("container", NElement.of(true));
+            }
+            if (placed.obstacle) {
+                ob.add("obstacle", NElement.of(true));
+            }
+            nodes.add(ob.build());
+        }
+        return nodes.build();
     }
 
     private void paintOnce(NTxCompiledPage page, NTxNodeRendererConfig renderConfig, Graphics2D base,

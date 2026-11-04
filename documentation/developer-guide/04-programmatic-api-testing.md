@@ -123,9 +123,41 @@ Comparing:
 - cheap: `MessageDigest.getInstance("SHA-256")` over the PNG bytes;
 - robust: decode with `ImageIO` and compute normalized Mean-Absolute-Error; threshold ~0 avoids CI flakes from font antialiasing.
 
-To regenerate goldens after an intentional change, flip a system property (`-Dgolden.regenerate=true`).
+The repository now ships this harness in
+`test/ntexup-test/src/test/java/net/thevpc/ntexup/test/GoldenImages.java`. It compares every
+rendered page against `src/test/resources/golden/<deck>-p<page>.png` with a small channel
+tolerance (anti-aliasing) and a 0.5% differing-pixel budget. A mismatch writes the actual
+image to `target/golden-actual/` for inspection.
+
+To regenerate goldens after an intentional change, run:
+
+```bash
+mvn -pl test/ntexup-test -am test -Dntexup.golden.update=true
+```
+
+then commit the updated PNGs. A missing baseline without the update flag is a test failure,
+so new decks must be added deliberately rather than silently accepted.
 
 > Caveat: PDF output itself embeds rasterized pages, so the golden target should be **the rendered page image**, not the PDF bytes (PDF byte layout may vary with OpenPDF/date/footer settings).
+
+### 2.2.1 Inspecting the geometry registry with the dump renderer
+
+The TSON dump renderer exposes the final per-page geometry registry under
+`pages[].layout`. Each entry has the placed node's `name`, `type`, `bounds`
+(page frame), optional rotation `transform`, and the `hidden` / `container` /
+`obstacle` flags. Connectors additionally emit a `dump{kind:"connector"}` payload with
+their resolved endpoints, route kind, waypoints and final points; flow decorations emit
+`dump{kind:"flow"}` with `count`, `period`, `speed`, `reverse` and `shape`.
+
+```java
+NElement dump = new DumpDocumentRenderer(engine,
+        new NTxDocumentStreamRendererConfig().setPageWidth(595).setPageHeight(842).setDpi(72))
+        .renderDump(doc);
+```
+
+This is what `TestConnectorDeck.testConnectorDeckDumpExposesLayoutAndRoute` asserts, and it
+is the fastest way to check that a reference was resolved to the node you meant when names
+are duplicated across sibling groups.
 
 ### 2.3 Strategy C — CLI-driven checks (no Java test harness at all)
 

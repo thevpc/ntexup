@@ -515,6 +515,12 @@ public class RecordingNTxGraphics implements NTxGraphics {
                         b.ob.add("from", point(q.getFrom()));
                         b.ob.add("ctrl", point(q.getCtrl()));
                         b.ob.add("to", point(q.getTo()));
+                        if (q.getStartArrow() != null) {
+                            b.ob.add("startArrow", DumpFormat.arrow(q.getStartArrow()));
+                        }
+                        if (q.getEndArrow() != null) {
+                            b.ob.add("endArrow", DumpFormat.arrow(q.getEndArrow()));
+                        }
                     }
                     break;
                 }
@@ -524,12 +530,24 @@ public class RecordingNTxGraphics implements NTxGraphics {
                         b.ob.add("ctrl1", point(c.getCtrl1()));
                         b.ob.add("ctrl2", point(c.getCtrl2()));
                         b.ob.add("to", point(c.getTo()));
+                        if (c.getStartArrow() != null) {
+                            b.ob.add("startArrow", DumpFormat.arrow(c.getStartArrow()));
+                        }
+                        if (c.getEndArrow() != null) {
+                            b.ob.add("endArrow", DumpFormat.arrow(c.getEndArrow()));
+                        }
                     }
                     break;
                 }
                 case POLYLINE: {
                     if (e instanceof NtxElement2DPolyline pl) {
                         b.ob.add("nodes", points(pl.getNodes()));
+                        if (pl.getStartArrow() != null) {
+                            b.ob.add("startArrow", DumpFormat.arrow(pl.getStartArrow()));
+                        }
+                        if (pl.getEndArrow() != null) {
+                            b.ob.add("endArrow", DumpFormat.arrow(pl.getEndArrow()));
+                        }
                     }
                     break;
                 }
