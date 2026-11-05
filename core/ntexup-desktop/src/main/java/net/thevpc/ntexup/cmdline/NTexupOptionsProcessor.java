@@ -12,6 +12,7 @@ import net.thevpc.ntexup.cmdline.options.*;
 import net.thevpc.ntexup.engine.eval.NTxGitHelper;
 import net.thevpc.ntexup.engine.repo.RepoBuilderTool;
 import net.thevpc.ntexup.engine.renderer.dump.DumpDocumentRenderer;
+import net.thevpc.ntexup.engine.renderer.htmlstatic.HtmlStaticDocumentRenderer;
 import net.thevpc.ntexup.engine.renderer.image.ImageDocumentRenderer;
 import net.thevpc.ntexup.main.MainFrame;
 import net.thevpc.nuts.artifact.NId;
@@ -213,6 +214,8 @@ public class NTexupOptionsProcessor {
         }
         GenerateActionOptions ga = info.options.get(GenerateActionOptions.class);
         boolean image = ga != null && ga.outputFormat == OutputFormat.IMAGE;
+        boolean htmlStatic = ga != null && ga.outputFormat == OutputFormat.HTML_STATIC;
+        boolean ntxp = ga != null && ga.outputFormat == OutputFormat.NTXP;
         DumpDocumentOptions dumpOptions = info.options.get(DumpDocumentOptions.class);
         boolean dump = dumpOptions != null;
         NTxDocumentStreamRendererConfig renderConfig = createStreamRendererConfig(ga);
@@ -227,11 +230,30 @@ public class NTexupOptionsProcessor {
                     ? info.engine.newStreamRenderer("dump").get()
                     : image
                     ? info.engine.newImageRenderer().get()
+                    : htmlStatic
+                    ? info.engine.newStreamRenderer("html-static").get()
+                    : ntxp
+                    ? info.engine.newStreamRenderer("ntxp").get()
                     : info.engine.newPdfRenderer().get();
             renderer.setStreamRendererConfig(renderConfig);
             if (image) {
                 renderer.setProperty(ImageDocumentRenderer.PROP_PAGES, ga == null ? null : ga.pages);
                 renderer.setProperty(ImageDocumentRenderer.PROP_FORMAT, ga == null ? null : ga.imageFormat);
+            }
+            if (htmlStatic || ntxp) {
+                //an ntxp container holds an html-static bundle, so it takes the same knobs
+                if (ga.htmlWidth > 0) {
+                    renderer.setProperty(HtmlStaticDocumentRenderer.PROP_WIDTH, ga.htmlWidth);
+                }
+                if (ga.htmlNoAnimate) {
+                    renderer.setProperty(HtmlStaticDocumentRenderer.PROP_ANIMATE, Boolean.FALSE);
+                }
+                if (htmlStatic && ga.htmlStandalone) {
+                    renderer.setProperty(HtmlStaticDocumentRenderer.PROP_STANDALONE, Boolean.TRUE);
+                }
+                if (ga.htmlNoMinify) {
+                    renderer.setProperty(HtmlStaticDocumentRenderer.PROP_MINIFY, Boolean.FALSE);
+                }
             }
             if (dump) {
                 renderer.setProperty(DumpDocumentRenderer.PROP_PAGES, ga == null ? null : ga.pages);
@@ -244,7 +266,23 @@ public class NTexupOptionsProcessor {
                 }
             }
             NPath output;
-            if (paths.size() == 1) {
+            if (htmlStatic || ntxp) {
+                //a folder export is a directory (or a zip of one), a standalone export is
+                //one html file and a container is one ntxp file. Only what the user typed
+                //(-o dir/ , --output-dir, several documents) says 'container' : testing the
+                //target for isDirectory() would make a second identical run nest one level
+                //deeper than the first, because the first run created that directory
+                boolean intoFolder = ga.output == null
+                        || ga.outputDirectory
+                        || paths.size() > 1;
+                if (ntxp) {
+                    output = namedTarget(expecteOutput, intoFolder, documentBaseName(path), ".ntxp");
+                } else if (ga.htmlStandalone) {
+                    output = namedTarget(expecteOutput, intoFolder, documentBaseName(path), ".html", ".zip");
+                } else {
+                    output = intoFolder ? expecteOutput.resolve(documentBaseName(path)) : expecteOutput;
+                }
+            } else if (paths.size() == 1) {
                 if (expecteOutput.isDirectory() || (image && ga != null && ga.outputDirectory)) {
                     if (image) {
                         output = expecteOutput.mkdirs();
@@ -277,6 +315,38 @@ public class NTexupOptionsProcessor {
             info.engine.log().log(NMsg.ofC("generated : %s in %s", output.normalize().toAbsolute(), ch).asInfo().withDurationMillis(ch.durationMs()));
 
         }
+    }
+
+    /**
+     * A single-file target keeps the name the user typed when it already ends in
+     * one of the extensions this format may ship as, and otherwise takes the
+     * document's base name with its own extension : -o deck writes deck.html,
+     * -o deck.shrunk writes deck.shrunk.html, -o s.zip writes s.zip.
+     */
+    private static NPath namedTarget(NPath expectedOutput, boolean intoFolder, String baseName,
+                                     String extension, String... acceptedExtensions) {
+        if (intoFolder) {
+            return expectedOutput.resolve(baseName + extension);
+        }
+        String name = expectedOutput.name();
+        for (String accepted : acceptedExtensions) {
+            if (name.endsWith(accepted)) {
+                return expectedOutput;
+            }
+        }
+        return name.endsWith(extension)
+                ? expectedOutput
+                : expectedOutput.resolveSibling(NPathRenameOptions.ofExtension(extension.substring(1)));
+    }
+
+    /**
+     * A bundle folder is named after the document without its extension, the way
+     * a pdf is : main.ntx exports to main/ rather than main.ntx/.
+     */
+    private static String documentBaseName(NPath document) {
+        String name = document.name();
+        int dot = name.lastIndexOf('.');
+        return dot > 0 ? name.substring(0, dot) : name;
     }
 
     private NTxDocumentStreamRendererConfig createStreamRendererConfig(GenerateActionOptions ga) {

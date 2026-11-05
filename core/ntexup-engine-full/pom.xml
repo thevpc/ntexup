@@ -74,6 +74,8 @@
         <dependency><groupId>net.thevpc.ntexup</groupId><artifactId>ntexup-renderer-dump</artifactId><version>1.1.0.0</version></dependency>
         <dependency><groupId>net.thevpc.ntexup</groupId><artifactId>ntexup-renderer-screen</artifactId><version>1.1.0.0</version></dependency>
         <dependency><groupId>net.thevpc.ntexup</groupId><artifactId>ntexup-renderer-html</artifactId><version>1.1.0.0</version></dependency>
+        <dependency><groupId>net.thevpc.ntexup</groupId><artifactId>ntexup-renderer-html-static</artifactId><version>1.1.0.0</version></dependency>
+        <dependency><groupId>net.thevpc.ntexup</groupId><artifactId>ntexup-renderer-ntxp</artifactId><version>1.1.0.0</version></dependency>
     </dependencies>
     <build>
         <plugins>

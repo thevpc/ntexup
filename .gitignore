@@ -54,3 +54,6 @@ extensions/ntexup-extension-presenters/target
 /test/ntexup-test/target/
 /target/
 /renderers/ntexup-renderer-dump/target/
+/renderers/ntexup-renderer-html-static/target/
+/renderers/ntexup-renderer-ntxp/target/
+/lib/ntexup-lib-paintstream/target/

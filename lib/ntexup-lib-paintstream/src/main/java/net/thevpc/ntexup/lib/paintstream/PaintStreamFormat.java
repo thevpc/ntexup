@@ -1,4 +1,4 @@
-package net.thevpc.ntexup.engine.renderer.dump;
+package net.thevpc.ntexup.lib.paintstream;
 
 import net.thevpc.nuts.elem.NElement;
 import net.thevpc.nuts.elem.NArrayElementBuilder;
@@ -16,13 +16,14 @@ import java.awt.image.RenderedImage;
 import java.text.AttributedCharacterIterator;
 
 /**
- * Serialization helpers shared by {@link RecordingGraphics2D} and
- * {@link RecordingNTxGraphics}. Converts rendered java2d primitives (shapes,
+ * Serialization helpers shared by {@link RecordingGraphics2D} and the
+ * semantic-level recorders built on top of it. Converts rendered java2d
+ * primitives (shapes,
  * paints, strokes, fonts, transforms) into deterministic TSON fragments.
  */
-public class DumpFormat {
+public class PaintStreamFormat {
 
-    private DumpFormat() {
+    private PaintStreamFormat() {
     }
 
     public static NObjectElementBuilder op(String name) {
@@ -117,7 +118,10 @@ public class DumpFormat {
     public static String shapePath(Shape s) {
         StringBuilder sb = new StringBuilder();
         double[] coords = new double[6];
-        PathIterator it = s.getPathIterator(null, 0.0);
+        //no flatness argument on purpose: getPathIterator(null, 0.0) does not mean
+        //"exact", it means "flatten to the finest subdivision" and turns an ellipse
+        //into 4096 line segments where the raw iterator yields 4 cubic curves
+        PathIterator it = s.getPathIterator(null);
         while (!it.isDone()) {
             int type = it.currentSegment(coords);
             switch (type) {
@@ -411,9 +415,27 @@ public class DumpFormat {
                 boolean full = cb.getX() == 0 && cb.getY() == 0
                         && Math.abs(cb.getWidth() - canvasWidth) < 1 && Math.abs(cb.getHeight() - canvasHeight) < 1;
                 if (!full) {
-                    ob.add("clip", rectArray(cb.getX(), cb.getY(), cb.getWidth(), cb.getHeight()));
+                    if (clip instanceof Rectangle2D r) {
+                        ob.add("clip", rectArray(r.getX(), r.getY(), r.getWidth(), r.getHeight()));
+                    } else {
+                        //a non-rectangular clip survives only as its real path
+                        ob.add("clip", shape(clip));
+                    }
                 }
             }
+        }
+        //only deviations from the hints the engine installs for the whole page
+        Object aa = g.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
+        if (RenderingHints.VALUE_ANTIALIAS_OFF.equals(aa)) {
+            ob.add("aa", NElement.ofBoolean(false));
+        }
+        Object textAA = g.getRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING);
+        if (RenderingHints.VALUE_TEXT_ANTIALIAS_OFF.equals(textAA)) {
+            ob.add("textAA", NElement.ofBoolean(false));
+        }
+        Object interpolation = g.getRenderingHint(RenderingHints.KEY_INTERPOLATION);
+        if (RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR.equals(interpolation)) {
+            ob.add("smooth", NElement.ofBoolean(false));
         }
         Composite composite = g.getComposite();
         if (composite instanceof AlphaComposite ac && ac.getAlpha() < 1.0f) {

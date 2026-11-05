@@ -1,5 +1,8 @@
 package net.thevpc.ntexup.engine.renderer.dump;
 
+import net.thevpc.ntexup.lib.paintstream.PaintStreamFormat;
+import net.thevpc.ntexup.lib.paintstream.PaintStreamRecorder;
+import net.thevpc.ntexup.lib.paintstream.PaintStreamSink;
 import net.thevpc.nuts.elem.NElement;
 import net.thevpc.nuts.elem.NObjectElementBuilder;
 import net.thevpc.nuts.io.NPath;
@@ -44,12 +47,12 @@ import java.text.AttributedCharacterIterator;
 public class RecordingNTxGraphics implements NTxGraphics {
 
     private final NTxGraphics delegate;
-    private final DumpRecorder recorder;
+    private final PaintStreamRecorder recorder;
     private final double canvasWidth;
     private final double canvasHeight;
-    private final DumpSink sink;
+    private final PaintStreamSink sink;
 
-    public RecordingNTxGraphics(NTxGraphics delegate, DumpRecorder recorder, double canvasWidth, double canvasHeight, DumpSink sink) {
+    public RecordingNTxGraphics(NTxGraphics delegate, PaintStreamRecorder recorder, double canvasWidth, double canvasHeight, PaintStreamSink sink) {
         this.delegate = delegate;
         this.recorder = recorder;
         this.canvasWidth = canvasWidth;
@@ -60,7 +63,7 @@ public class RecordingNTxGraphics implements NTxGraphics {
         }
     }
 
-    public DumpRecorder getRecorder() {
+    public PaintStreamRecorder getRecorder() {
         return recorder;
     }
 
@@ -69,23 +72,23 @@ public class RecordingNTxGraphics implements NTxGraphics {
     }
 
     private NObjectBuilder base(String op) {
-        NObjectBuilder b = new NObjectBuilder(DumpFormat.op(op));
-        DumpFormat.state(b.ob, raw(), canvasWidth, canvasHeight);
+        NObjectBuilder b = new NObjectBuilder(PaintStreamFormat.op(op));
+        PaintStreamFormat.state(b.ob, raw(), canvasWidth, canvasHeight);
         return b;
     }
 
     private void delegateFill(String op, double x, double y, double w, double h) {
         NObjectBuilder b = base(op);
         b.xywh(x, y, w, h);
-        b.ob.add("paint", DumpFormat.paint(raw().getPaint()));
+        b.ob.add("paint", PaintStreamFormat.paint(raw().getPaint()));
         recorder.record(b.build());
     }
 
     private void delegateDraw(String op, double x, double y, double w, double h) {
         NObjectBuilder b = base(op);
         b.xywh(x, y, w, h);
-        b.ob.add("paint", DumpFormat.paint(raw().getPaint()));
-        b.ob.add("stroke", DumpFormat.stroke(getStroke()));
+        b.ob.add("paint", PaintStreamFormat.paint(raw().getPaint()));
+        b.ob.add("stroke", PaintStreamFormat.stroke(getStroke()));
         recorder.record(b.build());
     }
 
@@ -206,10 +209,10 @@ public class RecordingNTxGraphics implements NTxGraphics {
     @Override
     public void drawString(AttributedCharacterIterator iterator, double x, double y) {
         NObjectBuilder b = base("text");
-        b.ob.add("at", DumpFormat.pointArray(x, y));
-        b.ob.add("text", DumpFormat.attributedText(iterator));
-        b.ob.add("font", DumpFormat.font(getFont()));
-        b.ob.add("paint", DumpFormat.paint(raw().getPaint()));
+        b.ob.add("at", PaintStreamFormat.pointArray(x, y));
+        b.ob.add("text", PaintStreamFormat.attributedText(iterator));
+        b.ob.add("font", PaintStreamFormat.font(getFont()));
+        b.ob.add("paint", PaintStreamFormat.paint(raw().getPaint()));
         recorder.record(b.build());
         delegate.drawString(iterator, x, y);
     }
@@ -217,10 +220,10 @@ public class RecordingNTxGraphics implements NTxGraphics {
     @Override
     public void drawString(String str, double x, double y) {
         NObjectBuilder b = base("text");
-        b.ob.add("at", DumpFormat.pointArray(x, y));
-        DumpFormat.addIf(b.ob, "s", str);
-        b.ob.add("font", DumpFormat.font(getFont()));
-        b.ob.add("paint", DumpFormat.paint(raw().getPaint()));
+        b.ob.add("at", PaintStreamFormat.pointArray(x, y));
+        PaintStreamFormat.addIf(b.ob, "s", str);
+        b.ob.add("font", PaintStreamFormat.font(getFont()));
+        b.ob.add("paint", PaintStreamFormat.paint(raw().getPaint()));
         recorder.record(b.build());
         delegate.drawString(str, x, y);
     }
@@ -228,10 +231,10 @@ public class RecordingNTxGraphics implements NTxGraphics {
     @Override
     public void drawString(String str, double x, double y, NTxTextOptions options) {
         NObjectBuilder b = base("text");
-        b.ob.add("at", DumpFormat.pointArray(x, y));
-        DumpFormat.addIf(b.ob, "s", str);
-        b.ob.add("font", DumpFormat.font(getFont()));
-        b.ob.add("paint", DumpFormat.paint(raw().getPaint()));
+        b.ob.add("at", PaintStreamFormat.pointArray(x, y));
+        PaintStreamFormat.addIf(b.ob, "s", str);
+        b.ob.add("font", PaintStreamFormat.font(getFont()));
+        b.ob.add("paint", PaintStreamFormat.paint(raw().getPaint()));
         if (options != null) {
             NElement oe = textOptions(options);
             if (oe != null) {
@@ -243,7 +246,7 @@ public class RecordingNTxGraphics implements NTxGraphics {
     }
 
     private NElement textOptions(NTxTextOptions o) {
-        NObjectBuilder b = new NObjectBuilder(DumpFormat.op("options"));
+        NObjectBuilder b = new NObjectBuilder(PaintStreamFormat.op("options"));
         if (o.bold != null) {
             b.ob.add("bold", NElement.of(o.bold));
         }
@@ -260,13 +263,13 @@ public class RecordingNTxGraphics implements NTxGraphics {
             b.ob.add("fontFamily", NElement.of(o.fontFamily));
         }
         if (o.foregroundColor != null) {
-            b.ob.add("foreground", DumpFormat.paint(o.foregroundColor));
+            b.ob.add("foreground", PaintStreamFormat.paint(o.foregroundColor));
         }
         if (o.backgroundColor != null) {
-            b.ob.add("background", DumpFormat.paint(o.backgroundColor));
+            b.ob.add("background", PaintStreamFormat.paint(o.backgroundColor));
         }
         if (o.computedFont != null) {
-            b.ob.add("computedFont", DumpFormat.font(o.computedFont));
+            b.ob.add("computedFont", PaintStreamFormat.font(o.computedFont));
         }
         return b.build();
     }
@@ -274,8 +277,8 @@ public class RecordingNTxGraphics implements NTxGraphics {
     @Override
     public void debugString(String str, double x, double y) {
         NObjectBuilder b = base("debugText");
-        b.ob.add("at", DumpFormat.pointArray(x, y));
-        DumpFormat.addIf(b.ob, "s", str);
+        b.ob.add("at", PaintStreamFormat.pointArray(x, y));
+        PaintStreamFormat.addIf(b.ob, "s", str);
         recorder.record(b.build());
         delegate.debugString(str, x, y);
     }
@@ -287,10 +290,10 @@ public class RecordingNTxGraphics implements NTxGraphics {
             b.ob.add("origin", point(origin));
         }
         if (direction != null) {
-            b.ob.add("direction", DumpFormat.pointArray(direction.x, direction.y));
+            b.ob.add("direction", PaintStreamFormat.pointArray(direction.x, direction.y));
         }
         if (arrow != null) {
-            b.ob.add("arrow", DumpFormat.arrow(arrow));
+            b.ob.add("arrow", PaintStreamFormat.arrow(arrow));
         }
         recorder.record(b.build());
         delegate.drawArrayHead(origin, direction, arrow);
@@ -300,10 +303,10 @@ public class RecordingNTxGraphics implements NTxGraphics {
     public void drawArc(double x, double y, double w, double h, double startAngle, double endAngle) {
         NObjectBuilder b = base("drawArc");
         b.xywh(x, y, w, h);
-        DumpFormat.add(b.ob, "start", startAngle);
-        DumpFormat.add(b.ob, "end", endAngle);
-        b.ob.add("paint", DumpFormat.paint(raw().getPaint()));
-        b.ob.add("stroke", DumpFormat.stroke(getStroke()));
+        PaintStreamFormat.add(b.ob, "start", startAngle);
+        PaintStreamFormat.add(b.ob, "end", endAngle);
+        b.ob.add("paint", PaintStreamFormat.paint(raw().getPaint()));
+        b.ob.add("stroke", PaintStreamFormat.stroke(getStroke()));
         recorder.record(b.build());
         delegate.drawArc(x, y, w, h, startAngle, endAngle);
     }
@@ -311,12 +314,12 @@ public class RecordingNTxGraphics implements NTxGraphics {
     @Override
     public void drawLine(double x1, double y1, double x2, double y2) {
         NObjectBuilder b = base("drawLine");
-        DumpFormat.add(b.ob, "x1", x1);
-        DumpFormat.add(b.ob, "y1", y1);
-        DumpFormat.add(b.ob, "x2", x2);
-        DumpFormat.add(b.ob, "y2", y2);
-        b.ob.add("paint", DumpFormat.paint(raw().getPaint()));
-        b.ob.add("stroke", DumpFormat.stroke(getStroke()));
+        PaintStreamFormat.add(b.ob, "x1", x1);
+        PaintStreamFormat.add(b.ob, "y1", y1);
+        PaintStreamFormat.add(b.ob, "x2", x2);
+        PaintStreamFormat.add(b.ob, "y2", y2);
+        b.ob.add("paint", PaintStreamFormat.paint(raw().getPaint()));
+        b.ob.add("stroke", PaintStreamFormat.stroke(getStroke()));
         recorder.record(b.build());
         delegate.drawLine(x1, y1, x2, y2);
     }
@@ -324,8 +327,8 @@ public class RecordingNTxGraphics implements NTxGraphics {
     @Override
     public void fillPolygon(double[] xx, double[] yy, int length) {
         NObjectBuilder b = base("fillPolygon");
-        b.ob.add("points", NElement.of(DumpFormat.pointsString(xx, yy, length)));
-        b.ob.add("paint", DumpFormat.paint(raw().getPaint()));
+        b.ob.add("points", NElement.of(PaintStreamFormat.pointsString(xx, yy, length)));
+        b.ob.add("paint", PaintStreamFormat.paint(raw().getPaint()));
         recorder.record(b.build());
         delegate.fillPolygon(xx, yy, length);
     }
@@ -333,9 +336,9 @@ public class RecordingNTxGraphics implements NTxGraphics {
     @Override
     public void drawPolygon(double[] xx, double[] yy, int length) {
         NObjectBuilder b = base("drawPolygon");
-        b.ob.add("points", NElement.of(DumpFormat.pointsString(xx, yy, length)));
-        b.ob.add("paint", DumpFormat.paint(raw().getPaint()));
-        b.ob.add("stroke", DumpFormat.stroke(getStroke()));
+        b.ob.add("points", NElement.of(PaintStreamFormat.pointsString(xx, yy, length)));
+        b.ob.add("paint", PaintStreamFormat.paint(raw().getPaint()));
+        b.ob.add("stroke", PaintStreamFormat.stroke(getStroke()));
         recorder.record(b.build());
         delegate.drawPolygon(xx, yy, length);
     }
@@ -343,9 +346,9 @@ public class RecordingNTxGraphics implements NTxGraphics {
     @Override
     public void drawPolyline(double[] xx, double[] yy, int length) {
         NObjectBuilder b = base("drawPolyline");
-        b.ob.add("points", NElement.of(DumpFormat.pointsString(xx, yy, length)));
-        b.ob.add("paint", DumpFormat.paint(raw().getPaint()));
-        b.ob.add("stroke", DumpFormat.stroke(getStroke()));
+        b.ob.add("points", NElement.of(PaintStreamFormat.pointsString(xx, yy, length)));
+        b.ob.add("paint", PaintStreamFormat.paint(raw().getPaint()));
+        b.ob.add("stroke", PaintStreamFormat.stroke(getStroke()));
         recorder.record(b.build());
         delegate.drawPolyline(xx, yy, length);
     }
@@ -354,9 +357,9 @@ public class RecordingNTxGraphics implements NTxGraphics {
     public void fillRoundRect(double x, double y, double w, double h, double cx, double cy) {
         NObjectBuilder b = base("fillRoundRect");
         b.xywh(x, y, w, h);
-        DumpFormat.add(b.ob, "arcwidth", cx);
-        DumpFormat.add(b.ob, "archeight", cy);
-        b.ob.add("paint", DumpFormat.paint(raw().getPaint()));
+        PaintStreamFormat.add(b.ob, "arcwidth", cx);
+        PaintStreamFormat.add(b.ob, "archeight", cy);
+        b.ob.add("paint", PaintStreamFormat.paint(raw().getPaint()));
         recorder.record(b.build());
         delegate.fillRoundRect(x, y, w, h, cx, cy);
     }
@@ -365,10 +368,10 @@ public class RecordingNTxGraphics implements NTxGraphics {
     public void drawRoundRect(double x, double y, double w, double h, double cx, double cy) {
         NObjectBuilder b = base("drawRoundRect");
         b.xywh(x, y, w, h);
-        DumpFormat.add(b.ob, "arcwidth", cx);
-        DumpFormat.add(b.ob, "archeight", cy);
-        b.ob.add("paint", DumpFormat.paint(raw().getPaint()));
-        b.ob.add("stroke", DumpFormat.stroke(getStroke()));
+        PaintStreamFormat.add(b.ob, "arcwidth", cx);
+        PaintStreamFormat.add(b.ob, "archeight", cy);
+        b.ob.add("paint", PaintStreamFormat.paint(raw().getPaint()));
+        b.ob.add("stroke", PaintStreamFormat.stroke(getStroke()));
         recorder.record(b.build());
         delegate.drawRoundRect(x, y, w, h, cx, cy);
     }
@@ -378,7 +381,7 @@ public class RecordingNTxGraphics implements NTxGraphics {
         NObjectBuilder b = base("fill3DRect");
         b.xywh(x, y, w, h);
         b.ob.add("raised", NElement.of(raised));
-        b.ob.add("paint", DumpFormat.paint(raw().getPaint()));
+        b.ob.add("paint", PaintStreamFormat.paint(raw().getPaint()));
         recorder.record(b.build());
         delegate.fill3DRect(x, y, w, h, raised);
     }
@@ -388,7 +391,7 @@ public class RecordingNTxGraphics implements NTxGraphics {
         NObjectBuilder b = base("draw3DRect");
         b.xywh(x, y, w, h);
         b.ob.add("raised", NElement.of(raised));
-        b.ob.add("paint", DumpFormat.paint(raw().getPaint()));
+        b.ob.add("paint", PaintStreamFormat.paint(raw().getPaint()));
         recorder.record(b.build());
         delegate.draw3DRect(x, y, w, h, raised);
     }
@@ -396,8 +399,8 @@ public class RecordingNTxGraphics implements NTxGraphics {
     @Override
     public void drawImage(Image image, double x, double y, ImageObserver o) {
         NObjectBuilder b = base("image");
-        b.ob.add("at", DumpFormat.pointArray(x, y));
-        DumpFormat.addIf(b.ob, "size", DumpFormat.imageInfo(image));
+        b.ob.add("at", PaintStreamFormat.pointArray(x, y));
+        PaintStreamFormat.addIf(b.ob, "size", PaintStreamFormat.imageInfo(image));
         recorder.record(b.build());
         delegate.drawImage(image, x, y, o);
     }
@@ -406,7 +409,7 @@ public class RecordingNTxGraphics implements NTxGraphics {
     public void drawImage(NPath image, double x, double y, NTxImageOptions options) {
         NObjectBuilder b = base("image");
         b.ob.add("src", NElement.of(String.valueOf(image)));
-        b.ob.add("at", DumpFormat.pointArray(x, y));
+        b.ob.add("at", PaintStreamFormat.pointArray(x, y));
         if (options != null) {
             if (options.getSize() != null) {
                 b.ob.add("size", NElement.of(options.getSize().width + "x" + options.getSize().height));
@@ -418,7 +421,7 @@ public class RecordingNTxGraphics implements NTxGraphics {
                 b.ob.add("disableAnimation", NElement.of(true));
             }
             if (options.getTransparentColor() != null) {
-                b.ob.add("transparentColor", NElement.of(DumpFormat.color(options.getTransparentColor())));
+                b.ob.add("transparentColor", NElement.of(PaintStreamFormat.color(options.getTransparentColor())));
             }
         }
         recorder.record(b.build());
@@ -439,9 +442,9 @@ public class RecordingNTxGraphics implements NTxGraphics {
     public void fillSphere(double x, double y, double w, double h, double lightAngle, float radius) {
         NObjectBuilder b = base("fillSphere");
         b.xywh(x, y, w, h);
-        DumpFormat.add(b.ob, "lightAngle", lightAngle);
-        DumpFormat.add(b.ob, "radius", radius);
-        b.ob.add("paint", DumpFormat.paint(raw().getPaint()));
+        PaintStreamFormat.add(b.ob, "lightAngle", lightAngle);
+        PaintStreamFormat.add(b.ob, "radius", radius);
+        b.ob.add("paint", PaintStreamFormat.paint(raw().getPaint()));
         recorder.record(b.build());
         delegate.fillSphere(x, y, w, h, lightAngle, radius);
     }
@@ -454,8 +457,8 @@ public class RecordingNTxGraphics implements NTxGraphics {
     @Override
     public void fill(Shape shape) {
         NObjectBuilder b = base("fill");
-        b.ob.add("shape", DumpFormat.shape(shape));
-        b.ob.add("paint", DumpFormat.paint(raw().getPaint()));
+        b.ob.add("shape", PaintStreamFormat.shape(shape));
+        b.ob.add("paint", PaintStreamFormat.paint(raw().getPaint()));
         recorder.record(b.build());
         delegate.fill(shape);
     }
@@ -463,9 +466,9 @@ public class RecordingNTxGraphics implements NTxGraphics {
     @Override
     public void draw(Shape shape) {
         NObjectBuilder b = base("draw");
-        b.ob.add("shape", DumpFormat.shape(shape));
-        b.ob.add("paint", DumpFormat.paint(raw().getPaint()));
-        b.ob.add("stroke", DumpFormat.stroke(getStroke()));
+        b.ob.add("shape", PaintStreamFormat.shape(shape));
+        b.ob.add("paint", PaintStreamFormat.paint(raw().getPaint()));
+        b.ob.add("stroke", PaintStreamFormat.stroke(getStroke()));
         recorder.record(b.build());
         delegate.draw(shape);
     }
@@ -502,10 +505,10 @@ public class RecordingNTxGraphics implements NTxGraphics {
                         b.ob.add("from", point(line.getFrom()));
                         b.ob.add("to", point(line.getTo()));
                         if (line.getStartArrow() != null) {
-                            b.ob.add("startArrow", DumpFormat.arrow(line.getStartArrow()));
+                            b.ob.add("startArrow", PaintStreamFormat.arrow(line.getStartArrow()));
                         }
                         if (line.getEndArrow() != null) {
-                            b.ob.add("endArrow", DumpFormat.arrow(line.getEndArrow()));
+                            b.ob.add("endArrow", PaintStreamFormat.arrow(line.getEndArrow()));
                         }
                     }
                     break;
@@ -516,10 +519,10 @@ public class RecordingNTxGraphics implements NTxGraphics {
                         b.ob.add("ctrl", point(q.getCtrl()));
                         b.ob.add("to", point(q.getTo()));
                         if (q.getStartArrow() != null) {
-                            b.ob.add("startArrow", DumpFormat.arrow(q.getStartArrow()));
+                            b.ob.add("startArrow", PaintStreamFormat.arrow(q.getStartArrow()));
                         }
                         if (q.getEndArrow() != null) {
-                            b.ob.add("endArrow", DumpFormat.arrow(q.getEndArrow()));
+                            b.ob.add("endArrow", PaintStreamFormat.arrow(q.getEndArrow()));
                         }
                     }
                     break;
@@ -531,10 +534,10 @@ public class RecordingNTxGraphics implements NTxGraphics {
                         b.ob.add("ctrl2", point(c.getCtrl2()));
                         b.ob.add("to", point(c.getTo()));
                         if (c.getStartArrow() != null) {
-                            b.ob.add("startArrow", DumpFormat.arrow(c.getStartArrow()));
+                            b.ob.add("startArrow", PaintStreamFormat.arrow(c.getStartArrow()));
                         }
                         if (c.getEndArrow() != null) {
-                            b.ob.add("endArrow", DumpFormat.arrow(c.getEndArrow()));
+                            b.ob.add("endArrow", PaintStreamFormat.arrow(c.getEndArrow()));
                         }
                     }
                     break;
@@ -543,10 +546,10 @@ public class RecordingNTxGraphics implements NTxGraphics {
                     if (e instanceof NtxElement2DPolyline pl) {
                         b.ob.add("nodes", points(pl.getNodes()));
                         if (pl.getStartArrow() != null) {
-                            b.ob.add("startArrow", DumpFormat.arrow(pl.getStartArrow()));
+                            b.ob.add("startArrow", PaintStreamFormat.arrow(pl.getStartArrow()));
                         }
                         if (pl.getEndArrow() != null) {
-                            b.ob.add("endArrow", DumpFormat.arrow(pl.getEndArrow()));
+                            b.ob.add("endArrow", PaintStreamFormat.arrow(pl.getEndArrow()));
                         }
                     }
                     break;
@@ -563,13 +566,13 @@ public class RecordingNTxGraphics implements NTxGraphics {
                 }
             }
             if (p.getBackgroundPaint() != null) {
-                b.ob.add("backgroundPaint", DumpFormat.paint(p.getBackgroundPaint()));
+                b.ob.add("backgroundPaint", PaintStreamFormat.paint(p.getBackgroundPaint()));
             }
             if (p.getLinePaint() != null) {
-                b.ob.add("linePaint", DumpFormat.paint(p.getLinePaint()));
+                b.ob.add("linePaint", PaintStreamFormat.paint(p.getLinePaint()));
             }
             if (p.getLineStroke() != null) {
-                b.ob.add("lineStroke", DumpFormat.stroke(p.getLineStroke()));
+                b.ob.add("lineStroke", PaintStreamFormat.stroke(p.getLineStroke()));
             }
         } else {
             b.ob.add("class", NElement.of(e.getClass().getName()));
@@ -580,7 +583,7 @@ public class RecordingNTxGraphics implements NTxGraphics {
         if (p == null) {
             return NElement.ofNull();
         }
-        return DumpFormat.pointArray(p.x, p.y);
+        return PaintStreamFormat.pointArray(p.x, p.y);
     }
 
     private NElement points(NTxPoint2D[] ps) {
@@ -593,7 +596,7 @@ public class RecordingNTxGraphics implements NTxGraphics {
                 sb.append(' ');
             }
             if (ps[i] != null) {
-                sb.append(DumpFormat.fmt(ps[i].x)).append(',').append(DumpFormat.fmt(ps[i].y));
+                sb.append(PaintStreamFormat.fmt(ps[i].x)).append(',').append(PaintStreamFormat.fmt(ps[i].y));
             }
         }
         return NElement.of(sb.toString());
@@ -645,10 +648,10 @@ public class RecordingNTxGraphics implements NTxGraphics {
         }
 
         void xywh(double x, double y, double w, double h) {
-            DumpFormat.add(ob, "x", x);
-            DumpFormat.add(ob, "y", y);
-            DumpFormat.add(ob, "width", w);
-            DumpFormat.add(ob, "height", h);
+            PaintStreamFormat.add(ob, "x", x);
+            PaintStreamFormat.add(ob, "y", y);
+            PaintStreamFormat.add(ob, "width", w);
+            PaintStreamFormat.add(ob, "height", h);
         }
 
         NElement build() {

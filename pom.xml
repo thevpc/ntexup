@@ -82,6 +82,7 @@
         <module>core/ntexup-api</module>
         <module>lib/ntexup-lib-geometry2d</module>
         <module>lib/ntexup-lib-geometry3d</module>
+        <module>lib/ntexup-lib-paintstream</module>
         <module>core/ntexup-engine</module>
         <module>extensions/ntexup-extension-layout</module>
         <module>extensions/ntexup-extension-text</module>
@@ -103,6 +104,8 @@
         <module>renderers/ntexup-renderer-image</module>
         <module>renderers/ntexup-renderer-dump</module>
         <module>renderers/ntexup-renderer-html</module>
+        <module>renderers/ntexup-renderer-html-static</module>
+        <module>renderers/ntexup-renderer-ntxp</module>
         <module>renderers/ntexup-renderer-screen</module>
         <module>renderers/ntexup-renderer-web</module>
 

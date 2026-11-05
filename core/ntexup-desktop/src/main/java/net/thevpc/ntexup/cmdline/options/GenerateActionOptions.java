@@ -26,6 +26,10 @@ public class GenerateActionOptions extends ActionOptions {
     public NTxPageOrientation orientation;
     public boolean showPageNumber;
     public NTxPdfMode pdfMode;
+    public int htmlWidth;
+    public boolean htmlNoAnimate;
+    public boolean htmlStandalone;
+    public boolean htmlNoMinify;
 
     public GenerateActionOptions() {
         super(Action.GENERATE);

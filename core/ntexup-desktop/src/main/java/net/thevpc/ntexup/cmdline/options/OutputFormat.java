@@ -1,5 +1,5 @@
 package net.thevpc.ntexup.cmdline.options;
 
 public enum OutputFormat {
-    PDF, IMAGE
+    PDF, IMAGE, HTML_STATIC, NTXP
 }

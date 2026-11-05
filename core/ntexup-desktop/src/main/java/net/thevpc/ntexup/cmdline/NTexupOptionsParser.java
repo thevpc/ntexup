@@ -70,6 +70,20 @@ public class NTexupOptionsParser {
                             options.getOrCreate(GenerateActionOptions.class).outputFormat = OutputFormat.IMAGE;
                             continueParsingGeneratePdf(cmdLine, options);
                         })
+                        .when("html-folder").asFlag(a -> {
+                            options.getOrCreate(GenerateActionOptions.class).outputFormat = OutputFormat.HTML_STATIC;
+                            continueParsingGeneratePdf(cmdLine, options);
+                        })
+                        .when("html-standalone").asFlag(a -> {
+                            GenerateActionOptions g = options.getOrCreate(GenerateActionOptions.class);
+                            g.outputFormat = OutputFormat.HTML_STATIC;
+                            g.htmlStandalone = true;
+                            continueParsingGeneratePdf(cmdLine, options);
+                        })
+                        .when("ntxp").asFlag(a -> {
+                            options.getOrCreate(GenerateActionOptions.class).outputFormat = OutputFormat.NTXP;
+                            continueParsingGeneratePdf(cmdLine, options);
+                        })
                         .when("new").asTrueFlag(a -> {
                             options.getOrCreate(NewActionOptions.class);
                             continueParsingNew(cmdLine, options);
@@ -242,6 +256,13 @@ public class NTexupOptionsParser {
                     .when("--dpi").asEntry(a -> {
                         options.getOrCreate(GenerateActionOptions.class).dpi = parseIntEntry(a.stringValue(), "--dpi");
                     })
+                    .when("--html-width").asEntry(a -> {
+                        options.getOrCreate(GenerateActionOptions.class).htmlWidth = parseIntEntry(a.stringValue(), "--html-width");
+                    })
+                    .when("--html-no-animate").asTrueFlag(a ->
+                            options.getOrCreate(GenerateActionOptions.class).htmlNoAnimate = true)
+                    .when("--html-no-minify").asTrueFlag(a ->
+                            options.getOrCreate(GenerateActionOptions.class).htmlNoMinify = true)
                     .when("--pdf-mode").asEntry(a -> {
                         String v = a.stringValue();
                         switch (v.toLowerCase()) {

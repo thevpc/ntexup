@@ -1,5 +1,9 @@
 package net.thevpc.ntexup.engine.renderer.dump;
 
+import net.thevpc.ntexup.lib.paintstream.PaintStreamFormat;
+import net.thevpc.ntexup.lib.paintstream.PaintStreamRecorder;
+import net.thevpc.ntexup.lib.paintstream.PaintStreamSink;
+import net.thevpc.ntexup.lib.paintstream.RecordingGraphics2D;
 import net.thevpc.nuts.elem.NArrayElementBuilder;
 import net.thevpc.nuts.elem.NElement;
 import net.thevpc.nuts.elem.NElementFormatterStyle;
@@ -108,7 +112,7 @@ public class DumpDocumentRenderer extends NTxDocumentStreamRendererBase implemen
         String level = resolveLevel();
         boolean withImage = Boolean.TRUE.equals(getProperty(PROP_WITH_IMAGE, Boolean.class).orNull());
         boolean infos = !Boolean.FALSE.equals(getProperty(PROP_INFOS, Boolean.class).orNull());
-        DumpSink sink = infos ? new DumpSink() : null;
+        PaintStreamSink sink = infos ? new PaintStreamSink() : null;
         List<NTxCompiledPage> allPages = document.pages();
         List<NTxCompiledPage> selectedPages = selectPages(allPages);
         if (document.hasPendingFutures()) {
@@ -149,7 +153,7 @@ public class DumpDocumentRenderer extends NTxDocumentStreamRendererBase implemen
         if (document.hasPendingFutures()) {
             document.awaitFutures();
         }
-        NObjectElementBuilder root = DumpFormat.op("dump");
+        NObjectElementBuilder root = PaintStreamFormat.op("dump");
         root.add("version", NElement.of(1));
         root.add("level", NElement.of(level));
         root.add("width", NElement.of(pixelWidth));
@@ -161,10 +165,10 @@ public class DumpDocumentRenderer extends NTxDocumentStreamRendererBase implemen
     private NElement renderPageDump(NTxCompiledPage page,
                                     NTxNodeRendererConfig renderConfig,
                                     int pixelWidth, int pixelHeight,
-                                    String level, boolean withImage, int index, DumpSink sink) {
+                                    String level, boolean withImage, int index, PaintStreamSink sink) {
         BufferedImage img = new BufferedImage(pixelWidth, pixelHeight, BufferedImage.TYPE_INT_ARGB);
         Graphics2D base = img.createGraphics();
-        DumpRecorder recorder = new DumpRecorder();
+        PaintStreamRecorder recorder = new PaintStreamRecorder();
         if (sink != null) {
             sink.resetSession();
             sink.setPageRoot(recorder);
@@ -175,7 +179,7 @@ public class DumpDocumentRenderer extends NTxDocumentStreamRendererBase implemen
             //mirrors DefaultNTxEngine.renderImage(): late async content forces a second static pass
             doc.awaitFutures();
             page.compiledPage().invalidateRenderCache();
-            recorder = new DumpRecorder();
+            recorder = new PaintStreamRecorder();
             if (sink != null) {
                 sink.resetSession();
                 sink.setPageRoot(recorder);
@@ -183,12 +187,12 @@ public class DumpDocumentRenderer extends NTxDocumentStreamRendererBase implemen
             paintOnce(page, renderConfig, base, recorder, pixelWidth, pixelHeight, level, sink);
         }
         base.dispose();
-        NObjectElementBuilder ob = DumpFormat.op("page");
+        NObjectElementBuilder ob = PaintStreamFormat.op("page");
         ob.add("index", NElement.of(index));
         ob.add("width", NElement.of(pixelWidth));
         ob.add("height", NElement.of(pixelHeight));
         if (withImage) {
-            ob.add("image", DumpFormat.op("png").add("sha256", NElement.of(sha256Of(img))).build());
+            ob.add("image", PaintStreamFormat.op("png").add("sha256", NElement.of(sha256Of(img))).build());
         }
         if (sink != null) {
             NTxRenderSession session = sink.session();
@@ -207,16 +211,16 @@ public class DumpDocumentRenderer extends NTxDocumentStreamRendererBase implemen
     private NElement layoutElement(NTxRenderSession session) {
         NArrayElementBuilder nodes = NElement.ofArrayBuilder();
         for (NTxPlaced placed : session.geometry().placed()) {
-            NObjectElementBuilder ob = DumpFormat.op("placed");
+            NObjectElementBuilder ob = PaintStreamFormat.op("placed");
             ob.add("name", NElement.of(placed.name == null ? "" : placed.name));
             ob.add("type", NElement.of(placed.node.type() == null ? "" : placed.node.type()));
-            ob.add("bounds", DumpFormat.rectArray(
+            ob.add("bounds", PaintStreamFormat.rectArray(
                     placed.bounds.minX(),
                     placed.bounds.minY(),
                     placed.bounds.widthX(),
                     placed.bounds.widthY()));
             if (placed.toRoot != null && !placed.toRoot.isIdentity()) {
-                ob.add("transform", DumpFormat.matrix(placed.toRoot));
+                ob.add("transform", PaintStreamFormat.matrix(placed.toRoot));
             }
             if (placed.hidden) {
                 ob.add("hidden", NElement.of(true));
@@ -233,7 +237,7 @@ public class DumpDocumentRenderer extends NTxDocumentStreamRendererBase implemen
     }
 
     private void paintOnce(NTxCompiledPage page, NTxNodeRendererConfig renderConfig, Graphics2D base,
-                           DumpRecorder recorder, int pixelWidth, int pixelHeight, String level, DumpSink sink) {
+                           PaintStreamRecorder recorder, int pixelWidth, int pixelHeight, String level, PaintStreamSink sink) {
         if (LEVEL_GRAPHICS2D.equals(level)) {
             //the engine wraps this recorder in its NTxGraphics implementation: java2d-level capture
             engine.renderPage(page, renderConfig, new RecordingGraphics2D(base, recorder, pixelWidth, pixelHeight, false, sink), null, null);

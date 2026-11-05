@@ -1,4 +1,4 @@
-package net.thevpc.ntexup.engine.renderer.dump;
+package net.thevpc.ntexup.lib.paintstream;
 
 import net.thevpc.nuts.elem.NElement;
 import net.thevpc.nuts.elem.NObjectElementBuilder;
@@ -19,6 +19,8 @@ import java.awt.Shape;
 import java.awt.Stroke;
 import java.awt.font.FontRenderContext;
 import java.awt.font.GlyphVector;
+import java.awt.font.TextAttribute;
+import java.awt.font.TextLayout;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.awt.image.BufferedImageOp;
@@ -43,13 +45,13 @@ import java.nio.charset.StandardCharsets;
 public class RecordingGraphics2D extends Graphics2D {
 
     private final Graphics2D d;
-    private final DumpRecorder recorder;
+    private final PaintStreamRecorder recorder;
     private final double canvasWidth;
     private final double canvasHeight;
     private final boolean ownsGroup;
-    private final DumpSink sink;
+    private final PaintStreamSink sink;
 
-    public RecordingGraphics2D(Graphics2D d, DumpRecorder recorder, double canvasWidth, double canvasHeight, boolean ownsGroup, DumpSink sink) {
+    public RecordingGraphics2D(Graphics2D d, PaintStreamRecorder recorder, double canvasWidth, double canvasHeight, boolean ownsGroup, PaintStreamSink sink) {
         this.d = d;
         this.recorder = recorder;
         this.canvasWidth = canvasWidth;
@@ -61,32 +63,38 @@ public class RecordingGraphics2D extends Graphics2D {
         }
     }
 
-    public DumpRecorder getRecorder() {
+    public PaintStreamRecorder getRecorder() {
         return recorder;
     }
 
     private NObjectElementBuilder op(String name) {
-        NObjectElementBuilder ob = DumpFormat.op(name);
-        DumpFormat.state(ob, d, canvasWidth, canvasHeight);
+        NObjectElementBuilder ob = PaintStreamFormat.op(name);
+        PaintStreamFormat.state(ob, d, canvasWidth, canvasHeight);
         return ob;
     }
 
     private void recordShape(String name, Shape s, boolean stroked) {
         NObjectElementBuilder ob = op(name);
-        ob.add("shape", DumpFormat.shape(s));
-        ob.add("paint", DumpFormat.paint(d.getPaint()));
+        ob.add("shape", PaintStreamFormat.shape(s));
+        ob.add("paint", PaintStreamFormat.paint(d.getPaint()));
         if (stroked) {
-            ob.add("stroke", DumpFormat.stroke(d.getStroke()));
+            ob.add("stroke", PaintStreamFormat.stroke(d.getStroke()));
         }
         recorder.record(ob.build());
     }
 
     private void recordText(String name, String s, double x, double y) {
         NObjectElementBuilder ob = op(name);
-        ob.add("at", DumpFormat.pointArray(x, y));
+        ob.add("at", PaintStreamFormat.pointArray(x, y));
         ob.add("s", NElement.of(s));
-        ob.add("font", DumpFormat.font(d.getFont()));
-        ob.add("paint", DumpFormat.paint(d.getPaint()));
+        ob.add("font", PaintStreamFormat.font(d.getFont()));
+        ob.add("paint", PaintStreamFormat.paint(d.getPaint()));
+        if (recorder.isTextOutlines()) {
+            //outline in local space: the consumer translates it to the baseline
+            //and fills it, so no browser font, shaping or layout is involved
+            GlyphVector gv = d.getFont().createGlyphVector(d.getFontRenderContext(), s);
+            ob.add("outline", PaintStreamFormat.shape(gv.getOutline()));
+        }
         recorder.record(ob.build());
     }
 
@@ -308,12 +316,12 @@ public class RecordingGraphics2D extends Graphics2D {
     @Override
     public void drawLine(int x1, int y1, int x2, int y2) {
         NObjectElementBuilder ob = op("drawLine");
-        DumpFormat.add(ob, "x1", x1);
-        DumpFormat.add(ob, "y1", y1);
-        DumpFormat.add(ob, "x2", x2);
-        DumpFormat.add(ob, "y2", y2);
-        ob.add("paint", DumpFormat.paint(d.getPaint()));
-        ob.add("stroke", DumpFormat.stroke(d.getStroke()));
+        PaintStreamFormat.add(ob, "x1", x1);
+        PaintStreamFormat.add(ob, "y1", y1);
+        PaintStreamFormat.add(ob, "x2", x2);
+        PaintStreamFormat.add(ob, "y2", y2);
+        ob.add("paint", PaintStreamFormat.paint(d.getPaint()));
+        ob.add("stroke", PaintStreamFormat.stroke(d.getStroke()));
         recorder.record(ob.build());
         d.drawLine(x1, y1, x2, y2);
     }
@@ -321,12 +329,12 @@ public class RecordingGraphics2D extends Graphics2D {
     @Override
     public void drawRect(int x, int y, int width, int height) {
         NObjectElementBuilder ob = op("drawRect");
-        DumpFormat.add(ob, "x", x);
-        DumpFormat.add(ob, "y", y);
-        DumpFormat.add(ob, "width", width);
-        DumpFormat.add(ob, "height", height);
-        ob.add("paint", DumpFormat.paint(d.getPaint()));
-        ob.add("stroke", DumpFormat.stroke(d.getStroke()));
+        PaintStreamFormat.add(ob, "x", x);
+        PaintStreamFormat.add(ob, "y", y);
+        PaintStreamFormat.add(ob, "width", width);
+        PaintStreamFormat.add(ob, "height", height);
+        ob.add("paint", PaintStreamFormat.paint(d.getPaint()));
+        ob.add("stroke", PaintStreamFormat.stroke(d.getStroke()));
         recorder.record(ob.build());
         d.drawRect(x, y, width, height);
     }
@@ -334,11 +342,11 @@ public class RecordingGraphics2D extends Graphics2D {
     @Override
     public void fillRect(int x, int y, int width, int height) {
         NObjectElementBuilder ob = op("fillRect");
-        DumpFormat.add(ob, "x", x);
-        DumpFormat.add(ob, "y", y);
-        DumpFormat.add(ob, "width", width);
-        DumpFormat.add(ob, "height", height);
-        ob.add("paint", DumpFormat.paint(d.getPaint()));
+        PaintStreamFormat.add(ob, "x", x);
+        PaintStreamFormat.add(ob, "y", y);
+        PaintStreamFormat.add(ob, "width", width);
+        PaintStreamFormat.add(ob, "height", height);
+        ob.add("paint", PaintStreamFormat.paint(d.getPaint()));
         recorder.record(ob.build());
         d.fillRect(x, y, width, height);
     }
@@ -346,10 +354,10 @@ public class RecordingGraphics2D extends Graphics2D {
     @Override
     public void clearRect(int x, int y, int width, int height) {
         NObjectElementBuilder ob = op("clearRect");
-        DumpFormat.add(ob, "x", x);
-        DumpFormat.add(ob, "y", y);
-        DumpFormat.add(ob, "width", width);
-        DumpFormat.add(ob, "height", height);
+        PaintStreamFormat.add(ob, "x", x);
+        PaintStreamFormat.add(ob, "y", y);
+        PaintStreamFormat.add(ob, "width", width);
+        PaintStreamFormat.add(ob, "height", height);
         recorder.record(ob.build());
         d.clearRect(x, y, width, height);
     }
@@ -357,14 +365,14 @@ public class RecordingGraphics2D extends Graphics2D {
     @Override
     public void drawRoundRect(int x, int y, int width, int height, int arcWidth, int arcHeight) {
         NObjectElementBuilder ob = op("drawRoundRect");
-        DumpFormat.add(ob, "x", x);
-        DumpFormat.add(ob, "y", y);
-        DumpFormat.add(ob, "width", width);
-        DumpFormat.add(ob, "height", height);
-        DumpFormat.add(ob, "arcwidth", arcWidth);
-        DumpFormat.add(ob, "archeight", arcHeight);
-        ob.add("paint", DumpFormat.paint(d.getPaint()));
-        ob.add("stroke", DumpFormat.stroke(d.getStroke()));
+        PaintStreamFormat.add(ob, "x", x);
+        PaintStreamFormat.add(ob, "y", y);
+        PaintStreamFormat.add(ob, "width", width);
+        PaintStreamFormat.add(ob, "height", height);
+        PaintStreamFormat.add(ob, "arcwidth", arcWidth);
+        PaintStreamFormat.add(ob, "archeight", arcHeight);
+        ob.add("paint", PaintStreamFormat.paint(d.getPaint()));
+        ob.add("stroke", PaintStreamFormat.stroke(d.getStroke()));
         recorder.record(ob.build());
         d.drawRoundRect(x, y, width, height, arcWidth, arcHeight);
     }
@@ -372,13 +380,13 @@ public class RecordingGraphics2D extends Graphics2D {
     @Override
     public void fillRoundRect(int x, int y, int width, int height, int arcWidth, int arcHeight) {
         NObjectElementBuilder ob = op("fillRoundRect");
-        DumpFormat.add(ob, "x", x);
-        DumpFormat.add(ob, "y", y);
-        DumpFormat.add(ob, "width", width);
-        DumpFormat.add(ob, "height", height);
-        DumpFormat.add(ob, "arcwidth", arcWidth);
-        DumpFormat.add(ob, "archeight", arcHeight);
-        ob.add("paint", DumpFormat.paint(d.getPaint()));
+        PaintStreamFormat.add(ob, "x", x);
+        PaintStreamFormat.add(ob, "y", y);
+        PaintStreamFormat.add(ob, "width", width);
+        PaintStreamFormat.add(ob, "height", height);
+        PaintStreamFormat.add(ob, "arcwidth", arcWidth);
+        PaintStreamFormat.add(ob, "archeight", arcHeight);
+        ob.add("paint", PaintStreamFormat.paint(d.getPaint()));
         recorder.record(ob.build());
         d.fillRoundRect(x, y, width, height, arcWidth, arcHeight);
     }
@@ -386,12 +394,12 @@ public class RecordingGraphics2D extends Graphics2D {
     @Override
     public void drawOval(int x, int y, int width, int height) {
         NObjectElementBuilder ob = op("drawOval");
-        DumpFormat.add(ob, "x", x);
-        DumpFormat.add(ob, "y", y);
-        DumpFormat.add(ob, "width", width);
-        DumpFormat.add(ob, "height", height);
-        ob.add("paint", DumpFormat.paint(d.getPaint()));
-        ob.add("stroke", DumpFormat.stroke(d.getStroke()));
+        PaintStreamFormat.add(ob, "x", x);
+        PaintStreamFormat.add(ob, "y", y);
+        PaintStreamFormat.add(ob, "width", width);
+        PaintStreamFormat.add(ob, "height", height);
+        ob.add("paint", PaintStreamFormat.paint(d.getPaint()));
+        ob.add("stroke", PaintStreamFormat.stroke(d.getStroke()));
         recorder.record(ob.build());
         d.drawOval(x, y, width, height);
     }
@@ -399,11 +407,11 @@ public class RecordingGraphics2D extends Graphics2D {
     @Override
     public void fillOval(int x, int y, int width, int height) {
         NObjectElementBuilder ob = op("fillOval");
-        DumpFormat.add(ob, "x", x);
-        DumpFormat.add(ob, "y", y);
-        DumpFormat.add(ob, "width", width);
-        DumpFormat.add(ob, "height", height);
-        ob.add("paint", DumpFormat.paint(d.getPaint()));
+        PaintStreamFormat.add(ob, "x", x);
+        PaintStreamFormat.add(ob, "y", y);
+        PaintStreamFormat.add(ob, "width", width);
+        PaintStreamFormat.add(ob, "height", height);
+        ob.add("paint", PaintStreamFormat.paint(d.getPaint()));
         recorder.record(ob.build());
         d.fillOval(x, y, width, height);
     }
@@ -411,14 +419,14 @@ public class RecordingGraphics2D extends Graphics2D {
     @Override
     public void drawArc(int x, int y, int width, int height, int startAngle, int arcAngle) {
         NObjectElementBuilder ob = op("drawArc");
-        DumpFormat.add(ob, "x", x);
-        DumpFormat.add(ob, "y", y);
-        DumpFormat.add(ob, "width", width);
-        DumpFormat.add(ob, "height", height);
-        DumpFormat.add(ob, "start", startAngle);
-        DumpFormat.add(ob, "extent", arcAngle);
-        ob.add("paint", DumpFormat.paint(d.getPaint()));
-        ob.add("stroke", DumpFormat.stroke(d.getStroke()));
+        PaintStreamFormat.add(ob, "x", x);
+        PaintStreamFormat.add(ob, "y", y);
+        PaintStreamFormat.add(ob, "width", width);
+        PaintStreamFormat.add(ob, "height", height);
+        PaintStreamFormat.add(ob, "start", startAngle);
+        PaintStreamFormat.add(ob, "extent", arcAngle);
+        ob.add("paint", PaintStreamFormat.paint(d.getPaint()));
+        ob.add("stroke", PaintStreamFormat.stroke(d.getStroke()));
         recorder.record(ob.build());
         d.drawArc(x, y, width, height, startAngle, arcAngle);
     }
@@ -426,13 +434,13 @@ public class RecordingGraphics2D extends Graphics2D {
     @Override
     public void fillArc(int x, int y, int width, int height, int startAngle, int arcAngle) {
         NObjectElementBuilder ob = op("fillArc");
-        DumpFormat.add(ob, "x", x);
-        DumpFormat.add(ob, "y", y);
-        DumpFormat.add(ob, "width", width);
-        DumpFormat.add(ob, "height", height);
-        DumpFormat.add(ob, "start", startAngle);
-        DumpFormat.add(ob, "extent", arcAngle);
-        ob.add("paint", DumpFormat.paint(d.getPaint()));
+        PaintStreamFormat.add(ob, "x", x);
+        PaintStreamFormat.add(ob, "y", y);
+        PaintStreamFormat.add(ob, "width", width);
+        PaintStreamFormat.add(ob, "height", height);
+        PaintStreamFormat.add(ob, "start", startAngle);
+        PaintStreamFormat.add(ob, "extent", arcAngle);
+        ob.add("paint", PaintStreamFormat.paint(d.getPaint()));
         recorder.record(ob.build());
         d.fillArc(x, y, width, height, startAngle, arcAngle);
     }
@@ -440,9 +448,9 @@ public class RecordingGraphics2D extends Graphics2D {
     @Override
     public void drawPolyline(int[] xPoints, int[] yPoints, int nPoints) {
         NObjectElementBuilder ob = op("drawPolyline");
-        ob.add("points", NElement.of(DumpFormat.pointsString(xPoints, yPoints, nPoints)));
-        ob.add("paint", DumpFormat.paint(d.getPaint()));
-        ob.add("stroke", DumpFormat.stroke(d.getStroke()));
+        ob.add("points", NElement.of(PaintStreamFormat.pointsString(xPoints, yPoints, nPoints)));
+        ob.add("paint", PaintStreamFormat.paint(d.getPaint()));
+        ob.add("stroke", PaintStreamFormat.stroke(d.getStroke()));
         recorder.record(ob.build());
         d.drawPolyline(xPoints, yPoints, nPoints);
     }
@@ -450,9 +458,9 @@ public class RecordingGraphics2D extends Graphics2D {
     @Override
     public void drawPolygon(int[] xPoints, int[] yPoints, int nPoints) {
         NObjectElementBuilder ob = op("drawPolygon");
-        ob.add("points", NElement.of(DumpFormat.pointsString(xPoints, yPoints, nPoints)));
-        ob.add("paint", DumpFormat.paint(d.getPaint()));
-        ob.add("stroke", DumpFormat.stroke(d.getStroke()));
+        ob.add("points", NElement.of(PaintStreamFormat.pointsString(xPoints, yPoints, nPoints)));
+        ob.add("paint", PaintStreamFormat.paint(d.getPaint()));
+        ob.add("stroke", PaintStreamFormat.stroke(d.getStroke()));
         recorder.record(ob.build());
         d.drawPolygon(xPoints, yPoints, nPoints);
     }
@@ -465,8 +473,8 @@ public class RecordingGraphics2D extends Graphics2D {
     @Override
     public void fillPolygon(int[] xPoints, int[] yPoints, int nPoints) {
         NObjectElementBuilder ob = op("fillPolygon");
-        ob.add("points", NElement.of(DumpFormat.pointsString(xPoints, yPoints, nPoints)));
-        ob.add("paint", DumpFormat.paint(d.getPaint()));
+        ob.add("points", NElement.of(PaintStreamFormat.pointsString(xPoints, yPoints, nPoints)));
+        ob.add("paint", PaintStreamFormat.paint(d.getPaint()));
         recorder.record(ob.build());
         d.fillPolygon(xPoints, yPoints, nPoints);
     }
@@ -479,12 +487,12 @@ public class RecordingGraphics2D extends Graphics2D {
     @Override
     public void draw3DRect(int x, int y, int width, int height, boolean raised) {
         NObjectElementBuilder ob = op("draw3DRect");
-        DumpFormat.add(ob, "x", x);
-        DumpFormat.add(ob, "y", y);
-        DumpFormat.add(ob, "width", width);
-        DumpFormat.add(ob, "height", height);
+        PaintStreamFormat.add(ob, "x", x);
+        PaintStreamFormat.add(ob, "y", y);
+        PaintStreamFormat.add(ob, "width", width);
+        PaintStreamFormat.add(ob, "height", height);
         ob.add("raised", NElement.of(raised));
-        ob.add("paint", DumpFormat.paint(d.getPaint()));
+        ob.add("paint", PaintStreamFormat.paint(d.getPaint()));
         recorder.record(ob.build());
         d.draw3DRect(x, y, width, height, raised);
     }
@@ -492,12 +500,12 @@ public class RecordingGraphics2D extends Graphics2D {
     @Override
     public void fill3DRect(int x, int y, int width, int height, boolean raised) {
         NObjectElementBuilder ob = op("fill3DRect");
-        DumpFormat.add(ob, "x", x);
-        DumpFormat.add(ob, "y", y);
-        DumpFormat.add(ob, "width", width);
-        DumpFormat.add(ob, "height", height);
+        PaintStreamFormat.add(ob, "x", x);
+        PaintStreamFormat.add(ob, "y", y);
+        PaintStreamFormat.add(ob, "width", width);
+        PaintStreamFormat.add(ob, "height", height);
         ob.add("raised", NElement.of(raised));
-        ob.add("paint", DumpFormat.paint(d.getPaint()));
+        ob.add("paint", PaintStreamFormat.paint(d.getPaint()));
         recorder.record(ob.build());
         d.fill3DRect(x, y, width, height, raised);
     }
@@ -528,10 +536,18 @@ public class RecordingGraphics2D extends Graphics2D {
 
     private void recordAttributed(AttributedCharacterIterator iterator, double x, double y) {
         NObjectElementBuilder ob = op("text");
-        ob.add("at", DumpFormat.pointArray(x, y));
-        ob.add("text", DumpFormat.attributedText(iterator));
-        ob.add("font", DumpFormat.font(d.getFont()));
-        ob.add("paint", DumpFormat.paint(d.getPaint()));
+        //read the attribute before attributedText() walks the cursor to DONE
+        Object foreground = iterator.getAttribute(TextAttribute.FOREGROUND);
+        ob.add("at", PaintStreamFormat.pointArray(x, y));
+        ob.add("text", PaintStreamFormat.attributedText(iterator));
+        ob.add("font", PaintStreamFormat.font(d.getFont()));
+        //SunGraphics2D lets a TextAttribute.FOREGROUND override the context paint,
+        //so syntax highlighted runs record their own colour instead of the canvas one
+        ob.add("paint", PaintStreamFormat.paint(foreground instanceof Paint p ? p : d.getPaint()));
+        if (recorder.isTextOutlines()) {
+            TextLayout tl = new TextLayout(iterator, d.getFontRenderContext());
+            ob.add("outline", PaintStreamFormat.shape(tl.getOutline(new AffineTransform())));
+        }
         recorder.record(ob.build());
     }
 
@@ -552,10 +568,13 @@ public class RecordingGraphics2D extends Graphics2D {
     @Override
     public void drawGlyphVector(GlyphVector g, float x, float y) {
         NObjectElementBuilder ob = op("glyphs");
-        ob.add("at", DumpFormat.pointArray(x, y));
+        ob.add("at", PaintStreamFormat.pointArray(x, y));
         ob.add("count", NElement.of(g.getNumGlyphs()));
-        ob.add("bounds", DumpFormat.shape(g.getLogicalBounds()));
-        ob.add("paint", DumpFormat.paint(d.getPaint()));
+        ob.add("bounds", PaintStreamFormat.shape(g.getLogicalBounds()));
+        ob.add("paint", PaintStreamFormat.paint(d.getPaint()));
+        if (recorder.isTextOutlines()) {
+            ob.add("outline", PaintStreamFormat.shape(g.getOutline()));
+        }
         recorder.record(ob.build());
         d.drawGlyphVector(g, x, y);
     }
@@ -568,23 +587,35 @@ public class RecordingGraphics2D extends Graphics2D {
     @Override
     public void copyArea(int x, int y, int width, int height, int dx, int dy) {
         NObjectElementBuilder ob = op("copyArea");
-        DumpFormat.add(ob, "x", x);
-        DumpFormat.add(ob, "y", y);
-        DumpFormat.add(ob, "width", width);
-        DumpFormat.add(ob, "height", height);
-        DumpFormat.add(ob, "dx", dx);
-        DumpFormat.add(ob, "dy", dy);
+        PaintStreamFormat.add(ob, "x", x);
+        PaintStreamFormat.add(ob, "y", y);
+        PaintStreamFormat.add(ob, "width", width);
+        PaintStreamFormat.add(ob, "height", height);
+        PaintStreamFormat.add(ob, "dx", dx);
+        PaintStreamFormat.add(ob, "dy", dy);
         recorder.record(ob.build());
         d.copyArea(x, y, width, height, dx, dy);
     }
 
     // ---------------- drawImage family ----------------
 
+    /**
+     * Attaches the content address of the painted pixels when the pass records
+     * image assets, so a replay surface can resolve the same bytes.
+     */
+    private void addImageRef(NObjectElementBuilder ob, Object img) {
+        PaintStreamImageAssets assets = recorder.images();
+        if (assets != null) {
+            PaintStreamFormat.addIf(ob, "ref", assets.element(img));
+        }
+    }
+
     @Override
     public boolean drawImage(Image img, int x, int y, ImageObserver observer) {
         NObjectElementBuilder ob = op("image");
-        ob.add("at", DumpFormat.pointArray(x, y));
-        DumpFormat.addIf(ob, "size", DumpFormat.imageInfo(img));
+        ob.add("at", PaintStreamFormat.pointArray(x, y));
+        PaintStreamFormat.addIf(ob, "size", PaintStreamFormat.imageInfo(img));
+        addImageRef(ob, img);
         recorder.record(ob.build());
         return d.drawImage(img, x, y, observer);
     }
@@ -592,9 +623,10 @@ public class RecordingGraphics2D extends Graphics2D {
     @Override
     public boolean drawImage(Image img, int x, int y, int width, int height, ImageObserver observer) {
         NObjectElementBuilder ob = op("image");
-        ob.add("at", DumpFormat.pointArray(x, y));
-        ob.add("dest", DumpFormat.rectArray(x, y, width, height));
-        DumpFormat.addIf(ob, "size", DumpFormat.imageInfo(img));
+        ob.add("at", PaintStreamFormat.pointArray(x, y));
+        ob.add("dest", PaintStreamFormat.rectArray(x, y, width, height));
+        PaintStreamFormat.addIf(ob, "size", PaintStreamFormat.imageInfo(img));
+        addImageRef(ob, img);
         recorder.record(ob.build());
         return d.drawImage(img, x, y, width, height, observer);
     }
@@ -602,9 +634,10 @@ public class RecordingGraphics2D extends Graphics2D {
     @Override
     public boolean drawImage(Image img, int x, int y, Color bgcolor, ImageObserver observer) {
         NObjectElementBuilder ob = op("image");
-        ob.add("at", DumpFormat.pointArray(x, y));
-        DumpFormat.addIf(ob, "bgcolor", DumpFormat.color(bgcolor));
-        DumpFormat.addIf(ob, "size", DumpFormat.imageInfo(img));
+        ob.add("at", PaintStreamFormat.pointArray(x, y));
+        PaintStreamFormat.addIf(ob, "bgcolor", PaintStreamFormat.color(bgcolor));
+        PaintStreamFormat.addIf(ob, "size", PaintStreamFormat.imageInfo(img));
+        addImageRef(ob, img);
         recorder.record(ob.build());
         return d.drawImage(img, x, y, bgcolor, observer);
     }
@@ -612,10 +645,11 @@ public class RecordingGraphics2D extends Graphics2D {
     @Override
     public boolean drawImage(Image img, int x, int y, int width, int height, Color bgcolor, ImageObserver observer) {
         NObjectElementBuilder ob = op("image");
-        ob.add("at", DumpFormat.pointArray(x, y));
-        ob.add("dest", DumpFormat.rectArray(x, y, width, height));
-        DumpFormat.addIf(ob, "bgcolor", DumpFormat.color(bgcolor));
-        DumpFormat.addIf(ob, "size", DumpFormat.imageInfo(img));
+        ob.add("at", PaintStreamFormat.pointArray(x, y));
+        ob.add("dest", PaintStreamFormat.rectArray(x, y, width, height));
+        PaintStreamFormat.addIf(ob, "bgcolor", PaintStreamFormat.color(bgcolor));
+        PaintStreamFormat.addIf(ob, "size", PaintStreamFormat.imageInfo(img));
+        addImageRef(ob, img);
         recorder.record(ob.build());
         return d.drawImage(img, x, y, width, height, bgcolor, observer);
     }
@@ -623,11 +657,12 @@ public class RecordingGraphics2D extends Graphics2D {
     @Override
     public boolean drawImage(Image img, int dx1, int dy1, int dx2, int dy2, int sx1, int sy1, int sx2, int sy2, ImageObserver observer) {
         NObjectElementBuilder ob = op("imagePart");
-        ob.add("dest", DumpFormat.pointArray(dx1, dy1));
-        ob.add("dest2", DumpFormat.pointArray(dx2, dy2));
-        ob.add("src", DumpFormat.pointArray(sx1, sy1));
-        ob.add("src2", DumpFormat.pointArray(sx2, sy2));
-        DumpFormat.addIf(ob, "size", DumpFormat.imageInfo(img));
+        ob.add("dest", PaintStreamFormat.pointArray(dx1, dy1));
+        ob.add("dest2", PaintStreamFormat.pointArray(dx2, dy2));
+        ob.add("src", PaintStreamFormat.pointArray(sx1, sy1));
+        ob.add("src2", PaintStreamFormat.pointArray(sx2, sy2));
+        PaintStreamFormat.addIf(ob, "size", PaintStreamFormat.imageInfo(img));
+        addImageRef(ob, img);
         recorder.record(ob.build());
         return d.drawImage(img, dx1, dy1, dx2, dy2, sx1, sy1, sx2, sy2, observer);
     }
@@ -635,12 +670,13 @@ public class RecordingGraphics2D extends Graphics2D {
     @Override
     public boolean drawImage(Image img, int dx1, int dy1, int dx2, int dy2, int sx1, int sy1, int sx2, int sy2, Color bgcolor, ImageObserver observer) {
         NObjectElementBuilder ob = op("imagePart");
-        ob.add("dest", DumpFormat.pointArray(dx1, dy1));
-        ob.add("dest2", DumpFormat.pointArray(dx2, dy2));
-        ob.add("src", DumpFormat.pointArray(sx1, sy1));
-        ob.add("src2", DumpFormat.pointArray(sx2, sy2));
-        DumpFormat.addIf(ob, "bgcolor", DumpFormat.color(bgcolor));
-        DumpFormat.addIf(ob, "size", DumpFormat.imageInfo(img));
+        ob.add("dest", PaintStreamFormat.pointArray(dx1, dy1));
+        ob.add("dest2", PaintStreamFormat.pointArray(dx2, dy2));
+        ob.add("src", PaintStreamFormat.pointArray(sx1, sy1));
+        ob.add("src2", PaintStreamFormat.pointArray(sx2, sy2));
+        PaintStreamFormat.addIf(ob, "bgcolor", PaintStreamFormat.color(bgcolor));
+        PaintStreamFormat.addIf(ob, "size", PaintStreamFormat.imageInfo(img));
+        addImageRef(ob, img);
         recorder.record(ob.build());
         return d.drawImage(img, dx1, dy1, dx2, dy2, sx1, sy1, sx2, sy2, bgcolor, observer);
     }
@@ -648,8 +684,9 @@ public class RecordingGraphics2D extends Graphics2D {
     @Override
     public boolean drawImage(Image img, AffineTransform xform, ImageObserver obs) {
         NObjectElementBuilder ob = op("image");
-        ob.add("at", DumpFormat.matrix(xform));
-        DumpFormat.addIf(ob, "size", DumpFormat.imageInfo(img));
+        ob.add("at", PaintStreamFormat.matrix(xform));
+        PaintStreamFormat.addIf(ob, "size", PaintStreamFormat.imageInfo(img));
+        addImageRef(ob, img);
         recorder.record(ob.build());
         return d.drawImage(img, xform, obs);
     }
@@ -657,8 +694,14 @@ public class RecordingGraphics2D extends Graphics2D {
     @Override
     public void drawImage(BufferedImage img, BufferedImageOp op, int x, int y) {
         NObjectElementBuilder ob = op("imageOp");
-        ob.add("at", DumpFormat.pointArray(x, y));
+        ob.add("at", PaintStreamFormat.pointArray(x, y));
         ob.add("op", NElement.of(op == null ? "null" : op.getClass().getName()));
+        if (op == null) {
+            addImageRef(ob, img);
+        } else {
+            //a java2d filter has no canvas equivalent: bake its result and reference the pixels
+            addImageRef(ob, op.filter(img, null));
+        }
         recorder.record(ob.build());
         d.drawImage(img, op, x, y);
     }
@@ -666,8 +709,9 @@ public class RecordingGraphics2D extends Graphics2D {
     @Override
     public void drawRenderedImage(RenderedImage img, AffineTransform xform) {
         NObjectElementBuilder ob = op("renderedImage");
-        ob.add("at", DumpFormat.matrix(xform));
+        ob.add("at", PaintStreamFormat.matrix(xform));
         ob.add("size", NElement.of(img.getWidth() + "x" + img.getHeight()));
+        addImageRef(ob, img);
         recorder.record(ob.build());
         d.drawRenderedImage(img, xform);
     }
@@ -675,9 +719,9 @@ public class RecordingGraphics2D extends Graphics2D {
     @Override
     public void drawRenderableImage(RenderableImage img, AffineTransform xform) {
         NObjectElementBuilder ob = op("renderableImage");
-        ob.add("at", DumpFormat.matrix(xform));
-        ob.add("width", NElement.of(DumpFormat.num(img.getWidth())));
-        ob.add("height", NElement.of(DumpFormat.num(img.getHeight())));
+        ob.add("at", PaintStreamFormat.matrix(xform));
+        ob.add("width", NElement.of(PaintStreamFormat.num(img.getWidth())));
+        ob.add("height", NElement.of(PaintStreamFormat.num(img.getHeight())));
         recorder.record(ob.build());
         d.drawRenderableImage(img, xform);
     }
@@ -686,7 +730,7 @@ public class RecordingGraphics2D extends Graphics2D {
 
     @Override
     public Graphics create() {
-        DumpRecorder child = recorder.branch();
+        PaintStreamRecorder child = recorder.branch();
         return new RecordingGraphics2D((Graphics2D) d.create(), child, canvasWidth, canvasHeight, true, sink);
     }
 
