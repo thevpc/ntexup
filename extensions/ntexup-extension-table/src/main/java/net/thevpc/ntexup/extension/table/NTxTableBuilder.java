@@ -101,8 +101,6 @@ public class NTxTableBuilder implements NTxNodeBuilder {
         // rendered box stays compact inside grid/column cells.
         TableMeasure m = measure(rendererContext, node, td, cols);
         double pad = m.pad;
-        double contentWidth = m.tableWidth - 2 * pad;
-        double contentHeight = m.tableHeight - 2 * pad;
 
         // Materialize rows and cells as real child nodes so that structural
         // selectors (table-row / table-cell / table-column / table-header /
@@ -180,11 +178,20 @@ public class NTxTableBuilder implements NTxNodeBuilder {
         // Draw grid if enabled
         if (rendererContext.requireDrawGrid()) {
             rendererContext.applyGridColor(true);
+            // lines span the cells actually painted, padding included
+            double gridWidth = 0;
+            for (int i = 0; i < cols; i++) {
+                gridWidth += colWidths[i];
+            }
+            double gridHeight = 0;
+            for (int i = 0; i < rows; i++) {
+                gridHeight += rowHeights[i];
+            }
             // Vertical lines
             double x = rendererContext.selfBounds2D().minX();
             for (int i = 0; i <= cols; i++) {
                 g.drawLine(x, rendererContext.selfBounds2D().minY(),
-                        x, rendererContext.selfBounds2D().minY() + contentHeight);
+                        x, rendererContext.selfBounds2D().minY() + gridHeight);
                 if (i < cols) {
                     x += colWidths[i];
                 }
@@ -194,7 +201,7 @@ public class NTxTableBuilder implements NTxNodeBuilder {
             for (int i = 0; i <= rows; i++) {
                 g.drawLine(
                         rendererContext.selfBounds2D().minX(), y,
-                        rendererContext.selfBounds2D().minX() + contentWidth, y
+                        rendererContext.selfBounds2D().minX() + gridWidth, y
                 );
                 if (i < rows) {
                     y += rowHeights[i];
@@ -340,67 +347,94 @@ public class NTxTableBuilder implements NTxNodeBuilder {
         if (padding != null) {
             pad = padding.getLeft(); // use left as representative
         }
-        NTxGraphics g = ctx.graphics().copy();
-        try {
-            double baseFont = ctx.getFontSize();
-            ctx.applyFont();
-            FontMetrics fmBig = g.getFontMetrics();
-            double lineH0 = Math.max(fmBig.getAscent() + fmBig.getDescent(), 1);
-            double useFont = Math.max(6, Math.min(baseFont, lineH0 * 0.55));
-            FontMetrics fmSmall = g.getFontMetrics(fmBig.getFont().deriveFont((float) useFont));
-            double lineH = Math.max(fmSmall.getAscent() + fmSmall.getDescent(), 1);
-            double[] colWidths = new double[cols];
-            for (int r = 0; r < rows; r++) {
-                List<String> rowData = data.get(r);
-                for (int c = 0; c < cols; c++) {
-                    String text = c < rowData.size() ? rowData.get(c) : "";
-                    if (!text.isEmpty()) {
-                        double w = fmSmall.stringWidth(text);
-                        if (w > colWidths[c]) {
-                            colWidths[c] = w;
+        // Measure the cells as they are painted: through the materialized cell
+        // nodes, so each text gets its own cascaded font (table-cell /
+        // table-header / table-column rules, px or %P), and with ${...}
+        // interpolated, since a template is usually far longer than its value.
+        List<NTxNode> rowNodes = materializeTable(ctx, node, data, td.sections, cols);
+        NTxBounds2D probe = NTxBounds2D.ofWidth(0, 0, 1, 1);
+        ctx.applyFont();
+        FontMetrics fmBase = ctx.graphics().getFontMetrics();
+        double baseLineH = Math.max(fmBase.getAscent() + fmBase.getDescent(), 1);
+        double[] colWidths = new double[cols];
+        double[] rowHeights = new double[rows];
+        for (int r = 0; r < rows; r++) {
+            double lineH = 0;
+            NTxNode rowNode = r < rowNodes.size() ? rowNodes.get(r) : null;
+            if (rowNode != null) {
+                NTxRendererContext rowCtx = ctx.resolveNode(rowNode, probe);
+                for (NTxNode cellNode : rowNode.children()) {
+                    int c = NTxValue.ofProp(cellNode, NTxPropName.COL_INDEX).asInt().orElse(1) - 1;
+                    if (c < 0 || c >= cols) {
+                        continue;
+                    }
+                    NTxRendererContext cellCtx = rowCtx.resolveNode(cellNode, probe);
+                    // The content is a text node, so a slide-level `text`
+                    // font rule would match it directly and beat the size it
+                    // inherits from table-cell / table-header / table-column.
+                    // Pin the cell's own resolved size (px or %P of the page).
+                    double cellFont = cellCtx.getFontSize();
+                    for (NTxNode content : cellNode.children()) {
+                        if (cellFont > 0) {
+                            content.setProperty(NTxProp.ofObject(NTxPropName.FONT_SIZE, NElement.ofDouble(cellFont, "px")));
                         }
+                        NTxRendererContext contentCtx = cellCtx.resolveNode(content, probe);
+                        contentCtx.applyFont();
+                        FontMetrics fm = contentCtx.graphics().getFontMetrics();
+                        String text = cellText(contentCtx, content);
+                        if (!text.isEmpty()) {
+                            // +1px: the text renderer wraps a line measured to the exact pixel
+                            colWidths[c] = Math.max(colWidths[c], Math.ceil(fm.getStringBounds(text, null).getWidth()) + 1);
+                        }
+                        lineH = Math.max(lineH, fm.getAscent() + fm.getDescent());
                     }
                 }
             }
-            double rowHeight = lineH + 2 * pad;
-            double tableWidth = 0;
-            for (int c = 0; c < cols; c++) {
-                colWidths[c] = colWidths[c] + 2 * pad;
-                tableWidth += colWidths[c];
-            }
-            double tableHeight = rows * rowHeight;
-            TableMeasure m = new TableMeasure();
-            m.colWidths = colWidths;
-            m.rowHeights = new double[rows];
-            Arrays.fill(m.rowHeights, rowHeight);
-            m.rowHeight = rowHeight;
-            m.pad = pad;
-            m.cellFont = useFont;
-            m.tableWidth = tableWidth;
-            m.tableHeight = tableHeight;
-            return m;
-        } finally {
-            g.dispose();
+            rowHeights[r] = (lineH > 0 ? lineH : baseLineH) + 2 * pad;
+        }
+        double tableWidth = 0;
+        for (int c = 0; c < cols; c++) {
+            colWidths[c] = colWidths[c] + 2 * pad;
+            tableWidth += colWidths[c];
+        }
+        double tableHeight = 0;
+        for (double rh : rowHeights) {
+            tableHeight += rh;
+        }
+        TableMeasure m = new TableMeasure();
+        m.colWidths = colWidths;
+        m.rowHeights = rowHeights;
+        m.pad = pad;
+        m.tableWidth = tableWidth;
+        m.tableHeight = tableHeight;
+        return m;
+    }
+
+    /** The text a cell content node paints: its value with ${...} interpolated. */
+    private static String cellText(NTxRendererContext ctx, NTxNode content) {
+        String text = NTxValue.ofProp(content, NTxPropName.VALUE).asString().orElse("");
+        if (text.indexOf('$') < 0) {
+            return text;
+        }
+        try {
+            return ctx.evalExpression(NElement.ofString(text)).flatMap(NElement::asStringValue).orElse(text);
+        } catch (RuntimeException e) {
+            return text;
         }
     }
 
     /**
      * Renders one cell content node through the generic pipeline, laid out in
-     * a box centered inside the cell. The font size is clamped so the text
-     * always fits the row height (a plain table inherits the slide body font,
-     * which is far too large for table cells), and horizontal/vertical
-     * centering is computed from the real font metrics.
+     * a box centered inside the cell. The text keeps its cascaded font (px or
+     * %P): measure() sized the rows and columns with that same font, so it
+     * fits without clamping. Centering uses the interpolated text, the one
+     * actually painted.
      */
     private void renderContentChild(NTxRendererContext cellCtx, NTxNode contentChild, NTxBounds2D innerRect) {
-        double baseFont = cellCtx.getFontSize();
-        double useFont = Math.max(6, Math.min(baseFont, innerRect.widthY() * 0.55));
-        // Explicit px font size -> magnitude 0, wins the cascade and is used
-        // both for measuring and painting, so the drawn text matches the box.
-        contentChild.setProperty(NTxProp.ofObject(NTxPropName.FONT_SIZE, NElement.ofLong(Math.round(useFont), "px")));
         NTxRendererContext contentCtx = cellCtx.resolveNode(contentChild, innerRect);
         contentCtx.applyFont();
         NTxGraphics cg = contentCtx.graphics();
-        String text = NTxValue.ofProp(contentChild, NTxPropName.VALUE).asString().orElse("");
+        String text = cellText(contentCtx, contentChild);
         FontMetrics fm = cg.getFontMetrics();
         double th = fm.getAscent() + fm.getDescent();
         double tw = 0;
@@ -588,9 +622,7 @@ public class NTxTableBuilder implements NTxNodeBuilder {
     private static class TableMeasure {
         double[] colWidths;
         double[] rowHeights;
-        double rowHeight;
         double pad;
-        double cellFont;
         double tableWidth;
         double tableHeight;
     }
