@@ -59,7 +59,6 @@ Top-level directory (`ntexup/`):
 | `extensions/` | Java plugins (`ntexup-extension-*`) loaded at runtime via `import()`. |
 | `renderers/` | Output renderers: PDF, Image (PNG), HTML, Screen, Web. |
 | `tutorials/` | Minimal runnable extension tutorial. |
-| `companions/` | Standalone apps (scoreboard) not bundled as engine extensions. |
 | `test/` | `ntexup-examples` (sample decks + `main()` render programs) and `ntexup-test` (programmatic test programs, e.g. `TestStyleSystem`). |
 | `app/` | Thin launcher apps (Nuts entry points) + experimental web viewer. |
 | `documentation/` | This guide, the user guide (`user-guide/`), agent skills (`agents/`), specs (`specifications/`). |
@@ -172,9 +171,14 @@ Renderers are a thin layer: **all drawing happens into AWT `Graphics2D`** (via `
 
 The **minimal extension reference** – exactly one `NTxNodeBuilder` (`my-shape`), one SPI file, one `pom.xml`. Copy this to start a new extension.
 
-### 3.9 `companions/nscoreboard`
+### 3.9 `extensions/ntexup-extension-scoreboard`
 
-A standalone Swing app ("scoreboard"). Not an ntexup extension; it models panels that are *planned* to be embedded as an ntexup component (animation support is TODO). The runtime-level equivalent of what it will become lives in `ntexup-extension-presenters` (`ScoreBoardBuilder`).
+Animated, customizable scoreboard / leaderboard component (`scoreboard` node type).
+Scores can be declared inline as TSON objects, positional rows or a name→score map, as
+inline CSV, or loaded from an external TSON/JSON/YAML/CSV file. The renderer animates
+score count-up and live rank reordering, and emits a clean final frame for PDF/image
+export. See the extension README and the *Scoreboard Extension* slide in
+`../ntexup-doc-slides/`.
 
 ### 3.10 `test/ntexup-examples`
 

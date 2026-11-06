@@ -23,7 +23,7 @@ Authoritative references (read before/while working):
 
 ## 1. Orientation (30 seconds)
 
-Modules: `core/ntexup-api` (interfaces/SPI — **extensions depend ONLY on this**), `core/ntexup-engine` (the implementation), `core/ntexup-engine-full` (thin aggregator pulling engine + geometry libs), `core/ntexup-desktop` (CLI parsing + Swing authoring GUI), `lib/ntexup-lib-geometry2d|3d` (shared common libs), `extensions/ntexup-extension-*` (plugins), `renderers/ntexup-renderer-*` (PDF/image/HTML/screen/web), `tutorials/` (minimal extension), `test/ntexup-examples` (sample decks + `main()` render programs) and `test/ntexup-test` (programmatic test programs), `app/` (launchers), `companions/` (standalone apps).
+Modules: `core/ntexup-api` (interfaces/SPI — **extensions depend ONLY on this**), `core/ntexup-engine` (the implementation), `core/ntexup-engine-full` (thin aggregator pulling engine + geometry libs), `core/ntexup-desktop` (CLI parsing + Swing authoring GUI), `lib/ntexup-lib-geometry2d|3d` (shared common libs), `extensions/ntexup-extension-*` (plugins), `renderers/ntexup-renderer-*` (PDF/image/HTML/screen/web), `tutorials/` (minimal extension), `test/ntexup-examples` (sample decks + `main()` render programs) and `test/ntexup-test` (programmatic test programs), `app/` (launchers).
 
 Pipeline (three stages):
 ```

@@ -98,8 +98,8 @@
         <module>extensions/ntexup-extension-progress</module>
         <module>extensions/ntexup-extension-stdlib</module>
         <module>extensions/ntexup-extension-table</module>
+        <module>extensions/ntexup-extension-scoreboard</module>
         <module>tutorials/ntexup-extension-tutorial-myshape</module>
-        <module>companions/nscoreboard</module>
         <module>renderers/ntexup-renderer-pdf</module>
         <module>renderers/ntexup-renderer-image</module>
         <module>renderers/ntexup-renderer-dump</module>
