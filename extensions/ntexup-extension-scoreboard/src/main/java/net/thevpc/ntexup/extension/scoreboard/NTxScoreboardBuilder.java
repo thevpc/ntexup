@@ -71,7 +71,7 @@ public class NTxScoreboardBuilder implements NTxNodeBuilder {
                             "max", "max-score", "maximum",
                             "gap", "row-gap", "radius", "corner-radius", "row-radius",
                             "limit", "top", "max-rows",
-                            "sort", "sorted", "pulse", "glow",
+                            "sort", "sorted", "pulse", "glow", "pulse-duration", "glow-duration",
                             "score-format", "number-format", "format-score",
                             "unit", "suffix", "font", "font-name"
                     )

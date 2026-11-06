@@ -117,7 +117,8 @@ The path is resolved relative to the deck file. TSON files may also carry
 | `radius` | `0.34` | Row corner radius as a fraction of row height |
 | `score-format` | `0.##` | `DecimalFormat` pattern |
 | `unit` | – | Appended to the score when `show-unit` is on |
-| `pulse` | `false` | Gently pulse the leader row |
+| `pulse` | `false` | Gently pulse the leader row for a short celebration |
+| `pulse-duration` | `2.5` | Seconds the leader pulse lasts after the reveal |
 
 Common ntexup properties (`at`, `size`, `background-color`, `color`,
 `font-family`, `draw-contour`, ...) work as usual.

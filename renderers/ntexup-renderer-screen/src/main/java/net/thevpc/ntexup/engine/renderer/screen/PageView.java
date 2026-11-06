@@ -31,10 +31,17 @@ public class PageView extends JComponent {
     private static final int DEFAULT_RENDER_WIDTH = 1024;
     private static final int FRAME_PERIOD_MS = 40;
     private static final int MIN_TIMER_PERIOD_MS = 5;
+    /**
+     * Number of empty frame ticks tolerated before the driver idles. A short
+     * grace window prevents losing a requestFrame() issued by an in-flight
+     * render (the "animation freezes on the first frame" race).
+     */
+    private static final int MAX_IDLE_FRAME_TICKS = 25;
     private final NTxCompiledPage page;
     private volatile long pageStartTime;
     private volatile boolean showing;
     private volatile boolean frameRequested;
+    private volatile int idleFrameTicks;
     private javax.swing.Timer frameTimer;
     private final NtxPageLifecycle lifecycle = new Lifecycle();
     // Page-owned animation timers, grouped by period so ticks that share a speed
@@ -141,6 +148,7 @@ public class PageView extends JComponent {
         boolean wasShowing = showing;
         showing = false;
         frameRequested = false;
+        idleFrameTicks = 0;
         stopFrameTimer();
         stopAndClearTimers();
         synchronized (renderLock) {
@@ -174,6 +182,7 @@ public class PageView extends JComponent {
         boolean wasShowing = showing;
         showing = false;
         frameRequested = false;
+        idleFrameTicks = 0;
         stopFrameTimer();
         applyTimerState();
         if (wasShowing) {
@@ -234,6 +243,7 @@ public class PageView extends JComponent {
         @Override
         public void requestFrame() {
             frameRequested = true;
+            idleFrameTicks = 0;
             if (SwingUtilities.isEventDispatchThread()) {
                 ensureFrameTimer();
             } else {
@@ -262,14 +272,24 @@ public class PageView extends JComponent {
 
     private void tickFrame() {
         if (discarded || !showing) {
+            idleFrameTicks = 0;
             stopFrameTimer();
             return;
         }
         if (frameRequested) {
             frameRequested = false;
+            idleFrameTicks = 0;
             forceRender();
-        } else {
-            // nothing wants to animate right now: idle until asked again
+        } else if (renderPending) {
+            // A render is still in flight. It may be about to call
+            // requestFrame() for the next animation frame; stopping the timer
+            // in this narrow window loses that request and freezes animations.
+            idleFrameTicks = 0;
+        } else if (++idleFrameTicks >= MAX_IDLE_FRAME_TICKS) {
+            // A component may have just finished a render and be about to ask
+            // for the next frame. Keep the driver alive for a short grace
+            // period before idling, so requestFrame() alone is reliable.
+            idleFrameTicks = 0;
             stopFrameTimer();
         }
     }

@@ -78,6 +78,7 @@ public final class ScoreboardStyle {
     public boolean pulse;
     public double duration = 2.6;
     public double stagger = 0.07;
+    public double pulseDuration = 2.5;
     public double max = -1;
     public double gapRatio = 0.16;
     public double cornerRatio = 0.34;
@@ -101,6 +102,7 @@ public final class ScoreboardStyle {
         s.pulse = firstBool(node, false, "pulse", "glow");
         s.duration = firstDouble(node, "duration", "animation-duration", "reveal-duration").orElse(2.6);
         s.stagger = firstDouble(node, "stagger", "row-stagger", "delay").orElse(0.07);
+        s.pulseDuration = firstDouble(node, "pulse-duration", "glow-duration").orElse(2.5);
         s.max = firstDouble(node, "max", "max-score", "maximum").orElse(-1.0);
         s.gapRatio = firstDouble(node, "gap", "row-gap").orElse(0.16);
         s.cornerRatio = firstDouble(node, "radius", "corner-radius", "row-radius").orElse(0.34);
@@ -110,6 +112,9 @@ public final class ScoreboardStyle {
         }
         if (s.stagger < 0) {
             s.stagger = 0;
+        }
+        if (s.pulseDuration < 0) {
+            s.pulseDuration = 0;
         }
         if (s.gapRatio < 0) {
             s.gapRatio = 0;

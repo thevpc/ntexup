@@ -96,7 +96,12 @@ public final class ScoreboardRenderer {
         // when sorting is disabled). This is what makes the badges swap live.
         int[] rankNow = style.sort ? ranks(entries, shown) : identityRanks(n);
 
-        boolean wantsFrame = animate && (elapsed < animationEnd || style.pulse);
+        // A pulse is a short celebration, not an endless animation: after the
+        // reveal + pulse window the page must become idle so the viewer's frame
+        // driver can stop and the UI stays responsive.
+        double animEnd = animationEnd + (style.pulse ? style.pulseDuration : 0);
+        boolean wantsFrame = animate && elapsed < animEnd;
+        boolean pulseActive = style.pulse && (!animate || elapsed < animEnd);
         for (int i = 0; i < n; i++) {
             double entrance = animate
                     ? easeOutCubic(clamp01((elapsed - i * style.stagger) / 0.55))
@@ -106,11 +111,14 @@ public final class ScoreboardRenderer {
             }
             double y = rowsTop + positions[i] * rowH + gap * 0.5;
             drawRow(ctx, cardX, y, cardW, cardH, entries.get(i), rankNow[i],
-                    shown[i], axisMax, entrance, finished, style, animate, elapsed);
+                    shown[i], axisMax, entrance, finished, style, animate, elapsed, pulseActive);
         }
 
-        if (wantsFrame) {
-            ctx.requestAnimationFrame(true);
+        if (wantsFrame && ctx.isAnimate() && ctx.isPageShowing()) {
+            // requestFrame is the portable contract: the page owns the frame
+            // driver, and the component only asks for the next frame while its
+            // animation is still running.
+            ctx.requestFrame();
         }
     }
 
@@ -380,7 +388,8 @@ public final class ScoreboardRenderer {
 
     private void drawRow(NTxRendererContext ctx, double cardX, double cardY, double cardW, double cardH,
                          ScoreEntry entry, int rank, double shown, double axisMax, double alpha,
-                         boolean finished, ScoreboardStyle style, boolean animate, double elapsed) {
+                         boolean finished, ScoreboardStyle style, boolean animate, double elapsed,
+                         boolean pulseActive) {
         if (cardH <= 1 || cardW <= 1) {
             return;
         }
@@ -421,7 +430,7 @@ public final class ScoreboardRenderer {
                 Shape bar = new RoundRectangle2D.Double(x, y, barW, h, radius, radius);
 
                 // A subtle glow under the leader makes the ranking readable at a glance.
-                if (rank == 0 && style.pulse) {
+                if (rank == 0 && pulseActive) {
                     double pulse = 0.5 + 0.5 * Math.sin((animate ? elapsed : 1.3) * 3.0);
                     g.setColor(ScoreboardStyle.withAlpha(barTop, (int) (26 + 30 * pulse)));
                     g.fillRoundRect(x - h * 0.06, y - h * 0.06, barW + h * 0.12, h * 1.12,
@@ -657,4 +666,5 @@ public final class ScoreboardRenderer {
         double[] positions;
         double lastElapsed = -1;
     }
+
 }
