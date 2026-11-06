@@ -1,4 +1,4 @@
-package net.thevpc.ntexup.engine.renderer.htmlstatic;
+package net.thevpc.ntexup.lib.paintstream;
 
 import net.thevpc.nuts.elem.NArrayElementBuilder;
 import net.thevpc.nuts.elem.NElement;
@@ -11,7 +11,11 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Compresses the baked frames of one page into what gets shipped.
+ * Compresses the recorded frames of one page into what gets shipped.
+ * <p>
+ * This is the paint-stream wire format, not an html concern: a browser player
+ * and a java one have to agree on it byte for byte, so it lives beside the
+ * recorder that produces the operations rather than beside either viewer.
  * <p>
  * Two effects dominate the payload of an animated page. The same primitives
  * recur almost unchanged from frame to frame — a flow of dots repaints three
@@ -32,9 +36,9 @@ import java.util.Map;
  * transcription of {@link #encodeValue}, and {@link #decode(NElement)} performs
  * the same walk in java to prove the round trip is lossless.
  */
-class HtmlStaticCodec {
+public class PaintStreamCodec {
 
-    static final int FORMAT_VERSION = 1;
+    public static final int FORMAT_VERSION = 1;
     /**
      * Values that encode to less than this stay inline: interning a two digit
      * number costs more than it saves.
@@ -45,24 +49,30 @@ class HtmlStaticCodec {
      */
     private static final double FULL_FRAME_RATIO = 0.55;
 
+    /**
+     * One sampled animation frame: when it was painted and what was painted.
+     */
+    public record Frame(long millis, List<NElement> ops) {
+    }
+
     private final boolean interning;
     private final Map<String, Integer> defIds = new LinkedHashMap<>();
     private final List<NElement> defValues = new ArrayList<>();
 
-    HtmlStaticCodec() {
+    public PaintStreamCodec() {
         this(true);
     }
 
-    HtmlStaticCodec(boolean interning) {
+    public PaintStreamCodec(boolean interning) {
         this.interning = interning;
     }
 
     /**
      * Builds {@code {defs:[...],frames:[{t,ops}|{t,patch,len},...]}}.
      */
-    NElement encodePage(List<HtmlStaticBaker.Frame> frames) {
+    public NElement encodePage(List<Frame> frames) {
         List<List<NElement>> encoded = new ArrayList<>();
-        for (HtmlStaticBaker.Frame frame : frames) {
+        for (Frame frame : frames) {
             List<NElement> slots = new ArrayList<>();
             for (NElement op : frame.ops()) {
                 slots.add(encodeValue(op));
@@ -208,10 +218,9 @@ class HtmlStaticCodec {
      * Rebuilds the operation list of every frame from a shipped page, resolving
      * defs references and applying patches: the walk the player performs.
      *
-     * @param page       the shipped page element, read back from disk
-     * @param definitions the defs of that page, already parsed
+     * @param page the shipped page element, read back from disk
      */
-    static List<List<NElement>> decode(NElement page) {
+    public static List<List<NElement>> decode(NElement page) {
         List<NElement> defs = new ArrayList<>();
         NElement defsElement = field(page, "defs");
         if (defsElement != null && defsElement.asArray().isPresent()) {
@@ -219,7 +228,7 @@ class HtmlStaticCodec {
                 defs.add(d);
             }
         }
-        HtmlStaticCodec codec = new HtmlStaticCodec();
+        PaintStreamCodec codec = new PaintStreamCodec();
         codec.defValues.addAll(defs);
         List<List<NElement>> frames = new ArrayList<>();
         NElement framesElement = field(page, "frames");
@@ -304,7 +313,7 @@ class HtmlStaticCodec {
      * Inverts the {@code k} header encoding so a decoded operation can be
      * compared, element for element, with what the recorder produced.
      */
-    static NElement toRecorderForm(NElement jsonValue) {
+    public static NElement toRecorderForm(NElement jsonValue) {
         if (jsonValue.asObject().isPresent()) {
             String header = null;
             List<NPairElement> pairs = new ArrayList<>(jsonValue.asObject().get().pairs());

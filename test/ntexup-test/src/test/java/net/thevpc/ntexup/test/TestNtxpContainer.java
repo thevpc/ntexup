@@ -34,11 +34,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Pins the contract of the {@code .ntxp} container: what a player must find
- * before it unpacks anything, that the bundle inside is the html-folder layout
- * unchanged, and that the descriptor cannot disagree with the manifest beside it.
- * The knob-forwarding case exists because that is the one thing this renderer
- * does by hand: the bundle is baked by the html-static renderer, so a property
- * left out of the forwarding list is silently ignored.
+ * before it unpacks anything, that the archive carries the page paint streams and
+ * nothing that needs a browser, and that the descriptor cannot disagree with the
+ * manifest beside it. The knob-forwarding case exists because that is the one thing
+ * this renderer does by hand: the bundle is baked by the html-static renderer, so a
+ * property left out of the forwarding list is silently ignored.
  */
 public class TestNtxpContainer {
 
@@ -62,18 +62,20 @@ public class TestNtxpContainer {
     }
 
     @Test
-    public void containerShipsTheBundleFlatAtTheArchiveRoot() throws IOException {
+    public void containerShipsThePaintStreamsFlatAtTheArchiveRoot() throws IOException {
         Map<String, byte[]> entries = entriesOf(container(r -> {
         }));
         assertEquals(new TreeSet<>(List.of(
                         "META-INF/ntexup.json",
-                        "index.html",
                         "manifest.json",
-                        "ntexup-player.js",
                         "pages/page-001.json",
                         "pages/page-002.json")),
                 new TreeSet<>(entries.keySet()),
-                "the bundle must sit at the root, not under the archive's own folder name");
+                "the paint streams must sit at the root, not under the archive's own folder name");
+        for (String name : entries.keySet()) {
+            assertFalse(name.endsWith(".html") || name.endsWith(".js"),
+                    "a container is replay data, not a web page: " + name + " belongs to html-folder");
+        }
     }
 
     @Test
@@ -84,11 +86,10 @@ public class TestNtxpContainer {
         assertEquals(1, longField(d, "format"), "the archive layout version a player guards on");
         assertEquals("playback", stringField(d, "kind"));
         assertFalse(booleanField(d, "source"), "no .ntx travels inside: a player replays, it does not compile");
-        for (String key : List.of("entry", "manifest", "player")) {
-            String name = stringField(d, key);
-            assertNotNull(name, "the descriptor must name its " + key);
-            assertTrue(entries.containsKey(name), key + " points at " + name + ", which is not in the archive");
-        }
+        String manifest = stringField(d, "manifest");
+        assertNotNull(manifest, "the descriptor must name its manifest");
+        assertTrue(entries.containsKey(manifest),
+                "manifest points at " + manifest + ", which is not in the archive");
     }
 
     @Test
@@ -113,16 +114,15 @@ public class TestNtxpContainer {
     public void htmlStaticKnobsReachTheBundleInsideTheContainer() throws IOException {
         Map<String, byte[]> frozen = entriesOf(container(r -> {
             r.setProperty(HtmlStaticDocumentRenderer.PROP_ANIMATE, Boolean.FALSE);
-            r.setProperty(HtmlStaticDocumentRenderer.PROP_MINIFY, Boolean.FALSE);
+            r.setProperty(HtmlStaticDocumentRenderer.PROP_PRETTY, Boolean.TRUE);
         }));
         NElement manifest = json(frozen.get("manifest.json"));
         assertFalse(booleanField(manifest, "animated"), "animate=false must reach the baker");
         for (NElement page : listOf(field(manifest, "pages"))) {
             assertEquals(1, longField(page, "frames"), "a frozen page ships one frame");
         }
-        String player = new String(frozen.get("ntexup-player.js"), StandardCharsets.UTF_8);
-        assertTrue(player.contains("Format contract"),
-                "minify=false must reach the shipped player");
+        assertTrue(new String(frozen.get("manifest.json"), StandardCharsets.UTF_8).contains("\n"),
+                "pretty=true must reach the json writer");
     }
 
     @Test

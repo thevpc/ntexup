@@ -15,23 +15,25 @@ import net.thevpc.ntexup.api.renderer.NTxDocumentStreamRendererConfig;
 import net.thevpc.ntexup.api.renderer.NTxDocumentView;
 import net.thevpc.ntexup.api.source.NTxSource;
 import net.thevpc.ntexup.engine.renderer.htmlstatic.HtmlStaticDocumentRenderer;
-import net.thevpc.ntexup.engine.renderer.htmlstatic.HtmlStaticJson;
+import net.thevpc.ntexup.lib.paintstream.PaintStreamJson;
 
 import java.io.IOException;
 import java.io.OutputStream;
 
 /**
  * Exports a document as an {@code .ntxp} container: one zip that carries the
- * html-static bundle unchanged, plus a {@value #DESCRIPTOR} entry that says what
+ * paint streams of every page, plus a {@value #DESCRIPTOR} entry that says what
  * the archive is before any of it has to be unpacked.
  * <p>
  * The container is data, not a program. Everything that makes a page — geometry,
- * timing, the player that replays it — comes from
- * {@link HtmlStaticDocumentRenderer#writeBundle} and keeps its exact layout, so a
- * swing player, a js loader and {@code ntexup-generate html-folder} all read the
- * same files. What the descriptor adds is the part no bundle states: that this
- * archive is an ntexup container, which format it is, where its entry point sits
- * and how many pages it holds.
+ * timing and the image assets — comes from
+ * {@link HtmlStaticDocumentRenderer#writeDataBundle} and keeps its exact layout,
+ * so a swing player, a js loader and {@code ntexup-generate html-folder} all read
+ * the same files. What it does not carry is a viewer: an html page and a
+ * javascript player would be dead weight in an archive whose whole point is being
+ * opened by something that already knows how to paint. What the descriptor adds is
+ * the part no bundle states: that this archive is an ntexup container, which format
+ * it is and how many pages it holds.
  * <p>
  * Replay only: no {@code .ntx} source travels inside, so a player gets the paint
  * streams and nothing to recompile. That is what lets the java side stay simple
@@ -50,7 +52,6 @@ public class NtxpDocumentRenderer extends NTxDocumentStreamRendererBase implemen
      * container rather than some other archive.
      */
     public static final String DESCRIPTOR = "META-INF/ntexup.json";
-    public static final String ENTRY_POINT = "index.html";
     public static final String MANIFEST = "manifest.json";
     /**
      * Nothing in the container is recompiled, so a player never needs a java
@@ -71,7 +72,6 @@ public class NtxpDocumentRenderer extends NTxDocumentStreamRendererBase implemen
             HtmlStaticDocumentRenderer.PROP_DEFS,
             HtmlStaticDocumentRenderer.PROP_SELFCHECK,
             HtmlStaticDocumentRenderer.PROP_PRETTY,
-            HtmlStaticDocumentRenderer.PROP_MINIFY,
     };
 
     private final NTxDocumentRendererContext rendererContext = new NTxDocumentRendererContextImpl();
@@ -106,8 +106,8 @@ public class NtxpDocumentRenderer extends NTxDocumentStreamRendererBase implemen
     }
 
     /**
-     * The container bytes: bundle in a folder, descriptor beside it, archive
-     * flattened so those files sit at the root.
+     * The container bytes: paint streams in a folder, descriptor beside them,
+     * archive flattened so those files sit at the root.
      * <p>
      * The archive is built in a temp file and returned as bytes because
      * {@link NCompress} refuses a plain {@code OutputStream} and an output name
@@ -118,7 +118,7 @@ public class NtxpDocumentRenderer extends NTxDocumentStreamRendererBase implemen
         NPath folder = NPath.ofTempFolder();
         NPath zip = NPath.ofTempFolder().resolveSibling("container.zip");
         try {
-            NElement manifest = bundleRenderer().writeBundle(document, folder);
+            NElement manifest = bundleRenderer().writeDataBundle(document, folder);
             folder.resolve(DESCRIPTOR).mkParentDirs().writeBytes(descriptor(manifest, document));
             NCompress.of().source(folder).skipRoot(true).to(zip).run();
             return zip.readBytes();
@@ -139,9 +139,7 @@ public class NtxpDocumentRenderer extends NTxDocumentStreamRendererBase implemen
         d.add("source", NElement.of(false));
         d.add("generator", NElement.of("ntexup-renderer-ntxp"));
         d.add("paintStreamFormat", valueOf(manifest, "format"));
-        d.add("entry", NElement.of(ENTRY_POINT));
         d.add("manifest", NElement.of(MANIFEST));
-        d.add("player", NElement.of("ntexup-player.js"));
         d.add("pages", NElement.of(pageCount(manifest)));
         d.add("width", valueOf(manifest, "width"));
         d.add("height", valueOf(manifest, "height"));
@@ -151,7 +149,7 @@ public class NtxpDocumentRenderer extends NTxDocumentStreamRendererBase implemen
         origin.add("title", NElement.of(document.title()));
         origin.add("name", NElement.of(documentName(document)));
         d.add("document", origin.build());
-        return HtmlStaticJson.write(d.build(), true);
+        return PaintStreamJson.write(d.build(), true);
     }
 
     private static NElement valueOf(NElement manifest, String name) {
@@ -188,8 +186,6 @@ public class NtxpDocumentRenderer extends NTxDocumentStreamRendererBase implemen
                 renderer.setProperty(name, value);
             }
         }
-        //a container unpacks into a folder, so the split layout is the one that fits
-        renderer.setProperty(HtmlStaticDocumentRenderer.PROP_STANDALONE, Boolean.FALSE);
         return renderer;
     }
 

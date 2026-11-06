@@ -250,6 +250,14 @@ public class PaintStreamFormat {
             addIf(ob, "cycle", String.valueOf(lp.getCycleMethod()));
             return ob.build();
         }
+        if (p instanceof LinearGradientPaint lgp) {
+            NObjectElementBuilder ob = op("linearGradient");
+            ob.add("start", pointArray(lgp.getStartPoint().getX(), lgp.getStartPoint().getY()));
+            ob.add("end", pointArray(lgp.getEndPoint().getX(), lgp.getEndPoint().getY()));
+            ob.add("stops", gradientStops(lgp.getFractions(), lgp.getColors()));
+            addIf(ob, "cycle", String.valueOf(lgp.getCycleMethod()));
+            return ob.build();
+        }
         if (p instanceof GradientPaint gp) {
             NObjectElementBuilder ob = op("linearGradient");
             ob.add("start", pointArray(gp.getPoint1().getX(), gp.getPoint1().getY()));

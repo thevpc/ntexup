@@ -19,7 +19,10 @@ import net.thevpc.ntexup.api.renderer.NTxDocumentStreamRendererBase;
 import net.thevpc.ntexup.api.renderer.NTxDocumentStreamRendererConfig;
 import net.thevpc.ntexup.api.renderer.NTxDocumentView;
 import net.thevpc.ntexup.api.renderer.NTxPageOrientation;
+import net.thevpc.ntexup.lib.paintstream.PaintStreamCodec;
+import net.thevpc.ntexup.lib.paintstream.PaintStreamCodec.Frame;
 import net.thevpc.ntexup.lib.paintstream.PaintStreamImageAssets;
+import net.thevpc.ntexup.lib.paintstream.PaintStreamJson;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -55,6 +58,9 @@ import java.util.Map;
  *   ntexup-player.js       the bundled player, copied so data and player cannot drift
  *   index.html             standalone viewer
  * </pre>
+ * The first three are the data half, written by {@link #writeDataBundle}, and are
+ * all an {@code .ntxp} container ships: the last two only exist because a browser
+ * needs a document to open.
  */
 public class HtmlStaticDocumentRenderer extends NTxDocumentStreamRendererBase implements NTxDocumentStreamRenderer {
 
@@ -192,6 +198,36 @@ public class HtmlStaticDocumentRenderer extends NTxDocumentStreamRendererBase im
      * Writes the whole bundle into {@code folder} and returns the manifest.
      */
     public NElement writeBundle(NTxCompiledDocument document, NPath folder) {
+        if (booleanProperty(PROP_STANDALONE, false)) {
+            //one html file carries the paint streams inline: no sibling files to write
+            NElement manifest = bake(document, folder, true);
+            folder.resolve("index.html").writeString(standaloneHtml(manifest), StandardCharsets.UTF_8);
+            return manifest;
+        }
+        NElement manifest = writeDataBundle(document, folder);
+        copyPlayer(folder);
+        folder.resolve("index.html").writeString(indexHtml(), StandardCharsets.UTF_8);
+        return manifest;
+    }
+
+    /**
+     * The data half on its own: {@code manifest.json}, {@code pages/*.json} and
+     * {@code assets/img}. No html and no javascript, because a viewer is the one
+     * thing a player that already knows how to paint does not need.
+     */
+    public NElement writeDataBundle(NTxCompiledDocument document, NPath folder) {
+        NElement manifest = bake(document, folder, false);
+        folder.resolve("manifest.json").writeBytes(toJson(manifest));
+        return manifest;
+    }
+
+    /**
+     * Bake every page and lay the result out in {@code folder}. When
+     * {@code inline}, nothing is written beside the manifest: each page payload
+     * and every png is attached to the manifest instead, so one json can carry the
+     * whole deck into a single html file.
+     */
+    private NElement bake(NTxCompiledDocument document, NPath folder, boolean inline) {
         NTxDocumentStreamRendererConfig rt = engine.tools().validateDocumentStreamRendererConfig(config);
         int[] points = resolvePageSize(rt);
         int pixelWidth = resolveWidth(points[0]);
@@ -206,8 +242,7 @@ public class HtmlStaticDocumentRenderer extends NTxDocumentStreamRendererBase im
         PaintStreamImageAssets assets = new PaintStreamImageAssets();
         HtmlStaticBaker baker = new HtmlStaticBaker(engine, assets);
         List<NTxCompiledPage> pages = document.pages();
-        boolean standalone = booleanProperty(PROP_STANDALONE, false);
-        if (!standalone) {
+        if (!inline) {
             folder.resolve("pages").mkdirs();
         }
         List<NObjectElementBuilder> pageEntries = new ArrayList<>();
@@ -218,15 +253,15 @@ public class HtmlStaticDocumentRenderer extends NTxDocumentStreamRendererBase im
             HtmlStaticBaker.Options options = new HtmlStaticBaker.Options(
                     pixelWidth, pixelHeight, animate, period, maxMillis, settle);
             HtmlStaticBaker.Result baked = baker.bake(page, i + 1, options);
-            List<HtmlStaticBaker.Frame> frames = baked.frames();
-            HtmlStaticCodec codec = new HtmlStaticCodec(interning);
+            List<Frame> frames = baked.frames();
+            PaintStreamCodec codec = new PaintStreamCodec(interning);
             NElement shipped = codec.encodePage(frames);
             byte[] bytes = toJson(shipped);
             if (selfcheck) {
                 verify(shipped, frames, i + 1);
             }
             String file = "pages/page-" + String.format("%03d", i + 1) + ".json";
-            if (!standalone) {
+            if (!inline) {
                 folder.resolve(file).mkParentDirs().writeBytes(bytes);
             }
             totalBytes += bytes.length;
@@ -248,20 +283,20 @@ public class HtmlStaticDocumentRenderer extends NTxDocumentStreamRendererBase im
 
         NArrayElementBuilder pageArray = NElement.ofArrayBuilder();
         NObjectElementBuilder manifest = NElement.ofObjectBuilder();
-        manifest.add("format", NElement.of(HtmlStaticCodec.FORMAT_VERSION));
+        manifest.add("format", NElement.of(PaintStreamCodec.FORMAT_VERSION));
         manifest.add("width", NElement.of(pixelWidth));
         manifest.add("height", NElement.of(pixelHeight));
         manifest.add("periodMs", NElement.of(period));
         manifest.add("animated", NElement.of(animate));
         manifest.add("bytes", NElement.of(totalBytes));
         Map<String, byte[]> images = assets.pngs();
-        if (standalone) {
+        if (inline) {
             //one file means no sibling pngs to resolve, so the pixels travel inline
-            NObjectElementBuilder inline = NElement.ofObjectBuilder();
+            NObjectElementBuilder inlineAssets = NElement.ofObjectBuilder();
             for (Map.Entry<String, byte[]> entry : images.entrySet()) {
-                inline.add(entry.getKey(), NElement.of(dataUrl(entry.getValue())));
+                inlineAssets.add(entry.getKey(), NElement.of(dataUrl(entry.getValue())));
             }
-            manifest.add("assets", inline.build());
+            manifest.add("assets", inlineAssets.build());
             for (int i = 0; i < pageEntries.size(); i++) {
                 pageEntries.get(i).add("data", pagePayloads.get(i));
             }
@@ -280,15 +315,7 @@ public class HtmlStaticDocumentRenderer extends NTxDocumentStreamRendererBase im
             pageArray.add(entry.build());
         }
         manifest.add("pages", pageArray.build());
-        NElement manifestElement = manifest.build();
-        if (standalone) {
-            folder.resolve("index.html").writeString(standaloneHtml(manifestElement), StandardCharsets.UTF_8);
-        } else {
-            folder.resolve("manifest.json").writeBytes(toJson(manifestElement));
-            copyPlayer(folder);
-            folder.resolve("index.html").writeString(indexHtml(pages.size()), StandardCharsets.UTF_8);
-        }
-        return manifestElement;
+        return manifest.build();
     }
 
     /**
@@ -298,9 +325,9 @@ public class HtmlStaticDocumentRenderer extends NTxDocumentStreamRendererBase im
         return "data:image/png;base64," + java.util.Base64.getEncoder().encodeToString(png);
     }
 
-    private void verify(NElement shipped, List<HtmlStaticBaker.Frame> frames, int pageIndex) {
+    private void verify(NElement shipped, List<Frame> frames, int pageIndex) {
         NElement reparsed = NElementReader.ofJson().read(new String(toJson(shipped), StandardCharsets.UTF_8));
-        List<List<NElement>> decoded = HtmlStaticCodec.decode(reparsed);
+        List<List<NElement>> decoded = PaintStreamCodec.decode(reparsed);
         if (decoded.size() != frames.size()) {
             throw new IllegalStateException(NMsg.ofC("html-static selfcheck: page %s shipped %s frames but %s were baked",
                     pageIndex, decoded.size(), frames.size()).toString());
@@ -314,7 +341,7 @@ public class HtmlStaticDocumentRenderer extends NTxDocumentStreamRendererBase im
             }
             for (int k = 0; k < expected.size(); k++) {
                 String want = expected.get(k).toString();
-                String got = HtmlStaticCodec.toRecorderForm(actual.get(k)).toString();
+                String got = PaintStreamCodec.toRecorderForm(actual.get(k)).toString();
                 if (!want.equals(got)) {
                     throw new IllegalStateException(NMsg.ofC("html-static selfcheck: page %s frame %s op %s differs%n  want %s%n  got  %s",
                             pageIndex, f, k, want, got).toString());
@@ -324,7 +351,7 @@ public class HtmlStaticDocumentRenderer extends NTxDocumentStreamRendererBase im
     }
 
     private byte[] toJson(NElement element) {
-        return HtmlStaticJson.write(element, booleanProperty(PROP_PRETTY, false));
+        return PaintStreamJson.write(element, booleanProperty(PROP_PRETTY, false));
     }
 
     private void copyPlayer(NPath folder) {
@@ -354,7 +381,7 @@ public class HtmlStaticDocumentRenderer extends NTxDocumentStreamRendererBase im
         }
     }
 
-    private String indexHtml(int pageCount) {
+    private String indexHtml() {
         return viewer("<script src=\"" + PLAYER_RESOURCE + "\"></script>",
                 "NTxPlayer.mount({manifest:\"manifest.json\",canvas:\"ntexup-canvas\",");
     }

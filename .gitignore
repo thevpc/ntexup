@@ -57,3 +57,4 @@ extensions/ntexup-extension-presenters/target
 /renderers/ntexup-renderer-html-static/target/
 /renderers/ntexup-renderer-ntxp/target/
 /lib/ntexup-lib-paintstream/target/
+/renderers/ntexup-player-swing/target/

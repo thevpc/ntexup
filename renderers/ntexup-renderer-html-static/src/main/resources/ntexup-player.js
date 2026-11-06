@@ -286,7 +286,8 @@
     }
 
     function cycleMethod(cycle) {
-        if (cycle === "CYCLE") {
+        //the recorder ships the java enum name: NO_CYCLE, REPEAT, REFLECT
+        if (cycle === "REPEAT") {
             return "repeat";
         }
         if (cycle === "REFLECT") {

@@ -106,6 +106,7 @@
         <module>renderers/ntexup-renderer-html</module>
         <module>renderers/ntexup-renderer-html-static</module>
         <module>renderers/ntexup-renderer-ntxp</module>
+        <module>renderers/ntexup-player-swing</module>
         <module>renderers/ntexup-renderer-screen</module>
         <module>renderers/ntexup-renderer-web</module>
 

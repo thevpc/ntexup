@@ -1,4 +1,4 @@
-package net.thevpc.ntexup.engine.renderer.htmlstatic;
+package net.thevpc.ntexup.lib.paintstream;
 
 import net.thevpc.nuts.elem.NArrayElement;
 import net.thevpc.nuts.elem.NElement;
@@ -9,21 +9,21 @@ import net.thevpc.nuts.text.NMsg;
 import java.nio.charset.StandardCharsets;
 
 /**
- * Writes a shipped page as strict JSON.
+ * Writes a shipped paint stream as strict JSON.
  * <p>
  * The nuts element writer always indents, and the payload is an export artifact
- * downloaded by a browser, so this exporter owns its own serialization: one
- * line per value when compact, plain {@code JSON.parse} input either way. The
- * element tree it receives is the one {@link HtmlStaticCodec} produced, which
- * means a TSON object header has already become a {@code k} field — anything
- * still named here would be unspellable in JSON and fails the export instead of
- * shipping a file the browser cannot read.
+ * downloaded by a browser, so the format owns its own serialization: one line
+ * per value when compact, plain {@code JSON.parse} input either way. The element
+ * tree it receives is the one {@link PaintStreamCodec} produced, which means a
+ * TSON object header has already become a {@code k} field — anything still named
+ * here would be unspellable in JSON and fails the write instead of shipping a
+ * file the browser cannot read.
  * <p>
- * Public because the ntxp container descriptor is written with it too: one
- * exporter-side json writer is the only way the shipped data and the container
- * metadata can be guaranteed to be readable by the same plain parser.
+ * Public because every artifact of the format is written with it: the page
+ * payloads, the manifest and the container descriptor all have to be readable by
+ * the same plain parser, on either side of the wire.
  */
-public class HtmlStaticJson {
+public class PaintStreamJson {
 
     public static byte[] write(NElement element, boolean pretty) {
         StringBuilder sb = new StringBuilder(1024);
@@ -38,9 +38,9 @@ public class HtmlStaticJson {
         }
         NObjectElement object = e.asObject().orNull();
         if (object != null) {
-            String header = HtmlStaticCodec.headerOf(object);
+            String header = PaintStreamCodec.headerOf(object);
             if (header != null && !header.isEmpty()) {
-                throw new IllegalStateException(NMsg.ofC("html-static: cannot write json, %s is a named object",
+                throw new IllegalStateException(NMsg.ofC("paint-stream: cannot write json, %s is a named object",
                         e).toString());
             }
             object(object, sb, pretty, depth);
@@ -66,7 +66,7 @@ public class HtmlStaticJson {
     private static String number(NElement e) {
         Number n = e.asNumberValue().orNull();
         if (n == null) {
-            throw new IllegalStateException(NMsg.ofC("html-static: cannot write json, %s is not a plain number",
+            throw new IllegalStateException(NMsg.ofC("paint-stream: cannot write json, %s is not a plain number",
                     e).toString());
         }
         if (e.isFloatingNumber()) {
@@ -88,7 +88,7 @@ public class HtmlStaticJson {
             }
             first = false;
             newline(sb, pretty, depth + 1);
-            string(HtmlStaticCodec.keyOf(pair.key()), sb);
+            string(PaintStreamCodec.keyOf(pair.key()), sb);
             sb.append(':');
             if (pretty) {
                 sb.append(' ');

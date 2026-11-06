@@ -241,7 +241,7 @@ public class NTexupOptionsProcessor {
                 renderer.setProperty(ImageDocumentRenderer.PROP_FORMAT, ga == null ? null : ga.imageFormat);
             }
             if (htmlStatic || ntxp) {
-                //an ntxp container holds an html-static bundle, so it takes the same knobs
+                //an ntxp container holds html-static paint streams, so it takes the same knobs
                 if (ga.htmlWidth > 0) {
                     renderer.setProperty(HtmlStaticDocumentRenderer.PROP_WIDTH, ga.htmlWidth);
                 }
@@ -251,7 +251,8 @@ public class NTexupOptionsProcessor {
                 if (htmlStatic && ga.htmlStandalone) {
                     renderer.setProperty(HtmlStaticDocumentRenderer.PROP_STANDALONE, Boolean.TRUE);
                 }
-                if (ga.htmlNoMinify) {
+                if (htmlStatic && ga.htmlNoMinify) {
+                    //only the html bundle ships a player ; a container ships no javascript to minify
                     renderer.setProperty(HtmlStaticDocumentRenderer.PROP_MINIFY, Boolean.FALSE);
                 }
             }

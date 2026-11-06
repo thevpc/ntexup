@@ -6,6 +6,7 @@ import net.thevpc.ntexup.api.engine.NTxCompiledPage;
 import net.thevpc.ntexup.api.engine.NTxEngine;
 import net.thevpc.ntexup.api.renderer.NTxNodeRendererConfig;
 import net.thevpc.ntexup.api.renderer.NtxPageLifecycle;
+import net.thevpc.ntexup.lib.paintstream.PaintStreamCodec.Frame;
 import net.thevpc.ntexup.lib.paintstream.PaintStreamImageAssets;
 import net.thevpc.ntexup.lib.paintstream.PaintStreamRecorder;
 import net.thevpc.ntexup.lib.paintstream.RecordingGraphics2D;
@@ -41,12 +42,6 @@ class HtmlStaticBaker {
      * instead of wrapping.
      */
     static final long NO_LOOP = -1;
-
-    /**
-     * One sampled animation frame.
-     */
-    record Frame(long millis, List<NElement> ops) {
-    }
 
     /**
      * The frames to ship, plus the animation window the player loops over.
