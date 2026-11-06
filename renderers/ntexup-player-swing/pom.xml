@@ -13,6 +13,7 @@
     <name>ntexup :: Player Swing</name>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.compiler.release>25</maven.compiler.release>
         <github.global.server>github</github.global.server>
         <nuts.term>true</nuts.term>
         <nuts.genericName>Document Playback Library</nuts.genericName>

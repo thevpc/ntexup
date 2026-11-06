@@ -13,6 +13,7 @@
     <name>ntexup :: Tutorial :: My Shape</name>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.compiler.release>25</maven.compiler.release>
         <github.global.server>github</github.global.server>
         <maven.compiler.source>25</maven.compiler.source>
         <maven.compiler.target>25</maven.compiler.target>

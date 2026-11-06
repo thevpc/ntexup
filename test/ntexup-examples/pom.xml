@@ -16,6 +16,7 @@
         <github.global.server>github</github.global.server>
         <maven.compiler.source>25</maven.compiler.source>
         <maven.compiler.target>25</maven.compiler.target>
+        <maven.compiler.release>25</maven.compiler.release>
         <java.version>25</java.version>
     </properties>
 
