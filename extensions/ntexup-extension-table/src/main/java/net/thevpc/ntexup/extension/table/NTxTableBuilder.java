@@ -24,9 +24,7 @@ import net.thevpc.nuts.elem.NListContainerElement;
 import net.thevpc.nuts.util.NOptional;
 
 import java.awt.Color;
-import java.awt.Font;
 import java.awt.FontMetrics;
-import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -378,15 +376,10 @@ public class NTxTableBuilder implements NTxNodeBuilder {
                         if (cellFont > 0) {
                             content.setProperty(NTxProp.ofObject(NTxPropName.FONT_SIZE, NElement.ofDouble(cellFont, "px")));
                         }
-                        NTxRendererContext contentCtx = cellCtx.resolveNode(content, probe);
-                        contentCtx.applyFont();
-                        FontMetrics fm = contentCtx.graphics().getFontMetrics();
-                        String text = cellText(contentCtx, content);
-                        if (!text.isEmpty()) {
-                            // +1px: the text renderer wraps a line measured to the exact pixel
-                            colWidths[c] = Math.max(colWidths[c], Math.ceil(fm.getStringBounds(text, null).getWidth()) + 1);
-                        }
-                        lineH = Math.max(lineH, fm.getAscent() + fm.getDescent());
+                        NTxBounds2D size = contentSize(cellCtx, content);
+                        // +1px: the text renderer wraps a line measured to the exact pixel
+                        colWidths[c] = Math.max(colWidths[c], Math.ceil(size.widthX()) + 1);
+                        lineH = Math.max(lineH, size.widthY());
                     }
                 }
             }
@@ -410,38 +403,29 @@ public class NTxTableBuilder implements NTxNodeBuilder {
         return m;
     }
 
-    /** The text a cell content node paints: its value with ${...} interpolated. */
-    private static String cellText(NTxRendererContext ctx, NTxNode content) {
-        String text = NTxValue.ofProp(content, NTxPropName.VALUE).asString().orElse("");
-        if (text.indexOf('$') < 0) {
-            return text;
-        }
-        try {
-            return ctx.evalExpression(NElement.ofString(text)).flatMap(NElement::asStringValue).orElse(text);
-        } catch (RuntimeException e) {
-            return text;
-        }
+    private static final NTxBounds2D UNBOUNDED = NTxBounds2D.ofWidth(0, 0, 1e6, 1e6);
+
+    /**
+     * The size a cell content node is painted at, asked of its own renderer:
+     * for text that is the theme's text font and padding, the cascaded size
+     * and weight, and the ${...}-interpolated value. The graphics font
+     * (applyFont) is a different, smaller font, so measuring with it wraps
+     * the wider cells. Laid out unbounded, so it is the unwrapped size.
+     */
+    private static NTxBounds2D contentSize(NTxRendererContext cellCtx, NTxNode content) {
+        return cellCtx.resolveNode(content, UNBOUNDED).selfBounds2D();
     }
 
     /**
      * Renders one cell content node through the generic pipeline, laid out in
      * a box centered inside the cell. The text keeps its cascaded font (px or
-     * %P): measure() sized the rows and columns with that same font, so it
-     * fits without clamping. Centering uses the interpolated text, the one
-     * actually painted.
+     * %P): measure() sized the rows and columns with the same contentSize, so
+     * it fits without clamping.
      */
     private void renderContentChild(NTxRendererContext cellCtx, NTxNode contentChild, NTxBounds2D innerRect) {
-        NTxRendererContext contentCtx = cellCtx.resolveNode(contentChild, innerRect);
-        contentCtx.applyFont();
-        NTxGraphics cg = contentCtx.graphics();
-        String text = cellText(contentCtx, contentChild);
-        FontMetrics fm = cg.getFontMetrics();
-        double th = fm.getAscent() + fm.getDescent();
-        double tw = 0;
-        if (!text.isEmpty()) {
-            Rectangle2D tb = cg.getStringBounds(text);
-            tw = tb.getWidth();
-        }
+        NTxBounds2D size = contentSize(cellCtx, contentChild);
+        double tw = size.widthX();
+        double th = size.widthY();
         double bw = Math.min(tw, innerRect.widthX());
         double bh = Math.min(th, innerRect.widthY());
         double bx = innerRect.minX() + Math.max(0, (innerRect.widthX() - tw) / 2.0);
