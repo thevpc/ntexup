@@ -42,10 +42,17 @@ public class DefaultNTxStyleRule implements NTxStyleRule {
         );
         this.selector = selector;
         this.styles.set(styles);
+        if (parent != null) {
+            this.styles.setMutationListener(parent::onStyleRuleMutation);
+        }
     }
 
     public NTxNode parent() {
         return parent;
+    }
+
+    public void setMutationListener(Runnable listener) {
+        styles.setMutationListener(listener);
     }
 
     public NTxSource source() {

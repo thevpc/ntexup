@@ -187,4 +187,12 @@ public interface NTxNode extends NTxItem {
     <T> NOptional<T> getAndSetRenderCache(Class<T> property, boolean force, Supplier<T> defaultValue);
 
     void invalidateRenderCache();
+
+    /**
+     * Notifies the owning node that mutable style-rule properties changed.
+     * Implementations that cache computed styles should invalidate that cache.
+     */
+    default void onStyleRuleMutation() {
+    }
+
 }

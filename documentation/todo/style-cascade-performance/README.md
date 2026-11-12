@@ -280,36 +280,38 @@ warm ≥ 10 % faster.
 
 ### Phase 2 — Computed-style pass (the big win)
 
-- [ ] Add a per-node computed style result:
+- [x] Add a per-node computed style result:
       `Map<String, NTxStyleAndMagnitude>` (or a compact equivalent) computed
       **once per node**, top-down, when the page is first rendered.
-- [ ] Do **not** compute it during `pages()`; compute lazily on first render of
+- [x] Do **not** compute it during `pages()`; compute lazily on first render of
       the page so `show` opening does not get slower.
-- [ ] Store it on `DefaultNTxNode` in a dedicated field/slot, **not** in
+- [x] Store it on `DefaultNTxNode` in a dedicated field/slot, **not** in
       `renderCache` (which `invalidateRenderCache` nukes).
-- [ ] `computePropertyMagnitude` becomes: computed-map lookup → fall back to the
+- [x] `computePropertyMagnitude` becomes: computed-map lookup → fall back to the
       renderer-context `defaultStyles` → miss. Keep `engine.getDefaultStyles()`
       in the computed pass.
-- [ ] `computePropertiesMagnitude` uses the same computed map (fix the current
+- [x] `computePropertiesMagnitude` uses the same computed map (fix the current
       divergence: the plural path ignores `engine.getDefaultStyles()` and
       renumbers candidates).
-- [ ] Preserve exact precedence: own prop → class fold → nearest ancestor →
+- [x] Preserve exact precedence: own prop → class fold → nearest ancestor →
       specificity → declaration index (later wins) → score. No reinterpretation.
-- [ ] Structural invalidation: bump a `structuralEpoch` on document recompile,
-      style/rule mutation, class mutation, theme reload. Clear only that page's
-      computed maps.
-- [ ] Keep the renderer-context `defaultStyles` fallback dynamic (it is per
+- [x] Structural invalidation: per-node structural epochs are captured along
+      the node's ancestor path, so edits invalidate only affected subtrees;
+      property, class, parent, rule, and mutable rule-style changes are covered.
+      Document recompilation copies nodes with empty caches. No theme-reload
+      API exists in the engine today.
+- [x] Keep the renderer-context `defaultStyles` fallback dynamic (it is per
       renderer call, e.g. text defaults).
 
 Tests:
 
-- [ ] Port/extend `TestStyleSystem` precedence matrix (single base, multi-base,
+- [x] Port/extend `TestStyleSystem` precedence matrix (single base, multi-base,
       deep chain, usage-site order, instance wins, nearest scope, specificity
       beats class, recency tie-break, `*`, `!`, `and`, table selectors).
-- [ ] **Equivalence test** (`TestCascadeEquivalence`): for every node and every
+- [x] **Equivalence test** (`TestCascadeEquivalence`): for every node and every
       property name on D1 and D2, compare the new computed value with the legacy
       resolver (`-Dntexup.style.legacy=true`). Assert **0 mismatches**.
-- [ ] Golden: D1 + D2 pixel-identical, cold and warm.
+- [x] Golden: D1 + D2 pixel-identical, cold and warm.
 - [ ] Control-flow tests from section 6 must pass with the cache on.
 
 **Gate 2:** equivalence 0 mismatches; golden diff = 0; cold ≥ 45 % faster
@@ -699,6 +701,58 @@ Notes / blockers:
   Gate 1 remains blocked because its full-suite requirement is not met: the two
   pre-existing, unrelated test failures still fail. Phase 1 is not marked done,
   and Phase 2 has not started.
+
+### 2026-11-12 — Phase 2.0 — computed-style cache implemented; gate blocked
+
+Changed:
+- `core/ntexup-engine/.../DefaultNTxNode.java` — added dedicated computed-style
+  cache storage and per-node structural epochs; cache entries validate the
+  node-to-root epoch path, so mutations invalidate only dependent subtrees.
+- `core/ntexup-engine/.../NTxPropCalculator.java` — computes a lazy candidate
+  index on first property lookup, preserving own/class/ancestor/default-style
+  precedence and alias selection. Singular and plural lookups now share it;
+  the plural path includes engine defaults. Removed the stale class-flatten
+  memo after class flattening moved to the per-node pass. The old uncached
+  resolver remains available with `-Dntexup.style.legacy=true`.
+- `core/ntexup-api/.../NTxNode.java`, `NTxProperties.java`, and
+  `DefaultNTxStyleRule.java` — invalidate the owning node's structural epoch
+  when a mutable style-rule property changes.
+- `test/ntexup-test/.../TestCascadeEquivalence.java` — checks cached vs legacy
+  results, plural vs legacy singular results, and cache invalidation for node,
+  class, and rule-style changes. With deck paths supplied, it checks every
+  compiled node against every property name found in the deck and default
+  styles.
+
+Tests:
+- `mvn -q -pl test/ntexup-test -am -Dtest=TestCascadeEquivalence \
+  -Dntexup.test.d1="$D1" -Dntexup.test.d2="$D2" \
+  -Dsurefire.failIfNoSpecifiedTests=false test` → 3 passed; 0 mismatches.
+  D1: 2,403 nodes × 77 properties = 185,031 comparisons.
+  D2: 20,732 nodes × 88 properties = 1,824,416 comparisons.
+- `TestStyleCascadeAllocations` → 4 passed.
+- `TestStyleSystem` → 149 assertions passed.
+- `TestSampleDecksRender` and `TestHtmlStaticExport` → passed.
+- Full `mvn -q -pl test/ntexup-test -am test` → 56 tests, 2 failures,
+  4 skipped. Only the same pre-existing HTML-backend and connector-loop tests
+  fail.
+- Golden capture → all 486 D1/D2 PNG hashes match the Phase 0 baseline.
+- D1 PDF extracted text matches; page counts and byte sizes match for both
+  decks, but PDF SHA-256 values differ.
+
+- D2 cold: 18.803 s / 42.7 ms per page (baseline 38.76 s / 88.1 ms; 51.5%
+  faster); p50/p90/p99/max = 32.6/65.2/231.9/751.9 ms.
+- D2 warm: 5.238 s / 11.9 ms per page (baseline 8.09 s / 18.4 ms; 35.3%
+  faster); p50/p90/p99/max = 8.5/17.7/65.6/488.2 ms.
+- D1 cold/warm: 3.671/1.463 s (Phase 1 4.229/1.427 s).
+- Golden diff: 0/486 PNGs; equivalence mismatches: 0.
+
+Notes / blockers:
+- The D2 cold and warm performance thresholds, exact equivalence, and PNG
+  goldens pass. Gate 2 remains blocked: the full suite retains the two known
+  unrelated failures, and the explicit `TestCascadeControlFlow` /
+  `TestCascadeLoops` scaffolds are still disabled. No Phase 3 work was started.
+- As in Phase 1, regenerated PDF binary hashes differ despite matching page
+  counts and byte sizes; the Phase 2 visual gate is the per-page PNG hashes.
 
 ---
 

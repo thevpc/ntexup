@@ -11,6 +11,7 @@ public class NTxProperties {
     private NTxNode parent;
     private final Map<String, NTxProp> map = new HashMap<>();
     private final Collection<NTxProp> values = Collections.unmodifiableCollection(map.values());
+    private Runnable mutationListener;
 
     public NTxProperties(NTxNode parent) {
         this.parent = parent;
@@ -19,12 +20,23 @@ public class NTxProperties {
     public NTxProperties() {
     }
 
+    void setMutationListener(Runnable mutationListener) {
+        this.mutationListener = mutationListener;
+    }
+
+    private void changed() {
+        if (mutationListener != null) {
+            mutationListener.run();
+        }
+    }
+
     public boolean containsKey(String k) {
         return map.containsKey(k);
     }
 
     public void set(String s, NElement value) {
         map.put(s, new NTxProp(s, value, parent));
+        changed();
     }
 
     public void set(NTxProp... c) {
@@ -45,19 +57,24 @@ public class NTxProperties {
 
     public void unset(NTxProp s) {
         if (s != null) {
-            map.remove(s.getName());
+            if (map.remove(s.getName()) != null) {
+                changed();
+            }
         }
     }
 
     public void unset(String s) {
         if (s != null) {
-            map.remove(s);
+            if (map.remove(s) != null) {
+                changed();
+            }
         }
     }
 
     public void set(NTxProp s) {
         if (s != null) {
             map.put(s.getName(), new NTxProp(s.getName(), s.getValue(), parent));
+            changed();
         }
     }
 
@@ -123,6 +140,9 @@ public class NTxProperties {
     }
 
     public void clear() {
-        map.clear();
+        if (!map.isEmpty()) {
+            map.clear();
+            changed();
+        }
     }
 }

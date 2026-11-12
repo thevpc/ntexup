@@ -1,5 +1,6 @@
 package net.thevpc.ntexup.engine.document;
 
+import net.thevpc.ntexup.api.document.node.NTxItem;
 import net.thevpc.ntexup.api.document.node.NTxNode;
 import net.thevpc.ntexup.api.document.style.*;
 import net.thevpc.ntexup.api.engine.NTxEngine;
@@ -12,7 +13,7 @@ import java.util.stream.Collectors;
 public class NTxPropCalculator {
 
     private NTxEngine engine;
-    private final Map<NTxStyleRule, Map<NTxNode, NTxProperties>> classFlattenCache = new HashMap<>();
+    private static final String LEGACY_PROPERTY = "ntexup.style.legacy";
 
     public NTxPropCalculator(NTxEngine engine) {
         this.engine = engine;
@@ -98,6 +99,108 @@ public class NTxPropCalculator {
         }
     }
 
+    static final class ComputedStyleCache {
+        private final NTxItem[] dependencyPath;
+        private final long[] dependencyEpochs;
+        private final Map<String, List<StyleCandidate>> candidatesByName;
+        private final List<String> propertyNames;
+        private final int groupCount;
+
+        private ComputedStyleCache(NTxItem[] dependencyPath,
+                                   long[] dependencyEpochs,
+                                   Map<String, List<StyleCandidate>> candidatesByName,
+                                   List<String> propertyNames, int groupCount) {
+            this.dependencyPath = dependencyPath;
+            this.dependencyEpochs = dependencyEpochs;
+            this.candidatesByName = candidatesByName;
+            this.propertyNames = propertyNames;
+            this.groupCount = groupCount;
+        }
+
+        private boolean isValid(DefaultNTxNode node) {
+            NTxItem current = node;
+            int dependencyIndex = 0;
+            while (current != null) {
+                if (dependencyIndex >= dependencyPath.length
+                        || dependencyPath[dependencyIndex] != current) {
+                    return false;
+                }
+                if (current instanceof DefaultNTxNode
+                        && dependencyEpochs[dependencyIndex]
+                        != ((DefaultNTxNode) current).structuralStyleEpoch()) {
+                    return false;
+                }
+                dependencyIndex++;
+                current = current.parent();
+            }
+            return dependencyIndex == dependencyPath.length;
+        }
+
+        private NOptional<NTxStyleAndMagnitude> resolve(String... requestedNames) {
+            String[] names = NTxUtils.uids(requestedNames);
+            if (names.length == 1) {
+                List<StyleCandidate> candidates = candidatesByName.get(names[0]);
+                StyleCandidate best = null;
+                if (candidates != null) {
+                    for (StyleCandidate candidate : candidates) {
+                        if (best == null || candidate.magnitude.compareTo(best.magnitude) < 0) {
+                            best = candidate;
+                        }
+                    }
+                }
+                if (best == null) {
+                    return NOptional.ofNamedEmpty("no style : " + Arrays.asList(names));
+                }
+                return NOptional.of(new NTxStyleAndMagnitude(best.property, best.magnitude));
+            }
+            StyleCandidate[] selectedByGroup = new StyleCandidate[groupCount];
+            int[] selectedNameIndex = new int[groupCount];
+            Arrays.fill(selectedNameIndex, -1);
+            for (int nameIndex = 0; nameIndex < names.length; nameIndex++) {
+                List<StyleCandidate> candidates = candidatesByName.get(names[nameIndex]);
+                if (candidates != null) {
+                    for (StyleCandidate candidate : candidates) {
+                        if (nameIndex > selectedNameIndex[candidate.group]) {
+                            selectedByGroup[candidate.group] = candidate;
+                            selectedNameIndex[candidate.group] = nameIndex;
+                        }
+                    }
+                }
+            }
+            StyleCandidate best = null;
+            for (StyleCandidate candidate : selectedByGroup) {
+                if (candidate != null && (best == null
+                        || candidate.magnitude.compareTo(best.magnitude) < 0)) {
+                    best = candidate;
+                }
+            }
+            if (best == null) {
+                return NOptional.ofNamedEmpty("no style : " + Arrays.asList(names));
+            }
+            return NOptional.of(new NTxStyleAndMagnitude(best.property, best.magnitude));
+        }
+
+        private List<NTxStyleAndMagnitude> resolveAll() {
+            List<NTxStyleAndMagnitude> all = new ArrayList<>(propertyNames.size());
+            for (String name : propertyNames) {
+                resolve(name).ifPresent(all::add);
+            }
+            return all;
+        }
+    }
+
+    private static final class StyleCandidate {
+        private final int group;
+        private final NTxProp property;
+        private final NTxStyleMagnitude magnitude;
+
+        private StyleCandidate(int group, NTxProp property, NTxStyleMagnitude magnitude) {
+            this.group = group;
+            this.property = property;
+            this.magnitude = magnitude;
+        }
+    }
+
     private NTxStyleRuleSelectorItem.ClassDefItem classDefItemOf(NTxStyleRule rule) {
         NTxStyleRuleSelector s = rule.selector();
         if (s instanceof DefaultNTxNodeSelector) {
@@ -168,15 +271,6 @@ public class NTxPropCalculator {
     }
 
     private NTxProperties flattenClassDef(NTxStyleRule def, NTxNode container, Set<NTxStyleRule> visiting) {
-        Map<NTxNode, NTxProperties> byContainer = classFlattenCache.get(def);
-        if (byContainer == null) {
-            byContainer = new HashMap<>();
-            classFlattenCache.put(def, byContainer);
-        }
-        NTxProperties cached = byContainer.get(container);
-        if (cached != null) {
-            return cached;
-        }
         NTxProperties acc = new NTxProperties(container);
         if (visiting.contains(def)) {
             return acc;
@@ -196,7 +290,6 @@ public class NTxPropCalculator {
         }
         acc.set(def.styles().values());
         visiting.remove(def);
-        byContainer.put(container, acc);
         return acc;
     }
 
@@ -231,6 +324,15 @@ public class NTxPropCalculator {
     }
 
     public NOptional<NTxStyleAndMagnitude> computePropertyMagnitude(NTxNode node, String[] propertyNames) {
+        if (Boolean.getBoolean(LEGACY_PROPERTY) || !(node instanceof DefaultNTxNode)
+                || !hasOnlyDefaultNodeAncestors(node)) {
+            return computePropertyMagnitudeLegacy(node, propertyNames);
+        }
+        DefaultNTxNode defaultNode = (DefaultNTxNode) node;
+        return computedStyleCache(defaultNode).resolve(propertyNames);
+    }
+
+    private NOptional<NTxStyleAndMagnitude> computePropertyMagnitudeLegacy(NTxNode node, String[] propertyNames) {
         propertyNames = NTxUtils.uids(propertyNames);
         NOptional<NTxProp> u = node.getProperty(propertyNames);
         if (u.isPresent()) {
@@ -304,6 +406,103 @@ public class NTxPropCalculator {
         return NOptional.ofNamedEmpty("no style : " + Arrays.asList(propertyNames));
     }
 
+    private ComputedStyleCache computeStyleCache(DefaultNTxNode node) {
+        List<NTxItem> dependencyPath = new ArrayList<>();
+        NTxItem pathNode = node;
+        while (pathNode != null) {
+            dependencyPath.add(pathNode);
+            pathNode = pathNode.parent();
+        }
+        NTxItem[] dependencyItems = dependencyPath.toArray(new NTxItem[0]);
+        long[] dependencyEpochs = new long[dependencyItems.length];
+        for (int i = 0; i < dependencyItems.length; i++) {
+            if (dependencyItems[i] instanceof DefaultNTxNode) {
+                dependencyEpochs[i] = ((DefaultNTxNode) dependencyItems[i]).structuralStyleEpoch();
+            }
+        }
+        LinkedHashMap<String, List<StyleCandidate>> candidatesByName = new LinkedHashMap<>();
+        LinkedHashSet<String> propertyNames = new LinkedHashSet<>();
+        int group = 0;
+        NTxStyleMagnitude ownMagnitude =
+                new NTxStyleMagnitude(0, 0, DefaultNTxNodeSelector.ofAny());
+        group = addCandidates(candidatesByName, propertyNames, group,
+                node.getProperties(), ownMagnitude);
+
+        ClassFoldResult classFold = computeClassFoldAll(node);
+        if (classFold != null) {
+            group = addCandidates(candidatesByName, propertyNames, group,
+                    classFold.props.values(), classFold.magn);
+        }
+
+        NTxNode parent = NTxUtils.firstNodeUp(node.parent());
+        int distance = 1;
+        while (parent != null) {
+            NTxStyleRule[] rules = parent.rules();
+            for (int i = 0; i < rules.length; i++) {
+                NTxStyleRule rule = rules[i];
+                if (rule.acceptNode(node)) {
+                    group = addCandidates(candidatesByName, propertyNames, group,
+                            rule.styles().values(),
+                            new NTxStyleMagnitude(distance, i, rule.selector()));
+                }
+            }
+            distance++;
+            parent = NTxUtils.firstNodeUp(parent.parent());
+        }
+
+        List<NTxStyleRule> defaultStyles = engine.getDefaultStyles();
+        for (int i = 0; i < defaultStyles.size(); i++) {
+            NTxStyleRule rule = defaultStyles.get(i);
+            if (rule.acceptNode(node)) {
+                group = addCandidates(candidatesByName, propertyNames, group,
+                        rule.styles().values(),
+                        new NTxStyleMagnitude(distance, i, rule.selector()));
+            }
+        }
+
+        Map<String, List<StyleCandidate>> immutableCandidates = new LinkedHashMap<>();
+        for (Map.Entry<String, List<StyleCandidate>> entry : candidatesByName.entrySet()) {
+            immutableCandidates.put(entry.getKey(), Collections.unmodifiableList(entry.getValue()));
+        }
+        return new ComputedStyleCache(dependencyItems, dependencyEpochs,
+                Collections.unmodifiableMap(immutableCandidates),
+                Collections.unmodifiableList(new ArrayList<>(propertyNames)), group);
+    }
+
+    private boolean hasOnlyDefaultNodeAncestors(NTxNode node) {
+        net.thevpc.ntexup.api.document.node.NTxItem current = node.parent();
+        while (current != null) {
+            if (current instanceof NTxNode && !(current instanceof DefaultNTxNode)) {
+                return false;
+            }
+            current = current.parent();
+        }
+        return true;
+    }
+
+    private ComputedStyleCache computedStyleCache(DefaultNTxNode node) {
+        ComputedStyleCache cache = node.computedStyleCache();
+        while (cache == null || !cache.isValid(node)) {
+            cache = computeStyleCache(node);
+            if (cache.isValid(node)) {
+                node.setComputedStyleCache(cache);
+            }
+        }
+        return cache;
+    }
+
+    private int addCandidates(Map<String, List<StyleCandidate>> candidatesByName,
+                              Set<String> propertyNames, int group, Collection<NTxProp> properties,
+                              NTxStyleMagnitude magnitude) {
+        for (NTxProp property : properties) {
+            String name = property.getName();
+            propertyNames.add(name);
+            candidatesByName.computeIfAbsent(name, k -> new ArrayList<>())
+                    .add(new StyleCandidate(group, property, magnitude));
+        }
+        return group + 1;
+    }
+
     public List<NTxStyleRule> computeStyles(NTxNode node) {
         List<NTxStyleRule> found = new ArrayList<>();
         NTxNode p = NTxUtils.firstNodeUp(node.parent());
@@ -333,6 +532,15 @@ public class NTxPropCalculator {
     }
 
     public List<NTxStyleAndMagnitude> computePropertiesMagnitude(NTxNode node) {
+        if (!Boolean.getBoolean(LEGACY_PROPERTY) && node instanceof DefaultNTxNode
+                && hasOnlyDefaultNodeAncestors(node)) {
+            DefaultNTxNode defaultNode = (DefaultNTxNode) node;
+            return computedStyleCache(defaultNode).resolveAll();
+        }
+        return computePropertiesMagnitudeLegacy(node);
+    }
+
+    private List<NTxStyleAndMagnitude> computePropertiesMagnitudeLegacy(NTxNode node) {
         Map<String, NTxStyleAndMagnitude> found = new LinkedHashMap<>();
         for (NTxProp property : node.getProperties()) {
             found.put(property.getName(),

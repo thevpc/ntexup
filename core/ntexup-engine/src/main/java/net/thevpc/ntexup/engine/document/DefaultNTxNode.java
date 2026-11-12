@@ -16,6 +16,7 @@ import net.thevpc.nuts.util.*;
 import java.util.*;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class DefaultNTxNode implements NTxNode, Cloneable{
     private String uuid;
@@ -29,6 +30,8 @@ public class DefaultNTxNode implements NTxNode, Cloneable{
     private List<NTxNode> children = new ArrayList<>();
     private List<NTxStyleRule> styleRules = new ArrayList<>();
     private NTxNodeDef templateDefinition;
+    private AtomicLong structuralStyleEpoch = new AtomicLong();
+    private volatile NTxPropCalculator.ComputedStyleCache computedStyleCache;
     public boolean compiling;
 
     public static DefaultNTxNode ofText(String message) {
@@ -297,11 +300,13 @@ public class DefaultNTxNode implements NTxNode, Cloneable{
             }
         }
         properties.set(prop);
+        bumpStructuralStyleEpoch();
         return this;
     }
 
     public NTxNode unsetProperty(String s) {
         properties.unset(s);
+        bumpStructuralStyleEpoch();
         return this;
     }
 
@@ -437,7 +442,29 @@ public class DefaultNTxNode implements NTxNode, Cloneable{
     @Override
     public NTxNode setParent(NTxItem parent) {
         this.parent = parent;
+        bumpStructuralStyleEpoch();
         return this;
+    }
+
+    private void bumpStructuralStyleEpoch() {
+        structuralStyleEpoch.incrementAndGet();
+    }
+
+    @Override
+    public void onStyleRuleMutation() {
+        bumpStructuralStyleEpoch();
+    }
+
+    long structuralStyleEpoch() {
+        return structuralStyleEpoch.get();
+    }
+
+    NTxPropCalculator.ComputedStyleCache computedStyleCache() {
+        return computedStyleCache;
+    }
+
+    void setComputedStyleCache(NTxPropCalculator.ComputedStyleCache computedStyleCache) {
+        this.computedStyleCache = computedStyleCache;
     }
 
     @Override
@@ -721,6 +748,10 @@ public class DefaultNTxNode implements NTxNode, Cloneable{
         if (s != null) {
             if (!styleRules.contains(s)) {
                 styleRules.add(s);
+                if (s instanceof DefaultNTxStyleRule) {
+                    ((DefaultNTxStyleRule) s).setMutationListener(this::onStyleRuleMutation);
+                }
+                bumpStructuralStyleEpoch();
             }
         }
         return this;
@@ -729,6 +760,7 @@ public class DefaultNTxNode implements NTxNode, Cloneable{
     @Override
     public NTxNode setRules(NTxStyleRule[] rules) {
         styleRules.clear();
+        bumpStructuralStyleEpoch();
         addRules(rules);
         return this;
     }
@@ -745,7 +777,9 @@ public class DefaultNTxNode implements NTxNode, Cloneable{
 
     @Override
     public NTxNode removeRule(NTxStyleRule s) {
-        styleRules.remove(s);
+        if (styleRules.remove(s)) {
+            bumpStructuralStyleEpoch();
+        }
         return this;
     }
 
@@ -759,6 +793,9 @@ public class DefaultNTxNode implements NTxNode, Cloneable{
 
     @Override
     public NTxNode clearChildren() {
+        if (!children.isEmpty()) {
+            bumpStructuralStyleEpoch();
+        }
         children.clear();
         return this;
     }
@@ -809,6 +846,8 @@ public class DefaultNTxNode implements NTxNode, Cloneable{
             c.renderCache=renderCache==null?null:new HashMap<>(renderCache);
             c.children=children().stream().map(NTxNode::copy).collect(Collectors.toList());
             c.styleRules=new ArrayList<>(styleRules);
+            c.structuralStyleEpoch=new AtomicLong();
+            c.computedStyleCache=null;
         } catch (CloneNotSupportedException e) {
             throw new RuntimeException(e);
         }
@@ -847,6 +886,7 @@ public class DefaultNTxNode implements NTxNode, Cloneable{
             userObjects.clear();
         }
         templateDefinition = null;
+        bumpStructuralStyleEpoch();
         return this;
     }
 
