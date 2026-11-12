@@ -18,6 +18,7 @@ import net.thevpc.ntexup.api.source.NTxSource;
 import net.thevpc.ntexup.api.util.NTxUtils;
 import net.thevpc.ntexup.engine.impl.NTxCompiledDocumentImpl;
 import net.thevpc.nuts.elem.NElement;
+import net.thevpc.nuts.elem.NElementTypeGroup;
 import net.thevpc.nuts.io.NPath;
 import net.thevpc.nuts.text.NMsg;
 import net.thevpc.nuts.util.*;
@@ -46,6 +47,7 @@ public class NTxResolutionContextImpl implements NTxResolutionContext {
     protected NTxItemParser itemParser;
     protected NTxCompiledDocument compiledDocument;
     protected NTxCompiledPage compiledPage;
+    private volatile NTxNodeEval nodeEvaluator;
 
     public NTxResolutionContextImpl(NTxNode[] path, NElement element, NTxNodeDef def, boolean isInPage, NTxEngine engine, NTxDocument document, Map<String, NTxVar> vars, Map<String, NTxNodeDef> definitions, Map<String, NTxFunction> functions,
                                     NTxCompiledDocument compiledDocument,
@@ -593,7 +595,18 @@ public class NTxResolutionContextImpl implements NTxResolutionContext {
             return NOptional.ofNamedEmpty(String.valueOf(expression));
         }
         String baseSrc = NTxUtils.findCompilerDeclarationPath(expression).orNull();
-        NTxNodeEval ne = new NTxNodeEval(this);
+        if (baseSrc == null && isPrimitiveLiteral(expression)) {
+            return NOptional.of(expression);
+        }
+        NTxNodeEval ne = nodeEvaluator;
+        if (ne == null) {
+            synchronized (this) {
+                ne = nodeEvaluator;
+                if (ne == null) {
+                    nodeEvaluator = ne = new NTxNodeEval(this);
+                }
+            }
+        }
         NElement u = ne.eval(expression);
         if (u == null) {
             u = NElement.ofNull();
@@ -602,6 +615,13 @@ public class NTxResolutionContextImpl implements NTxResolutionContext {
             u = NTxUtils.addCompilerDeclarationPath(u, baseSrc);
         }
         return NOptional.ofNamed(u, "expression " + expression);
+    }
+
+    private boolean isPrimitiveLiteral(NElement expression) {
+        NElementTypeGroup group = expression.type().group();
+        return group == NElementTypeGroup.NUMBER
+                || group == NElementTypeGroup.BOOLEAN
+                || group == NElementTypeGroup.NULL;
     }
 
     @Override

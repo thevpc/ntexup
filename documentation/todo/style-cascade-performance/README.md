@@ -326,8 +326,9 @@ Tests:
       residue** (`%P`, `%R`, percent units, `time`, animation vars, futures).
 - [ ] Cache the folded value per `(node, prop, varEpoch)`; re-apply only the
       residue per render.
-- [ ] `evalExpression` short-circuits already-folded/constant elements instead of
-      always allocating `NTxNodeEval`.
+- [x] `evalExpression` short-circuits unannotated primitive number, boolean, and
+      null literals. Reuse the context-bound evaluator for expressions that
+      still require evaluation; strings are never bypassed.
 - [ ] Wire `varEpoch`: a var assignment (`@assign`, animation variable) bumps it
       and invalidates only the nodes that depend on that var (use
       `DefaultNTxDependencyGraph`).
@@ -750,9 +751,56 @@ Notes / blockers:
 - The D2 cold and warm performance thresholds, exact equivalence, and PNG
   goldens pass. Gate 2 remains blocked: the full suite retains the two known
   unrelated failures, and the explicit `TestCascadeControlFlow` /
-  `TestCascadeLoops` scaffolds are still disabled. No Phase 3 work was started.
+  `TestCascadeLoops` scaffolds are still disabled.
 - As in Phase 1, regenerated PDF binary hashes differ despite matching page
   counts and byte sizes; the Phase 2 visual gate is the per-page PNG hashes.
+
+### 2026-11-12 — Phase 3.0 — literal fast-path trial rejected
+
+Before changing Phase 3 code, the current Phase 2 tree measured on D2 at
+1920×1080 with `NTxRenderAll`: cold 20.095 s total (45.7 ms/page), warm
+5.802 s total (13.2 ms/page).
+
+Tried bypassing `NTxNodeEval` for unannotated primitive literals in
+`NTxResolutionContextImpl.evalExpression`, with focused tests for literal
+identity and string interpolation. The measured pass was faster (cold 13.464 s,
+30.6 ms/page; warm 5.014 s, 11.4 ms/page), but it was not behavior-preserving:
+the D1/D2 PNG hash comparison found 37/46 and 87/440 differing pages. The
+rendered differences include missing text backgrounds and code highlighting.
+The trial and its tests were reverted; no Phase 3 optimization is retained.
+After reverting, recapturing D1 matched its committed PNG hashes.
+
+**Status:** The broad literal shortcut was rejected, but a narrower primitive
+fast path is retained below. No dynamic-value folding or `varEpoch` caching has
+been implemented. Phase 2 remains gate-blocked by missing control-flow coverage
+and the two previously reported suite failures.
+
+### 2026-11-12 — Phase 3.1 — primitive evaluation fast path
+
+Changed:
+- `NTxResolutionContextImpl` now returns unannotated number, boolean, and null
+  elements directly, matching `NTxNodeEval`'s behavior for these primitive
+  groups. Strings and all annotated elements continue through the evaluator.
+- Reuse a lazily created `NTxNodeEval` per resolution context. The evaluator
+  holds no mutable state and reads the current context on each call.
+- `TestCascadeValueFolding` verifies primitive identity and confirms the reused
+  evaluator observes a reassigned string variable.
+
+Validation:
+- `TestCascadeValueFolding` and `TestCascadeEquivalence` pass; D1 and D2
+  comparisons report 0 mismatches (185,031 and 1,824,416 comparisons).
+- D1 and D2 PNG manifests match all 486 committed Phase 0 hashes.
+- Full suite: 58 tests, 2 failures, 4 skipped. The only failures remain the
+  known HTML backend and connector-loop tests.
+- D2 `NTxRenderAll` at 1920×1080: immediately before this change, cold/warm
+  20.095/5.802 s; after the change, two runs were 18.596/5.419 s and
+  18.346/5.158 s. Earlier Phase 2 runs were 18.803/5.238 s, so the apparent
+  improvement over the immediate pre-change run is within run-to-run variance
+  and is not treated as an established gain.
+
+**Status:** Partial Phase 3 implementation only. The dynamic residue split,
+folded-value cache, and dependency-scoped `varEpoch` invalidation remain open.
+No animation/resize leakage tests have been added, so Gate 3 is not passed.
 
 ---
 
