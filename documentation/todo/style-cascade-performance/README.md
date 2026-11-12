@@ -338,11 +338,12 @@ Tests:
 
 Tests:
 
-- [ ] Same node, same prop, two renders at the same time → identical bytes.
-- [ ] Time-dependent page at t=0, t=1, t=2 → different bytes (cache does not
+- [x] Same animated node, same virtual time, two renders → identical pixels.
+- [x] Time-dependent page at t=0, t=1, t=2 → different pixels (cache does not
       freeze time).
-- [ ] Resize (e.g. 1920×1080 → 1280×720) → `%P` values change; golden matches the
-      legacy resolver at the new size.
+- [ ] Resize (e.g. 1920×1080 → 1280×720) → `%P` values change; golden matches
+      the legacy resolver at the new size. (Page-relative geometry is checked
+      across output sizes; a cached-vs-legacy resize golden is still needed.)
 - [ ] Var reassignment invalidates only affected nodes (assert unrelated nodes
       keep the same cached identity/value).
 - [ ] Golden: static decks byte-identical.
@@ -800,7 +801,34 @@ Validation:
 
 **Status:** Partial Phase 3 implementation only. The dynamic residue split,
 folded-value cache, and dependency-scoped `varEpoch` invalidation remain open.
-No animation/resize leakage tests have been added, so Gate 3 is not passed.
+Gate 3 is not passed.
+
+### 2026-11-12 — Phase 3.2 — dynamic-output safety tests
+
+Changed:
+- Replaced the disabled `TestCascadeAnimation` scaffold with renders against a
+  controllable `NtxPageLifecycle`: three animation times produce distinct
+  connector-flow pixels; repeated rendering at t=0 is pixel-identical; static
+  rendering ignores lifecycle time and does not request another frame.
+- Added a `%P` geometry check that doubles the render dimensions and verifies
+  the page-relative rectangle area scales accordingly.
+- Extended `TestCascadeValueFolding` to verify a variable read registers a
+  dependency and a binding update clears only that dependent node's render
+  cache, leaving an unrelated node's cached object intact.
+
+Validation:
+- `TestCascadeAnimation`, `TestCascadeValueFolding`, and
+  `TestCascadeEquivalence` pass; 8 tests passed and the path-dependent deck
+  comparison was skipped when no deck paths were supplied in that run.
+- Full suite: 61 tests, 2 failures, 3 skipped. The failures remain the known
+  HTML-backend and connector-loop tests; the two disabled control-flow/loop
+  scaffolds remain skipped.
+- D1/D2 visual hashes and full-deck equivalence were verified after the
+  production fast path in Phase 3.1; this update changes tests only.
+
+**Status:** Safety coverage improved, but no dynamic value is currently cached,
+and no integrated cached-vs-legacy resize comparison exists. Gate 3 remains
+blocked; do not treat these tests as evidence that value folding is complete.
 
 ---
 
