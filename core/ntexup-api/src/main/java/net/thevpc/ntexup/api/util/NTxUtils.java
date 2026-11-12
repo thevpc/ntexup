@@ -389,6 +389,10 @@ public class NTxUtils {
     }
 
     public static String[] uids(String[]... ids) {
+        if (ids != null && ids.length == 1 && ids[0] != null && ids[0].length == 1) {
+            String id = NStringUtils.stripToNull(ids[0][0]);
+            return id == null ? new String[0] : new String[]{uid(id)};
+        }
         LinkedHashSet<String> all = new LinkedHashSet<>();
         if (ids != null) {
             for (String[] ids1 : ids) {
@@ -413,7 +417,29 @@ public class NTxUtils {
     }
 
     public static String uid(String id) {
-        return NNameFormat.LOWER_KEBAB_CASE.format(NStringUtils.strip(id));
+        String stripped = NStringUtils.strip(id);
+        if (isCanonicalLowerKebab(stripped)) {
+            return stripped;
+        }
+        return NNameFormat.LOWER_KEBAB_CASE.format(stripped);
+    }
+
+    private static boolean isCanonicalLowerKebab(String value) {
+        if (value == null || value.isEmpty()) {
+            return false;
+        }
+        boolean previousWasSeparator = true;
+        for (int i = 0; i < value.length(); i++) {
+            char c = value.charAt(i);
+            if ((c >= 'a' && c <= 'z') || (c >= '0' && c <= '9')) {
+                previousWasSeparator = false;
+            } else if (c == '-' && !previousWasSeparator) {
+                previousWasSeparator = true;
+            } else {
+                return false;
+            }
+        }
+        return !previousWasSeparator;
     }
 
     public static Color paintAsColor(Paint paint) {

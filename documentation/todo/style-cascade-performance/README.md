@@ -250,28 +250,28 @@ eniso theme, O(N²) `NClassLoaderBase.buildInternal`).
 
 No algorithm change; behaviour must be byte-identical.
 
-- [ ] **`uid` cache.** Add a bounded/static cache in `NTxUtils.uid(String)` or a
+- [x] **`uid` fast path.** Add a bounded/static cache in `NTxUtils.uid(String)` or a
       fast path: if the string is already lower-kebab (`[a-z0-9-]+`), return it.
       Keep `uid` semantics identical for every existing property name.
-- [ ] **`uids()` fast path.** For a single non-null name, avoid `LinkedHashSet` +
+- [x] **`uids()` fast path.** For a single non-null name, avoid `LinkedHashSet` +
       array allocation.
-- [ ] **Lazy `NOptional` message** in `NTxProperties.get(String...)` and
+- [x] **Lazy `NOptional` message** in `NTxProperties.get(String...)` and
       `get(String)`: build the diagnostic string only on miss.
-- [ ] **Cache `getClassDefNames()`** on `DefaultNTxNodeSelector` (computed once in
+- [x] **Cache `getClassDefNames()`** on `DefaultNTxNodeSelector` (computed once in
       the constructor, immutable). Return an unmodifiable set.
-- [ ] **Remove per-lookup list copies** in `_HStyleRuleResult2s` and
+- [x] **Remove per-lookup list copies** in `_HStyleRuleResult2s` and
       `flattenClassDef` (`toList()`/`toArray()` per call).
-- [ ] **Kill per-render logging** that is unconditional (plot2d `FUNCTION_X`,
+- [x] **Kill per-render logging** that is unconditional (plot2d `FUNCTION_X`,
       `NChronometer`), or gate it behind a debug property.
 
 Tests:
 
-- [ ] Unit: `uid("Fill-Color") == uid("fill-color")`, idempotent, and all
+- [x] Unit: `uid("Fill-Color") == uid("fill-color")`, idempotent, and all
       `NTxPropName` constants map to themselves.
-- [ ] Unit: `NTxProperties.get("a","b")` still returns **b** when both exist
+- [x] Unit: `NTxProperties.get("a","b")` still returns **b** when both exist
       (last-synonym-wins is the current contract — pin it).
-- [ ] Unit: `getClassDefNames()` equality with the old implementation.
-- [ ] Golden: D1 + D2 pixel-identical.
+- [x] Unit: `getClassDefNames()` equality with the old implementation.
+- [x] Golden: D1 + D2 pixel-identical.
 
 **Gate 1:** all existing tests pass; golden diff = 0; cold ≥ 15 % faster,
 warm ≥ 10 % faster.
@@ -654,6 +654,51 @@ Notes / blockers:
 - Baseline renders emit existing diagnostics: D1 `scoreboard` invalid-argument
   and null-font messages; D2 reports missing U+27C2 glyphs in DejaVuSans.
   These need to be recorded as baseline behavior, not treated as phase regressions.
+
+### 2026-11-12 — Phase 1.0 — implementation complete; gate blocked
+
+Changed:
+- `core/ntexup-api/.../NTxUtils.java` — added the canonical lower-kebab return
+  fast path and one-name `uids()` fast path.
+- `core/ntexup-api/.../NTxProperties.java` — deferred diagnostic construction
+  until misses and exposed a live read-only values view to avoid list/array
+  copies in cascade traversal.
+- `core/ntexup-api/.../DefaultNTxNodeSelector.java` — cached immutable class
+  definition names.
+- `core/ntexup-engine/.../NTxPropCalculator.java` — traversed property views
+  directly while preserving map order and property precedence.
+- `extensions/ntexup-extension-plot2d/.../NTxDrawContextRenderCompiler.java`
+  — removed unconditional per-render function timing/logging.
+- `test/ntexup-test/.../TestStyleCascadeAllocations.java` — added four
+  regression tests for UID normalization, one-name `uids`, last-synonym
+  precedence/lazy miss messages, and cached immutable class names.
+
+Tests:
+- `mvn -q -pl test/ntexup-test -am -DskipTests test-compile` → pass.
+- `mvn -q -pl test/ntexup-test -am -Dtest=TestStyleCascadeAllocations
+  -Dsurefire.failIfNoSpecifiedTests=false test` → 4 passed.
+- `TestStyleSystem` → 149 assertions passed.
+- `mvn -q -pl test/ntexup-test -am test` → 54 tests, 2 failures, 4 skipped.
+  The same two failures already present before Phase 1 remain:
+  `TestRenderBackends.htmlRendererHandlesConnectorsAndDecorations` and
+  `TestConnectorIntegration.loopedNodesCanBeReferencedByChainedConnectors`.
+- D1/D2 golden capture → all 46 + 440 PNG hashes match the committed baseline.
+  PDF page counts and file sizes match; binary PDF hashes differ.
+- `git diff --check` → pass.
+
+Benchmarks (D1 and D2, 1920x1080; `NTxRenderAll`):
+- D2 cold: 29.308 s / 66.6 ms per page (baseline 38.76 s / 88.1 ms; 24.4%
+  faster); p50/p90/p99/max = 58.0/115.6/273.8/709.1 ms.
+- D2 warm: 6.138 s / 14.0 ms per page (baseline 8.09 s / 18.4 ms; 24.2%
+  faster); p50/p90/p99/max = 10.0/23.0/38.8/484.1 ms.
+- D1 cold/warm: 4.229/1.427 s (baseline 4.603/1.450 s).
+- Golden diff: 0/486 PNGs; equivalence mismatches: n/a.
+
+Notes / blockers:
+- The D2 cold and warm improvement thresholds and pixel-golden checks passed.
+  Gate 1 remains blocked because its full-suite requirement is not met: the two
+  pre-existing, unrelated test failures still fail. Phase 1 is not marked done,
+  and Phase 2 has not started.
 
 ---
 

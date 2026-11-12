@@ -13,6 +13,7 @@ public class DefaultNTxNodeSelector implements NTxStyleRuleSelector {
     private static DefaultNTxNodeSelector ANY = new DefaultNTxNodeSelector(new HashSet<>(Arrays.asList(ANY_ITEM)));
     private static DefaultNTxNodeSelector NONE = new DefaultNTxNodeSelector(new HashSet<>(Arrays.asList(NONE_ITEM)));
     private final Set<NTxStyleRuleSelectorItem> items = new HashSet<>();
+    private final Set<String> classDefNames;
 
     public static DefaultNTxNodeSelector ofAny() {
         return ANY;
@@ -55,6 +56,13 @@ public class DefaultNTxNodeSelector implements NTxStyleRuleSelector {
 
     private DefaultNTxNodeSelector(Set<NTxStyleRuleSelectorItem> items) {
         this.items.addAll(items);
+        Set<String> names = new HashSet<>();
+        for (NTxStyleRuleSelectorItem item : this.items) {
+            if (item instanceof NTxStyleRuleSelectorItem.ClassDefItem) {
+                names.add(((NTxStyleRuleSelectorItem.ClassDefItem) item).getName());
+            }
+        }
+        this.classDefNames = Collections.unmodifiableSet(names);
     }
 
     /**
@@ -62,13 +70,7 @@ public class DefaultNTxNodeSelector implements NTxStyleRuleSelector {
      * this selector.
      */
     public Set<String> getClassDefNames() {
-        Set<String> all = new HashSet<>();
-        for (NTxStyleRuleSelectorItem item : items) {
-            if (item instanceof NTxStyleRuleSelectorItem.ClassDefItem) {
-                all.add(((NTxStyleRuleSelectorItem.ClassDefItem) item).getName());
-            }
-        }
-        return all;
+        return classDefNames;
     }
 
     /**

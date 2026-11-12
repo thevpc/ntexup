@@ -2,13 +2,15 @@ package net.thevpc.ntexup.api.document.style;
 
 import net.thevpc.ntexup.api.document.node.NTxNode;
 import net.thevpc.nuts.elem.NElement;
+import net.thevpc.nuts.text.NMsg;
 import net.thevpc.nuts.util.NOptional;
 
 import java.util.*;
 
 public class NTxProperties {
     private NTxNode parent;
-    private Map<String, NTxProp> map = new HashMap<>();
+    private final Map<String, NTxProp> map = new HashMap<>();
+    private final Collection<NTxProp> values = Collections.unmodifiableCollection(map.values());
 
     public NTxProperties(NTxNode parent) {
         this.parent = parent;
@@ -67,13 +69,12 @@ public class NTxProperties {
                 last = hProp;
             }
         }
-        return NOptional.ofNamed(last, "style " +
-                (names.length == 1 ? names[0] : Arrays.asList(names).toString())
-        );
+        return NOptional.of(last, () -> NMsg.ofC("style " +
+                (names.length == 1 ? names[0] : Arrays.asList(names).toString())));
     }
 
     public NOptional<NTxProp> get(String s) {
-        return NOptional.ofNamed(map.get(s), "style " + s);
+        return NOptional.of(map.get(s), () -> NMsg.ofC("style " + s));
     }
 
     @Override
@@ -103,11 +104,16 @@ public class NTxProperties {
     }
 
     public NTxProp[] toArray() {
-        return toList().toArray(new NTxProp[0]);
+        return values.toArray(new NTxProp[0]);
     }
 
     public List<NTxProp> toList() {
-        return new ArrayList<>(map.values());
+        return new ArrayList<>(values);
+    }
+
+    /** Returns an unmodifiable, live view of this property's values. */
+    public Collection<NTxProp> values() {
+        return values;
     }
 
     public NElement toElement() {

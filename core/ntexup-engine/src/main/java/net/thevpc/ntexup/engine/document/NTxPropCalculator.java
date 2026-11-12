@@ -58,10 +58,10 @@ public class NTxPropCalculator {
         for (int j = 0; j < rules.length; j++) {
             NTxStyleRule rule = rules[j];
             if (rule.acceptNode(t)) {
-                List<NTxProp> list = rule.styles().toList();
-                for (int i = 0; i < list.size(); i++) {
-                    NTxProp style = list.get(i);
+                int i = 0;
+                for (NTxProp style : rule.styles().values()) {
                     rr.add(new HStyleRuleResult2(rule, style, 0, i));
+                    i++;
                 }
             }
         }
@@ -189,12 +189,12 @@ public class NTxPropCalculator {
                 for (String base : bases) {
                     ClassDefRef bd = findClassDef(container, base);
                     if (bd != null) {
-                        acc.set(flattenClassDef(bd.rule, bd.container, visiting).toArray());
+                        acc.set(flattenClassDef(bd.rule, bd.container, visiting).values());
                     }
                 }
             }
         }
-        acc.set(def.styles().toArray());
+        acc.set(def.styles().values());
         visiting.remove(def);
         byContainer.put(container, acc);
         return acc;
@@ -222,7 +222,7 @@ public class NTxPropCalculator {
                 bestIndex = idx;
                 bestDef = def;
             }
-            acc.set(flattenClassDef(def, ref.container, new HashSet<>()).toArray());
+            acc.set(flattenClassDef(def, ref.container, new HashSet<>()).values());
         }
         if (bestDef == null) {
             return null;
@@ -344,7 +344,7 @@ public class NTxPropCalculator {
         }
         ClassFoldResult classFold = computeClassFoldAll(node);
         if (classFold != null) {
-            for (NTxProp property : classFold.props.toList()) {
+            for (NTxProp property : classFold.props.values()) {
                 NTxStyleAndMagnitude m2 = new NTxStyleAndMagnitude(property, classFold.magn);
                 NTxStyleAndMagnitude existing = found.get(property.getName());
                 if (existing == null || m2.getMagnetude().compareTo(existing.getMagnetude()) <= 0) {

@@ -9,10 +9,8 @@ import net.thevpc.ntexup.extension.plot2d.model.NTxFunctionPlotInfo;
 import net.thevpc.ntexup.extension.plot2d.model.NTxPlot2DData;
 import net.thevpc.nuts.elem.NElement;
 import net.thevpc.nuts.math.NDoubleRange;
-import net.thevpc.nuts.mon.NChronometer;
 import net.thevpc.nuts.util.NArrays;
 import net.thevpc.nuts.math.NDoubleFunction;
-import net.thevpc.nuts.text.NMsg;
 
 import java.awt.*;
 import java.util.List;
@@ -69,10 +67,7 @@ class NTxDrawContextRenderCompiler {
                     case FUNCTION_X: {
                         NDoubleFunction ff = NTxPlotNExprResolver.compileFunctionX(pld, rendererContext);
                         if (ff != null) {
-                            NChronometer c = NChronometer.of();
                             pd.prepareX(ff, xValues, minMaxY);
-                            c.stop();
-                            rendererContext.log(NMsg.ofC("FUNCTION_X : %s", c));
                             drawContext.allData.add(pd);
                         }
                         break;
