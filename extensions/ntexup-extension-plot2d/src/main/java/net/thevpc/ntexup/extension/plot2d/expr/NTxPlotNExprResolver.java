@@ -3,6 +3,7 @@ package net.thevpc.ntexup.extension.plot2d.expr;
 import net.thevpc.ntexup.api.renderer.NTxRendererContext;
 import net.thevpc.ntexup.api.util.NTxUtils;
 import net.thevpc.ntexup.extension.plot2d.model.NTxFunctionPlotInfo;
+import net.thevpc.nuts.elem.NElement;
 import net.thevpc.nuts.expr.*;
 import net.thevpc.nuts.math.NDoubleFunction;
 import net.thevpc.nuts.text.NMsg;
@@ -18,17 +19,30 @@ public class NTxPlotNExprResolver implements NExprResolver {
 
 
     public static NDoubleFunction compileFunctionX(NTxFunctionPlotInfo e, NTxRendererContext rendererContext) {
-        NExprMutableContext d = NTxExprHelper.create(rendererContext);
-        NOptional<NExprNode> ne = d.parse(e.fexpr.isAnyString() ? e.fexpr.asStringValue().get() : NTxUtils.removeCompilerDeclarationPathAnnotations(e.fexpr).toString());
-        if (!ne.isPresent()) {
-            rendererContext.log(NMsg.ofC("unable to parse expression %s : %s", ne.message(), e.fexpr));
-            return null;
+        NElement expression = e.fexpr;
+        NTxFunctionPlotInfo.CompiledExpression compiled;
+        synchronized (e) {
+            compiled = e.getCompiledFunction(expression);
+            if (compiled == null) {
+                NExprMutableContext context = NTxExprHelper.create(rendererContext);
+                NOptional<NExprNode> parsed = context.parse(expression.isAnyString()
+                        ? expression.asStringValue().get()
+                        : NTxUtils.removeCompilerDeclarationPathAnnotations(expression).toString());
+                if (!parsed.isPresent()) {
+                    rendererContext.log(NMsg.ofC("unable to parse expression %s : %s",
+                            parsed.message(), expression));
+                    return null;
+                }
+                e.setCompiledFunction(expression, context, parsed.get());
+                compiled = e.getCompiledFunction(expression);
+            }
         }
-        NExprNode nExprNode = ne.get();
+        NExprMutableContext context = compiled.context;
+        NExprNode expressionNode = compiled.node;
         return x -> {
-            NOptional<Object> r = nExprNode.eval(
-                    d.childContext()
-                            .declareResolver(new NTxPlotNExprResolver(e, d, x, 0, 0, 0))
+            NOptional<Object> r = expressionNode.eval(
+                    context.childContext()
+                            .declareResolver(new NTxPlotNExprResolver(e, context, x, 0, 0, 0))
                             .build()
             );
             return NTxExprHelper.asDouble(r,rendererContext);

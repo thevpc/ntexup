@@ -376,6 +376,8 @@ Tests:
 
 ### Phase 5 — Renderer-level caches
 
+- [x] Cache parsed plot-expression trees by expression on the plot definition;
+      create a per-render evaluator so diagnostics use the current render context.
 - [ ] plot2d: cache sampled geometry keyed by
       `(function expression, params, x-range, width, height, timeEpoch)`. Do not
       cache across time for animated plots.
@@ -872,6 +874,17 @@ D1/D2 PNG hash manifests match their Phase 0 baselines. D2 `NTxRenderAll` at
 1920×1080 measured cold 17.654 s and warm 4.890 s (43.1% below the 8.6 s
 baseline). The performance and golden gates pass, but broader nested-scope tests
 remain open, so Phase 4 is incomplete.
+
+### 2026-11-12 — Phase 5.1 — compiled plot-expression reuse
+
+Plot definitions now retain the parsed `NExprNode` and its immutable base
+expression context keyed by the exact source `NElement`. Each render still
+creates a lightweight function closure using its current renderer context, so
+runtime evaluation errors are reported against the active render rather than a
+stale context. Changing the plot expression replaces the cached parse.
+`TestPlotExpressionCache` verifies reuse, expression-change invalidation, and
+sampled values. Sampled geometry is not cached; no performance gain is claimed,
+and Gate 5 remains open.
 
 ---
 
