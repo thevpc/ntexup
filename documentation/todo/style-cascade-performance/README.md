@@ -343,8 +343,9 @@ Tests:
       freeze time).
 - [x] Resize (e.g. 1920×1080 → 1280×720) → `%P` values change; output at the
       larger size matches the legacy resolver.
-- [ ] Var reassignment invalidates only affected nodes (assert unrelated nodes
-      keep the same cached identity/value).
+- [x] Runtime `@assign` / `@assign-default` notify the dependency graph; tests
+      assert that only dependent nodes are invalidated and unrelated nodes keep
+      the same cached identity/value.
 - [ ] Golden: static decks byte-identical.
 
 **Gate 3:** animation tests pass; static golden diff = 0; warm ≥ 35 % faster than
@@ -843,6 +844,18 @@ area assertion confirms that page-relative sizes still respond to output size.
 `TestCascadeEquivalence` suite pass. This is test-only; no benchmark was run.
 Dynamic-value caching and `varEpoch` remain unimplemented, so Gate 3 remains
 blocked.
+
+### 2026-11-12 — Phase 3.4 — runtime assignment invalidation
+
+Runtime `@assign` and `@assign-default` now notify the compiled document's
+dependency graph after setting a binding. Focused tests verify that dependent
+node render caches are invalidated, including default assignment when the
+binding is absent; the existing graph test verifies unrelated nodes retain
+their cache identity.
+
+The change does not add a `varEpoch` or folded-value cache, and animation-driven
+binding updates are not wired here. `TestCascadeValueFolding` and
+`TestCascadeAnimation` pass. Gate 3 remains blocked.
 
 ---
 

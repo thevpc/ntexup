@@ -32,6 +32,9 @@ public class NTxAssignDefaultRenderer extends NTxDoNothingRenderer {
                     if (p != null) {
                         p.setVar(varName, var);
                     }
+                    if (ctx.compiledDocument() != null) {
+                        ctx.compiledDocument().dependencyGraph().notifyBindingUpdated(varName);
+                    }
                 }
             }
         }
