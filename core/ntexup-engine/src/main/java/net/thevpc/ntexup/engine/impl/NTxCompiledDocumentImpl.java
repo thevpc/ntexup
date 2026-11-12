@@ -758,13 +758,8 @@ public class NTxCompiledDocumentImpl implements NTxCompiledDocument {
         }
         if (elem.type() == NElementType.FLAT_EXPR) {
             NFlatExprElement flat = (NFlatExprElement) elem;
-            try {
-                NElement reshaped = flat.reshape();
-                scanElementDependencies(reshaped, pageIndex);
-            } catch (Exception ex) {
-                for (NElement child : flat.children()) {
-                    scanElementDependencies(child, pageIndex);
-                }
+            for (NElement child : flat.children()) {
+                scanElementDependencies(child, pageIndex);
             }
         }
         if (elem.type() == NElementType.BINARY_OPERATOR) {

@@ -652,10 +652,11 @@ public class NTxCompiler {
         for (NElement o : b) {
             NTxResolutionContext icontext = context.withVar(varNameStr, NTxVar.ofEvaluatedExpression(o));
             for (NElement e : node.getBody()) {
+                NTxResolutionContext itemContext = icontext.withElement(e);
                 engine.parseNode(e,
-                        icontext.withElement(e), node2 -> {
+                        itemContext, node2 -> {
                             NTxUtils.setNodeParent(node2.get(), context.parent());
-                            new DispatchCompileNodeVisitor(visitor).visitItem(node2.get(), context);
+                            new DispatchCompileNodeVisitor(visitor).visitItem(node2.get(), itemContext);
                         }
                 );
             }
