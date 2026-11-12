@@ -341,9 +341,8 @@ Tests:
 - [x] Same animated node, same virtual time, two renders → identical pixels.
 - [x] Time-dependent page at t=0, t=1, t=2 → different pixels (cache does not
       freeze time).
-- [ ] Resize (e.g. 1920×1080 → 1280×720) → `%P` values change; golden matches
-      the legacy resolver at the new size. (Page-relative geometry is checked
-      across output sizes; a cached-vs-legacy resize golden is still needed.)
+- [x] Resize (e.g. 1920×1080 → 1280×720) → `%P` values change; output at the
+      larger size matches the legacy resolver.
 - [ ] Var reassignment invalidates only affected nodes (assert unrelated nodes
       keep the same cached identity/value).
 - [ ] Golden: static decks byte-identical.
@@ -819,7 +818,11 @@ Changed:
 Validation:
 - `TestCascadeAnimation`, `TestCascadeValueFolding`, and
   `TestCascadeEquivalence` pass; 8 tests passed and the path-dependent deck
-  comparison was skipped when no deck paths were supplied in that run.
+  comparison was run with D1 and D2 paths, with 0 mismatches (185,031 and
+  1,824,416 comparisons).
+- The `%P` resize test matches cached and legacy rendering pixel-for-pixel at
+  1200×800; it also confirms the page-relative rectangle scales when rendered
+  at 600×400 versus 1200×800.
 - Full suite: 61 tests, 2 failures, 3 skipped. The failures remain the known
   HTML-backend and connector-loop tests; the two disabled control-flow/loop
   scaffolds remain skipped.
@@ -827,8 +830,19 @@ Validation:
   production fast path in Phase 3.1; this update changes tests only.
 
 **Status:** Safety coverage improved, but no dynamic value is currently cached,
-and no integrated cached-vs-legacy resize comparison exists. Gate 3 remains
+and no dependency-scoped `varEpoch` folding is implemented. Gate 3 remains
 blocked; do not treat these tests as evidence that value folding is complete.
+
+### 2026-11-12 — Phase 3.3 — resized legacy equivalence
+
+Extended the `%P` resize test to render the same compiled page at 1200×800 with
+the cached resolver and with `-Dntexup.style.legacy=true`, then compare every
+pixel. The cached and legacy images match; the existing 600×400 vs 1200×800
+area assertion confirms that page-relative sizes still respond to output size.
+`TestCascadeAnimation`, `TestCascadeValueFolding`, and the D1/D2
+`TestCascadeEquivalence` suite pass. This is test-only; no benchmark was run.
+Dynamic-value caching and `varEpoch` remain unimplemented, so Gate 3 remains
+blocked.
 
 ---
 

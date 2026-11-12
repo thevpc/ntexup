@@ -86,15 +86,36 @@ class TestCascadeAnimation {
                 ("page{rectangle(at:(10,10), size:(25%P,25%P), background-color:red)}")
                         .getBytes(StandardCharsets.UTF_8))).page(0).get();
 
-        int smallRedPixels = countRedPixels(pixels(engine.renderImage(page,
-                new NTxNodeRendererConfig(600, 400).withAnimate(false).withPrint(true))));
-        int largeRedPixels = countRedPixels(pixels(engine.renderImage(page,
-                new NTxNodeRendererConfig(1200, 800).withAnimate(false).withPrint(true))));
+        int[] small = renderPixels(engine, page, 600, 400, false);
+        int[] large = renderPixels(engine, page, 1200, 800, false);
 
+        int smallRedPixels = countRedPixels(small);
+        int largeRedPixels = countRedPixels(large);
         assertTrue(smallRedPixels > 0, "page-relative rectangle must render");
         assertTrue(largeRedPixels > smallRedPixels * 3,
                 "doubling render dimensions should grow page-relative area; got "
                         + smallRedPixels + " -> " + largeRedPixels);
+
+        int[] legacyLarge;
+        String oldLegacy = System.getProperty("ntexup.style.legacy");
+        try {
+            System.setProperty("ntexup.style.legacy", "true");
+            legacyLarge = renderPixels(engine, page, 1200, 800, false);
+        } finally {
+            if (oldLegacy == null) {
+                System.clearProperty("ntexup.style.legacy");
+            } else {
+                System.setProperty("ntexup.style.legacy", oldLegacy);
+            }
+        }
+        assertArrayEquals(legacyLarge, large,
+                "resized page-relative rendering must match the legacy resolver");
+    }
+
+    private static int[] renderPixels(NTxEngine engine, NTxCompiledPage page,
+                                     int width, int height, boolean animate) {
+        return pixels(engine.renderImage(page, new NTxNodeRendererConfig(width, height)
+                .withAnimate(animate).withPrint(true)));
     }
 
     private static int[] pixels(BufferedImage image) {
