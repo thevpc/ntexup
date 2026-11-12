@@ -19,12 +19,15 @@ import net.thevpc.nuts.util.NStringBuilder;
 import javax.imageio.ImageIO;
 import java.awt.Color;
 import java.awt.image.BufferedImage;
+import java.lang.ref.SoftReference;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import net.thevpc.nuts.elem.NElement;
 
 
 public abstract class PlantUmlBuilderBase implements NTxNodeBuilder {
+    private static final String DIAGRAM_CACHE_KEY = "ntexup-plantuml-diagram";
+
     private final String id;
     private String mode;
     private final String[] aliases;
@@ -109,16 +112,8 @@ public abstract class PlantUmlBuilderBase implements NTxNodeBuilder {
             }
         }
         if (plantUMLText != null) {
-            SourceStringReader reader = new SourceStringReader(plantUMLText);
-            // Write the first image to "png"
-            ByteArrayOutputStream bos = new ByteArrayOutputStream();
-            try {
-                reader.outputImage(bos);
-                image = ImageIO.read(new ByteArrayInputStream(bos.toByteArray()));
-            } catch (Exception ex) {
-                NTxSource src = NTxUtils.sourceOf(node);
-                rendererContext.log(NMsg.ofC("Unable to evaluate UML : %s", ex).asSevere(), src);
-            }
+            image = renderDiagramImage(plantUMLText, node,
+                    NTxUtils.intOf(b.widthX()), NTxUtils.intOf(b.widthY()), rendererContext);
         }
         if (image != null) {
 
@@ -137,8 +132,52 @@ public abstract class PlantUmlBuilderBase implements NTxNodeBuilder {
                         g.drawImage(resized, (int) x, (int) y, null);
                     }
                 }
+
             }
             rendererContext.drawContour();
+        }
+    }
+
+    static BufferedImage renderDiagramImage(String source, NTxNode node, int width, int height,
+                                            NTxRendererContext rendererContext) {
+        Object cacheValue = node.getRenderCache(DIAGRAM_CACHE_KEY).orNull();
+        DiagramCacheEntry cached = cacheValue instanceof SoftReference
+                ? (DiagramCacheEntry) ((SoftReference<?>) cacheValue).get() : null;
+        if (cached != null && cached.matches(source, width, height)) {
+            return cached.image;
+        }
+        SourceStringReader reader = new SourceStringReader(source);
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        try {
+            reader.outputImage(bos);
+            BufferedImage image = ImageIO.read(new ByteArrayInputStream(bos.toByteArray()));
+            if (image != null) {
+                node.setRenderCache(DIAGRAM_CACHE_KEY,
+                        new SoftReference<>(new DiagramCacheEntry(source, width, height, image)));
+            }
+            return image;
+        } catch (Exception ex) {
+            NTxSource src = NTxUtils.sourceOf(node);
+            rendererContext.log(NMsg.ofC("Unable to evaluate UML : %s", ex).asSevere(), src);
+            return null;
+        }
+    }
+
+    private static final class DiagramCacheEntry {
+        private final String source;
+        private final int width;
+        private final int height;
+        private final BufferedImage image;
+
+        private DiagramCacheEntry(String source, int width, int height, BufferedImage image) {
+            this.source = source;
+            this.width = width;
+            this.height = height;
+            this.image = image;
+        }
+
+        private boolean matches(String candidateSource, int candidateWidth, int candidateHeight) {
+            return source.equals(candidateSource) && width == candidateWidth && height == candidateHeight;
         }
     }
 

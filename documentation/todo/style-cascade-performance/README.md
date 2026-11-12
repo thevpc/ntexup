@@ -386,7 +386,7 @@ Tests:
       cache across time for animated plots.
 - [x] Text shadow: cache the tinted + blurred bitmap keyed by
       `(text, font, size, color, blur, shadow params)`.
-- [ ] PlantUML: cache the rendered diagram keyed by `(source, size, params)`.
+- [x] PlantUML: cache the rendered diagram keyed by `(source, size, params)`.
 - [ ] Remove/gate per-render logging and `NChronometer` allocations.
 
 Tests:
@@ -394,7 +394,8 @@ Tests:
 - [ ] plot2d golden at several `startTime` values; identical at the same time.
 - [x] Shadow golden; identical after cache warm.
 - [ ] `TestHtmlStaticExport` animation tests keep passing.
-- [ ] D1 + D2 golden identical (static).
+- [x] D1 + D2 golden identical (static).
+- [x] PlantUML cache test covers reuse and source/size invalidation.
 
 **Gate 5:** plot-heavy pages ≥ 30 % faster warm; animation frames still differ;
 golden diff = 0.
@@ -918,6 +919,16 @@ with 4.969 s in one run immediately before sample caching. This is directional
 only because the run-to-run variance is material; it does not establish the
 30% plot-page gate. Plot-specific start-time tests and the remaining Gate 5
 items are open.
+
+### 2026-11-12 — Phase 5.4 — PlantUML image reuse
+
+PlantUML source output is cached on its node with a soft reference, keyed by the
+fully prepared diagram source and target dimensions (the source includes mode,
+parameters, and theme skin settings). Failures are not cached; drawing,
+foreground/background application, and resize remain in the active render.
+`TestPlantUmlCache` verifies same-key reuse and source/size invalidation. D1/D2
+PNG hashes match. D1 `NTxRenderAll` measured cold 3.389 s and warm 0.943 s;
+that single run does not establish a performance gain. Gate 5 remains open.
 
 ---
 
