@@ -131,7 +131,7 @@ public abstract class NTxNodeRendererBase implements NTxNodeRenderer {
                         NTxShadow shadow = shadowOptional.get();
                         NTx2DUtils0.drawShadowed(c.graphics(), gg -> {
                             renderMain(c.withGraphics(gg));
-                        }, c.globalBounds2D(), shadow);
+                        }, c.globalBounds2D(), shadow, node);
                     } else {
                         renderMain(c);
                     }

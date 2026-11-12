@@ -381,7 +381,7 @@ Tests:
 - [ ] plot2d: cache sampled geometry keyed by
       `(function expression, params, x-range, width, height, timeEpoch)`. Do not
       cache across time for animated plots.
-- [ ] Text shadow: cache the tinted + blurred bitmap keyed by
+- [x] Text shadow: cache the tinted + blurred bitmap keyed by
       `(text, font, size, color, blur, shadow params)`.
 - [ ] PlantUML: cache the rendered diagram keyed by `(source, size, params)`.
 - [ ] Remove/gate per-render logging and `NChronometer` allocations.
@@ -389,7 +389,7 @@ Tests:
 Tests:
 
 - [ ] plot2d golden at several `startTime` values; identical at the same time.
-- [ ] Shadow golden; identical after cache warm.
+- [x] Shadow golden; identical after cache warm.
 - [ ] `TestHtmlStaticExport` animation tests keep passing.
 - [ ] D1 + D2 golden identical (static).
 
@@ -877,7 +877,7 @@ remain open, so Phase 4 is incomplete.
 
 ### 2026-11-12 — Phase 5.1 — compiled plot-expression reuse
 
-Plot definitions now retain the parsed `NExprNode` and its immutable base
+Plot definitions now retain the parsed `NExprNode` and its base
 expression context keyed by the exact source `NElement`. Each render still
 creates a lightweight function closure using its current renderer context, so
 runtime evaluation errors are reported against the active render rather than a
@@ -885,6 +885,20 @@ stale context. Changing the plot expression replaces the cached parse.
 `TestPlotExpressionCache` verifies reuse, expression-change invalidation, and
 sampled values. Sampled geometry is not cached; no performance gain is claimed,
 and Gate 5 remains open.
+
+### 2026-11-12 — Phase 5.2 — shadow bitmap reuse
+
+Shadow rendering now keeps a soft reference to the previous source bitmap and
+its tinted/blurred result on the node. It reuses the result only when dimensions,
+every source pixel, tint color, and blur radius match exactly; translation,
+zoom, shear, and alpha are still applied per render. Changed/animated pixels
+therefore cannot be frozen, and soft references avoid pinning large images.
+`TestShadowBitmapCache` verifies pixel-equivalent blur output, cache hits, and
+invalidation on source/style changes. D1/D2 PNG hash manifests still match.
+
+D1 `NTxRenderAll` measured cold/warm 3.494/1.367 s; D2 measured 17.789/4.969 s.
+These single runs do not establish a performance gain. Plot sample caching,
+PlantUML caching, and the remaining Gate 5 checks are still open.
 
 ---
 

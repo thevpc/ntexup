@@ -4,6 +4,7 @@ package net.thevpc.ntexup.engine.util;
 import net.thevpc.ntexup.api.document.elem2d.NTxBounds2D;
 import net.thevpc.ntexup.api.document.elem2d.NTxPoint2D;
 import net.thevpc.ntexup.api.document.elem2d.NTxShadow;
+import net.thevpc.ntexup.api.document.node.NTxNode;
 import net.thevpc.ntexup.api.renderer.NTxGraphics;
 import net.thevpc.ntexup.api.renderer.text.NTxTextOptions;
 
@@ -13,13 +14,18 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.ConvolveOp;
+import java.awt.image.DataBufferInt;
 import java.awt.image.Kernel;
 import java.awt.image.RescaleOp;
+import java.lang.ref.SoftReference;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.function.Consumer;
 
 public class NTx2DUtils0 {
+    private static final String SHADOW_CACHE_KEY = "ntexup-shadow-bitmap";
+
     private static float[] createGaussianKernel(float radius) {
         int r = (int) Math.ceil(radius * 3); // cover ~99% of Gaussian
         int size = r * 2 + 1;
@@ -149,16 +155,19 @@ public class NTx2DUtils0 {
     }
 
     public static void drawShadowed(NTxGraphics graphics, Consumer<NTxGraphics> consumer, NTxBounds2D selfBounds, NTxShadow shadow) {
+        drawShadowed(graphics, consumer, selfBounds, shadow, null);
+    }
+
+    public static void drawShadowed(NTxGraphics graphics, Consumer<NTxGraphics> consumer,
+                                    NTxBounds2D selfBounds, NTxShadow shadow, NTxNode node) {
         NTxGraphics g2d = graphics.copy();
         // Render text to offscreen image (solid white for shadow)
         BufferedImage textImage = new BufferedImage(selfBounds.widthX().intValue(), selfBounds.widthY().intValue(), BufferedImage.TYPE_INT_ARGB);
         Graphics2D tg = textImage.createGraphics();
         consumer.accept(graphics.engine().createGraphics(tg));
         tg.dispose();
-        if(shadow.getColor() instanceof Color) {
-            textImage=tint(textImage,(Color) shadow.getColor());
-        }
-        BufferedImage blurred = applyGaussianBlur(textImage, 2);
+        Color tintColor = shadow.getColor() instanceof Color ? (Color) shadow.getColor() : null;
+        BufferedImage blurred = cachedBlurredImage(node, textImage, tintColor, 2);
 
         // Draw blurred image as shadow, offset by (0,2)
         double alpha = shadow.getAlpha();
@@ -189,6 +198,52 @@ public class NTx2DUtils0 {
         g2d.setComposite(AlphaComposite.SrcOver);
         consumer.accept(g2d);
         g2d.dispose();
+    }
+
+    static BufferedImage cachedBlurredImage(NTxNode node, BufferedImage source,
+                                            Color tintColor, float radius) {
+        if (node != null) {
+            Object cacheValue = node.getRenderCache(SHADOW_CACHE_KEY).orNull();
+            ShadowCacheEntry cached = cacheValue instanceof SoftReference
+                    ? (ShadowCacheEntry) ((SoftReference<?>) cacheValue).get() : null;
+            if (cached != null && cached.matches(source, tintColor, radius)) {
+                return cached.blurred;
+            }
+        }
+        BufferedImage image = tintColor == null ? source : tint(source, tintColor);
+        BufferedImage blurred = applyGaussianBlur(image, radius);
+        if (node != null) {
+            node.setRenderCache(SHADOW_CACHE_KEY,
+                    new SoftReference<>(new ShadowCacheEntry(source, tintColor, radius, blurred)));
+        }
+        return blurred;
+    }
+
+    private static final class ShadowCacheEntry {
+        private final BufferedImage source;
+        private final Color tintColor;
+        private final float radius;
+        private final BufferedImage blurred;
+
+        private ShadowCacheEntry(BufferedImage source, Color tintColor,
+                                 float radius, BufferedImage blurred) {
+            this.source = source;
+            this.tintColor = tintColor;
+            this.radius = radius;
+            this.blurred = blurred;
+        }
+
+        private boolean matches(BufferedImage candidate, Color candidateTint, float candidateRadius) {
+            if (source.getWidth() != candidate.getWidth()
+                    || source.getHeight() != candidate.getHeight()
+                    || !java.util.Objects.equals(tintColor, candidateTint)
+                    || Float.compare(radius, candidateRadius) != 0) {
+                return false;
+            }
+            int[] sourcePixels = ((DataBufferInt) source.getRaster().getDataBuffer()).getData();
+            int[] candidatePixels = ((DataBufferInt) candidate.getRaster().getDataBuffer()).getData();
+            return Arrays.equals(sourcePixels, candidatePixels);
+        }
     }
 
     public static BufferedImage applyGaussianBlur(BufferedImage src, float radius) {
