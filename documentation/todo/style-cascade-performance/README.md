@@ -378,6 +378,9 @@ Tests:
 
 - [x] Cache parsed plot-expression trees by expression on the plot definition;
       create a per-render evaluator so diagnostics use the current render context.
+- [x] Cache static plot sample arrays by expression, argument bindings, and
+      exact x-values. Expressions referencing `t`, time, or randomness are not
+      cached; viewport projection is recomputed per render.
 - [ ] plot2d: cache sampled geometry keyed by
       `(function expression, params, x-range, width, height, timeEpoch)`. Do not
       cache across time for animated plots.
@@ -899,6 +902,22 @@ invalidation on source/style changes. D1/D2 PNG hash manifests still match.
 D1 `NTxRenderAll` measured cold/warm 3.494/1.367 s; D2 measured 17.789/4.969 s.
 These single runs do not establish a performance gain. Plot sample caching,
 PlantUML caching, and the remaining Gate 5 checks are still open.
+
+### 2026-11-12 — Phase 5.3 — static plot sample reuse
+
+Function plots now retain sampled y-values only when the expression does not
+reference `t`, time, or random values. The cache key includes the expression,
+argument count and variable names, and a copy of the exact x-values; cached
+arrays are copied on read/write. Rendering still recomputes viewport projection
+and y-range on every pass, and time-dependent/random expressions continue to
+evaluate each time. `TestPlotExpressionCache` covers key changes and dynamic
+exclusions; D1/D2 PNG hash manifests match.
+
+D2 `NTxRenderAll` warm totals were 3.798 s and 4.052 s in two runs, compared
+with 4.969 s in one run immediately before sample caching. This is directional
+only because the run-to-run variance is material; it does not establish the
+30% plot-page gate. Plot-specific start-time tests and the remaining Gate 5
+items are open.
 
 ---
 

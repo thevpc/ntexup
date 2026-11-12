@@ -11,6 +11,8 @@ import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Proxy;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertSame;
@@ -47,5 +49,27 @@ class TestPlotExpressionCache {
 
         assertNotSame(compiled, plot.getCompiledFunction(plot.fexpr));
         assertEquals(4, changed.apply(2), 1e-10);
+    }
+
+    @Test
+    void sampleCacheUsesExpressionAndXValuesAndSkipsDynamicExpressions() {
+        NTxFunctionPlotInfo plot = new NTxFunctionPlotInfo();
+        plot.fexpr = NElement.ofString("sin(x)");
+        double[] xValues = {0, 1, 2};
+        plot.setCachedSamples(plot.fexpr, xValues, new double[]{0, 1, 2});
+
+        double[] cached = plot.getCachedSamples(plot.fexpr, xValues);
+        assertArrayEquals(new double[]{0, 1, 2}, cached);
+        org.junit.jupiter.api.Assertions.assertNotSame(cached,
+                plot.getCachedSamples(plot.fexpr, xValues));
+        assertNull(plot.getCachedSamples(plot.fexpr, new double[]{0, 2}));
+
+        plot.fexpr = NElement.ofString("sin(t)");
+        plot.setCachedSamples(plot.fexpr, xValues, new double[]{0, 1, 2});
+        assertNull(plot.getCachedSamples(plot.fexpr, xValues));
+
+        plot.fexpr = NElement.ofString("random()");
+        plot.setCachedSamples(plot.fexpr, xValues, new double[]{0, 1, 2});
+        assertNull(plot.getCachedSamples(plot.fexpr, xValues));
     }
 }

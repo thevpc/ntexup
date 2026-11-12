@@ -67,7 +67,19 @@ class NTxDrawContextRenderCompiler {
                     case FUNCTION_X: {
                         NDoubleFunction ff = NTxPlotNExprResolver.compileFunctionX(pld, rendererContext);
                         if (ff != null) {
-                            pd.prepareX(ff, xValues, minMaxY);
+                            double[] sampledY = pld.getCachedSamples(pld.fexpr, xValues);
+                            if (sampledY == null) {
+                                pd.prepareX(ff, xValues, minMaxY);
+                                pld.setCachedSamples(pld.fexpr, xValues, pd.yy);
+                            } else {
+                                pd.xx = xValues;
+                                pd.yy = sampledY;
+                                for (double yv : sampledY) {
+                                    if (Double.isFinite(yv)) {
+                                        minMaxY.add(yv);
+                                    }
+                                }
+                            }
                             drawContext.allData.add(pd);
                         }
                         break;
