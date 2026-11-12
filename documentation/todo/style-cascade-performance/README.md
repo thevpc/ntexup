@@ -346,7 +346,7 @@ Tests:
 - [x] Runtime `@assign` / `@assign-default` notify the dependency graph; tests
       assert that only dependent nodes are invalidated and unrelated nodes keep
       the same cached identity/value.
-- [ ] Golden: static decks byte-identical.
+- [x] Golden: static decks byte-identical.
 
 **Gate 3:** animation tests pass; static golden diff = 0; warm ≥ 35 % faster than
 baseline; no `time`/`%P` leakage.
@@ -355,18 +355,20 @@ baseline; no `time`/`%P` leakage.
 
 ### Phase 4 — Per-node context copy
 
-- [ ] Stop copying `vars`/`definitions`/`functions` per node render. Share
-      immutable maps; copy-on-write only when a scope actually adds a binding.
-- [ ] Replace the per-context `uid` string concatenation with a lazy/structural
+- [x] Stop copying `vars`/`definitions`/`functions` per node render. Share scope
+      maps; copy-on-write only when a scope actually adds a binding.
+- [x] Replace the per-context `uid` string concatenation with a lazy/structural
       identity (only materialise it when logged).
 - [ ] Preserve scoping semantics: nested scopes, shadowing, `for`/`if` scopes.
 
 Tests:
 
-- [ ] `TestVariablesAnywhere` (existing) unchanged.
-- [ ] New scoping tests: nested `for` + `if`, variable shadowing, variable used
+- [x] `TestVariablesAnywhere` (existing) unchanged.
+- [x] New scoping test: copied contexts preserve parent bindings and isolate
+      child variable shadowing.
+- [ ] New scoping tests: nested `for` + `if`, variable used
       after a loop, `@let` inside a component body.
-- [ ] Golden: D1 + D2 identical.
+- [x] Golden: D1 + D2 identical.
 
 **Gate 4:** scoping tests pass; warm ≥ 40 % faster than baseline; golden diff = 0.
 
@@ -856,6 +858,20 @@ their cache identity.
 The change does not add a `varEpoch` or folded-value cache, and animation-driven
 binding updates are not wired here. `TestCascadeValueFolding` and
 `TestCascadeAnimation` pass. Gate 3 remains blocked.
+
+### 2026-11-12 — Phase 4.1 — copy-on-write resolution contexts
+
+Resolution-context copies now share variable, definition, and function maps until
+the first mutation in either scope, which then detaches that scope. Context IDs
+are allocated as integers and the hierarchical UID string is materialized only
+when requested. A focused test checks inherited lookup and child variable
+shadowing; `TestVariablesAnywhere`, cascade animation, and full D1/D2 cascade
+equivalence pass.
+
+D1/D2 PNG hash manifests match their Phase 0 baselines. D2 `NTxRenderAll` at
+1920×1080 measured cold 17.654 s and warm 4.890 s (43.1% below the 8.6 s
+baseline). The performance and golden gates pass, but broader nested-scope tests
+remain open, so Phase 4 is incomplete.
 
 ---
 

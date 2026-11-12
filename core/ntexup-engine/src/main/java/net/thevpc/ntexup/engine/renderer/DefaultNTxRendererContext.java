@@ -860,6 +860,7 @@ public class DefaultNTxRendererContext extends NTxResolutionContextImpl implemen
                                                 NTxItemParser itemParser,
                                                 NTxRenderSession session
     ) {
+        markScopeMapsShared();
         return new DefaultNTxRendererContext(
                 path, engine, g,
                 selfBounds2D, parentBounds2D, globalBound2D, realBounds2D, realGlobalBounds2D,

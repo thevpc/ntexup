@@ -30,7 +30,8 @@ import java.util.function.Predicate;
 
 public class NTxResolutionContextImpl implements NTxResolutionContext {
     protected static AtomicInteger ID = new AtomicInteger();
-    protected String uid;
+    protected volatile String uid;
+    private final int uidPart;
     protected NElement element;
     protected NTxNode node;
     protected NTxResolutionContext parentContext;
@@ -44,6 +45,9 @@ public class NTxResolutionContextImpl implements NTxResolutionContext {
     protected Map<String, NTxVar> vars = new LinkedHashMap<>();
     protected Map<String, NTxNodeDef> definitions = new LinkedHashMap<>();
     protected Map<String, NTxFunction> functions = new LinkedHashMap<>();
+    private volatile boolean varsShared;
+    private volatile boolean definitionsShared;
+    private volatile boolean functionsShared;
     protected NTxItemParser itemParser;
     protected NTxCompiledDocument compiledDocument;
     protected NTxCompiledPage compiledPage;
@@ -53,7 +57,7 @@ public class NTxResolutionContextImpl implements NTxResolutionContext {
                                     NTxCompiledDocument compiledDocument,
                                     NTxCompiledPage compiledPage,
                                     NTxResolutionContext parentContext, NTxItemParser itemParser) {
-        this.uid = ((parentContext != null) ? (parentContext.uid() + "/") : "") + ID.incrementAndGet();
+        this.uidPart = ID.incrementAndGet();
         this.path = Arrays.copyOf(path, path.length);
         this.node = path[path.length - 1];
         this.parent = (path.length - 2 >= 0) ? path[path.length - 2] : null;
@@ -65,25 +69,48 @@ public class NTxResolutionContextImpl implements NTxResolutionContext {
         this.compiledPage = compiledPage;
         this.compiledDocument = compiledDocument;
 
-        if (parentContext != null) {
-            this.vars.putAll(((NTxResolutionContextImpl) parentContext).getVars());
-        }
-        if (vars != null) {
+        NTxResolutionContextImpl parentImpl = parentContext == null
+                ? null : (NTxResolutionContextImpl) parentContext;
+        if (vars == null || (parentImpl != null && vars == parentImpl.vars)) {
+            if (parentImpl != null) {
+                parentImpl.varsShared = true;
+                this.vars = parentImpl.vars;
+                this.varsShared = true;
+            }
+        } else if (parentImpl != null) {
+            this.vars = new LinkedHashMap<>(parentImpl.vars);
             this.vars.putAll(vars);
+        } else {
+            this.vars = vars;
+            this.varsShared = true;
         }
 
-        if (parentContext != null) {
-            this.definitions.putAll(((NTxResolutionContextImpl) parentContext).getDefinitions());
-        }
-        if (definitions != null) {
+        if (definitions == null || (parentImpl != null && definitions == parentImpl.definitions)) {
+            if (parentImpl != null) {
+                parentImpl.definitionsShared = true;
+                this.definitions = parentImpl.definitions;
+                this.definitionsShared = true;
+            }
+        } else if (parentImpl != null) {
+            this.definitions = new LinkedHashMap<>(parentImpl.definitions);
             this.definitions.putAll(definitions);
+        } else {
+            this.definitions = definitions;
+            this.definitionsShared = true;
         }
 
-        if (parentContext != null) {
-            this.functions.putAll(((NTxResolutionContextImpl) parentContext).getFunctions());
-        }
-        if (functions != null) {
+        if (functions == null || (parentImpl != null && functions == parentImpl.functions)) {
+            if (parentImpl != null) {
+                parentImpl.functionsShared = true;
+                this.functions = parentImpl.functions;
+                this.functionsShared = true;
+            }
+        } else if (parentImpl != null) {
+            this.functions = new LinkedHashMap<>(parentImpl.functions);
             this.functions.putAll(functions);
+        } else {
+            this.functions = functions;
+            this.functionsShared = true;
         }
 
         this.parentContext = parentContext;
@@ -112,14 +139,27 @@ public class NTxResolutionContextImpl implements NTxResolutionContext {
 
 
     public String uid() {
-        return uid;
+        String value = uid;
+        if (value == null) {
+            String parentUid = parentContext == null ? "" : parentContext.uid();
+            value = parentUid.isEmpty() ? Integer.toString(uidPart) : parentUid + "/" + uidPart;
+            uid = value;
+        }
+        return value;
     }
 
     protected NTxResolutionContext copyAs(NTxNode[] path, NElement element, NTxNodeDef def, boolean isInPage, NTxEngine engine, NTxDocument document, Map<String, NTxVar> vars, Map<String, NTxNodeDef> definitions, Map<String, NTxFunction> functions,
                                           NTxCompiledDocument compiledDocument,
                                           NTxCompiledPage compiledPage,
                                           NTxResolutionContext parentContext, NTxItemParser nodeParserFactory) {
+        markScopeMapsShared();
         return new NTxResolutionContextImpl(path, element, def, isInPage, engine, document, vars, definitions, functions, compiledDocument, compiledPage, parentContext, nodeParserFactory);
+    }
+
+    protected void markScopeMapsShared() {
+        varsShared = true;
+        definitionsShared = true;
+        functionsShared = true;
     }
 
     public NTxItemParser itemParser() {
@@ -352,6 +392,7 @@ public class NTxResolutionContextImpl implements NTxResolutionContext {
         }
         NTxVar old = this.vars.get(name);
         if (!Objects.equals(value, old)) {
+            ensureVarsWritable();
             if (value == null) {
                 vars.remove(name);
             } else {
@@ -473,6 +514,7 @@ public class NTxResolutionContextImpl implements NTxResolutionContext {
     @Override
     public NTxResolutionContext removeNamedDef(String name) {
         if (this.definitions.containsKey(name)) {
+            ensureDefinitionsWritable();
             definitions.remove(name);
         }
         return this;
@@ -489,6 +531,7 @@ public class NTxResolutionContextImpl implements NTxResolutionContext {
         }
         Object old = this.definitions.get(value.name());
         if (!Objects.equals(value, old)) {
+            ensureDefinitionsWritable();
             if (value == null) {
                 definitions.remove(value.name());
             } else {
@@ -530,6 +573,7 @@ public class NTxResolutionContextImpl implements NTxResolutionContext {
     @Override
     public NTxResolutionContext removeFunction(String name) {
         if (this.functions.containsKey(name)) {
+            ensureFunctionsWritable();
             functions.remove(name);
         }
         return this;
@@ -557,6 +601,7 @@ public class NTxResolutionContextImpl implements NTxResolutionContext {
         }
         Object old = this.functions.get(value.name());
         if (!Objects.equals(value, old)) {
+            ensureFunctionsWritable();
             if (value == null) {
                 functions.remove(value.name());
             } else {
@@ -712,6 +757,27 @@ public class NTxResolutionContextImpl implements NTxResolutionContext {
 
     public Map<String, ? extends NTxFunction> getFunctions() {
         return new LinkedHashMap<>(functions);
+    }
+
+    private void ensureVarsWritable() {
+        if (varsShared) {
+            vars = new LinkedHashMap<>(vars);
+            varsShared = false;
+        }
+    }
+
+    private void ensureDefinitionsWritable() {
+        if (definitionsShared) {
+            definitions = new LinkedHashMap<>(definitions);
+            definitionsShared = false;
+        }
+    }
+
+    private void ensureFunctionsWritable() {
+        if (functionsShared) {
+            functions = new LinkedHashMap<>(functions);
+            functionsShared = false;
+        }
     }
 
     @Override

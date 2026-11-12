@@ -46,6 +46,20 @@ class TestCascadeValueFolding {
     }
 
     @Test
+    void copiedContextsShareVariablesUntilOneScopeMutates() {
+        NTxResolutionContextImpl parent = context();
+        parent.setVar("name", NTxVar.ofEvaluatedExpression(NElement.ofString("parent")));
+        NTxResolutionContextImpl child = (NTxResolutionContextImpl) parent.pushContext();
+        parent.setVar("name", NTxVar.ofEvaluatedExpression(NElement.ofString("parent-updated")));
+
+        assertEquals("parent", child.getVar("name").get().get().asStringValue().get());
+        child.setVar("name", NTxVar.ofEvaluatedExpression(NElement.ofString("child")));
+
+        assertEquals("child", child.getVar("name").get().get().asStringValue().get());
+        assertEquals("parent-updated", parent.getVar("name").get().get().asStringValue().get());
+    }
+
+    @Test
     void primitiveValuesAreReturnedUnchanged() {
         NTxResolutionContextImpl context = context();
         NElement[] literals = {
