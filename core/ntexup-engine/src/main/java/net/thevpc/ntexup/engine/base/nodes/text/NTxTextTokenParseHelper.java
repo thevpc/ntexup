@@ -2,10 +2,12 @@ package net.thevpc.ntexup.engine.base.nodes.text;
 
 import net.thevpc.ntexup.api.document.elem2d.NTxPoint;
 import net.thevpc.ntexup.api.engine.NTxNodeBuilderContext;
+import net.thevpc.ntexup.api.eval.NTxValue;
 import net.thevpc.ntexup.api.renderer.NTxRendererContext;
 import net.thevpc.ntexup.api.renderer.text.*;
 import net.thevpc.ntexup.api.util.NTxColors;
 import net.thevpc.nuts.collections.NCharQueue;
+import net.thevpc.nuts.elem.NElement;
 import net.thevpc.nuts.spi.NCodeHighlighter;
 import net.thevpc.nuts.text.*;
 import net.thevpc.nuts.util.NStringUtils;
@@ -66,7 +68,11 @@ class NTxTextTokenParseHelper {
     private NTxRendererContext rendererContext;
     private boolean warnedMissingMtf;
     private final List<Placeholder> placeholders = new ArrayList<>();
-    private NTextTransformConfig nconfig = new NTextTransformConfig().applyTheme(true).normalize(true).basicTrueStyles(true);
+    // Keep symbolic styles (primary, secondary, palette indexes) instead of letting
+    // nuts resolve them against its ANSI terminal theme. ntexup maps them to the
+    // document palette, so a `##heading##` follows the presentation theme instead
+    // of becoming bright cyan (the nuts default for primary).
+    private NTextTransformConfig nconfig = new NTextTransformConfig().applyTheme(false).normalize(true).basicTrueStyles(true);
 
     public NTxTextTokenParseHelper(NTxRendererContext rendererContext, NCharQueue cq, NTxNodeBuilderContext builderContext) {
         this.rendererContext = rendererContext;
@@ -410,6 +416,9 @@ class NTxTextTokenParseHelper {
                 case FORE_TRUE_COLOR:
                     options.foregroundColor = new Color(style.variant());
                     break;
+                case PRIMARY:
+                    options.foregroundColor = resolvePrimaryColor();
+                    break;
                 case BACK_COLOR:
                     options.backgroundColor = NTxColors.resolveDefaultColorByIndex(style.variant(), null, rendererContext);
                     break;
@@ -422,6 +431,35 @@ class NTxTextTokenParseHelper {
         }
     }
 
+    /**
+     * Color used for {@code PRIMARY} text styles, which is what MTF's {@code ##text##}
+     * markup produces. Themes may define {@code documentPrimaryColor}; otherwise the
+     * normal text color is used so that headings never fall back to an ANSI color.
+     */
+    private Color resolvePrimaryColor() {
+        if (rendererContext == null) {
+            return null;
+        }
+        Color c = resolveColorVar("documentPrimaryColor");
+        if (c == null) {
+            c = resolveColorVar("documentTextPrimary");
+        }
+        if (c == null) {
+            c = NTxColors.resolveDefaultColorByIndex(1, null, rendererContext);
+        }
+        return c;
+    }
+
+    private Color resolveColorVar(String name) {
+        if (rendererContext == null) {
+            return null;
+        }
+        NElement v = rendererContext.getVarValue(name).orNull();
+        if (v == null) {
+            return null;
+        }
+        return NTxValue.of(v).asColor().orNull();
+    }
 
     List<NTxTextToken> readSpecial() {
         String bcId = builderContext == null ? null : builderContext.id();

@@ -124,12 +124,21 @@ public abstract class PlantUmlBuilderBase implements NTxNodeBuilder {
 
                 rendererContext.applyForeground(false);
                 if (image != null) {
-                    // would resize?
+                    // fit inside the box, keep the diagram's aspect ratio
                     int w = NTxUtils.intOf(b.widthX());
                     int h = NTxUtils.intOf(b.widthY());
                     if (w > 0 && h > 0) {
-                        BufferedImage resized = rendererContext.engine().tools().resizeBufferedImage(image, w, h);
-                        g.drawImage(resized, (int) x, (int) y, null);
+                        int iw = Math.max(1, image.getWidth());
+                        int ih = Math.max(1, image.getHeight());
+                        double scale = Math.min((double) w / iw, (double) h / ih);
+                        int dw = Math.max(1, (int) Math.round(iw * scale));
+                        int dh = Math.max(1, (int) Math.round(ih * scale));
+                        BufferedImage resized = (dw == iw && dh == ih)
+                                ? image
+                                : rendererContext.engine().tools().resizeBufferedImage(image, dw, dh);
+                        int dx = (int) Math.round(x + (w - dw) / 2.0);
+                        int dy = (int) Math.round(y + (h - dh) / 2.0);
+                        g.drawImage(resized, dx, dy, null);
                     }
                 }
 
@@ -290,7 +299,15 @@ public abstract class PlantUmlBuilderBase implements NTxNodeBuilder {
         NStringBuilder out = NStringBuilder.of();
         out.println("@start" + type);
         if ("uml".equals(type)) {
-            out.println("!pragma layout smetana");
+            String layout = "smetana";
+            NElement layoutVal = rendererContext == null ? null : rendererContext.getVarValue("plantumlLayout").orNull();
+            if (layoutVal != null && layoutVal.isString()) {
+                String s = layoutVal.asStringValue().get().trim();
+                if (!s.isEmpty()) {
+                    layout = s;
+                }
+            }
+            out.println("!pragma layout " + layout);
         }
         out.println("scale " + (b.widthX().intValue()) + "*" + (b.widthY().intValue()));
         out.println("skinparam backgroundcolor transparent");
