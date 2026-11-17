@@ -18,6 +18,13 @@
  * Usage:
  *   NTxPlayer.mount({manifest:"manifest.json", canvas:"ntexup-canvas",
  *                    onPage:function (index, total) {...}});
+ *
+ * Anonymous exports read the archive with plain fetch. An application whose
+ * endpoint needs a token (the token lives in the page, not in the URL) passes
+ * the one hook the player knows about:
+ *   fetcher: function (path) -> Promise<Response>
+ * It is used for the manifest, for every page and for the image assets, so a
+ * caller decides once how an entry is read (authenticated request, cache, …).
  * Returns a promise for a controller:
  *   {page, pages, goTo, next, prev, first, last, pause, resume, destroy}
  */
@@ -385,7 +392,7 @@
      * instead of as files beside the page, because a page opened from the disk
      * cannot fetch its own directory.
      */
-    function imageLoader(base, assets, onReady) {
+    function imageLoader(base, assets, onReady, request) {
         var cache = {};
         return function (sha) {
             var entry = cache[sha];
@@ -399,8 +406,28 @@
                 img.onerror = function () {
                     warnOnce("image", sha + " did not load");
                 };
-                img.src = assets && assets[sha]
+                var src = assets && assets[sha]
                     ? assets[sha] : base + "assets/img/" + sha + ".png";
+                if (request && !(assets && assets[sha])) {
+                    //an <img> cannot carry a header: the caller's hook hands the bytes,
+                    //which are shown through an object URL instead of a URL fetch
+                    request(src).then(function (response) {
+                        if (!response.ok) {
+                            throw new Error("ntexup-player: " + src + " -> " + response.status);
+                        }
+                        return response.blob();
+                    }).then(function (blob) {
+                        entry.objectUrl = URL.createObjectURL(blob);
+                        img.src = entry.objectUrl;
+                    }, function (error) {
+                        warnOnce("image", sha + " did not load");
+                        if (global.console) {
+                            global.console.warn(error);
+                        }
+                    });
+                } else {
+                    img.src = src;
+                }
             }
             return entry;
         };
@@ -772,7 +799,7 @@
         return last > first ? {first: first, count: last - first + 1} : null;
     }
 
-    function PageStore(manifest, base) {
+    function PageStore(manifest, base, request) {
         var pages = manifest.pages || [];
         var cache = {};
 
@@ -800,7 +827,7 @@
             if (meta.data) {
                 return Promise.resolve(decode(index, meta, meta.data));
             }
-            var entry = fetch(base + meta.file)
+            var entry = request(base + meta.file)
                 .then(function (response) {
                     if (!response.ok) {
                         throw new Error("ntexup-player: " + meta.file + " -> " + response.status);
@@ -848,6 +875,11 @@
         //export is one file and must not reach for the network
         var data = options.data || null;
         var manifestUrl = options.manifest || "manifest.json";
+        //one place decides how an archive entry is read; plain fetch when the caller says nothing
+        var request = typeof options.fetcher === "function"
+            ? options.fetcher : function (url) {
+                return fetch(url);
+            };
         var base = data ? "" : manifestUrl.replace(/[^/]*$/, "");
         var listeners = [];
         var manifest = null;
@@ -906,7 +938,7 @@
                     render(index);
                 });
             }
-        });
+        }, data ? null : request);
 
         function schedule() {
             if (raf || !current || current.frames.length < 2 || !playing) {
@@ -1042,7 +1074,7 @@
 
         var boot = data
             ? Promise.resolve(data)
-            : fetch(manifestUrl).then(function (response) {
+            : request(manifestUrl).then(function (response) {
                 if (!response.ok) {
                     throw new Error("ntexup-player: " + manifestUrl + " -> " + response.status);
                 }
@@ -1056,7 +1088,7 @@
                         + ", this player reads " + FORMAT);
                 }
                 manifest = loaded;
-                store = PageStore(manifest, base);
+                store = PageStore(manifest, base, data ? null : request);
                 sizeCanvas();
                 bindKeys();
                 show(hashIndex());

@@ -3,12 +3,12 @@
     <parent>
         <groupId>net.thevpc.xprojects.builders</groupId>
         <artifactId>ntexup-builder</artifactId>
-        <version>1.1.0.0</version>
+        <version>1.2.0.0</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
     <groupId>net.thevpc.ntexup</groupId>
     <artifactId>ntexup-engine</artifactId>
-    <version>1.1.0.0</version>
+    <version>1.2.0.0</version>
     <packaging>jar</packaging>
     <name>ntexup :: Engine</name>
     <properties>
@@ -58,10 +58,10 @@
     </licenses>
 
     <dependencies>
-        <dependency><groupId>net.thevpc.ntexup</groupId><artifactId>ntexup-api</artifactId><version>1.1.0.0</version></dependency>
-        <dependency><groupId>net.thevpc.ntexup</groupId><artifactId>ntexup-lib-geometry2d</artifactId><version>1.1.0.0</version></dependency>
-        <dependency><groupId>net.thevpc.ntexup</groupId><artifactId>ntexup-lib-geometry3d</artifactId><version>1.1.0.0</version></dependency>
-        <dependency><groupId>net.thevpc.nuts</groupId><artifactId>nuts</artifactId><version>1.1.0</version></dependency>
+        <dependency><groupId>net.thevpc.ntexup</groupId><artifactId>ntexup-api</artifactId><version>1.2.0.0</version></dependency>
+        <dependency><groupId>net.thevpc.ntexup</groupId><artifactId>ntexup-lib-geometry2d</artifactId><version>1.2.0.0</version></dependency>
+        <dependency><groupId>net.thevpc.ntexup</groupId><artifactId>ntexup-lib-geometry3d</artifactId><version>1.2.0.0</version></dependency>
+        <dependency><groupId>net.thevpc.nuts</groupId><artifactId>nuts</artifactId><version>1.2.0</version></dependency>
         <dependency><groupId>org.bouncycastle</groupId><artifactId>bcpkix-jdk18on</artifactId><version>1.86</version></dependency>
         <dependency><groupId>org.eclipse.jgit</groupId><artifactId>org.eclipse.jgit</artifactId><version>${jgit.version}</version></dependency>
         <dependency><groupId>org.junit.jupiter</groupId><artifactId>junit-jupiter</artifactId><version>5.10.5</version><scope>test</scope></dependency>

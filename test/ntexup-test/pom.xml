@@ -2,7 +2,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>net.thevpc.xprojects.test.ntexup</groupId>
     <artifactId>ntexup-test</artifactId>
-    <version>1.1.0.0</version>
+    <version>1.2.0.0</version>
     <packaging>jar</packaging>
     <name>ntexup :: Test</name>
     <properties>
@@ -46,13 +46,13 @@
     </licenses>
 
     <dependencies>
-        <dependency><groupId>net.thevpc.ntexup</groupId><artifactId>ntexup</artifactId><version>1.1.0.0</version></dependency>
-        <dependency><groupId>net.thevpc.ntexup</groupId><artifactId>ntexup-lib-geometry3d</artifactId><version>1.1.0.0</version></dependency>
-        <dependency><groupId>net.thevpc.ntexup</groupId><artifactId>ntexup-extension-shapes3d</artifactId><version>1.1.0.0</version></dependency>
-        <dependency><groupId>net.thevpc.ntexup</groupId><artifactId>ntexup-extension-plot2d</artifactId><version>1.1.0.0</version></dependency>
-        <dependency><groupId>net.thevpc.ntexup</groupId><artifactId>ntexup-extension-plantuml</artifactId><version>1.1.0.0</version><scope>test</scope></dependency>
-        <dependency><groupId>net.thevpc.ntexup</groupId><artifactId>ntexup-extension-shapes2d</artifactId><version>1.1.0.0</version></dependency>
-        <dependency><groupId>net.thevpc.ntexup</groupId><artifactId>ntexup-extension-layout</artifactId><version>1.1.0.0</version></dependency>
+        <dependency><groupId>net.thevpc.ntexup</groupId><artifactId>ntexup</artifactId><version>1.2.0.0</version></dependency>
+        <dependency><groupId>net.thevpc.ntexup</groupId><artifactId>ntexup-lib-geometry3d</artifactId><version>1.2.0.0</version></dependency>
+        <dependency><groupId>net.thevpc.ntexup</groupId><artifactId>ntexup-extension-shapes3d</artifactId><version>1.2.0.0</version></dependency>
+        <dependency><groupId>net.thevpc.ntexup</groupId><artifactId>ntexup-extension-plot2d</artifactId><version>1.2.0.0</version></dependency>
+        <dependency><groupId>net.thevpc.ntexup</groupId><artifactId>ntexup-extension-plantuml</artifactId><version>1.2.0.0</version><scope>test</scope></dependency>
+        <dependency><groupId>net.thevpc.ntexup</groupId><artifactId>ntexup-extension-shapes2d</artifactId><version>1.2.0.0</version></dependency>
+        <dependency><groupId>net.thevpc.ntexup</groupId><artifactId>ntexup-extension-layout</artifactId><version>1.2.0.0</version></dependency>
         <dependency><groupId>org.junit.jupiter</groupId><artifactId>junit-jupiter</artifactId><version>5.11.4</version><scope>test</scope></dependency>
         <dependency><groupId>org.junit.platform</groupId><artifactId>junit-platform-launcher</artifactId><version>1.11.4</version><scope>test</scope></dependency>
     </dependencies>
