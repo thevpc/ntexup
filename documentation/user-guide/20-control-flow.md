@@ -46,7 +46,9 @@ y = x * 2 + 5
 text("Total: " + y)
 ```
 
-Operators: `+ - * / %`, comparisons, `&& || !`, ternary `? :`.
+Operators: `+ - * / %` (`+` also concatenates strings: `"Total: " + y`), comparisons `== != < > <= >=` (numbers or strings), `&& || !` (short-circuit).
+There is no ternary operator (`a ? b : c` is reported as `unsupported operator`); use `if`.
+`${...}` interpolation takes a variable name only (`${y}`), not an expression (`${y * 2}` stays literal).
 
 ## String Interpolation
 
@@ -58,22 +60,26 @@ text("Pending tasks: ${count}")
 ## Loops
 
 ```tson
-@for (i in [1, 2, 3]) {
+for (i: [1, 2, 3]) {
     circle(size: 50, at: (i * 30, 0))
 }
 
-@for (i in [1 -> 5]) {
-    text(i)
+for (i: [1 -> 5]) {
+    text("item ${i}")
 }
 ```
 
-Range `[1 -> 5]` yields 1..5; add `step`: `[0 -> 100 step 10]`.
+The loop header is a **pair** `var: domain` (`for(i in ...)` is rejected with `unexpected for(...)`; and no `@`: an
+`@for` annotation is silently ignored and its body is emitted once, uninterpolated).
+
+Range `[1 -> 5]` yields 1..5 (inclusive; `[5 -> 1]` counts down); add `step`:
+`[0 -> 100 step 10]`. A range can be mixed with plain items: `[0, 2 -> 4, 9]`.
 
 ### Nested Loops
 
 ```tson
-@for (row in [0 -> 2]) {
-    @for (col in [0 -> 3]) {
+for (row: [0 -> 2]) {
+    for (col: [0 -> 3]) {
         ...
     }
 }
@@ -82,16 +88,9 @@ Range `[1 -> 5]` yields 1..5; add `step`: `[0 -> 100 step 10]`.
 ## Conditionals
 
 ```tson
-@if (x > 10) {
+if (x > 10) {
     text("x is greater than 10")
 }
-```
-
-### Ternary Expression
-
-```tson
-status = (score >= 50) ? "Pass" : "Fail"
-background: (ok ? "green" : "red")
 ```
 
 ## Functions
@@ -149,7 +148,7 @@ include("github://thevpc/ntexup-templates/${themeName}/v1.0/theme")
 
 titles = ["Introduction", "Methods", "Results"]
 
-@for (i in [0 -> 2]) {
+for (i: [0 -> 2]) {
     content-slide(title: "Chapter ${i + 1}") {
         body {
             text(titles[i], font-size: 4%P, font-bold)

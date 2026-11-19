@@ -461,7 +461,11 @@ public class NTxGraphicsImpl implements NTxGraphics {
 
     @Override
     public void setFont(Font font) {
-        g.setFont(font);
+        // java.awt.Graphics contract: a null font is silently ignored.
+        // Some Graphics2D implementations (PdfBoxGraphics2D) store it and NPE later.
+        if (font != null) {
+            g.setFont(font);
+        }
     }
 
     @Override

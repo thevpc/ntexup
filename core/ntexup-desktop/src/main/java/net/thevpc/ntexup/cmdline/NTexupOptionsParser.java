@@ -80,6 +80,10 @@ public class NTexupOptionsParser {
                             g.htmlStandalone = true;
                             continueParsingGeneratePdf(cmdLine, options);
                         })
+                        .when("check").asFlag(a -> {
+                            options.getOrCreate(GenerateActionOptions.class).outputFormat = OutputFormat.CHECK;
+                            continueParsingGeneratePdf(cmdLine, options);
+                        })
                         .when("ntxp").asFlag(a -> {
                             options.getOrCreate(GenerateActionOptions.class).outputFormat = OutputFormat.NTXP;
                             continueParsingGeneratePdf(cmdLine, options);
@@ -346,6 +350,15 @@ public class NTexupOptionsParser {
                     })
                     .when("--show-page-number").asTrueFlag(a -> {
                         options.getOrCreate(GenerateActionOptions.class).showPageNumber = true;
+                    })
+                    .when("--page-labels").asTrueFlag(a -> {
+                        options.getOrCreate(GenerateActionOptions.class).pageLabels = true;
+                    })
+                    .when("--strict").asTrueFlag(a -> {
+                        options.getOrCreate(GenerateActionOptions.class).strict = true;
+                    })
+                    .when("--diagnostics").asEntry(a -> {
+                        options.getOrCreate(GenerateActionOptions.class).diagnosticsFile = NPath.of(a.stringValue());
                     })
                     .when("--dump").asFlag(a -> options.getOrCreate(DumpDocumentOptions.class))
                     .when("--dump-level").asEntry(a -> {

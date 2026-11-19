@@ -16,6 +16,7 @@ import net.thevpc.ntexup.engine.renderer.htmlstatic.HtmlStaticDocumentRenderer;
 import net.thevpc.ntexup.engine.renderer.image.ImageDocumentRenderer;
 import net.thevpc.ntexup.main.MainFrame;
 import net.thevpc.nuts.artifact.NId;
+import net.thevpc.nuts.command.NExecutionException;
 import net.thevpc.nuts.platform.NSysEditorFamily;
 import net.thevpc.nuts.command.NSysEditorSupportCmd;
 import net.thevpc.nuts.io.*;
@@ -208,12 +209,55 @@ public class NTexupOptionsProcessor {
         }
     }
 
+    /**
+     * Runs the generation while collecting every warning/error the engine logs, then
+     * prints a summary, optionally writes it as json (--diagnostics=FILE) and fails
+     * with exit code 1 when errors were logged (or warnings, with --strict). The engine
+     * keeps going after most errors, so without this a broken deck "succeeds".
+     */
     private void runActionGenerate(List<NPath> paths, NPath expecteOutput, Info info) {
+        GenerateActionOptions ga = info.options.get(GenerateActionOptions.class);
+        NTxDiagnosticsCollector diagnostics = new NTxDiagnosticsCollector();
+        info.engine.addLog(diagnostics);
+        RuntimeException failure = null;
+        try {
+            runActionGenerate0(paths, expecteOutput, info, diagnostics);
+        } catch (RuntimeException ex) {
+            failure = ex;
+            diagnostics.log(NMsg.ofC("%s", ex).asError());
+        } finally {
+            info.engine.removeLog(diagnostics);
+        }
+        reportDiagnostics(diagnostics, ga, failure);
+    }
+
+    private void reportDiagnostics(NTxDiagnosticsCollector diagnostics, GenerateActionOptions ga, RuntimeException failure) {
+        List<NTxDiagnosticsCollector.Diagnostic> errors = diagnostics.errors();
+        List<NTxDiagnosticsCollector.Diagnostic> warnings = diagnostics.warnings();
+        if (ga != null && ga.diagnosticsFile != null) {
+            ga.diagnosticsFile.mkParentDirs().writeString(diagnostics.toJson());
+        }
+        NOut.println(NMsg.ofC("ntexup: %s error(s), %s warning(s)", errors.size(), warnings.size()));
+        List<NTxDiagnosticsCollector.Diagnostic> all = new ArrayList<>(errors);
+        all.addAll(warnings);
+        for (NTxDiagnosticsCollector.Diagnostic d : all) {
+            NOut.println(NMsg.ofC("  %-7s [%s] %s", d.level, d.source, d.message));
+        }
+        boolean strict = ga != null && ga.strict;
+        if (!errors.isEmpty() || (strict && !warnings.isEmpty())) {
+            throw new NExecutionException(
+                    NMsg.ofC("ntexup finished with %s error(s) and %s warning(s)", errors.size(), warnings.size()),
+                    failure, 1);
+        }
+    }
+
+    private void runActionGenerate0(List<NPath> paths, NPath expecteOutput, Info info, NTxDiagnosticsCollector diagnostics) {
         if (expecteOutput == null) {
             expecteOutput = NPath.of(".");
         }
         GenerateActionOptions ga = info.options.get(GenerateActionOptions.class);
         boolean image = ga != null && ga.outputFormat == OutputFormat.IMAGE;
+        boolean check = ga != null && ga.outputFormat == OutputFormat.CHECK;
         boolean htmlStatic = ga != null && ga.outputFormat == OutputFormat.HTML_STATIC;
         boolean ntxp = ga != null && ga.outputFormat == OutputFormat.NTXP;
         DumpDocumentOptions dumpOptions = info.options.get(DumpDocumentOptions.class);
@@ -224,7 +268,22 @@ public class NTexupOptionsProcessor {
             NTxCompiledDocument doc = info.engine.loadDocument(path);
             if (doc.pages().isEmpty()) {
                 info.engine.log().log(NMsg.ofC("no pages to render : %s", path.normalize().toAbsolute()).asError());
-                return;
+                continue;
+            }
+            if (check) {
+                // render every page in memory and discard it: compiling alone would miss
+                // render-time errors. A low resolution keeps it fast.
+                NTxDocumentStreamRendererConfig checkConfig = renderConfig.copy();
+                if (checkConfig.getDpi() <= 0) {
+                    checkConfig.setDpi(24);
+                }
+                ImageDocumentRenderer checker = (ImageDocumentRenderer) info.engine.newImageRenderer().get();
+                checker.setStreamRendererConfig(checkConfig);
+                checker.setProperty(ImageDocumentRenderer.PROP_PAGES, ga.pages);
+                int n = checker.renderImages(doc).size();
+                ch.stop();
+                info.engine.log().log(NMsg.ofC("checked %s page(s) of %s in %s", n, path.normalize().toAbsolute(), ch).asInfo());
+                continue;
             }
             NTxDocumentStreamRenderer renderer = dump
                     ? info.engine.newStreamRenderer("dump").get()
@@ -239,6 +298,7 @@ public class NTexupOptionsProcessor {
             if (image) {
                 renderer.setProperty(ImageDocumentRenderer.PROP_PAGES, ga == null ? null : ga.pages);
                 renderer.setProperty(ImageDocumentRenderer.PROP_FORMAT, ga == null ? null : ga.imageFormat);
+                renderer.setProperty(ImageDocumentRenderer.PROP_LABELS, ga != null && ga.pageLabels);
             }
             if (htmlStatic || ntxp) {
                 //an ntxp container holds html-static paint streams, so it takes the same knobs
@@ -312,6 +372,7 @@ public class NTexupOptionsProcessor {
             }
             renderer.setOutput(output);
             renderer.render(doc);
+            diagnostics.addOutput(output);
             ch.stop();
             info.engine.log().log(NMsg.ofC("generated : %s in %s", output.normalize().toAbsolute(), ch).asInfo().withDurationMillis(ch.durationMs()));
 

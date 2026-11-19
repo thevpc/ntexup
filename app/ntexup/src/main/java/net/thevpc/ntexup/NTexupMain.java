@@ -21,18 +21,15 @@ public class NTexupMain {
 
     @NAppRun
     public void run() {
-        try {
-            NWorkspace.of().share();
-            Options options = new Options();
-            NCmdLine cmdLine = NApplication.of().cmdLine();
-            cmdLine.commandName("ntexup");
-            new NTexupOptionsParser().parse(cmdLine, options);
-            DefaultNTxEngine engine = new DefaultNTxEngine();
-            new NTexupOptionsProcessor().process(options, engine);
-        } catch (Throwable t) {
-            t.printStackTrace();
-            throw t;
-        }
+        // errors are reported (and turned into the process exit code) by nuts' application
+        // handling (NApplicationBuilder.run, HANDLE mode) : no local printing here
+        NWorkspace.of().share();
+        Options options = new Options();
+        NCmdLine cmdLine = NApplication.of().cmdLine();
+        cmdLine.commandName("ntexup");
+        new NTexupOptionsParser().parse(cmdLine, options);
+        DefaultNTxEngine engine = new DefaultNTxEngine();
+        new NTexupOptionsProcessor().process(options, engine);
     }
 
 

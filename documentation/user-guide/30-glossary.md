@@ -52,7 +52,7 @@
 
 **Literal-first** — TSON parsing rule: try the constant interpretation of a token before treating it as a function/variable.
 
-**Loop** — `@for (i in [1 -> 5])` repeated element generation.
+**Loop** — `for (i: [1 -> 5])` repeated element generation.
 
 ## M
 

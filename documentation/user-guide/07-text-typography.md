@@ -92,17 +92,25 @@ Rich-text markers are processed **inside text components** (`text()`, and `ntf()
 | Marker | Meaning |
 |--------|---------|
 | `**text**` | bold |
-| `__text__` | italic |
+| `*text*` | italic |
+| `***text***` | bold italic |
+| `` `text` `` | inline code (accent color) |
+| `##:p1 text##` .. `##:p10 text##` | theme palette color |
+| `##:/ text##` / `##:_ text##` / `##:+ text##` | italic / underline / bold |
+| `\*`, `\#`, ... | escape a marker character |
 | `#Title 1#` | heading level 1 |
 | `##Title 2##` | heading level 2 |
 | `###Title 3###` | heading level 3 |
 | `[[eq: X^2=\sin(\pi x)]]` | inline equation |
 | `[[ntf: ##:p1: hello##]]` | inline ntf flavor |
 
+> Markup is parsed by the nuts **MTF** format (markdown-like). `__text__` and `~~text~~` are **not** markers
+> (`__text__` only works in the legacy fallback tokenizer used when nuts-runtime is unavailable).
+
 ```tson
 text("""
     **Bold X**
-    __Italic Y__
+    *Italic Y*
     #Title 1#
     ##Title 2##
     ###Title 3###
@@ -225,7 +233,7 @@ content-slide(title: "Text", variant: 3) {
             miniPage {
                 text("""
                     **Bold X**
-                    __Italic Y__
+                    *Italic Y*
                     #Title 1#
                     ##Title 2##
                     ###Title 3###

@@ -429,7 +429,37 @@ public class NTxCompiler {
         }
     }
 
+    /**
+     * call sites of the component calls being expanded on this thread (outermost first).
+     * Nested calls inherit the outermost one so that a page produced deep inside theme
+     * components (agenda-slide -> ... -> page) is attributed to the user file that made
+     * the call, not to the theme file that defines the page.
+     */
+    private static final ThreadLocal<java.util.ArrayDeque<Object>> CALL_SOURCES = ThreadLocal.withInitial(java.util.ArrayDeque::new);
+
     private void _process_call_node(NTxNodeDef d, CtrlNTxNodeCall c, final NTxResolutionContext context, CompileNodeVisitor visitor) {
+        java.util.ArrayDeque<Object> callSources = CALL_SOURCES.get();
+        Object callSource = c.getUserObject("callSource").orNull();
+        if (callSource == null) {
+            callSource = callSources.peekLast();
+        }
+        if (callSource == null) {
+            callSource = c.source();
+        }
+        boolean pushed = callSource != null;
+        if (pushed) {
+            callSources.addLast(callSource);
+        }
+        try {
+            _process_call_node0(d, c, context, visitor, callSource);
+        } finally {
+            if (pushed) {
+                callSources.removeLast();
+            }
+        }
+    }
+
+    private void _process_call_node0(NTxNodeDef d, CtrlNTxNodeCall c, final NTxResolutionContext context, CompileNodeVisitor visitor, Object callSource) {
         NTxNodeDefParam[] expectedParams = d.params();
         //first unset any parent COMPONENT_BODY_VAR_NAME and create a new context!
         DefaultNTxNode block = DefaultNTxNode.ofBlock();
@@ -485,10 +515,6 @@ public class NTxCompiler {
                 });
             }
         });
-        Object callSource = c.getUserObject("callSource").orNull();
-        if (callSource == null) {
-            callSource = c.source();
-        }
         if (callSource != null) {
             block.setUserObject("callSource", callSource);
             for (NTxNode child : block.children()) {

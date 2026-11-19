@@ -344,6 +344,7 @@ public class NTxDocStreamParser {
         if (u == null) {
             return NOptional.ofEmpty(NMsg.ofC("input is empty : %s", is));
         }
+        logSyntaxDiagnostics(u, source);
         try {
             u = NTxUtils.addCompilerDeclarationPathAnnotations(u, source.path().map(NPath::toString).orNull());
         } catch (Exception ex) {
@@ -366,6 +367,7 @@ public class NTxDocStreamParser {
         if (u == null) {
             return NOptional.ofEmpty(NMsg.ofC("path is empty : %s", path));
         }
+        logSyntaxDiagnostics(u, source);
         try {
             u = NTxUtils.addCompilerDeclarationPathAnnotations(u, source.path().map(NPath::toString).orNull());
         } catch (Exception ex) {
@@ -374,5 +376,51 @@ public class NTxDocStreamParser {
             return NOptional.ofNamedError(msg, ex);
         }
         return parseElements(u);
+    }
+    /**
+     * The TSON reader is lenient: it recovers from syntax errors (e.g. a missing '}')
+     * and only attaches diagnostics to the elements. Without reporting them, a stray
+     * brace silently nests every following page inside the previous one (pages vanish
+     * from the output with no error at all).
+     */
+    private void logSyntaxDiagnostics(NElement root, NTxSource source) {
+        int[] count = new int[1];
+        logSyntaxDiagnostics(root, source, count, new java.util.IdentityHashMap<>());
+    }
+
+    private void logSyntaxDiagnostics(NElement e, NTxSource source, int[] count, java.util.IdentityHashMap<NElement, Boolean> seen) {
+        if (e == null || count[0] >= 20 || seen.put(e, Boolean.TRUE) != null) {
+            return;
+        }
+        for (NElementDiagnostic d : e.diagnostics()) {
+            count[0]++;
+            engine.log().log(NMsg.ofC("syntax error : %s, in %s", d.message(), NTxUtils.snippet(e)).asError(), source);
+        }
+        if (e instanceof NPairElement) {
+            logSyntaxDiagnostics(((NPairElement) e).key(), source, count, seen);
+            logSyntaxDiagnostics(((NPairElement) e).value(), source, count, seen);
+        }
+        if (e instanceof NParametrizedContainerElement) {
+            List<NElement> params = ((NParametrizedContainerElement) e).params().orNull();
+            if (params != null) {
+                for (NElement c : params) {
+                    logSyntaxDiagnostics(c, source, count, seen);
+                }
+            }
+        }
+        if (e instanceof NListContainerElement) {
+            for (NElement c : ((NListContainerElement) e).children()) {
+                logSyntaxDiagnostics(c, source, count, seen);
+            }
+        } else if (e instanceof NFlatExprElement) {
+            for (NElement c : ((NFlatExprElement) e).children()) {
+                logSyntaxDiagnostics(c, source, count, seen);
+            }
+        } else if (e instanceof NFragmentElement) {
+            // root of a file holding several top level statements
+            for (NElement c : (NFragmentElement) e) {
+                logSyntaxDiagnostics(c, source, count, seen);
+            }
+        }
     }
 }

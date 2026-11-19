@@ -82,7 +82,7 @@ Or with an if:
     page {
         text(titleText, at: top)
         if (showBox) {
-            rectangle(size: (100, 60), color: documentColors[1], at: center, down: 25)
+            rectangle(size: (100, 60), color: documentColors[1], position: (50, 60), origin: center)
         }
     }
 }

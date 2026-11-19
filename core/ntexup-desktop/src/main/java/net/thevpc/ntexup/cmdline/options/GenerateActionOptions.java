@@ -30,6 +30,12 @@ public class GenerateActionOptions extends ActionOptions {
     public boolean htmlNoAnimate;
     public boolean htmlStandalone;
     public boolean htmlNoMinify;
+    /** image: caption every page with its number and source file */
+    public boolean pageLabels;
+    /** also fail (exit code 1) when warnings were logged, not only errors */
+    public boolean strict;
+    /** write the diagnostics report (json) to this file */
+    public NPath diagnosticsFile;
 
     public GenerateActionOptions() {
         super(Action.GENERATE);

@@ -39,7 +39,7 @@ public class TestConnectorIntegration {
     @Test
     public void loopedNodesCanBeReferencedByChainedConnectors() throws Exception {
         RenderResult r = render("page{\n"
-                + "  @for (i in [1,2,3]){\n"
+                + "  for (i: [1,2,3]){\n"
                 + "    rectangle(name: \"r\" + i, at:(10,10), size:(10,8),\n"
                 + "              background-color:white, draw-contour)\n"
                 + "  }\n"

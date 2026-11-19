@@ -193,7 +193,8 @@ public class NTxGitHelper {
                     session.out().println(message);
                 }
             } else {
-                NMsg message = NMsg.ofC("took %s to %s repo %s to %s", c, pulling ? "pull" : "clone", NPath.of(githubPaths[0]), localRepo).asWarning();
+                // a successful clone/pull is informational (a warning would fail `--strict` renders)
+                NMsg message = NMsg.ofC("took %s to %s repo %s to %s", c, pulling ? "pull" : "clone", NPath.of(githubPaths[0]), localRepo).asInfo();
                 if (messages != null) {
                     messages.log(message);
                 }

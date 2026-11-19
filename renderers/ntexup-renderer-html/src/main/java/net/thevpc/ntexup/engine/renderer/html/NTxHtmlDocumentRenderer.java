@@ -72,7 +72,8 @@ public class NTxHtmlDocumentRenderer extends NTxDocumentStreamRendererBase imple
                 if (!pp.name().endsWith(".zip")) {
                     pp = pp.resolveSibling(NPathRenameOptions.ofExtension("zip"));
                 }
-                NCompress.of().source(toRemoveFolder).to(pp);
+                // run() was missing : the zip was never written
+                NCompress.of().source(toRemoveFolder).skipRoot(true).to(pp).run();
                 toRemoveFolder.deleteTree();
             } else {
                 throw new IllegalArgumentException("invalid output path " + pp);
@@ -80,7 +81,11 @@ public class NTxHtmlDocumentRenderer extends NTxDocumentStreamRendererBase imple
         } else if (o instanceof OutputStream) {
             NPath toRemoveFolder = NPath.ofTempFolder();
             writeIntoDirectory(d, toRemoveFolder);
-            NCompress.of().source(toRemoveFolder).to((OutputStream) o);
+            // run() was missing : nothing was written to the stream.
+            // NCompress closes the stream it writes to : this one belongs to our caller,
+            // so it is passed non-closable (the zip is still finished and flushed)
+            NCompress.of().source(toRemoveFolder).skipRoot(true)
+                    .to(new net.thevpc.nuts.io.NonClosableOutputStream((OutputStream) o)).run();
             toRemoveFolder.deleteTree();
         }
         return null;

@@ -29,11 +29,14 @@ text("...", origin: center, position: (50, 65))
 
 ## Offsets from Anchors
 
+> There are no anchor-offset properties (`up`/`down`/`leftOf`/`rightOf` are rejected as
+> `invalid argument`). To place something relative to an anchor, use `position` + `origin`:
+
 ```tson
-text("Below title", at: top, down: 80)
-text("Above bottom", at: bottom, up: 30)
-text("Left of center", at: center, leftOf: 50)
-text("Right of center", at: center, rightOf: 50)
+text("Below title",     position: (50, 20), origin: top)      // ~ at: top, pushed down
+text("Above bottom",    position: (50, 90), origin: bottom)
+text("Left of center",  position: (30, 50), origin: right)
+text("Right of center", position: (70, 50), origin: left)
 ```
 
 ## Size
@@ -106,7 +109,6 @@ rectangle(rowspan: 2)
 | `at` | alignment anchor |
 | `position` | absolute `(x, y)` |
 | `origin` | reference point within element |
-| `up/down/leftOf/rightOf` | offset from anchor |
 | `size/width/height` | dimensions |
 | `rotate` | degrees (clockwise) |
 | `margin` | outer spacing |

@@ -258,11 +258,14 @@ rectangle(origin: left, position: (6, 14))
 
 ### Offsets
 
+> There are no anchor-offset properties (`up`/`down`/`leftOf`/`rightOf` are rejected as
+> `invalid argument`). To place something relative to an anchor, use `position` + `origin`:
+
 ```tson
-text("Below", at: top, down: 80)
-text("Above, at: bottom, up: 30")
-text("Left of center", at: center, leftOf: 50)
-text("Right of center", at: center, rightOf: 50)
+text("Below title",     position: (50, 20), origin: top)      // ~ at: top, pushed down
+text("Above bottom",    position: (50, 90), origin: bottom)
+text("Left of center",  position: (30, 50), origin: right)
+text("Right of center", position: (70, 50), origin: left)
 ```
 
 ## Size Properties

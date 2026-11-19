@@ -71,6 +71,7 @@ Each page can be rendered to an image, either via the CLI, or programmatically:
 ```bash
 nuts ntexup image . -o target/img       # one PNG per page
 nuts ntexup image . -o pages.png -p 2-5 # only pages 2 to 5
+nuts ntexup image . --grid=4x2 --page-labels -o target/review/   # 8 captioned pages per image
 ```
 
 ```java

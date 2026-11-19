@@ -183,7 +183,7 @@ Reference later:
 ```tson
 text(str)
 text(x + 1)
-@if (x > 40) { ... }
+if (x > 40) { ... }
 ```
 
 ## Elements (Nodes)
@@ -245,7 +245,8 @@ text("Hello ##World##")        // marker -> subtitle
 | Marker | Meaning |
 |--------|---------|
 | `**text**` | bold |
-| `__text__` | italic |
+| `*text*` | italic |
+| `***text***` | bold italic |
 | `#text#` | title level 1 |
 | `##text##` | title level 2 |
 | `###text###` | title level 3 |
@@ -293,7 +294,7 @@ y = x * 2 + 5
 text("Total: " + y)
 ```
 
-Operators: `+ - * / %`, comparisons, `&& || !`, ternary `cond ? a : b`.
+Operators: `+ - * / %` (`+` also concatenates strings), comparisons, `&& || !`. No ternary operator.
 
 ## String Interpolation (`${...}`)
 

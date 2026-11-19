@@ -23,7 +23,8 @@ nuts ntexup <command> [options]
 | `build-repo` | Build a local template repository |
 | `list-templates` | List available templates |
 | `pdf` | Render to PDF |
-| `image` | Render to a set of images (PNG per page by default) |
+| `image` | Render to a set of images (PNG per page by default, or N-up sheets) |
+| `check` | Render every page in memory to surface errors; writes nothing |
 | `dump` | Dump the parsed document model to the console |
 | `install-editor-syntax` | Install syntax highlighting for editors |
 | `--gui` | Force GUI mode |
@@ -127,7 +128,10 @@ Common options:
 | `--size <WxH>` | Page size in pixels |
 | `--page-size <name>` | Named page size: `a0..a6`, `letter`, `legal`, `ledger`, `executive`, `folio`, `statement` |
 | `--page-width` / `--page-height <n>` | Page size per dimension |
-| `--grid <colsxrows>` | Split one page into a grid of images |
+| `--grid <colsxrows>` | Pages per output sheet: N-up pdf sheets, or `sheet-NN.png` images |
+| `--page-labels` | (image) caption each page with `page N · file.ntx` (the file that produced it) |
+| `--strict` | Exit 1 on warnings too (default: only on errors) |
+| `--diagnostics <file>` | Write the error/warning report as json |
 | `--margin[-top|bottom|left|right] <n>` | Page margins |
 | `--landscape` / `--portrait` | Page orientation |
 | `--show-page-number` | Draw page numbers |
@@ -140,6 +144,45 @@ Global options (any command): `--git-provider=<jgit|system>` and `--prefer-syste
 - `system` — prefer the native `git` executable; falls back to JGit with a warning when `git` is not installed.
 
 The same preference can be set without the flag via the `ntexup.git.provider` system property or the `NTEXUP_GIT_PROVIDER` environment variable.
+
+## `check`
+
+```bash
+nuts ntexup check .                    # validate every page, write nothing
+nuts ntexup check . --strict --diagnostics=target/diag.json
+```
+
+Renders every page in memory at low resolution (so render-time errors are caught too,
+not only syntax errors) and reports. Same `--pages`, `--strict` and `--diagnostics` options
+as `pdf`/`image`.
+
+## Diagnostics and exit code
+
+`pdf`, `image`, `html-*`, `ntxp` and `check` end with a summary:
+
+```
+ntexup: 2 error(s), 0 warning(s)
+  error   [main.ntx] syntax error : missing rbrace, in page{ul{¶ a ¶ b } }...
+```
+
+and exit with code **1 when errors were logged** (with `--strict`, also when warnings were).
+The engine keeps rendering after most errors, so the output file may exist even when the
+command fails. `--diagnostics=FILE` writes the same report as json:
+
+```json
+{"status": "errors", "errorCount": 2, "warningCount": 0, "outputs": [],
+ "diagnostics": [{"level": "error", "source": "main.ntx", "message": "..."}]}
+```
+
+## Images for review (N-up sheets)
+
+```bash
+nuts ntexup image --grid=4x2 --page-labels -o target/review/ .   # sheet-01.png = pages 1-8
+```
+
+Lays pages out 4 per row, 2 rows per image, each captioned with its page number and source
+file. Sheets are capped at 2400px wide unless `--dpi` is given. With `--page-labels` alone
+(no grid) each page image gets its caption.
 
 ## `dump`
 
@@ -175,7 +218,7 @@ Editor support files live under the main project at
 
 ## Exit Codes
 
-Standard Nuts exit codes apply (0 = success). Warnings during first-run (template repository clones, caches) do not affect the exit status.
+0 = success; 1 = errors were logged (or warnings, with `--strict`), see *Diagnostics and exit code*. First-run messages (template repository clones, caches) are informational and do not affect the exit status.
 
 ## Global Nuts options
 

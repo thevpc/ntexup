@@ -17,8 +17,6 @@ The complete list of node properties observed in ntexup.
 | `at` | anchor word | `center`, `top`, `top-left`, `bottom-right`, ... |
 | `position` | `(x, y)` | absolute coordinates |
 | `origin` | `(x,y)` or anchor | element reference point (`left`, `center`, `top-left`, ...) |
-| `up` / `down` | number | vertical offset from anchor |
-| `leftOf` / `rightOf` | number | horizontal offset from anchor |
 
 ## Font & Text
 
@@ -147,8 +145,8 @@ Hidden endpoints suppress the connector silently; unresolved names log a warning
 | `include(...)` | include files |
 | `import(...)` | import extensions |
 | `@define` | define components |
-| `@for` | loop |
-| `@if` | conditional |
+| `for(i: ...)` | loop |
+| `if(...)` | conditional |
 
 ## Async Computation
 

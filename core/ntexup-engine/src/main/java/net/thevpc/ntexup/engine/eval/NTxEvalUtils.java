@@ -241,7 +241,16 @@ public class NTxEvalUtils {
                 }
             }
         }
+        // string concatenation: "Total: " + 3  ->  "Total: 3"
+        if ((aa.isString() && (bb.isString() || bb.isNumber() || bb.isBoolean()))
+                || (bb.isString() && (aa.isNumber() || aa.isBoolean()))) {
+            return NOptional.of(NElement.ofString(concatPart(aa) + concatPart(bb)));
+        }
         return NOptional.ofNamedEmpty("add");
+    }
+
+    private static String concatPart(NElement e) {
+        return e.isString() ? e.asStringValue().get() : e.toString();
     }
 
     public static NOptional<NElement> substruct(NElement a, NElement b, MathContext mc) {
@@ -308,6 +317,36 @@ public class NTxEvalUtils {
 
     public static Number addNumbers(Number a, Number b) {
         return NNumberUtils.addNumbers(a, b);
+    }
+
+    /**
+     * interval with an explicit step ([a -> b step s]). The step magnitude is
+     * used; direction follows a/b. Integral bounds+step yield integers.
+     */
+    public static NElement[] evalInterval(NElement f, NElement s, NElement step) {
+        f = simplify(f);
+        s = simplify(s);
+        step = simplify(step);
+        if (!f.isNumber() || !s.isNumber() || !step.isNumber()) {
+            return null;
+        }
+        java.math.BigDecimal a = new java.math.BigDecimal(String.valueOf(f.asNumberValue().get()));
+        java.math.BigDecimal b = new java.math.BigDecimal(String.valueOf(s.asNumberValue().get()));
+        java.math.BigDecimal st = new java.math.BigDecimal(String.valueOf(step.asNumberValue().get())).abs();
+        if (st.signum() == 0) {
+            return null;
+        }
+        boolean integral = !f.type().isAnyDecimalNumber() && !s.type().isAnyDecimalNumber() && !step.type().isAnyDecimalNumber();
+        int dir = a.compareTo(b) <= 0 ? 1 : -1;
+        java.math.BigDecimal inc = dir > 0 ? st : st.negate();
+        List<NElement> all = new ArrayList<>();
+        java.math.BigDecimal i = a;
+        int guard = 0;
+        while ((dir > 0 ? i.compareTo(b) <= 0 : i.compareTo(b) >= 0) && guard++ < 1_000_000) {
+            all.add(integral ? NElement.ofLong(i.longValueExact()) : NElement.ofDouble(i.doubleValue()));
+            i = i.add(inc);
+        }
+        return all.toArray(new NElement[0]);
     }
 
     public static NElement[] evalInterval(NElement f, NElement s) {

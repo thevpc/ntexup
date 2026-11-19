@@ -65,8 +65,9 @@
 - TSON is literal-first. A bare word that isn't a keyword/function config can confuse parsing — quote strings: `color: "red"` if needed (bare `red` usually works as a color).
 - Missing closing brace.
 
-### `@for` loop doesn't produce slides
+### `for` loop doesn't produce slides
 
+- Write `for(i: [1 -> 5]) { ... }` — a pair header, no `@`. `@for(...)` is not a loop (the body renders once with `${i}` left literal); `for(i in ...)` fails with `unexpected for(...)`.
 - Ranges use `[1 -> 5]` not `[1,5]` (that's a 2-element list).
 
 ## Style Issues

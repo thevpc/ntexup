@@ -14,10 +14,12 @@ import java.util.Objects;
 public class NTxNumberUtils {
 
     public static boolean eq(NNumberElement a1, NNumberElement b1) {
-        String us1 = a1.numberSuffix();
-        String us2 = b1.numberSuffix();
+        // suffix is null for plain numbers (was a NullPointerException on `n == 3`)
+        String us1 = NStringUtils.strip(a1.numberSuffix());
+        String us2 = NStringUtils.strip(b1.numberSuffix());
         if(us1.equalsIgnoreCase(us2)){
-            return a1.numberValue().equals(b1.numberValue());
+            // numeric comparison: Integer 3 must equal Long 3 / BigDecimal 3.0
+            return net.thevpc.nuts.math.NNumberUtils.compareNumbers(a1.numberValue(), b1.numberValue()) == 0;
         }
         NTxNumberUtils.UnitType u1 = NTxNumberUtils.detectUnitType(us1);
         NTxNumberUtils.UnitType u2 = NTxNumberUtils.detectUnitType(us2);

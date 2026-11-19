@@ -138,7 +138,7 @@ Requires `import("plot2d")`.
 | Node | Description |
 |------|-------------|
 | `assign` | set a variable (`x = 42`) |
-| `@for` | loop |
+| `for` | loop (`for(i: [1 -> 5]) {...}`) |
 | `if` | conditional |
 | `@define` | component/function definition |
 | `include` | include a file |

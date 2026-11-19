@@ -184,6 +184,13 @@ public class NTxNodeEval implements NTxObjectEvalContext {
             case FLAT_EXPR: {
                 NFlatExprElement ff1 = ((NFlatExprElement) elementExpr);
                 NElement reshaped = ff1.reshape();
+                if (reshaped.type() == NElementType.FLAT_EXPR) {
+                    // reshape failed (it returns a flat expr carrying diagnostics):
+                    // re-evaluating it would recurse forever (StackOverflowError)
+                    String why = reshaped.diagnostics().stream().map(d -> String.valueOf(d.message())).collect(Collectors.joining("; "));
+                    context.engine().log().log(NMsg.ofC("invalid expression %s%s", NTxUtils.snippet(elementExpr), why.isEmpty() ? "" : (" : " + why)).asError(), NTxUtils.sourceOf(context.node()));
+                    return elementExpr;
+                }
                 return eval(reshaped);
             }
             case BINARY_OPERATOR: {
@@ -233,10 +240,21 @@ public class NTxNodeEval implements NTxObjectEvalContext {
                         return NElement.ofArray();
                     } else {
                         List<NElement> newChildren = new ArrayList<>();
-                        for (NElement c : children) {
-                            NElement[] zz = interpretAsArrayItems_interval(c);
+                        for (int i = 0; i < children.size(); i++) {
+                            NElement c = children.get(i);
+                            // [a -> b step s] : the step clause follows the interval as two siblings
+                            NElement step = null;
+                            if (i + 2 < children.size()
+                                    && children.get(i + 1).isName()
+                                    && "step".equals(children.get(i + 1).asStringValue().orNull())) {
+                                step = eval(children.get(i + 2));
+                            }
+                            NElement[] zz = interpretAsArrayItems_interval(c, step);
                             if (zz != null) {
                                 newChildren.addAll(Arrays.asList(zz));
+                                if (step != null) {
+                                    i += 2;
+                                }
                             } else {
                                 newChildren.add(eval(c));
                             }
@@ -323,9 +341,32 @@ public class NTxNodeEval implements NTxObjectEvalContext {
             case PLUS: {
                 return eval(elem.operand());
             }
+            case NOT: {
+                return NElement.ofBoolean(!evalBoolean(elem.operand()));
+            }
         }
-        context.engine().log().log(NMsg.ofC("unsupported operator %s in %s", elem.asOperator().get().fixity(), NTxUtils.snippet(elem)).asWarning(), NTxUtils.sourceOf(context.node()));
+        context.engine().log().log(NMsg.ofC("unsupported operator %s in %s", elem.asOperator().get().fixity(), NTxUtils.snippet(elem)).asError(), NTxUtils.sourceOf(context.node()));
         return NElement.ofNull();
+    }
+
+    private boolean evalBoolean(NElement e) {
+        return NTxUtils.asBoolean(NTxEvalUtils.simplify(eval(e)));
+    }
+
+    /**
+     * ordering comparison for &lt; &gt; &lt;= &gt;= ; null when operands are not comparable
+     */
+    private Integer compareOperands(NBinaryOperatorElement elem) {
+        NElement a = NTxEvalUtils.simplify(eval(elem.firstOperand()));
+        NElement b = NTxEvalUtils.simplify(eval(elem.secondOperand()));
+        if (a.isNumber() && b.isNumber()) {
+            return NTxEvalUtils.compareNumbers(a.asNumberValue().get(), b.asNumberValue().get());
+        }
+        if (a.isString() && b.isString()) {
+            return a.asStringValue().get().compareTo(b.asStringValue().get());
+        }
+        context.engine().log().log(NMsg.ofC("cannot compare %s and %s in %s", a, b, NTxUtils.snippet(elem)).asError(), NTxUtils.sourceOf(context.node()));
+        return null;
     }
 
     private NElement _evalBinaryOperator(NBinaryOperatorElement elem) {
@@ -348,6 +389,38 @@ public class NTxNodeEval implements NTxObjectEvalContext {
                 NElement a = eval(elem.firstOperand());
                 NElement b = eval(elem.secondOperand());
                 return NTxEvalUtils.eq(a, b);
+            }
+            case NOT_EQ:
+            case LT_GT: {
+                NElement a = eval(elem.firstOperand());
+                NElement b = eval(elem.secondOperand());
+                return NElement.ofBoolean(!NTxUtils.asBoolean(NTxEvalUtils.eq(a, b)));
+            }
+            case LT:
+            case GT:
+            case LTE:
+            case GTE: {
+                Integer c = compareOperands(elem);
+                if (c == null) {
+                    return NElement.ofNull();
+                }
+                switch (elem.operatorSymbol()) {
+                    case LT:
+                        return NElement.ofBoolean(c < 0);
+                    case GT:
+                        return NElement.ofBoolean(c > 0);
+                    case LTE:
+                        return NElement.ofBoolean(c <= 0);
+                    default:
+                        return NElement.ofBoolean(c >= 0);
+                }
+            }
+            case AND2: {
+                // short-circuit
+                return NElement.ofBoolean(evalBoolean(elem.firstOperand()) && evalBoolean(elem.secondOperand()));
+            }
+            case PIPE2: {
+                return NElement.ofBoolean(evalBoolean(elem.firstOperand()) || evalBoolean(elem.secondOperand()));
             }
             case REM: {
                 NElement a = eval(elem.firstOperand());
@@ -450,17 +523,24 @@ public class NTxNodeEval implements NTxObjectEvalContext {
                 return NElement.ofNull();
             }
         }
-        context.engine().log().log(NMsg.ofC("unsupported operator %s in %s", elem.asOperator().get().fixity(), NTxUtils.snippet(elem)).asWarning(), NTxUtils.sourceOf(context.node()));
+        context.engine().log().log(NMsg.ofC("unsupported operator %s in %s", elem.asOperator().get().fixity(), NTxUtils.snippet(elem)).asError(), NTxUtils.sourceOf(context.node()));
         return NElement.ofNull();
     }
 
-    private NElement[] interpretAsArrayItems_interval(NElement c) {
+    private NElement[] interpretAsArrayItems_interval(NElement c, NElement step) {
+        if (c.type() == NElementType.FLAT_EXPR) {
+            // TSON keeps operator sequences flat ([1 -> 5] holds the flat expr 1,->,5)
+            NElement r = ((NFlatExprElement) c).reshape();
+            if (r.type() != NElementType.FLAT_EXPR) {
+                c = r;
+            }
+        }
         if (c.isBinaryOperator()
                 && c.asBinaryOperator().get().operatorSymbol() == NOperatorSymbol.MINUS_GT) {
             NBinaryOperatorElement g = c.asBinaryOperator().get();
             NElement f = eval(g.firstOperand());
             NElement s = eval(g.secondOperand());
-            return NTxEvalUtils.evalInterval(f, s);
+            return step == null ? NTxEvalUtils.evalInterval(f, s) : NTxEvalUtils.evalInterval(f, s, step);
         }
         return null;
     }

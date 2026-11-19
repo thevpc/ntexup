@@ -5,7 +5,7 @@ description: "Develops and extends the ntexup codebase itself: adds Java extensi
 
 # NTexUp Extension & Engine Development
 
-This skill supports an agent doing **developer work on the ntexup repository** (not authoring decks — for decks use the `ntexup-presentation` skill). It lets you add new components/functions/flavors, navigate the engine, and verify everything by **rendering a PDF automatically**.
+This skill supports an agent doing **developer work on the ntexup repository** (not authoring decks — for decks use the `ntx-editing` skill in `.agent/skills/ntx-editing/`). It lets you add new components/functions/flavors, navigate the engine, and verify everything by **rendering a PDF automatically**.
 
 Workspace note: this repo usually sits in a multi-project workspace alongside `../ntexup-doc-slides/` (doc deck) and `../ntexup-templates/` (themes); the parent folder's `AGENTS.md` documents render/build commands across all three.
 
@@ -200,7 +200,7 @@ Groups: geometry/layout (`at`, `position`, `size`, `origin`, `margin`, `padding`
 ## 10. Golden rules
 
 1. Extensions depend on `ntexup-api` (+ 3rd-party). Never on another extension. Put shared code in `lib/`.
-2. Every new module goes in the root `pom.xml` `<modules>`; version stays `1.1.0.0`.
+2. Every new module goes in the root `pom.xml` `<modules>`; version stays `1.2.0.0`.
 3. New visual elements use `NTxNodeBuilder` — don't hand-write parser+renderer pairs.
 4. Use `NTxValue`/`NTxValueByName` for property coercion; use `selfBounds2D()` for geometry, never hardcoded pixels.
 5. Respect lazy compilation: syntax errors inside a `page{}` may not surface until that page renders — tests must walk all pages.
