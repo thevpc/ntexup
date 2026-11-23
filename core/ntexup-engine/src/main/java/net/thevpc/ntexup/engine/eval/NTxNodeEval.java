@@ -128,6 +128,10 @@ public class NTxNodeEval implements NTxObjectEvalContext {
                                 }
                                 return ss;
                             }
+                            Object called = evalInterpolatedCall(s);
+                            if (called != null) {
+                                return called;
+                            }
                             return "${" + s + "}";
                         }
                     }).toString());
@@ -330,6 +334,51 @@ public class NTxNodeEval implements NTxObjectEvalContext {
             }
         }
         return elementExpr;
+    }
+
+    private static final java.util.regex.Pattern INTERPOLATED_CALL = java.util.regex.Pattern.compile("^\\s*[\\p{L}_][\\p{L}\\p{N}_-]*\\s*\\(.*\\)\\s*$", java.util.regex.Pattern.DOTALL);
+
+    /**
+     * {@code ${f(args)}}: a function call inside string interpolation, so a sentence can format,
+     * compare or aggregate the values it quotes ({@code "${fixed(oems_frGHz, 3)} GHz"}).
+     * Only a call is evaluated: {@code ${name}} keeps its variable lookup and any other text
+     * ({@code ${a * 2}}) stays literal, as before. When the call cannot be evaluated yet (an
+     * unbound variable among its arguments, which the function signals by handing its own call
+     * back) or the function is unknown, the placeholder stays literal, like an unbound variable.
+     *
+     * @return the text to substitute, or null to keep the placeholder
+     */
+    private Object evalInterpolatedCall(String s) {
+        if (s == null || s.indexOf('(') < 0 || !INTERPOLATED_CALL.matcher(s).matches()) {
+            return null;
+        }
+        NElement parsed;
+        try {
+            parsed = NElementReader.ofTson().read(s);
+        } catch (Exception ex) {
+            context.engine().log().log(NMsg.ofC("cannot parse ${%s} : %s", s, ex.getMessage()).asWarning(), NTxUtils.sourceOf(context.node()));
+            return null;
+        }
+        if (parsed != null && parsed.isFragment() && parsed.asFragment().get().children().size() == 1) {
+            parsed = parsed.asFragment().get().children().get(0);
+        }
+        if (parsed == null || parsed.type() != NElementType.NAMED_TUPLE) {
+            return null;
+        }
+        String fname = ((NTupleElement) parsed).name().orNull();
+        if (fname == null || !context.getFunction(fname).isPresent()) {
+            context.engine().log().log(NMsg.ofC("unknown function %s in ${%s} (missing import?)", fname, s).asWarning(), NTxUtils.sourceOf(context.node()));
+            return null;
+        }
+        NElement r = eval(parsed);
+        if (r == null || r.type() == NElementType.NAMED_TUPLE || r.equals(parsed)) {
+            return null;
+        }
+        r = NTxUtils.removeCompilerDeclarationPathAnnotations(r);
+        if (r.isAnyString()) {
+            return r.asStringValue().get();
+        }
+        return r;
     }
 
     private NElement _evalUnaryOperator(NUnaryOperatorElement elem) {

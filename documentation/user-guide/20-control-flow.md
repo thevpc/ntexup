@@ -48,7 +48,7 @@ text("Total: " + y)
 
 Operators: `+ - * / %` (`+` also concatenates strings: `"Total: " + y`), comparisons `== != < > <= >=` (numbers or strings), `&& || !` (short-circuit).
 There is no ternary operator (`a ? b : c` is reported as `unsupported operator`); use `if`.
-`${...}` interpolation takes a variable name only (`${y}`), not an expression (`${y * 2}` stays literal).
+`${...}` interpolation takes a variable name (`${y}`) or a function call (`${fixed(y, 2)}`); any other expression (`${y * 2}`) stays literal.
 
 ## String Interpolation
 
@@ -56,6 +56,18 @@ There is no ternary operator (`a ? b : c` is reported as `unsupported operator`)
 count = 7
 text("Pending tasks: ${count}")
 ```
+
+A function call is evaluated too, so a sentence can format and check the numbers it quotes
+(the numeric functions below need `import("stdlib#1.2.0.0")`):
+
+```tson
+text("fr = ${fixed(div(oems_fr, 1e9), 3)} GHz, ${within-pct(oems_fr, sheen_fr, 1)} from the reference")
+```
+
+The placeholder ends at the first `}`, so the call cannot contain one; quote strings with
+single quotes inside a double-quoted text (`${claim(x, '<', 1)}`). If the function is unknown
+(missing import) or an argument is an unbound name, the placeholder stays literal, like an
+unbound variable, and the unknown function is logged as a warning.
 
 ## Loops
 
@@ -101,7 +113,31 @@ if (x > 10) {
 |----------|-------------|
 | `dtimes(start, stop, count)` | sample points for plots |
 | `either(a, b)` | first non-null argument |
-| `min`, `max` | numeric helpers |
+| `min`, `max` | numeric helpers (`stdlib`, see below) |
+
+### Numeric functions (`import("stdlib#1.2.0.0")`)
+
+For numbers computed from results (solver metrics such as `oems_fr`, `oems_minDb`).
+Arrays are flattened by the aggregates. A value bound to the empty string (a solver metric
+not available yet) makes the function render nothing; a non-numeric value is logged as an
+error and rendered as `[name: reason]` in place of the number; NaN renders as `n/a`.
+
+| Function | Description |
+|----------|-------------|
+| `fixed(x, decimals = 2)` | fixed decimals, half-up: `fixed(7.4675, 3)` → `7.468` |
+| `sig(x, digits = 3)` | significant digits, trailing zeros kept: `sig(7.4, 3)` → `7.40` |
+| `signed(x, decimals = 2)` | like `fixed` with an explicit sign: `+0.42` |
+| `add(a, b, ...)`, `sub(a, b)`, `mul(a, b, ...)`, `div(a, b)`, `abs(x)` | arithmetic (`div` reports a zero divisor) |
+| `pct-diff(value, ref)` | signed relative difference in percent, `100 (value - ref) / abs(ref)` |
+| `min(...)`, `max(...)`, `mean(...)` | over numbers and arrays; NaN if any value is NaN |
+| `spread(...)`, `spread-pct(...)` | `max - min`, and the same in percent of the mean |
+| `claim(value, op, bound, decimals?)` | checked claim: renders the value if `value op bound` holds (`op`: `'<' '<=' '>' '>=' '==' '!='` or `lt le gt ge eq ne`), else `[CLAIM FAILED: ...]` plus a render error |
+| `within-pct(value, ref, tol, decimals = 2)` | checked claim: renders `pct-diff` as `+0.42%` if `abs(pct-diff) <= tol`, else `[CLAIM FAILED: ...]` plus a render error |
+
+```tson
+text("OpenEMS lies ${within-pct(oems_fr, sheen_fr, 1)} from Sheen's resonance;
+the three solvers spread by ${fixed(spread-pct(oems_fr, scuff_fr, palace_fr), 1)}%.")
+```
 
 ### Color functions (`import("stdlib")`)
 
