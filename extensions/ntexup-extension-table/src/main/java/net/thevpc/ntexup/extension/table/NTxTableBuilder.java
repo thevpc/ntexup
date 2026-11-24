@@ -45,6 +45,7 @@ public class NTxTableBuilder implements NTxNodeBuilder {
      * renderer from painting a box over the cell background / grid lines.
      */
     private static final NElement NO_BACKGROUND = NElement.ofCustom(new Color(0, 0, 0, 0));
+    private static final NElement NO_PADDING = NElement.ofDouble(0, "px");
 
     private final NTxProperties defaultStyles = new NTxProperties();
 
@@ -161,9 +162,16 @@ public class NTxTableBuilder implements NTxNodeBuilder {
                 NTxRendererContext cellCtx = rowCtx.resolveNode(cellNode, cellRect);
                 cellCtx.paintBackground(cellRect);
                 List<NTxNode> contentChildren = cellNode.children();
-                if (!contentChildren.isEmpty() && colW > 2 * pad && rowH > 2 * pad) {
+                NTxMargin cellPadding = NTxValueByName.getPadding(cellCtx);
+                double left = pad + cellPadding.getLeft();
+                double top = pad + cellPadding.getTop();
+                double right = pad + cellPadding.getRight();
+                double bottom = pad + cellPadding.getBottom();
+                if (!contentChildren.isEmpty()
+                        && colW > left + right && rowH > top + bottom) {
                     NTxBounds2D innerRect = NTxBounds2D.ofWidth(
-                            cx + pad, cy + pad, colW - 2 * pad, rowH - 2 * pad);
+                            cx + left, cy + top,
+                            colW - left - right, rowH - top - bottom);
                     for (NTxNode contentChild : contentChildren) {
                         renderContentChild(cellCtx, contentChild, innerRect);
                     }
@@ -385,14 +393,42 @@ public class NTxTableBuilder implements NTxNodeBuilder {
             }
             rowHeights[r] = (lineH > 0 ? lineH : baseLineH) + 2 * pad;
         }
-        double tableWidth = 0;
         for (int c = 0; c < cols; c++) {
             colWidths[c] = colWidths[c] + 2 * pad;
+        }
+
+        // Resolve percentage cell padding against finite preliminary cell bounds.
+        double[] colInsets = new double[cols];
+        double[] rowInsets = new double[rows];
+        for (int r = 0; r < rows; r++) {
+            NTxNode rowNode = r < rowNodes.size() ? rowNodes.get(r) : null;
+            if (rowNode == null) {
+                continue;
+            }
+            NTxRendererContext rowCtx = ctx.resolveNode(rowNode, probe);
+            for (NTxNode cellNode : rowNode.children()) {
+                int c = NTxValue.ofProp(cellNode, NTxPropName.COL_INDEX).asInt().orElse(1) - 1;
+                if (c < 0 || c >= cols) {
+                    continue;
+                }
+                NTxBounds2D cellProbe = NTxBounds2D.ofWidth(0, 0, colWidths[c], rowHeights[r]);
+                NTxMargin cellPadding = NTxValueByName.getPadding(
+                        rowCtx.resolveNode(cellNode, cellProbe));
+                colInsets[c] = Math.max(colInsets[c],
+                        cellPadding.getLeft() + cellPadding.getRight());
+                rowInsets[r] = Math.max(rowInsets[r],
+                        cellPadding.getTop() + cellPadding.getBottom());
+            }
+        }
+        double tableWidth = 0;
+        for (int c = 0; c < cols; c++) {
+            colWidths[c] += colInsets[c];
             tableWidth += colWidths[c];
         }
         double tableHeight = 0;
-        for (double rh : rowHeights) {
-            tableHeight += rh;
+        for (int r = 0; r < rows; r++) {
+            rowHeights[r] += rowInsets[r];
+            tableHeight += rowHeights[r];
         }
         TableMeasure m = new TableMeasure();
         m.colWidths = colWidths;
@@ -492,6 +528,7 @@ public class NTxTableBuilder implements NTxNodeBuilder {
                     content.setSource(table.source());
                     content.setProperty(NTxProp.ofString(NTxPropName.VALUE, text));
                     content.setProperty(NTxProp.ofObject(NTxPropName.BACKGROUND_COLOR, NO_BACKGROUND));
+                    content.setProperty(NTxProp.ofObject(NTxPropName.PADDING, NO_PADDING));
                     cell.append(content);
                 }
                 row.append(cell);

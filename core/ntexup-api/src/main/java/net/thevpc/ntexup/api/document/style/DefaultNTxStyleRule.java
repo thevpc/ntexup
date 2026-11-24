@@ -18,7 +18,7 @@ public class DefaultNTxStyleRule implements NTxStyleRule {
 
 
     /**
-     * Registers a class definition ({@code class-<name>(<bases>)}), backed by a
+     * Registers a class definition ({@code @name(<bases>)}), backed by a
      * rule whose selector is a {@link NTxStyleRuleSelectorItem.ClassDefItem}.
      * Class definitions never match nodes directly; they are folded into nodes
      * that reference the class by name (usage-site {@code @(name)}).

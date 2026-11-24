@@ -350,9 +350,9 @@ for (i : [1 -> 5]) {
 info-badge(label: "Pending Tasks", count: 7, accent: documentColors[1])
 ```
 
-### `body` Slot
+### Caller Content (`slot`)
 
-Components can embed caller content with `body`:
+Components can embed caller content with bare `slot`:
 
 ```tson
 @define feature-box(title, accent: documentColors[1]) {
@@ -361,7 +361,7 @@ Components can embed caller content with `body`:
         rectangle(background: accent, position: (0, 0), size: (0.35%P, 100))
         text("${title}", position: (6, 14), origin: left, font-bold, color: accent)
         group(position: (6, 32), size: (88, 62), origin: top-left) {
-            body
+            slot
         }
     }
 }
@@ -372,6 +372,8 @@ feature-box(title: "My Box") {
     }
 }
 ```
+
+A component can opt into implicit bodies with `@default-body(body, body2a, ...)` next to `@define`. Direct caller content is then wrapped in the first listed body; an explicit listed layout or bare `slot` takes precedence.
 
 ## Includes and Imports
 
@@ -390,12 +392,18 @@ import("plantuml")
 
 ```tson
 styles {
-    "all":       { font-size: 10, color: black }
-    class-title: { font-size: 48, bold: true }
-    class-note:  { color: blue }
-    source:      { at: left }
+    (*)      { font-size: 10, color: black }
+    @title   { font-size: 48, font-bold }
+    @note    { color: blue }
+    source:  { at: left }
 }
+
+@title text("Title")
+@(note) text("Note")
+text("Title and note", class: [title, note])
 ```
+
+`@title` declares a class; bare `@title` applies it. Use `@child(base1, base2) { ... }` for class inheritance.
 
 ## Theme Variables
 

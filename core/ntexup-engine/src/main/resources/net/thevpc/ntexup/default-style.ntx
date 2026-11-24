@@ -29,11 +29,11 @@ styles {
 //    }
 //
 //    // List Handling
-//    class-ul-item {
+//    @ul-item {
 //        margin : (2%P, 0),
 //        at     : left,
 //    }
-//    class-ul-bullet {
+//    @ul-bullet {
 //        margin : (2%P, 2%P),
 //        background : "#393a3a8",
 //        at         : left,
@@ -56,7 +56,7 @@ styles {
 //    }
 //
 //    // Figure/Image Captions
-//    class-image-fig-legend {
+//    @image-fig-legend {
 //        at        : bottom,
 //        font-size : 2.5%P,
 //        color     : "#555555",

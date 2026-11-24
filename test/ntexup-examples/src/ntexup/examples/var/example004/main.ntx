@@ -1,4 +1,4 @@
-(name:'myname', classes:[class1,class2],disabled:false){
+(name:'myname', class:[class1,class2],disabled:false){
     styles:{
         all :{
             color:blue,
@@ -8,7 +8,7 @@
             font-size:50,
             bold:true
         },
-        class-myname :{
+        @myname {
 
         }
     },

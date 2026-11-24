@@ -219,6 +219,33 @@ public class DefaultNTxDocumentItemParserFactory
                     params = new ArrayList<>();
                 }
                 NTxSource source = context.source();
+                String[] defaultBody = new String[0];
+                for (NElementAnnotation annotation : finalC1.annotations()) {
+                    if (NTxNodeType.CTRL_DEFINE.equals(annotation.name()) || !"default-body".equals(annotation.name())) {
+                        continue;
+                    }
+                    List<NElement> annotationParams = annotation.params().orElse(Collections.emptyList());
+                    List<String> names = new ArrayList<>();
+                    boolean valid = !annotationParams.isEmpty();
+                    for (NElement param : annotationParams) {
+                        if (!param.isAnyString() && !param.isName()) {
+                            valid = false;
+                            break;
+                        }
+                        String name = NTxUtils.uid(param);
+                        if (NBlankable.isBlank(name)) {
+                            valid = false;
+                            break;
+                        }
+                        names.add(name);
+                    }
+                    if (valid) {
+                        defaultBody = names.toArray(new String[0]);
+                    } else {
+                        context.log(NMsg.ofC("invalid @default-body annotation in definition %s: expected one or more non-blank component names as strings or names", templateName).asError(), source);
+                    }
+                    break;
+                }
                 List<NTxNode> defBody = new ArrayList<>();
                 for (NElement child : object.children()) {
                     NTxItem item = new CtrNTxNodeUncompiled(child,source);
@@ -238,6 +265,7 @@ public class DefaultNTxDocumentItemParserFactory
                         bodyContainer,
                         source
                 );
+                d.setDefaultBody(defaultBody);
                 d.setRaw(c);
                 return d;
             });
@@ -291,6 +319,7 @@ public class DefaultNTxDocumentItemParserFactory
         DefaultNTxNode n = new DefaultNTxNode(
                 list.type() == NElementType.ORDERED_LIST ? NTxNodeType.ORDERED_LIST : NTxNodeType.UNORDERED_LIST
                 , context.source());
+        NTxParseHelper.fillAnnotations(c, n);
         for (NListItemElement item : list.items()) {
             n.addAll(Arrays.asList(parseListItem(item, context)).toArray(new NTxItem[0]));
         }
@@ -457,35 +486,12 @@ public class DefaultNTxDocumentItemParserFactory
         NElement c = context.element();
         NTxEngine engine = context.engine();
         NTxDocumentFactory f = engine.documentFactory();
-        HashSet<String> allAncestors = null;
-        HashSet<String> allStyles = null;
         NTxValue ee = NTxValue.of(c);
-        for (NElementAnnotation a : c.annotations()) {
-            String nn = a.name();
-            if (!NBlankable.isBlank(nn)) {
-                if (allAncestors == null) {
-                    allAncestors = new HashSet<>();
-                }
-                allAncestors.add(NTxUtils.uid(nn));
-            }
-            // add classes as well
-            List<NElement> params = a.params().orNull();
-            if (params != null) {
-                for (NElement cls : params) {
-                    if (allStyles == null) {
-                        allStyles = new HashSet<>();
-                    }
-                    NOptional<String[]> ss = NTxValue.of(cls).asStringArrayOrString();
-                    if (ss.isPresent()) {
-                        allStyles.addAll(Arrays.asList(ss.get()));
-                    }
-                }
-            }
-        }
-//        NTxNode node = context.node();
-        if ((allStyles != null || allAncestors != null) && !isRootBloc(context)) {
+        boolean annotated = c.annotations().stream().anyMatch(a ->
+                !NBlankable.isBlank(a.name()) || (a.params().isPresent() && !a.params().get().isEmpty()));
+        if (annotated && !isRootBloc(context)) {
             NTxNode pg = f.ofGroup().setSource(context.source());
-            pg.setStyleClasses(allStyles == null ? null : allStyles.toArray(new String[0]));
+            NTxParseHelper.fillAnnotations(c, pg);
             for (NElement child : ee.body()) {
                 pg.append(new CtrNTxNodeUncompiled(child, context.source()));
             }

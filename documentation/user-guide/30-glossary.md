@@ -14,7 +14,7 @@
 
 **Compilation** — the process of turning `.ntx` (TSON) source into a `NTxCompiledDocument` of pages ready for rendering.
 
-**CSS-like styles** — ntexup's styling model: rules selecting by type/class with `{ property: value }`.
+**CSS-like styles** — ntexup's styling model: rules selecting by type or classes declared with `@name { ... }` and applied with node annotations or `class: name`.
 
 ## E
 
@@ -100,7 +100,7 @@
 
 ## S
 
-**Selector** — the "who" part of a style rule (`page`, `(*)`, `table-row(even)`, `class-card-item`).
+**Selector** — the "who" part of a style rule (`page`, `(*)`, `@card-item`, `table-row(row: even, class: important)`).
 
 **Scene3D** — a container for 3D primitives with camera and transform.
 

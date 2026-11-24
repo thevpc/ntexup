@@ -9,7 +9,8 @@ and exits 1 on errors (`--strict`: also on warnings); older versions exit 0 rega
 | `syntax error : missing rbrace` / pages missing with no error | unclosed `{`, typically `¶ a ¶ b }` on one line (`¶` eats to end of line) | one `¶` per line or quoted strings; count braces |
 | `undefined node ul` (or any node) | extension not imported, or typo | add `import("layout")` (lists/grids), `"shapes2d"`, `"latex"`, `"text"`, `"plot2d"`, `"plantuml"`, `"image"`, `"svg"`, `"shapes3d"`; or include a theme |
 | `No parser for node type X` | same as above | same |
-| `invalid style rule ".x"` | dot selector | `class-x: {...}` + `@(x) node(...)` |
+| `invalid style rule ".x"` | dot selector | declare `@x { ... }` in `styles`; apply with `@x node(...)` or `class: x` |
+| legacy `class-*` declaration rejected | removed class syntax | use `@name { ... }` or `@child(base1, base2) { ... }`; apply with `@name node(...)` |
 | `invalid argument """...` in `source(...)` | comma between language and code | `source(java """...""")` |
 | `unexpected for(i,in[...])` | `in` loop syntax | `for(i: [...]){...}` |
 | body rendered once, `${i}` printed literally | `@for(...)` annotation form | drop the `@` |

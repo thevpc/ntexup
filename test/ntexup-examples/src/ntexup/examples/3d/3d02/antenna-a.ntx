@@ -8,12 +8,12 @@ page{
         line:{
             color:black
         }
-        class-dimLine:{
+        @dimLine {
             start-arrow:simple()
             end-arrow:simple()
             stroke:basic(dashed)
         }
-        class-dimLabel:{
+        @dimLabel {
             origin:(50,50)
         }
     }

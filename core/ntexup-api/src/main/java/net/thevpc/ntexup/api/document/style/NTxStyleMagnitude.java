@@ -7,11 +7,20 @@ public class NTxStyleMagnitude implements Comparable<NTxStyleMagnitude> {
     private int distance;
     private int index;
     private int score;
+    private int classOrder;
+    private int classDepth;
 
     public NTxStyleMagnitude(int distance, int index,NTxStyleRuleSelector selector) {
+        this(distance, index, selector, 0, 0);
+    }
+
+    public NTxStyleMagnitude(int distance, int index, NTxStyleRuleSelector selector,
+                             int classOrder, int classDepth) {
         this.distance = distance;
         this.index = index;
         this.selector = selector == null ? DefaultNTxNodeSelector.ofAny() : selector;
+        this.classOrder = classOrder;
+        this.classDepth = classDepth;
     }
 
     public NTxStyleRuleSelector getSelector() {
@@ -37,6 +46,12 @@ public class NTxStyleMagnitude implements Comparable<NTxStyleMagnitude> {
             if (u != 0) {
                 return u;
             }
+        }
+        if (this.classOrder != o.classOrder) {
+            return -Integer.compare(this.classOrder, o.classOrder);
+        }
+        if (this.classDepth != o.classDepth) {
+            return Integer.compare(this.classDepth, o.classDepth);
         }
         if (this.selector != o.selector) {
             int u = this.selector.compareTo(o.selector);
@@ -68,12 +83,14 @@ public class NTxStyleMagnitude implements Comparable<NTxStyleMagnitude> {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         NTxStyleMagnitude that = (NTxStyleMagnitude) o;
-        return distance == that.distance && score == that.score&& index == that.index && Objects.equals(selector, that.selector);
+        return distance == that.distance && score == that.score&& index == that.index
+                && classOrder == that.classOrder && classDepth == that.classDepth
+                && Objects.equals(selector, that.selector);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(selector, distance, score);
+        return Objects.hash(selector, distance, score, classOrder, classDepth);
     }
 
     @Override

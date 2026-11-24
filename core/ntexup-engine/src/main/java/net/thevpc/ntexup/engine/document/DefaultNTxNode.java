@@ -357,12 +357,13 @@ public class DefaultNTxNode implements NTxNode, Cloneable{
     private Set<String> _oldClassNames() {
         NOptional<NTxProp> y = properties.get(NTxPropName.CLASS);
         if (y.isPresent()) {
-            return new LinkedHashSet<>(Arrays.asList(NTxValue.of(y.get().getValue()).asStringArray().orElse(new String[0])).stream()
-                    .filter(x -> x != null && x.trim().length() > 0)
+            String[] values = NTxValue.of(y.get().getValue()).asStringArrayOrString().orElse(new String[0]);
+            return Arrays.stream(values)
+                    .filter(x -> !NBlankable.isBlank(x))
                     .map(NStringUtils::strip)
-                    .collect(Collectors.toList()));
+                    .collect(Collectors.toCollection(LinkedHashSet::new));
         }
-        return new HashSet<>();
+        return new LinkedHashSet<>();
     }
 
     @Override
@@ -378,7 +379,7 @@ public class DefaultNTxNode implements NTxNode, Cloneable{
 
     @Override
     public NTxItem setStyleClasses(String[] classNames) {
-        Set<String> s = new HashSet<>();
+        Set<String> s = new LinkedHashSet<>();
         if (classNames != null) {
             for (String c : classNames) {
                 c = validateClassName(c);

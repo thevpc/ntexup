@@ -71,7 +71,7 @@ ul(bullet-align: top){                         // bullet aligned with first wrap
 }
 ```
 
-Theme classes to restyle items: `class-ul-item`, `class-ol-item`, `class-ul-bullet`.
+Built-in list style class names: `ul-item`, `ol-item`, `ul-bullet`.
 
 ## 5. Layout containers  (`import("layout")`)
 
@@ -211,18 +211,21 @@ styles {
     (*)       { font-size: 4%P }               // all ("*": {...} also works)
     text      { color: documentTextPrimary }   // by node type
     page      { background: "#ffffff" }
-    class-card: { round-corner: 4, draw-contour }
-    class-hot(card): { color: red, font-bold } // class inheriting from card
+    @card { round-corner: 4, draw-contour }
+    @hot(card) { color: red, font-bold }      // class inheriting from card
 }
-@(hot) text("hot")
-text("hot", class: hot)
+@hot text("hot")
+@card @hot text("hot card")
+@(card, hot) text("hot card")
+text("hot", class: [card, hot])
 grid(2, 2){ styles: { "*": { margin: 2 } }  ... }   // scoped to this container
 ```
 
+`@card` declares a class; bare `@card` applies it. `@hot(card)` inherits from `card`.
 Cascade: theme → enclosing `styles` (closest wins) → inline props (always win).
 A type selector (`text { color: … }`) beats a class at the same distance — put the colour
 inline or drop it from the type rule if a class must override it.
-Dot selectors like `".hot"` are invalid.
+Legacy `class-*` declarations and dot selectors like `".hot"` are invalid.
 
 Theme colour variables: `documentColors[0..11]`, `documentBg`, `documentSurface`,
 `documentSurfaceAlt`, `documentLine`, `documentTextPrimary`, `documentTextSecondary`,
@@ -253,6 +256,15 @@ feature-box(title: "Results"){ ul{ "faster" "smaller" } }
 
 Named slots (as in themes): define `@define body{ group{ slot } }` inside the component and
 the caller writes `body{ ... }`. Put shared `@define`s in a file included before pages.
+
+For implicit slide bodies, a definition carries `@default-body(body, body2a, ...)` next to
+`@define`. Direct caller content goes to the first listed body unless the caller uses an
+explicit listed layout or includes a bare `slot` in the call body to forward content:
+
+```tson
+content-slide(title: "Simple") { text("Direct content") }
+content-slide(title: "Two columns") { body2a { ... } body2b { ... } }
+```
 
 ## 17. Variables, expressions, control flow
 

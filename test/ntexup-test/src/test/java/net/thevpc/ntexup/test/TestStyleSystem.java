@@ -9,22 +9,25 @@ import net.thevpc.ntexup.api.eval.NTxValue;
 import net.thevpc.ntexup.api.log.NTxLogger;
 import net.thevpc.ntexup.api.log.NTxMsg;
 import net.thevpc.ntexup.api.source.NTxSource;
+import net.thevpc.ntexup.api.util.NTxUtils;
 import net.thevpc.ntexup.engine.document.DefaultNTxNode;
 import net.thevpc.ntexup.engine.document.NTxPropCalculator;
 import net.thevpc.ntexup.engine.impl.DefaultNTxEngine;
 import net.thevpc.ntexup.engine.parser.resources.NTxSourceNew;
 import net.thevpc.nuts.Nuts;
+import net.thevpc.nuts.elem.NElement;
 import net.thevpc.nuts.text.NMsg;
 import net.thevpc.nuts.util.NOptional;
 
 import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
 /**
  * Plain main-based tests for the class-inheritance + table-substructure
- * styling extension (class- definitions, @() usage combination, and
+ * styling extension (@ declarations, multi-class usage, and
  * table-row / table-cell / table-column selectors).
  */
 public class TestStyleSystem {
@@ -56,15 +59,24 @@ public class TestStyleSystem {
             testMultiBaseLastWins();
             testDeepChain();
             testUsageSiteOrder();
+            testTableClassUsageOrder();
+            testTableClassInheritanceDepth();
+            testSetStyleClassesPreservesOrder();
+            testLatestClassDefinitionWins();
             testInstancePropWins();
             testNearestScope();
             testSpecificityBeatsClass();
             testRecencyTieBreak();
             testDotSelectorRemoval();
+            testLegacyClassSyntaxRejected();
+            testClassDefinitionSerializationRoundTrip();
+            testSelectorSerializationRoundTrip();
             testAllKeyword();
             testTableSelectors();
             testTableResolution();
+            testTableClassScopedStyles();
             testE2eClasses();
+            testE2eMultiClassUsage();
             testE2eAllKeyword();
             testE2eLoad();
             testEmptySelectorIsNone();
@@ -76,6 +88,7 @@ public class TestStyleSystem {
             testTableWeightGrammarNeverFails();
             testStructuralContentInheritance();
             testNestedTableInnerShadowsOuter();
+            testE2eReusableTableStyle();
             testE2eTableStylesGrammar();
             testE2eNeverFailLegacy();
             testE2eClassExtendsKeyword();
@@ -133,6 +146,29 @@ public class TestStyleSystem {
     static void typeRule(NTxNode container, String type, NTxProp... props) {
         container.addRule(DefaultNTxStyleRule.of(container, SRC,
                 DefaultNTxNodeSelector.of(NTxStyleRuleSelectorItem.of(type, (NTxLogger) null).get()), props));
+    }
+
+    static void tableClassRule(NTxNode container, String className, String color) {
+        container.addRule(DefaultNTxStyleRule.of(container, SRC,
+                DefaultNTxNodeSelector.of(
+                        NTxStyleRuleSelectorItem.ofTableRow(null),
+                        NTxStyleRuleSelectorItem.ofTableClassUse(className)
+                ),
+                NTxProp.ofString(NTxPropName.COLOR, color)));
+    }
+
+    static NTxNode tableText(NTxNode root, String... classes) {
+        NTxNode table = engine().newDefaultNode(NTxNodeType.TABLE);
+        table.setSource(SRC);
+        table.setStyleClasses(classes);
+        root.addChild(table);
+        NTxNode row = rowNode("body", 1, 1);
+        table.addChild(row);
+        NTxNode cell = cellNode(1, 1);
+        row.addChild(cell);
+        NTxNode text = textNode();
+        cell.addChild(text);
+        return text;
     }
 
     static void anyRule(NTxNode container, NTxProp... props) {
@@ -228,6 +264,51 @@ public class TestStyleSystem {
         assertEq("usage order y,x -> x wins", "red", colorOf(n2));
     }
 
+    static void testTableClassUsageOrder() {
+        DefaultNTxNode root = new DefaultNTxNode(NTxNodeType.GROUP);
+        def(root, "base", null);
+        def(root, "striped", null);
+        tableClassRule(root, "striped", "blue");
+        tableClassRule(root, "base", "red");
+        NTxNode text = tableText(root, "base", "striped");
+        assertEq("later table class wins over rule order", "blue", colorOf(text));
+        NTxNode table = NTxUtils.firstNodeUp(text.parent().parent().parent());
+        table.setStyleClasses(new String[]{"striped", "base"});
+        assertEq("reversed table class order changes nested style winner", "red", colorOf(text));
+    }
+
+    static void testTableClassInheritanceDepth() {
+        DefaultNTxNode root = new DefaultNTxNode(NTxNodeType.GROUP);
+        def(root, "base", null);
+        def(root, "derived", List.of("base"));
+        def(root, "deep", List.of("derived"));
+        tableClassRule(root, "derived", "blue");
+        tableClassRule(root, "base", "red");
+        NTxNode text = tableText(root, "deep");
+        assertEq("nearer inherited table class beats deeper base and later rule", "blue", colorOf(text));
+    }
+
+    static void testSetStyleClassesPreservesOrder() {
+        DefaultNTxNode root = new DefaultNTxNode(NTxNodeType.GROUP);
+        def(root, "x", null, NTxProp.ofString(NTxPropName.COLOR, "red"));
+        def(root, "y", null, NTxProp.ofString(NTxPropName.COLOR, "blue"));
+        NTxNode n = textNode();
+        root.addChild(n);
+        n.setStyleClasses(new String[]{"y", "x", "y"});
+        assertEq("setStyleClasses preserves first occurrence order", List.of("y", "x"), Arrays.asList(n.getStyleClasses()));
+        assertEq("setStyleClasses y,x -> x wins", "red", colorOf(n));
+    }
+
+    static void testLatestClassDefinitionWins() {
+        DefaultNTxNode root = new DefaultNTxNode(NTxNodeType.GROUP);
+        def(root, "x", null, NTxProp.ofString(NTxPropName.COLOR, "red"));
+        def(root, "x", null, NTxProp.ofString(NTxPropName.COLOR, "blue"));
+        NTxNode n = textNode();
+        root.addChild(n);
+        n.addStyleClass("x");
+        assertEq("latest same-scope class definition wins", "blue", colorOf(n));
+    }
+
     static void testInstancePropWins() {
         DefaultNTxNode root = new DefaultNTxNode(NTxNodeType.GROUP);
         def(root, "x", null, NTxProp.ofString(NTxPropName.COLOR, "red"));
@@ -282,6 +363,54 @@ public class TestStyleSystem {
     static void testDotSelectorRemoval() {
         NOptional<NTxStyleRuleSelectorItem> r = NTxStyleRuleSelectorItem.of(".H1", (NTxLogger) null);
         assertTrue("dot selector is rejected", r.isEmpty());
+    }
+
+    static void testLegacyClassSyntaxRejected() {
+        CaptureLogger cap = new CaptureLogger();
+        NOptional<NTxStyleRuleSelectorItem> legacy = NTxStyleRuleSelectorItem.of("class-old", cap);
+        assertTrue("legacy class- selector is rejected", legacy.isEmpty());
+        assertTrue("legacy class- diagnostic points to @old", String.join("\n", cap.msgs).contains("@old"));
+        NTxStyleRuleSelectorItem usage = NTxStyleRuleSelectorItem.ofClassUse("important");
+        assertEq("class usage serialization is unambiguous", "class: important", usage.toString());
+        assertEq("class usage serialization round-trips", usage, NTxStyleRuleSelectorItem.of(usage.toString(), null).get());
+    }
+
+    static void testClassDefinitionSerializationRoundTrip() {
+        DefaultNTxNode root = new DefaultNTxNode(NTxNodeType.PAGE_GROUP);
+        DefaultNTxStyleRule rule = DefaultNTxStyleRule.ofClassDef(
+                root, SRC, "table-base", Arrays.asList("base", "other"),
+                NTxProp.ofString(NTxPropName.COLOR, "red"),
+                NTxProp.ofString(NTxPropName.FONT_SIZE, "12"));
+        NElement serializedRule = rule.toElement();
+        DefaultNTxEngine e = new DefaultNTxEngine();
+        CaptureLogger cap = new CaptureLogger();
+        e.addLog(cap);
+        NTxCompiledDocument d = e.loadDocument(new ByteArrayInputStream(
+                ("styles{" + serializedRule + "}").getBytes()));
+        assertTrue("serialized class declaration parses clean: " + errorMsgs(cap), errorMsgs(cap).isEmpty());
+        NTxStyleRule[] rules = d.document().root().rules();
+        assertEq("class definition serializes as one rule", 1, rules.length);
+        assertEq("class definition serialization round-trips", rule.selector(), rules[0].selector());
+        assertEq("class definition properties round-trip", rule.styles(), rules[0].styles());
+    }
+
+    static void testSelectorSerializationRoundTrip() {
+        DefaultNTxNode root = new DefaultNTxNode(NTxNodeType.PAGE_GROUP);
+        DefaultNTxNodeSelector selector = DefaultNTxNodeSelector.of(
+                NTxStyleRuleSelectorItem.of("table", (NTxLogger) null).get(),
+                NTxStyleRuleSelectorItem.ofClassUse("important"),
+                NTxStyleRuleSelectorItem.ofTableRow("even"),
+                NTxStyleRuleSelectorItem.ofTableColumn(2)
+        );
+        NElement serializedRule = DefaultNTxStyleRule.of(root, SRC, selector,
+                NTxProp.ofString(NTxPropName.COLOR, "red")).toElement();
+        DefaultNTxEngine e = new DefaultNTxEngine();
+        CaptureLogger cap = new CaptureLogger();
+        e.addLog(cap);
+        NTxCompiledDocument d = e.loadDocument(new ByteArrayInputStream(
+                ("styles{" + serializedRule + "}").getBytes()));
+        assertTrue("serialized selector parses clean: " + errorMsgs(cap), errorMsgs(cap).isEmpty());
+        assertEq("full selector serialization round-trips", selector, d.document().root().rules()[0].selector());
     }
 
     static void testAllKeyword() {
@@ -396,6 +525,56 @@ public class TestStyleSystem {
         // body cell (data row 2, col 2): explicit table-cell(row:,col:) beats table-column(2)
         assertEq("explicit table-cell beats table-column", "cell22-green", colorOf(cell(root, 3, 2)));
         assertEq("cell 2/1 -> col1 rule", "col1-purple", colorOf(cell(root, 2, 1)));
+    }
+
+    static void testTableClassScopedStyles() {
+        DefaultNTxNode root = new DefaultNTxNode(NTxNodeType.GROUP);
+        def(root, "table-base", null, NTxProp.ofString(NTxPropName.PADDING, "2"));
+        def(root, "table-striped", List.of("table-base"), NTxProp.ofString(NTxPropName.COLOR, "table-color"));
+        def(root, "table-inner", null, NTxProp.ofString(NTxPropName.PADDING, "4"));
+        root.addRule(DefaultNTxStyleRule.of(root, SRC,
+                DefaultNTxNodeSelector.of(NTxStyleRuleSelectorItem.ofTableRow("even"))
+                        .and(NTxStyleRuleSelectorItem.ofTableClassUse("table-base")),
+                NTxProp.ofString(NTxPropName.BACKGROUND_COLOR, "zebra")));
+        root.addRule(DefaultNTxStyleRule.of(root, SRC,
+                DefaultNTxNodeSelector.of(NTxStyleRuleSelectorItem.ofTableCell(null, null))
+                        .and(NTxStyleRuleSelectorItem.ofTableClassUse("table-striped")),
+                NTxProp.ofString(NTxPropName.FONT_SIZE, "11")));
+        root.addRule(DefaultNTxStyleRule.of(root, SRC,
+                DefaultNTxNodeSelector.of(NTxStyleRuleSelectorItem.ofTableCell(null, null))
+                        .and(NTxStyleRuleSelectorItem.ofTableClassUse("table-inner")),
+                NTxProp.ofString(NTxPropName.FONT_SIZE, "13")));
+
+        NTxNode table = engine().newDefaultNode(NTxNodeType.TABLE);
+        table.setSource(SRC);
+        table.addStyleClass("table-striped");
+        root.addChild(table);
+        NTxNode oddRow = rowNode("body", 1, 1);
+        NTxNode evenRow = rowNode("body", 2, 2);
+        table.addChild(oddRow);
+        table.addChild(evenRow);
+        NTxNode evenCell = cellNode(2, 2);
+        evenRow.addChild(evenCell);
+        NTxNode text = textNode();
+        evenCell.addChild(text);
+
+        NTxNode innerTable = engine().newDefaultNode(NTxNodeType.TABLE);
+        innerTable.setSource(SRC);
+        innerTable.addStyleClass("table-inner");
+        evenCell.addChild(innerTable);
+        NTxNode innerRow = rowNode("body", 2, 1);
+        innerTable.addChild(innerRow);
+        innerRow.addChild(cellNode(2, 2));
+
+        assertEq("table class styles the table itself", "2", propOf(table, NTxPropName.PADDING));
+        assertEq("table class color applies to table", "table-color", colorOf(table));
+        assertEq("inherited table class styles even rows", "zebra", propOf(evenRow, NTxPropName.BACKGROUND_COLOR));
+        assertEq("table class leaves odd rows unstyled", null, propOf(oddRow, NTxPropName.BACKGROUND_COLOR));
+        assertEq("derived table class styles cells", "11", propOf(evenCell, NTxPropName.FONT_SIZE));
+        assertEq("table cell style reaches content", "11", propOf(text, NTxPropName.FONT_SIZE));
+        assertEq("nested table keeps its own class", "4", propOf(innerTable, NTxPropName.PADDING));
+        assertEq("nested table rows reject outer table class", null, propOf(innerRow, NTxPropName.BACKGROUND_COLOR));
+        assertEq("nested table cells use their own class", "13", propOf(innerRow.children().get(0), NTxPropName.FONT_SIZE));
     }
 
     static void testStructuralContentInheritance() {
@@ -544,9 +723,9 @@ public class TestStyleSystem {
     static void testE2eClasses() {
         String doc = "" +
                 "styles{\n" +
-                "   class-a: { color: red }\n" +
-                "   class-b(a): { font-size: 12 }\n" +
-                "   class-c(b): { font-bold }\n" +
+                "   @a { color: red }\n" +
+                "   @b(a) { font-size: 12 }\n" +
+                "   @c(b) { font-bold }\n" +
                 "}\n" +
                 "page {\n" +
                 "   @(c) text(\"t1\")\n" +
@@ -555,9 +734,42 @@ public class TestStyleSystem {
         CaptureLogger cap = new CaptureLogger();
         DefaultNTxEngine e = new DefaultNTxEngine();
         e.addLog(cap);
-        e.loadDocument(new ByteArrayInputStream(doc.getBytes()));
-        assertTrue("e2e class definitions parse clean: " + errorMsgs(cap),
-                errorMsgs(cap).isEmpty());
+        NTxCompiledDocument d = e.loadDocument(new ByteArrayInputStream(doc.getBytes()));
+        NTxNode page = d.pages().get(0).compiledPage();
+        List<NTxNode> texts = new ArrayList<>();
+        collectByType(page, NTxNodeType.TEXT, texts);
+        assertTrue("e2e class definitions parse clean: " + errorMsgs(cap), errorMsgs(cap).isEmpty());
+        assertEq("annotation class inheritance resolves color", "red", propOf2(e, texts.get(0), "color"));
+        assertEq("annotation class inheritance resolves font-size", "12", propOf2(e, texts.get(0), "font-size"));
+        NTxValue bold = NTxValue.of(e.computeProperty(texts.get(0), new String[]{"font-bold"}).map(NTxProp::getValue).orNull());
+        assertTrue("annotation class inheritance resolves font-bold", bold.asBoolean().orElse(false));
+    }
+
+    static void testE2eMultiClassUsage() {
+        String doc = "" +
+                "styles{\n" +
+                "   @a { color: red }\n" +
+                "   @b { color: blue }\n" +
+                "}\n" +
+                "page {\n" +
+                "   @a @b text(\"repeated\")\n" +
+                "   @(b, a) text(\"list\")\n" +
+                "   text(\"property\", class: [a, b])\n" +
+                "}\n";
+        DefaultNTxEngine e = new DefaultNTxEngine();
+        CaptureLogger cap = new CaptureLogger();
+        e.addLog(cap);
+        NTxCompiledDocument d = e.loadDocument(new ByteArrayInputStream(doc.getBytes()));
+        NTxNode page = d.pages().get(0).compiledPage();
+        List<NTxNode> texts = new ArrayList<>();
+        collectByType(page, NTxNodeType.TEXT, texts);
+        assertTrue("multi-class syntax parses clean: " + errorMsgs(cap), errorMsgs(cap).isEmpty());
+        assertEq("repeated annotations preserve class order", List.of("a", "b"), Arrays.asList(texts.get(0).getStyleClasses()));
+        assertEq("annotation list preserves class order", List.of("b", "a"), Arrays.asList(texts.get(1).getStyleClasses()));
+        assertEq("class property array preserves class order", List.of("a", "b"), Arrays.asList(texts.get(2).getStyleClasses()));
+        assertEq("repeated annotations: later class wins", "blue", propOf2(e, texts.get(0), "color"));
+        assertEq("annotation list: later class wins", "red", propOf2(e, texts.get(1), "color"));
+        assertEq("class property array: later class wins", "blue", propOf2(e, texts.get(2), "color"));
     }
 
     static void testE2eAllKeyword() {
@@ -597,7 +809,7 @@ public class TestStyleSystem {
         String doc = "" +
                 "page {\n" +
                 "   styles{\n" +
-                "      class-title: { position:(50,32), origin:center, font-size:8%P, color:\"#0f172a\" }\n" +
+                "      @title { position:(50,32), origin:center, font-size:8%P, color:\"#0f172a\" }\n" +
                 "   }\n" +
                 "   @(title) text(\"T\")\n" +
                 "}\n";
@@ -619,7 +831,7 @@ public class TestStyleSystem {
                 "page {\n" +
                 "   styles{\n" +
                 "      (.subtitle): { position:(50,44), color:\"#c0ffee\", font-size:3%P }\n" +
-                "      class-title: { position:(50,32), color:\"#000000\" }\n" +
+                "      @title { position:(50,32), color:\"#000000\" }\n" +
                 "   }\n" +
                 "   @(title) text(\"T\")\n" +
                 "}\n";
@@ -664,9 +876,9 @@ public class TestStyleSystem {
         root.addRule(DefaultNTxStyleRule.of(root, SRC, tableOnly, NTxProp.ofString(NTxPropName.COLOR, "blue")));
         root.addRule(DefaultNTxStyleRule.of(root, SRC, tableAndImportant, NTxProp.ofString(NTxPropName.COLOR, "violet")));
 
-        assertTrue("table(class-important) matches table with class", tableAndImportant.acceptNode(tableA));
-        assertTrue("table(class-important) rejects table without class (AND)", !tableAndImportant.acceptNode(tableB));
-        assertTrue("table(class-important) rejects non-table with class (AND)", !tableAndImportant.acceptNode(textA));
+        assertTrue("table(class: important) matches table with class", tableAndImportant.acceptNode(tableA));
+        assertTrue("table(class: important) rejects table without class (AND)", !tableAndImportant.acceptNode(tableB));
+        assertTrue("table(class: important) rejects non-table with class (AND)", !tableAndImportant.acceptNode(textA));
         assertTrue("type table matches any table", tableOnly.acceptNode(tableA) && tableOnly.acceptNode(tableB));
         assertTrue("type table rejects text", !tableOnly.acceptNode(textA));
 
@@ -727,9 +939,9 @@ public class TestStyleSystem {
         NTxNode oddImp = rowNode("body", 1, 2);
         oddImp.addStyleClass("important");
         DefaultNTxNodeSelector evenAndImportant = DefaultNTxNodeSelector.of(even, NTxStyleRuleSelectorItem.ofClassUse("important"));
-        assertTrue("table-row(row: even) AND class-important matches even+class", evenAndImportant.acceptNode(evenImp));
-        assertTrue("table-row(row: even) AND class-important rejects even no-class", !evenAndImportant.acceptNode(body1));
-        assertTrue("table-row(row: even) AND class-important rejects odd+class", !evenAndImportant.acceptNode(oddImp));
+        assertTrue("table-row(row: even) AND class: important matches even+class", evenAndImportant.acceptNode(evenImp));
+        assertTrue("table-row(row: even) AND class: important rejects even no-class", !evenAndImportant.acceptNode(body1));
+        assertTrue("table-row(row: even) AND class: important rejects odd+class", !evenAndImportant.acceptNode(oddImp));
 
         CaptureLogger cap = new CaptureLogger();
         NTxStyleRuleSelectorItem legacy = NTxStyleRuleSelectorItem.of("table-row(header)", cap).get();
@@ -856,21 +1068,53 @@ public class TestStyleSystem {
         assertTrue("never-fail: weight-style grammar compiles (bogus dropped, table-weight warned)", d != null);
     }
 
+    static void testE2eReusableTableStyle() {
+        String doc = "" +
+                "styles{\n" +
+                "   @tableBase {\n" +
+                "      background-color: white\n" +
+                "      row { color: \"#111111\" }\n" +
+                "      cell { padding: 1 }\n" +
+                "   }\n" +
+                "   @tableStriped(tableBase) {\n" +
+                "      row(row: even) { background-color: \"#eef2ff\" }\n" +
+                "      header { font-bold }\n" +
+                "   }\n" +
+                "}\n";
+        DefaultNTxEngine e = new DefaultNTxEngine();
+        CaptureLogger cap = new CaptureLogger();
+        e.addLog(cap);
+        NTxCompiledDocument d = e.loadDocument(new ByteArrayInputStream(doc.getBytes()));
+        NTxStyleRule[] rules = d.document().root().rules();
+        assertTrue("reusable table style parses clean: " + errorMsgs(cap), errorMsgs(cap).isEmpty());
+        assertEq("class declaration plus nested sections become rules", 6, rules.length);
+        DefaultNTxNodeSelector baseDef = (DefaultNTxNodeSelector) rules[0].selector();
+        DefaultNTxNodeSelector stripedDef = (DefaultNTxNodeSelector) rules[3].selector();
+        assertEq("base table class is declared", "table-base", baseDef.getClassDef("table-base").getName());
+        assertEq("striped table class inherits base", List.of("table-base"), stripedDef.getClassDef("table-striped").getBases());
+        assertTrue("base row alias normalizes to table-row", rules[1].selector().toString().contains("table-row"));
+        assertTrue("base row section is scoped to table class", rules[1].selector().toString().contains("table(@table-base)"));
+        assertTrue("base cell alias normalizes to table-cell", rules[2].selector().toString().contains("table-cell"));
+        assertTrue("striped row section keeps structural selector", rules[4].selector().toString().contains("table-row"));
+        assertTrue("striped row section is scoped to derived class", rules[4].selector().toString().contains("table(@table-striped)"));
+        assertTrue("header alias normalizes to table-header: " + rules[5].selector(), rules[5].selector().toString().contains("table-header"));
+    }
+
     static void testE2eTableStylesGrammar() {
         String doc = "" +
                 "styles{\n" +
-                "   class-important: { color: red }\n" +
-                "   class-b(extends: important): { font-bold }\n" +
+                "   @important { color: red }\n" +
+                "   @b(extends: important) { font-bold }\n" +
                 "   table-header: { background-color: \"#1e293b\", color: \"#ffffff\" }\n" +
                 "   table-header(row: 1, col: 1): { background-color: \"#7c3aed\", column-weight: 1.5 }\n" +
                 "   table-footer(row: 1): { background-color: \"#e2e8f0\", row-weight: 1.5 }\n" +
                 "   table-row(row: even): { background-color: \"#eef2ff\", color: \"#1e293b\" }\n" +
                 "   table-row(row: odd): { background-color: \"#ffffff\" }\n" +
                 "   table-row(row: 1): { row-weight: 2 }\n" +
-                "   table-row(row: even, class-important): { background-color: \"#fef3c7\" }\n" +
+                "   table-row(row: even, class: important): { background-color: \"#fef3c7\" }\n" +
                 "   table-column(col: 1): { font-bold, column-weight: 1.5 }\n" +
                 "   table-cell(row: 1, col: 1): { background-color: \"#7c3aed\", color: \"#ffffff\" }\n" +
-                "   table(class-important): { background-color: \"#fef3c7\" }\n" +
+                "   table(class: important): { background-color: \"#fef3c7\" }\n" +
                 "}\n";
         DefaultNTxEngine e = new DefaultNTxEngine();
         e.loadDocument(new ByteArrayInputStream(doc.getBytes()));
@@ -890,8 +1134,8 @@ public class TestStyleSystem {
     static void testE2eClassExtendsKeyword() {
         String doc = "" +
                 "styles{\n" +
-                "   class-base: { color: \"#123456\", font-bold }\n" +
-                "   class-child(extends: base): { color: \"#abcdef\" }\n" +
+                "   @base { color: \"#123456\", font-bold }\n" +
+                "   @child(extends: base) { color: \"#abcdef\" }\n" +
                 "}\n" +
                 "page{\n" +
                 "   @(child) text(\"t\")\n" +
@@ -917,7 +1161,7 @@ public class TestStyleSystem {
         DefaultNTxEngine e = new DefaultNTxEngine();
         e.loadDocument(new ByteArrayInputStream(oldDotDoc.getBytes()));
         String hint = hintForLegacyDot(".H1");
-        assertTrue("legacy dot removal hint mentions class-H1: " + hint, hint.contains("class-H1"));
+        assertTrue("legacy dot removal hint mentions @H1: " + hint, hint.contains("@H1"));
         hintForLegacyDot("text.H1");
         passed++;
     }

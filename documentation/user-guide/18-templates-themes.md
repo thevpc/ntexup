@@ -122,6 +122,19 @@ Common theme components (from `classic`):
 | `code(...)` | code block wrapper |
 | `table(...)` | styled table |
 | `quote(...)` | block quote |
+| `content-slide(...)` | content page with default or explicit layouts |
+
+```tson
+content-slide(title: "My Slide") {
+    text("Direct content")
+}
+content-slide(title: "Two columns") {
+    body2a { text("Left") }
+    body2b { text("Right") }
+}
+```
+
+Direct content uses the component's opt-in `@default-body(body, body2a, ...)` metadata and goes to the first listed body. Explicit listed layouts remain available.
 
 > Exact names vary by theme — inspect the theme `.ntx` files for the full component list.
 
@@ -148,14 +161,14 @@ mytheme/v1.0/
 ```tson
 // Theme base styles
 styles {
-    page:         { background: #fdf6e3, font-family: "SansSerif" }
-    class-title:  { font-size: 4%P, font-bold, color: #b58900 }
-    class-body:   { font-size: 1.5%P, color: #073642 }
+    page:    { background: #fdf6e3, font-family: "SansSerif" }
+    @title   { font-size: 4%P, font-bold, color: #b58900 }
+    @body    { font-size: 1.5%P, color: #073642 }
 }
 
 // Theme components
 @define myTitle(textValue) {
-    text(textValue, @(title), at: top-left)
+    @title text(textValue, at: top-left)
 }
 
 @define myPageFooter(index) {

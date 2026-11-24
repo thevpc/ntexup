@@ -110,7 +110,7 @@ public abstract class NTxStyleRuleSelectorItem {
     }
 
     /**
-     * Class definition: {@code class-<name>(<base>, <base>, ...)}.
+     * Class definition: {@code @name(<base>, <base>, ...)}.
      * This is a <b>definition</b>, not a matcher: {@link #acceptNode} always
      * returns false. Resolution folds the flattened definition into nodes that
      * reference the class by name (usage-site {@code @(name)} classes).
@@ -152,17 +152,17 @@ public abstract class NTxStyleRuleSelectorItem {
         @Override
         public String toString() {
             if (bases.isEmpty()) {
-                return "class-" + name;
+                return "@" + name;
             }
-            return "class-" + name + "(" + String.join(", ", bases) + ")";
+            return "@" + name + "(" + String.join(", ", bases) + ")";
         }
     }
 
     /**
-     * Class <b>usage</b>: {@code class-<name>} referenced inside another
-     * selector, e.g. {@code table(class-important)}. Matches nodes that carry
+     * Class <b>usage</b>: {@code class: name} referenced inside another
+     * selector, e.g. {@code table(class: important)}. Matches nodes that carry
      * the class in their style-class list. This is a pure constraint, never a
-     * definition: it does not create nor modify {@code class-<name>}.
+     * definition.
      */
     public static class ClassUseItem extends NTxStyleRuleSelectorItem {
         private final String name;
@@ -199,7 +199,122 @@ public abstract class NTxStyleRuleSelectorItem {
 
         @Override
         public String toString() {
-            return "@" + name;
+            return "class: " + name;
+        }
+    }
+
+    /**
+     * Scopes a nested table-style rule to the nearest table carrying the class,
+     * including classes inherited through {@code @derived(base)}. Nested tables
+     * therefore keep independent styles and generated rows/cells retain their
+     * structural node types.
+     */
+    public static class TableClassItem extends NTxStyleRuleSelectorItem {
+        private final String name;
+
+        public TableClassItem(String name) {
+            this.name = name == null ? "" : name;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        @Override
+        public boolean acceptNode(NTxNode n) {
+            return precedence(n) != null;
+        }
+
+        public int[] precedence(NTxNode n) {
+            NTxNode table = nearestTable(n);
+            if (table == null) {
+                return null;
+            }
+            String[] actualClasses = table.getStyleClasses();
+            int bestOrder = -1;
+            int bestDepth = Integer.MAX_VALUE;
+            for (int order = 0; order < actualClasses.length; order++) {
+                int depth = inheritanceDepth(table, actualClasses[order], name, new HashSet<>());
+                if (depth >= 0 && (order > bestOrder
+                        || (order == bestOrder && depth < bestDepth))) {
+                    bestOrder = order;
+                    bestDepth = depth;
+                }
+            }
+            return bestOrder < 0 ? null : new int[]{bestOrder, bestDepth};
+        }
+
+        private static int inheritanceDepth(NTxNode table, String actual, String expected, Set<String> visiting) {
+            if (Objects.equals(actual, expected)) {
+                return 0;
+            }
+            if (!visiting.add(actual)) {
+                return -1;
+            }
+            try {
+                NTxStyleRuleSelectorItem.ClassDefItem def = findClassDef(table, actual);
+                if (def != null) {
+                    int bestDepth = Integer.MAX_VALUE;
+                    for (String base : def.getBases()) {
+                        int depth = inheritanceDepth(table, base, expected, visiting);
+                        if (depth >= 0) {
+                            bestDepth = Math.min(bestDepth, depth + 1);
+                        }
+                    }
+                    if (bestDepth != Integer.MAX_VALUE) {
+                        return bestDepth;
+                    }
+                }
+                return -1;
+            } finally {
+                visiting.remove(actual);
+            }
+        }
+
+        private static NTxStyleRuleSelectorItem.ClassDefItem findClassDef(NTxNode from, String name) {
+            NTxNode current = from;
+            while (current != null) {
+                NTxStyleRule[] rules = current.rules();
+                for (int i = rules.length - 1; i >= 0; i--) {
+                    NTxStyleRuleSelector selector = rules[i].selector();
+                    if (selector instanceof DefaultNTxNodeSelector) {
+                        NTxStyleRuleSelectorItem.ClassDefItem def = ((DefaultNTxNodeSelector) selector).getClassDef(name);
+                        if (def != null) {
+                            return def;
+                        }
+                    }
+                }
+                current = NTxUtils.firstNodeUp(current.parent());
+            }
+            return null;
+        }
+
+        private static NTxNode nearestTable(NTxNode from) {
+            NTxNode current = from;
+            while (current != null) {
+                if (NTxNodeType.TABLE.equals(current.type())) {
+                    return current;
+                }
+                current = NTxUtils.firstNodeUp(current.parent());
+            }
+            return null;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (o == null || getClass() != o.getClass()) return false;
+            TableClassItem item = (TableClassItem) o;
+            return Objects.equals(name, item.name);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash("TableClassItem", name);
+        }
+
+        @Override
+        public String toString() {
+            return "table(@" + name + ")";
         }
     }
 
@@ -602,6 +717,10 @@ public abstract class NTxStyleRuleSelectorItem {
         return new ClassUseItem(name);
     }
 
+    public static NTxStyleRuleSelectorItem ofTableClassUse(String name) {
+        return new TableClassItem(name);
+    }
+
     public static NTxStyleRuleSelectorItem ofTableRow(String kind) {
         return new TableRowItem(kind, null);
     }
@@ -639,8 +758,18 @@ public abstract class NTxStyleRuleSelectorItem {
         if (item.charAt(0) == '.') {
             return rejectLegacyDotSelector(item, log);
         }
+        if (item.startsWith("class-")) {
+            return rejectLegacyClassSelector(item, log);
+        }
+        if (item.startsWith("class:")) {
+            String name = NStringUtils.strip(item.substring("class:".length()));
+            return name.isEmpty() ? _err(log, "invalid class usage selector '%s'", item)
+                    : NOptional.of(ofClassUse(name));
+        }
+        if (item.charAt(0) == '@') {
+            return parseAnnotatedClassDef(item, log);
+        }
 
-        // Special forms with parens / class- prefix
         if (isSpecialSelectorPrefix(item)) {
             return parseSpecialSelector(item, log);
         }
@@ -686,13 +815,47 @@ public abstract class NTxStyleRuleSelectorItem {
         if (log != null) {
             int dot = item.indexOf('.');
             String name = dot >= 0 ? item.substring(dot + 1) : item;
-            log.log(NMsg.ofC("invalid style rule selector '%s': legacy class selector '.%s' is no longer supported; declare class-%s in a styles{} block and use @(%s) at the usage site", item, name, name, name));
+            log.log(NMsg.ofC("invalid style rule selector '%s': legacy class selector '.%s' is no longer supported; declare @%s in a styles{} block and use @(%s) at the usage site", item, name, name, name));
         }
         return NOptional.ofEmpty(NMsg.ofC("invalid style rule selector '%s'", item));
     }
 
+    private static NOptional<NTxStyleRuleSelectorItem> rejectLegacyClassSelector(String item, NTxLogger log) {
+        if (log != null) {
+            String name = item.substring("class-".length());
+            log.log(NMsg.ofC("invalid style rule selector '%s': class- definitions are no longer supported; declare @%s in a styles{} block and use @(%s) or class: %s at the usage site", item, name, name, name));
+        }
+        return NOptional.ofEmpty(NMsg.ofC("invalid style rule selector '%s'", item));
+    }
+
+    private static NOptional<NTxStyleRuleSelectorItem> parseAnnotatedClassDef(String item, NTxLogger log) {
+        String rest = item.substring(1);
+        int open = rest.indexOf('(');
+        String name;
+        List<String> bases = Collections.emptyList();
+        if (open >= 0) {
+            if (!rest.endsWith(")")) {
+                return _err(log, "invalid class definition '%s'", item);
+            }
+            name = NStringUtils.strip(rest.substring(0, open));
+            bases = new ArrayList<>();
+            for (String base : rest.substring(open + 1, rest.length() - 1).split(",")) {
+                String value = NStringUtils.strip(base);
+                if (!value.isEmpty()) {
+                    bases.add(value);
+                }
+            }
+        } else {
+            name = NStringUtils.strip(rest);
+        }
+        if (name.isEmpty()) {
+            return _err(log, "invalid class definition '%s'", item);
+        }
+        return NOptional.of(ofClassDef(name, bases));
+    }
+
     private static boolean isSpecialSelectorPrefix(String item) {
-        return item.startsWith("class-")
+        return item.startsWith("table(@")
                 || item.startsWith("table-header")
                 || item.startsWith("table-footer")
                 || item.startsWith("table-row")
@@ -707,32 +870,9 @@ public abstract class NTxStyleRuleSelectorItem {
     }
 
     private static NOptional<NTxStyleRuleSelectorItem> parseSpecialSelector(String item, NTxLogger log) {
-        if (item.startsWith("class-")) {
-            // At rule top (or in a text context) a bare class-* is a definition.
-            String rest = item.substring("class-".length());
-            String name;
-            List<String> bases = Collections.emptyList();
-            int open = rest.indexOf('(');
-            if (open >= 0) {
-                if (!rest.endsWith(")")) {
-                    return _err(log, "invalid class selector '%s'", item);
-                }
-                name = rest.substring(0, open);
-                String inner = rest.substring(open + 1, rest.length() - 1);
-                bases = new ArrayList<>();
-                for (String b : inner.split(",")) {
-                    String bb = NStringUtils.strip(b);
-                    if (!bb.isEmpty()) {
-                        bases.add(bb);
-                    }
-                }
-            } else {
-                name = rest;
-            }
-            if (name.isEmpty()) {
-                return _err(log, "invalid class selector '%s'", item);
-            }
-            return NOptional.of(ofClassDef(name, bases));
+        if (item.startsWith("table(@") && item.endsWith(")")) {
+            String name = NStringUtils.strip(item.substring("table(@".length(), item.length() - 1));
+            return name.isEmpty() ? _err(log, "invalid table class selector '%s'", item) : NOptional.of(ofTableClassUse(name));
         }
         if (item.startsWith("table-header")) {
             String rest = item.substring("table-header".length());

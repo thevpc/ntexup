@@ -66,11 +66,23 @@ public class DefaultNTxNodeSelector implements NTxStyleRuleSelector {
     }
 
     /**
-     * Returns the names of any class definitions ({@code class-<name>}) held in
+     * Returns the names of any class definitions ({@code @name}) held in
      * this selector.
      */
     public Set<String> getClassDefNames() {
         return classDefNames;
+    }
+
+    public DefaultNTxNodeSelector and(NTxStyleRuleSelectorItem... additional) {
+        if (this == NONE || additional == null || additional.length == 0) {
+            return this;
+        }
+        if (this == ANY) {
+            return of(additional);
+        }
+        List<NTxStyleRuleSelectorItem> combined = new ArrayList<>(items);
+        combined.addAll(Arrays.asList(additional));
+        return of(combined.toArray(new NTxStyleRuleSelectorItem[0]));
     }
 
     /**
@@ -88,10 +100,19 @@ public class DefaultNTxNodeSelector implements NTxStyleRuleSelector {
         return null;
     }
 
+    public NTxStyleRuleSelectorItem.TableClassItem getTableClassItem() {
+        for (NTxStyleRuleSelectorItem item : items) {
+            if (item instanceof NTxStyleRuleSelectorItem.TableClassItem) {
+                return (NTxStyleRuleSelectorItem.TableClassItem) item;
+            }
+        }
+        return null;
+    }
+
     @Override
     public boolean acceptNode(NTxNode n) {
         // Conjunction: every item must accept the node. A selector such as
-        // table(class-important) therefore means "a table node that also
+        // table(class: important) therefore means "a table node that also
         // carries the class important".
         for (NTxStyleRuleSelectorItem item : items) {
             if (!item.acceptNode(n)) {
@@ -109,7 +130,13 @@ public class DefaultNTxNodeSelector implements NTxStyleRuleSelector {
     @Override
     public NElement toElement() {
         return NElement.ofTuple(
-                items.stream().map(x -> NElement.ofNameOrString(x.toString())).toArray(NElement[]::new)
+                items.stream().map(x -> {
+                    if (x instanceof NTxStyleRuleSelectorItem.ClassUseItem) {
+                        NTxStyleRuleSelectorItem.ClassUseItem use = (NTxStyleRuleSelectorItem.ClassUseItem) x;
+                        return NElement.ofPair("class", NElement.ofNameOrString(use.getName()));
+                    }
+                    return NElement.ofNameOrString(x.toString());
+                }).toArray(NElement[]::new)
         );
     }
 
@@ -189,7 +216,8 @@ public class DefaultNTxNodeSelector implements NTxStyleRuleSelector {
         if (it instanceof NTxStyleRuleSelectorItem.NoneItem) {
             return 0;
         }
-        if (it instanceof NTxStyleRuleSelectorItem.ClassUseItem) {
+        if (it instanceof NTxStyleRuleSelectorItem.ClassUseItem
+                || it instanceof NTxStyleRuleSelectorItem.TableClassItem) {
             return 8;
         }
         if (it instanceof NTxStyleRuleSelectorItem.ClassDefItem) {

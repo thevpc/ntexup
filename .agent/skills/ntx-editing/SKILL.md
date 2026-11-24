@@ -118,12 +118,15 @@ agenda-slide(title: "Plan"){
         }
     }
 }
-content-slide(title: "My Slide"){ body{ ... } }                 // full-width body
-content-slide(title: "Two cols"){ body2a{ ... } body2b{ ... } } // 2 columns
+content-slide(title: "My Slide"){ text("Direct content") }             // implicit default body
+content-slide(title: "One col"){ body{ ... } }                        // explicit layout
+content-slide(title: "Two cols"){ body2a{ ... } body2b{ ... } }       // 2 columns
 content-slide(title: "Three"){ body3a{...} body3b{...} body3c{...} }
 conclusion-slide(title: "Conclusion"){ body{ ul{ ¶ point } } }
 thankyou-slide()
 ```
+
+Direct content uses the component's opt-in `@default-body(body, body2a, ...)` metadata and goes to the first listed body. Explicit listed layouts remain available; definitions can also use bare `slot`.
 
 Theme helper components (classic): `card`, `kicker(text)`, `divider`, `stat(value, label)`,
 `quote(author:)`, `panel`, `callout(title, accentColor, bgColor)`,
@@ -152,16 +155,16 @@ page {
 }
 for(i: [1 -> 3]){ text("item ${i}") }          // pair header ; [a -> b step s] ; [0, 2 -> 4, 9]
 if(x > 5 && x != 7){ text("big") }            // == != < > <= >= && || ! ; no ternary
-@define badge(label, accent: blue){            // reusable component; caller children land in `slot`
+@define badge(label, accent: blue){            // reusable component
     group{ rectangle(background: accent, round-corner: 4)  text("${label}", color: white, at: center) }
 }
 badge(label: "Hi", accent: green)
 styles{
     (*) { font-size: 4%P }                     // or "*": {...}
     text { color: documentTextPrimary }
-    class-hot: { color: red, font-bold }       // declare a class ...
+    @hot { color: red, font-bold }            // declare a class ...
 }
-@(hot) text("hot")                             // ... use it (or text("hot", class: hot))
+@hot text("hot")                               // ... use it (or text("hot", class: hot))
 source(java """
 class A {}
 """, font-size: 2%P)                           // lang is a bare name, no comma before the code
@@ -181,7 +184,9 @@ Rules that bite:
   `position`/`size` numbers inside a container are percentages of it.
 - **Loops**: `for(i: …){}` only. `@for(...)` silently renders the body once with `${i}` literal;
   `for(i in …)` errors.
-- **Classes**: `class-name: {}` + `@(name)`/`class: name`. Dot selectors (`".x"`) are rejected.
+- **Classes**: declare `@name { ... }` or `@child(base1, base2) { ... }` in `styles`; apply with
+  `@name`, repeated annotations, `@(a, b)`, or `class: [a, b]`. Legacy `class-*` declarations and
+  dot selectors (`".x"`) are rejected.
 - **Imports**: every node type comes from an extension; `undefined node ul` means a missing
   `import("layout")`. Themes import everything; raw decks need e.g.
   `import("stdlib" "layout" "text" "shapes2d" "latex" "plot2d" "plantuml" "image" "svg")`.

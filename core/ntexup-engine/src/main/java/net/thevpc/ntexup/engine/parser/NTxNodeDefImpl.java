@@ -13,6 +13,7 @@ import java.util.ArrayList;
 public class NTxNodeDefImpl extends DefaultNTxNode implements NTxNodeDef, Cloneable {
     private NTxNodeDefParam[] params;
     private NTxNode bodyContainer;
+    private String[] defaultBody = new String[0];
 
     public NTxNodeDefImpl(NTxNode parent, String templateName, NTxNodeDefParam[] params, NTxNode bodyContainer, NTxSource source) {
         super(NTxNodeType.CTRL_DEFINE);
@@ -41,6 +42,7 @@ public class NTxNodeDefImpl extends DefaultNTxNode implements NTxNodeDef, Clonea
             NTxNodeDefImpl oc = (NTxNodeDefImpl) other;
             oc.params = params;
             oc.bodyContainer = bodyContainer;
+            oc.defaultBody = defaultBody.clone();
             bodyContainer.setParent(parent);
             for (NTxNode n : bodyContainer.children()) {
                 n.setParent(bodyContainer);
@@ -52,6 +54,15 @@ public class NTxNodeDefImpl extends DefaultNTxNode implements NTxNodeDef, Clonea
     @Override
     public NTxNodeDefParam[] params() {
         return params;
+    }
+
+    @Override
+    public String[] defaultBody() {
+        return defaultBody.clone();
+    }
+
+    public void setDefaultBody(String[] defaultBody) {
+        this.defaultBody = defaultBody == null ? new String[0] : defaultBody.clone();
     }
 
     @Override

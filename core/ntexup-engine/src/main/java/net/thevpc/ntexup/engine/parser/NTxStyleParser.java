@@ -1,6 +1,7 @@
 package net.thevpc.ntexup.engine.parser;
 
 import net.thevpc.ntexup.api.document.NTxDocumentFactory;
+import net.thevpc.ntexup.api.document.node.NTxNodeType;
 import net.thevpc.ntexup.api.document.style.*;
 import net.thevpc.ntexup.api.eval.NTxResolutionContext;
 import net.thevpc.ntexup.api.util.NTxUtils;
@@ -140,7 +141,8 @@ public class NTxStyleParser {
 
     private static void parsePair(NPairElement pair, NTxResolutionContext context,
                                   List<String> types,
-                                  List<String> names
+                                  List<String> names,
+                                  List<String> classes
     ) {
         NTxValue h = NTxValue.of(pair.key());
         NOptional<String> k = h.asStringOrName();
@@ -170,13 +172,24 @@ public class NTxStyleParser {
                     }
                     break;
                 }
+                case "class": {
+                    NTxValue h2 = NTxValue.of(pair.value());
+                    NOptional<String[]> cc = h2.asStringArrayOrString();
+                    if (cc.isPresent()) {
+                        classes.addAll(Arrays.asList(cc.get()));
+                    } else {
+                        NMsg errMsg = NMsg.ofC("[%s] invalid style rule selector %s. expected a class name or an array of class names", NTxUtils.shortName(context.source()), pair).asSevere();
+                        context.log(errMsg, context.source());
+                    }
+                    break;
+                }
                 default: {
-                    NMsg errMsg = NMsg.ofC("[%s] invalid style rule selector %s. expected one of 'name' or 'type'", NTxUtils.shortName(context.source()), pair).asSevere();
+                    NMsg errMsg = NMsg.ofC("[%s] invalid style rule selector %s. expected one of 'name', 'type' or 'class'", NTxUtils.shortName(context.source()), pair).asSevere();
                     context.log(errMsg, context.source());
                 }
             }
         } else {
-            NMsg errMsg = NMsg.ofC("[%s] invalid style rule selector %s. expected one of 'name' or 'type'", NTxUtils.shortName(context.source()), pair).asSevere();
+            NMsg errMsg = NMsg.ofC("[%s] invalid style rule selector %s. expected one of 'name', 'type' or 'class'", NTxUtils.shortName(context.source()), pair).asSevere();
             context.log(errMsg, context.source());
         }
     }
@@ -194,7 +207,7 @@ public class NTxStyleParser {
     /**
      * Dispatches selectors written as named elements with optional parameters:
      * <ul>
-     *     <li>class-&lt;name&gt;[(base, ...)]  - class definition</li>
+     *     <li>@&lt;name&gt;[(base, ...)]  - class definition</li>
      *     <li>table-row(row: header|even|odd) or table-row(row: n)</li>
      *     <li>table-column(col: n)</li>
      *     <li>table-cell(row: r, col: c) — row: is 1-based over data rows</li>
@@ -236,39 +249,7 @@ public class NTxStyleParser {
     private static void parseNamedParamSelector(String name, List<NElement> params, NTxResolutionContext context, List<NTxStyleRuleSelectorItem> items) {
         String uid = NTxUtils.uid(name);
         if (uid.startsWith("class-")) {
-            String clsName = uid.substring("class-".length());
-            List<String> bases = new ArrayList<>();
-            if (params != null) {
-                for (NElement p : params) {
-                    if (p.isNamedPair()) {
-                        NPairElement pair = p.asNamedPair().get();
-                        String k = NTxUtils.uid(NTxValue.of(pair.key()).asStringOrName().orElse(""));
-                        if (k.equals("extends") || k.equals("bases")) {
-                            NOptional<String[]> bb = NTxValue.of(pair.value()).asStringArrayOrString();
-                            if (bb.isPresent()) {
-                                for (String b : bb.get()) {
-                                    bases.add(NTxUtils.uid(b));
-                                }
-                            } else {
-                                NMsg errMsg = NMsg.ofC("[%s] invalid base class in class definition %s. expected a class name or an array of class names", NTxUtils.shortName(context.source()), p).asSevere();
-                                context.log(errMsg, context.source());
-                            }
-                        } else {
-                            NMsg errMsg = NMsg.ofC("[%s] invalid class definition %s. expected positional base class names or a 'extends:' named pair", NTxUtils.shortName(context.source()), p).asSevere();
-                            context.log(errMsg, context.source());
-                        }
-                    } else {
-                        NOptional<String> ps = NTxValue.of(p).asStringOrName();
-                        if (ps.isPresent()) {
-                            bases.add(NTxUtils.uid(ps.get()));
-                        } else {
-                            NMsg errMsg = NMsg.ofC("[%s] invalid base class %s in class definition %s. expected a class name", NTxUtils.shortName(context.source()), p, name).asSevere();
-                            context.log(errMsg, context.source());
-                        }
-                    }
-                }
-            }
-            items.add(NTxStyleRuleSelectorItem.ofClassDef(clsName, bases));
+            context.log(NMsg.ofC("[%s] class- definitions are no longer supported; declare @%s in a styles{} block", NTxUtils.shortName(context.source()), uid.substring("class-".length())).asSevere(), context.source());
             return;
         }
         if (uid.equals("table-row")) {
@@ -277,6 +258,9 @@ public class NTxStyleParser {
             boolean dead = false;
             if (params != null) {
                 for (NElement p : params) {
+                    if (addClassConstraint(p, context, items)) {
+                        continue;
+                    }
                     if (p.isNamedPair()) {
                         NPairElement pair = p.asNamedPair().get();
                         String k = NTxUtils.uid(NTxValue.of(pair.key()).asStringOrName().orElse(""));
@@ -295,12 +279,10 @@ public class NTxStyleParser {
                                 }
                             }
                         } else {
-                            NMsg errMsg = NMsg.ofC("[%s] invalid style rule selector %s. table-row accepts only row: {header, even, odd, n} or class-* usages", NTxUtils.shortName(context.source()), name).asSevere();
+                            NMsg errMsg = NMsg.ofC("[%s] invalid style rule selector %s. table-row accepts only row: {header, even, odd, n} or class: name usages", NTxUtils.shortName(context.source()), name).asSevere();
                             context.log(errMsg, context.source());
                             dead = true;
                         }
-                    } else if (isClassUseWord(p)) {
-                        addClassUseParam(p, items);
                     } else {
                         NOptional<String> word = NTxValue.of(p).asStringOrName();
                         if (word.isPresent()) {
@@ -310,12 +292,12 @@ public class NTxStyleParser {
                                 context.log(errMsg, context.source());
                                 kind = w;
                             } else {
-                                NMsg errMsg = NMsg.ofC("[%s] invalid style rule selector %s. table-row accepts only row: {header, even, odd, n} or class-* usages", NTxUtils.shortName(context.source()), name).asSevere();
+                                NMsg errMsg = NMsg.ofC("[%s] invalid style rule selector %s. table-row accepts only row: {header, even, odd, n} or class: name usages", NTxUtils.shortName(context.source()), name).asSevere();
                                 context.log(errMsg, context.source());
                                 dead = true;
                             }
                         } else {
-                            NMsg errMsg = NMsg.ofC("[%s] invalid style rule selector %s. table-row accepts only row: {header, even, odd, n} or class-* usages", NTxUtils.shortName(context.source()), name).asSevere();
+                            NMsg errMsg = NMsg.ofC("[%s] invalid style rule selector %s. table-row accepts only row: {header, even, odd, n} or class: name usages", NTxUtils.shortName(context.source()), name).asSevere();
                             context.log(errMsg, context.source());
                             dead = true;
                         }
@@ -333,6 +315,9 @@ public class NTxStyleParser {
             boolean dead = false;
             if (params != null) {
                 for (NElement p : params) {
+                    if (addClassConstraint(p, context, items)) {
+                        continue;
+                    }
                     if (p.isNamedPair()) {
                         NPairElement pair = p.asNamedPair().get();
                         String k = NTxUtils.uid(NTxValue.of(pair.key()).asStringOrName().orElse(""));
@@ -352,8 +337,6 @@ public class NTxStyleParser {
                         } else {
                             col = v.get();
                         }
-                    } else if (isClassUseWord(p)) {
-                        addClassUseParam(p, items);
                     } else {
                         NMsg errMsg = NMsg.ofC("[%s] invalid style rule selector %s. %s accepts only row: and col: 1-based indices", NTxUtils.shortName(context.source()), name, uid).asSevere();
                         context.log(errMsg, context.source());
@@ -377,6 +360,9 @@ public class NTxStyleParser {
                 return;
             }
             for (NElement p : params) {
+                if (addClassConstraint(p, context, items)) {
+                    continue;
+                }
                 if (p.isNamedPair()) {
                     NPairElement pair = p.asNamedPair().get();
                     String k = NTxUtils.uid(NTxValue.of(pair.key()).asStringOrName().orElse(""));
@@ -388,12 +374,10 @@ public class NTxStyleParser {
                             dead = true;
                         }
                     } else {
-                        NMsg errMsg = NMsg.ofC("[%s] invalid style rule selector %s. table-column accepts only col: with a 1-based column index or class-* usages", NTxUtils.shortName(context.source()), name).asSevere();
+                        NMsg errMsg = NMsg.ofC("[%s] invalid style rule selector %s. table-column accepts only col: with a 1-based column index or class: name usages", NTxUtils.shortName(context.source()), name).asSevere();
                         context.log(errMsg, context.source());
                         dead = true;
                     }
-                } else if (isClassUseWord(p)) {
-                    addClassUseParam(p, items);
                 } else {
                     NOptional<Integer> v = _asInt(p, context);
                     if (v.isPresent()) {
@@ -416,6 +400,9 @@ public class NTxStyleParser {
             boolean dead = false;
             if (params != null) {
                 for (NElement p : params) {
+                    if (addClassConstraint(p, context, items)) {
+                        continue;
+                    }
                     if (p.isNamedPair()) {
                         NPairElement pair = p.asNamedPair().get();
                         String k = NTxUtils.uid(NTxValue.of(pair.key()).asStringOrName().orElse(""));
@@ -435,8 +422,6 @@ public class NTxStyleParser {
                         } else {
                             col = v.get();
                         }
-                    } else if (isClassUseWord(p)) {
-                        addClassUseParam(p, items);
                     } else {
                         NMsg errMsg = NMsg.ofC("[%s] invalid style rule selector %s. table-cell accepts only row : and col : 1-based indices", NTxUtils.shortName(context.source()), name).asSevere();
                         context.log(errMsg, context.source());
@@ -474,27 +459,46 @@ public class NTxStyleParser {
         }
     }
 
-    private static boolean isClassUseWord(NElement p) {
-        NOptional<String> w = NTxValue.of(p).asStringOrName();
-        return w.isPresent() && NTxUtils.uid(w.get()).startsWith("class-");
-    }
-
-    private static void addClassUseParam(NElement p, List<NTxStyleRuleSelectorItem> items) {
-        String w = NTxValue.of(p).asStringOrName().get();
-        items.add(NTxStyleRuleSelectorItem.ofClassUse(NTxUtils.uid(w).substring("class-".length())));
+    private static boolean addClassConstraint(NElement selector, NTxResolutionContext context, List<NTxStyleRuleSelectorItem> items) {
+        if (!selector.isNamedPair()) {
+            return false;
+        }
+        NPairElement pair = selector.asPair().get();
+        String key = NTxUtils.uid(NTxValue.of(pair.key()).asStringOrName().orElse(""));
+        if (!key.equals("class")) {
+            return false;
+        }
+        NOptional<String[]> classes = NTxValue.of(pair.value()).asStringArrayOrString();
+        if (classes.isPresent()) {
+            for (String value : classes.get()) {
+                String name = NTxUtils.uid(value);
+                if (!NBlankable.isBlank(name)) {
+                    items.add(NTxStyleRuleSelectorItem.ofClassUse(name));
+                }
+            }
+        } else {
+            context.log(NMsg.ofC("[%s] invalid class constraint %s. expected a class name or an array of class names", NTxUtils.shortName(context.source()), pair).asSevere(), context.source());
+        }
+        return true;
     }
 
     /**
-     * Like {@link #parseStyleRuleSelectorItem} but treats a bare
-     * {@code class-<name>} as a class <b>usage</b> constraint (the node must
-     * carry that class), never as a class definition.
+     * Parses a selector parameter, where {@code class: name} constrains usage
+     * instead of declaring a class.
      */
     public static void parseStyleRuleSelectorParam(NElement selector, NTxResolutionContext context, List<NTxStyleRuleSelectorItem> items) {
+        if (addClassConstraint(selector, context, items)) {
+            return;
+        }
         NOptional<String> w = NTxValue.of(selector).asStringOrName();
         if (w.isPresent()) {
             String s = NTxUtils.uid(w.get());
             if (s.startsWith("class-")) {
-                items.add(NTxStyleRuleSelectorItem.ofClassUse(s.substring("class-".length())));
+                context.log(NMsg.ofC("[%s] class- selectors are no longer supported; use class: %s", NTxUtils.shortName(context.source()), s.substring("class-".length())).asSevere(), context.source());
+                return;
+            }
+            if (s.startsWith("@") && s.length() > 1) {
+                items.add(NTxStyleRuleSelectorItem.ofClassUse(s.substring(1)));
                 return;
             }
         }
@@ -536,6 +540,9 @@ public class NTxStyleParser {
                 break;
             }
             case PAIR: {
+                if (addClassConstraint(selector, context, items)) {
+                    return;
+                }
                 NPairElement pair = selector.asPair().get();
                 NElement key = pair.key();
                 String kk = namedSelectorName(key);
@@ -548,8 +555,14 @@ public class NTxStyleParser {
                 }
                 List<String> types = new ArrayList<>();
                 List<String> names = new ArrayList<>();
-                parsePair(pair, context, types, names);
-                items.add(NTxStyleRuleSelectorItem.of(types.toArray(new String[0]), names.toArray(new String[0])));
+                List<String> classes = new ArrayList<>();
+                parsePair(pair, context, types, names, classes);
+                if (!types.isEmpty() || !names.isEmpty()) {
+                    items.add(NTxStyleRuleSelectorItem.of(types.toArray(new String[0]), names.toArray(new String[0])));
+                }
+                for (String className : classes) {
+                    items.add(NTxStyleRuleSelectorItem.ofClassUse(NTxUtils.uid(className)));
+                }
                 return;
             }
             case NAMED_OBJECT:
@@ -594,12 +607,18 @@ public class NTxStyleParser {
                 if (isExactUpletPair(selector)) {
                     List<String> types = new ArrayList<>();
                     List<String> names = new ArrayList<>();
+                    List<String> classes = new ArrayList<>();
                     for (NElement child : u.children()) {
                         if (child.isNamedPair()) {
-                            parsePair(child.asPair().get(), context, types, names);
+                            parsePair(child.asPair().get(), context, types, names, classes);
                         }
                     }
-                    items.add(NTxStyleRuleSelectorItem.of(types.toArray(new String[0]), names.toArray(new String[0])));
+                    if (!types.isEmpty() || !names.isEmpty()) {
+                        items.add(NTxStyleRuleSelectorItem.of(types.toArray(new String[0]), names.toArray(new String[0])));
+                    }
+                    for (String className : classes) {
+                        items.add(NTxStyleRuleSelectorItem.ofClassUse(NTxUtils.uid(className)));
+                    }
                 } else {
                     for (NElement item : u.children()) {
                         parseStyleRuleSelectorParam(item, context, items);
@@ -621,6 +640,7 @@ public class NTxStyleParser {
                     case "names":
                     case "type":
                     case "types":
+                    case "class":
                         return true;
                 }
                 return false;
@@ -642,6 +662,171 @@ public class NTxStyleParser {
         List<NTxStyleRuleSelectorItem> items = new ArrayList<>();
         parseStyleRuleSelectorItem(selectors, context, items);
         return NOptional.of(DefaultNTxNodeSelector.of(items.toArray(new NTxStyleRuleSelectorItem[0])));
+    }
+
+    private static List<String> parseClassBases(NElementAnnotation annotation, NTxResolutionContext context) {
+        List<String> bases = new ArrayList<>();
+        List<NElement> params = annotation.params().orElse(Collections.emptyList());
+        for (NElement param : params) {
+            if (param.isNamedPair()) {
+                NPairElement pair = param.asPair().get();
+                String key = NTxUtils.uid(NTxValue.of(pair.key()).asStringOrName().orElse(""));
+                if (key.equals("extends") || key.equals("bases")) {
+                    NOptional<String[]> values = NTxValue.of(pair.value()).asStringArrayOrString();
+                    if (values.isPresent()) {
+                        for (String value : values.get()) {
+                            bases.add(NTxUtils.uid(value));
+                        }
+                    } else {
+                        context.log(NMsg.ofC("[%s] invalid base class in @%s. expected a class name or an array of class names", NTxUtils.shortName(context.source()), pair, annotation.name()).asSevere(), context.source());
+                    }
+                } else {
+                    context.log(NMsg.ofC("[%s] invalid class definition @%s. expected positional base class names or an 'extends:' named pair", NTxUtils.shortName(context.source()), param, annotation.name()).asSevere(), context.source());
+                }
+            } else {
+                NOptional<String> value = NTxValue.of(param).asStringOrName();
+                if (value.isPresent()) {
+                    bases.add(NTxUtils.uid(value.get()));
+                } else {
+                    context.log(NMsg.ofC("[%s] invalid base class %s in @%s. expected a class name", NTxUtils.shortName(context.source()), param, annotation.name()).asSevere(), context.source());
+                }
+            }
+        }
+        return bases;
+    }
+
+    private static String tableSectionName(NElement selector) {
+        String raw = namedSelectorName(selector);
+        if (raw == null) {
+            raw = NTxValue.of(selector).asStringOrName().orNull();
+        }
+        if (raw == null) {
+            return null;
+        }
+        switch (NTxUtils.uid(raw)) {
+            case "table":
+            case "table-row":
+            case "table-header":
+            case "table-footer":
+            case "table-column":
+            case "table-cell":
+                return NTxUtils.uid(raw);
+            case "row":
+                return "table-row";
+            case "header":
+                return "table-header";
+            case "footer":
+                return "table-footer";
+            case "column":
+                return "table-column";
+            case "cell":
+                return "table-cell";
+            default:
+                return null;
+        }
+    }
+
+    private static String nestedTableSelectorName(NElement child) {
+        if (child.isNamedPair()) {
+            NPairElement pair = child.asPair().get();
+            if (pair.value().isAnyObject() || pair.value().isAnyArray()) {
+                return tableSectionName(pair.key());
+            }
+        } else if (child.isNamed() && (child.isAnyObject() || child.isAnyArray())) {
+            return tableSectionName(child);
+        }
+        return null;
+    }
+
+    private static NOptional<NTxStyleRule> parseNestedTableStyleRule(NElement child, String className, NTxResolutionContext context) {
+        NElement selectorElement;
+        List<NElement> children;
+        if (child.isNamedPair()) {
+            NPairElement pair = child.asPair().get();
+            selectorElement = pair.key();
+            children = pair.value().asListContainer().get().children();
+        } else {
+            selectorElement = child;
+            children = child.asListContainer().get().children();
+        }
+        String sectionName = tableSectionName(selectorElement);
+        List<NElement> sectionParams = selectorParams(selectorElement);
+        NOptional<NTxStyleRuleSelector> selector;
+        if (sectionParams.isEmpty()) {
+            NTxStyleRuleSelectorItem item;
+            switch (sectionName) {
+                case "table":
+                    item = NTxStyleRuleSelectorItem.of(new String[]{"table"}, new String[0]);
+                    break;
+                case "table-row":
+                    item = NTxStyleRuleSelectorItem.ofTableRow(null);
+                    break;
+                case "table-header":
+                    item = NTxStyleRuleSelectorItem.ofTableHeader(null, null);
+                    break;
+                case "table-footer":
+                    item = NTxStyleRuleSelectorItem.ofTableFooter(null, null);
+                    break;
+                case "table-cell":
+                    item = NTxStyleRuleSelectorItem.ofTableCell(null, null);
+                    break;
+                default:
+                    return NOptional.ofEmpty(NMsg.ofC("invalid table style selector %s. table-column expects col: with a 1-based column index", child));
+            }
+            selector = NOptional.of(DefaultNTxNodeSelector.of(item));
+        } else {
+            NElement normalizedSelector = NElement.ofNamedTuple(sectionName, sectionParams.toArray(new NElement[0]));
+            selector = parseStyleRuleSelector(normalizedSelector, context);
+        }
+        if (!selector.isPresent()) {
+            return NOptional.ofEmpty(NMsg.ofC("invalid table style selector %s", child));
+        }
+        DefaultNTxNodeSelector scoped = ((DefaultNTxNodeSelector) selector.get())
+                .and(NTxStyleRuleSelectorItem.ofTableClassUse(className));
+        List<NTxProp> styles = new ArrayList<>();
+        for (NElement style : children) {
+            NOptional<NTxProp[]> parsed = parseStyle(style, context);
+            if (!parsed.isPresent()) {
+                return NOptional.ofEmpty(parsed.message());
+            }
+            styles.addAll(Arrays.asList(parsed.get()));
+        }
+        return NOptional.of(DefaultNTxStyleRule.of(context.node(), context.source(), scoped, styles.toArray(new NTxProp[0])));
+    }
+
+    private static NOptional<NTxStyleRule[]> parseAnnotatedClassRule(NElement e, NTxResolutionContext context, NMsg errMsg) {
+        List<NElementAnnotation> annotations = e.annotations();
+        if (annotations.size() != 1) {
+            context.log(NMsg.ofC("[%s] a class declaration must have exactly one @name annotation", NTxUtils.shortName(context.source())).asSevere(), context.source());
+            return NOptional.ofEmpty(errMsg);
+        }
+        NElementAnnotation annotation = annotations.get(0);
+        String className = NTxUtils.uid(annotation.name());
+        if (NBlankable.isBlank(className) || className.equals(NTxNodeType.CTRL_DEFINE) || className.startsWith("class-")) {
+            context.log(NMsg.ofC("[%s] invalid class declaration %s. expected @name", NTxUtils.shortName(context.source()), e).asSevere(), context.source());
+            return NOptional.ofEmpty(errMsg);
+        }
+        List<String> bases = parseClassBases(annotation, context);
+        List<NTxProp> styles = new ArrayList<>();
+        List<NTxStyleRule> rules = new ArrayList<>();
+        rules.add(DefaultNTxStyleRule.ofClassDef(context.node(), context.source(), className, bases));
+        for (NElement child : e.asListContainer().get().children()) {
+            if (nestedTableSelectorName(child) != null) {
+                NOptional<NTxStyleRule> nested = parseNestedTableStyleRule(child, className, context);
+                if (!nested.isPresent()) {
+                    return NOptional.ofEmpty(nested.message());
+                }
+                rules.add(nested.get());
+            } else {
+                NOptional<NTxProp[]> parsed = parseStyle(child, context);
+                if (!parsed.isPresent()) {
+                    return NOptional.ofEmpty(parsed.message());
+                }
+                styles.addAll(Arrays.asList(parsed.get()));
+            }
+        }
+        rules.set(0, DefaultNTxStyleRule.ofClassDef(context.node(), context.source(), className, bases, styles.toArray(new NTxProp[0])));
+        return NOptional.of(rules.toArray(new NTxStyleRule[0]));
     }
 
     public static NOptional<NTxStyleRule[]> parseStyleRule(NElement e, NTxDocumentFactory f, NTxResolutionContext context) {
@@ -666,8 +851,20 @@ public class NTxStyleParser {
                 }
                 break;
             }
+            case OBJECT:
+            case FULL_OBJECT:
+            case ARRAY:
+            case FULL_ARRAY: {
+                if (!e.isNamed() && !e.annotations().isEmpty()) {
+                    return parseAnnotatedClassRule(e, context, errMsg);
+                }
+                break;
+            }
             case PARAM_OBJECT:
             case PARAM_ARRAY: {
+                if (!e.isNamed() && !e.annotations().isEmpty()) {
+                    return parseAnnotatedClassRule(e, context, errMsg);
+                }
                 List<NElement> children = e.asListContainer().get().children();
                 return _parseStyleRule(e, e, children, f, context, errMsg);
             }

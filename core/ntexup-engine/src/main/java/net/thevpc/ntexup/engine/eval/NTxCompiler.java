@@ -470,7 +470,56 @@ public class NTxCompiler {
                 assigns.add(DefaultNTxNode.ofAssign(expectedParam.name(), expectedParam.value(), context.source()));
             }
         }
-        assigns.add(DefaultNTxNode.ofAssign(NTxUtils.COMPONENT_SLOT_VAR_NAME, NElement.ofArray(c.getCallBody().toArray(new NElement[0])), context.source()));
+        List<NElement> callBody = c.getCallBody();
+        String[] defaultBody = d.defaultBody();
+        if (defaultBody.length > 0 && !callBody.isEmpty()) {
+            boolean forwardsSlot = callBody.size() == 1
+                    && callBody.get(0).isName()
+                    && NTxUtils.COMPONENT_SLOT_VAR_NAME.equals(callBody.get(0).asStringValue().orNull());
+            if (!forwardsSlot) {
+                NOptional<NElement> callerSlot = context.getVarValue(NTxUtils.COMPONENT_SLOT_VAR_NAME);
+                List<NElement> resolvedBody = new ArrayList<>();
+                for (NElement child : callBody) {
+                    if (child.isName()
+                            && NTxUtils.COMPONENT_SLOT_VAR_NAME.equals(child.asStringValue().orNull())) {
+                        if (callerSlot.isPresent()) {
+                            NElement value = callerSlot.get();
+                            if (value.isArray()) {
+                                resolvedBody.addAll(value.asArray().get().children());
+                            } else {
+                                resolvedBody.add(value);
+                            }
+                        }
+                    } else {
+                        resolvedBody.add(child);
+                    }
+                }
+                callBody = resolvedBody;
+            }
+            Set<String> defaultBodyNames = new HashSet<>(Arrays.asList(defaultBody));
+            boolean hasExplicitBody = false;
+            for (NElement child : callBody) {
+                String name;
+                if (child.isNamedPair()) {
+                    name = child.asPair().get().key().asStringValue().orNull();
+                } else if (child.isNamed()) {
+                    name = child.asNamed().get().name().orNull();
+                } else {
+                    continue;
+                }
+                if (name != null && defaultBodyNames.contains(NTxUtils.uid(name))) {
+                    hasExplicitBody = true;
+                    break;
+                }
+            }
+            if (!hasExplicitBody && !forwardsSlot && !callBody.isEmpty()) {
+                NElement wrappedCallBody = NElement.ofObjectBuilder(defaultBody[0])
+                        .addAll(callBody)
+                        .build();
+                callBody = Collections.singletonList(NTxUtils.addCompilerDeclarationPath(wrappedCallBody, c.source()));
+            }
+        }
+        assigns.add(DefaultNTxNode.ofAssign(NTxUtils.COMPONENT_SLOT_VAR_NAME, NElement.ofArray(callBody.toArray(new NElement[0])), context.source()));
 
         List<NElement> callArgs = c.getCallArgs();
 

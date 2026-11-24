@@ -15,8 +15,8 @@ styles {
     "*":    { font-size: 10, color: black }   // or `(*)`
     source: { font-size: 3%P, background: "#0a192f", font-family: monospaced }
     page:   { background: "#ffffff" }
-    class-bordered:        { stroke: basic(width: 2, dash: [8,4]) }
-    class-card-item(bordered): { margin: (4, 0), at: left }
+    @bordered        { stroke: basic(width: 2, dash: [8,4]) }
+    @card-item(bordered) { margin: (4, 0), at: left }
 }
 ```
 
@@ -26,33 +26,66 @@ Selectors:
 |----------|---------|
 | `"*"` (or `(*)`) | all elements |
 | `page`, `source`, `text`, ... | by node type |
-| `class-my-item` | **declares** a reusable style class |
-| `class-my-item(base1, base2)` | declares a class inheriting from the listed base classes |
+| `@my-item` | **declares** a reusable style class |
+| `@my-item(base1, base2)` | declares a class inheriting from the listed base classes |
 | `table-row(header\|even\|odd)` | table rows (`even`/`odd` count over body rows only) |
+| `table-header` / `table-footer` | header or footer rows and cells |
 | `table-column(n)` | cells of the 1-based column `n` |
 | `table-cell(row: r, col: c)` | the cell at 1-based row `r` / column `c` |
+| `table(class: my-item)` | tables carrying the class `my-item` |
 
-Legacy dot selectors (`.H1`) are no longer supported; declare `class-H1:` in a
-`styles` block and apply it with `@(H1)`.
+Legacy dot selectors (`.H1`) and `class-*` declarations are no longer supported;
+declare `@H1` in a `styles` block and apply it with `@(H1)` or `class: H1`.
 
-Nodes opt into a class with a class annotation:
-
-```tson
-@(card-item) text("Hello")
-```
-
-or with the `class` property:
+Nodes can carry multiple classes. Use repeated annotations, an annotation list,
+or the `class` property:
 
 ```tson
-text("Hello", class: card-item)
+@card @important text("Hello")
+@(card, important) text("Hello")
+text("Hello", class: [card, important])
 ```
 
-Classes resolve like regular rules with a single-level flattening: the closest
-enclosing `styles` block wins, `class-a(b, c)` merges its base classes (declared
+Class order is significant: when classes define the same property, the later
+class wins. Classes resolve like regular rules with inheritance flattening: the
+closest enclosing `styles` block wins, `@a(b, c)` merges its base classes (listed
 left to right, later base wins) plus its own properties, and the result behaves
 like one virtual rule at the usage site. Inline node properties always win, and
 an explicit type selector (e.g. `text { ... }`) beats a class at the same
 distance.
+
+## Reusable Table Styles
+
+A class can style the table itself and its generated rows and cells. Direct
+properties apply to the table; nested `row`, `header`, `footer`, `column`, and
+`cell` sections use the existing structural selectors without changing row or
+cell node types:
+
+```tson
+styles {
+    @tableBase {
+        background-color: white
+        row { color: "#1e293b" }
+        cell { padding: 1 }
+    }
+
+    @tableStriped(tableBase) {
+        row(row: even) { background-color: "#eef2ff" }
+        header { font-bold }
+        column(col: 1) { color: "#7c3aed" }
+    }
+}
+
+table(class: tableStriped, data: [
+    ["Alice", 30],
+    ["Bob", 25]
+])
+```
+
+`@tableStriped` inherits the nested rules from `@tableBase`. A nested table is
+matched only against its own nearest table class, so inner and outer tables keep
+independent styles. The full selector names (`table-row`, `table-header`,
+`table-footer`, `table-column`, `table-cell`) are also accepted inside a class.
 
 ## Theme Digital Colors
 
@@ -158,11 +191,10 @@ rectangle(background: complementaryColor(documentColors[1]))
 ## Precedence
 
 1. Theme default styles (lowest)
-2. User `styles` blocks
-3. Node inline properties
-4. Style classes
+2. User `styles` blocks and style classes, resolved by scope, specificity, and rule order
+3. Node inline properties (highest)
 
-Later-defined style blocks override earlier ones.
+Later-defined rules win when scope and specificity are equal.
 
 ## Font Sizing in Page Context
 
@@ -197,7 +229,7 @@ styles {
     page: { background: documentSurface }
 
     // Content
-    class-title: { font-size: 4%P, font-bold, color: documentColors[1] }
+    @title { font-size: 4%P, font-bold, color: documentColors[1] }
     ul:    { font-size: 2%P, margin: 2 }
     source:{ font-size: 3%P, background: "#0a192f", at: left }
 }
