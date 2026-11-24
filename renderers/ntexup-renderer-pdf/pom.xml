@@ -63,7 +63,9 @@
         <dependency><groupId>org.xhtmlrenderer</groupId><artifactId>flying-saucer-core</artifactId><version>10.5.0</version></dependency>
         <dependency><groupId>org.xhtmlrenderer</groupId><artifactId>flying-saucer-pdf</artifactId><version>10.5.0</version></dependency>
 
-        <dependency><groupId>com.itextpdf</groupId><artifactId>itextpdf</artifactId><version>5.5.13.4</version></dependency>
+        <!-- no iText: the sources import org.openpdf.* (OpenPDF, the LGPL/MPL fork) and the old
+             com.lowagie/com.itextpdf imports are commented out. Keeping iText 5 here left an AGPL jar on the
+             classpath of every application that ships this renderer, and it was never referenced. -->
         <dependency>
             <groupId>org.apache.pdfbox</groupId>
             <artifactId>pdfbox</artifactId>
