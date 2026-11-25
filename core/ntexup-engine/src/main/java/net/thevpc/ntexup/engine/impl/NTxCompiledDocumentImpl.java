@@ -8,6 +8,7 @@ import net.thevpc.ntexup.api.document.security.NTxManifest;
 import net.thevpc.ntexup.api.document.security.NTxManifestOptions;
 import net.thevpc.ntexup.api.document.security.NTxManifestResourceType;
 import net.thevpc.ntexup.api.document.style.NTxProp;
+import net.thevpc.ntexup.api.document.style.NTxPropName;
 import net.thevpc.ntexup.api.document.style.NTxStyleRule;
 import net.thevpc.ntexup.api.engine.*;
 import net.thevpc.ntexup.api.eval.NTxObj;
@@ -51,6 +52,7 @@ public class NTxCompiledDocumentImpl implements NTxCompiledDocument {
     private boolean allPagesLoaded;
     private final NTxSourceMonitor resources = new NTxSourceMonitored();
     private boolean successfullyLoaded = true;
+    private volatile String currentDocumentChapter;
     private final FingerprintBuilder fingerPrintBuilder = new FingerprintBuilder();
     private final Map<String, NTxObj> globalObjects = new ConcurrentHashMap<>();
     private final NTxDependencyGraph dependencyGraph = new net.thevpc.ntexup.engine.eval.DefaultNTxDependencyGraph();
@@ -556,6 +558,7 @@ public class NTxCompiledDocumentImpl implements NTxCompiledDocument {
                         pendingAutoPage = null;
                     }
                     part.run(document(), engine, this, null, false);
+                    captureDocumentChapter(part);
                     pendingInstr.add(part);
                     break;
                 }
@@ -715,7 +718,35 @@ public class NTxCompiledDocumentImpl implements NTxCompiledDocument {
         }
     }
 
+    /**
+     * Tracks the conventional {@code documentChapter="..."} assignment as pages
+     * are scheduled in source order, so each page can carry its chapter as
+     * slide metadata (used by search results and the go-to-slide outline).
+     */
+    private void captureDocumentChapter(NTxNodeAndContext part) {
+        NTxProp nameProp = part.node.getProperty(NTxPropName.NAME).orNull();
+        if (nameProp == null) {
+            return;
+        }
+        String name = nameProp.getValue().asStringValue().orNull();
+        if (!"documentChapter".equals(name)) {
+            return;
+        }
+        NTxProp valueProp = part.node.getProperty(NTxPropName.VALUE).orNull();
+        if (valueProp == null) {
+            return;
+        }
+        NElement value = part.context.evalExpression(valueProp.getValue()).orNull();
+        String s = value == null ? null : value.asStringValue().orNull();
+        if (s != null) {
+            currentDocumentChapter = s.trim();
+        }
+    }
+
     private boolean safeAddPage(NTxCompiledPageImpl a) {
+        // chapter convention: a top-level `documentChapter="..."` assignment
+        // applies to every page that follows it in source order
+        NTxSlideMeta.setIfBetter(a.rawPage(), NTxSlideMeta.CHAPTER, currentDocumentChapter, Integer.MAX_VALUE);
         compiledPages.add(a);
         try {
             scanPageDependencies(a.rawPage(), a.index());

@@ -18,19 +18,25 @@ import java.awt.event.WindowListener;
 public class NTxDebugFrame extends JFrame {
     private NTxDebugPanel debugPanel;
     private Runnable onClose;
+    /**
+     * True when the document/page model changed while the debug frame was
+     * hidden. Refreshing the debug panel serializes the whole document, so it
+     * must not run on every slide change when nobody is looking at it.
+     */
+    private volatile boolean pendingRefresh;
 
     NTxDocumentRendererListener hDocumentRendererListener = new NTxDocumentRendererListener() {
         @Override
         public void onChangedCompiledDocument(NTxCompiledDocument compiledDocument) {
             model().setCompiledDocument(compiledDocument.document());
             model().setRawDocument(compiledDocument.rawDocument());
-            updateContent();
+            requestRefresh();
         }
 
         @Override
         public void onChangedPage(NTxCompiledPage page) {
             model().setCurrentPage(page==null?null:page.rawPage());
-            updateContent();
+            requestRefresh();
         }
 
         @Override
@@ -43,7 +49,7 @@ public class NTxDebugFrame extends JFrame {
             model().setCurrentPage(null);
             model().setCompiledDocument(null);
             model().setRawDocument(null);
-            updateContent();
+            requestRefresh();
         }
     };
 
@@ -124,10 +130,21 @@ public class NTxDebugFrame extends JFrame {
         debugPanel.updateContent();
     }
 
+    private void requestRefresh() {
+        if (isVisible()) {
+            updateContent();
+        } else {
+            pendingRefresh = true;
+        }
+    }
+
     public void run() {
         NTexupUtils.runUiAsync(()->{
-            updateContent();
             setVisible(true);
+            if (pendingRefresh) {
+                pendingRefresh = false;
+                updateContent();
+            }
         });
     }
 }

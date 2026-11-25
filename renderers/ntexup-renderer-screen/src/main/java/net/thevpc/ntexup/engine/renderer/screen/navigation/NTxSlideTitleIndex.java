@@ -2,6 +2,7 @@ package net.thevpc.ntexup.engine.renderer.screen.navigation;
 
 import net.thevpc.ntexup.api.engine.NTxCompiledDocument;
 import net.thevpc.ntexup.api.engine.NTxCompiledPage;
+import net.thevpc.ntexup.api.engine.NTxSlideMeta;
 import net.thevpc.ntexup.api.source.NTxSource;
 import net.thevpc.ntexup.api.util.NTxUtils;
 import net.thevpc.nuts.io.NPath;
@@ -34,13 +35,20 @@ public final class NTxSlideTitleIndex {
         public final int pageIndex;
         /** resolved display title, never blank */
         public final String title;
-        /** section name (source folder), may be null */
+        /** section name (chapter metadata, else source folder), may be null */
         public final String section;
+        /** source file name (e.g. {@code 0010-intro.ntx}), may be null */
+        public final String sourceFileName;
 
-        public Entry(int pageIndex, String title, String section) {
+        public Entry(int pageIndex, String title, String section, String sourceFileName) {
             this.pageIndex = pageIndex;
             this.title = title;
             this.section = section;
+            this.sourceFileName = sourceFileName;
+        }
+
+        public Entry(int pageIndex, String title, String section) {
+            this(pageIndex, title, section, null);
         }
 
         /** 1-based number as shown by the viewer's slide counter */
@@ -72,16 +80,25 @@ public final class NTxSlideTitleIndex {
         if (document != null) {
             for (NTxCompiledPage page : document.pages()) {
                 int pageIndex = page.index();
+                String sourcePath = sourcePath(page);
+                String fileName = fileName(sourcePath);
                 String section = null;
-                String title;
+                String title = null;
                 try {
-                    section = SlideTitleResolver.sectionFromPath(sourcePath(page));
-                    SlideTitleResolver.Candidates c = SlideTitleResolver.extract(page.compiledPage());
-                    title = SlideTitleResolver.resolve(c, section, pageIndex + 1);
+                    java.util.Map<String, String> meta = NTxSlideMeta.read(page.rawPage());
+                    title = meta.get(NTxSlideMeta.TITLE);
+                    String chapter = meta.get(NTxSlideMeta.CHAPTER);
+                    section = chapter != null ? chapter : SlideTitleResolver.sectionFromPath(sourcePath);
+                    if (title == null) {
+                        SlideTitleResolver.Candidates c = SlideTitleResolver.extract(page.compiledPage());
+                        title = SlideTitleResolver.resolve(c, section, pageIndex + 1);
+                    }
                 } catch (Throwable ex) {
-                    title = SlideTitleResolver.resolve(null, section, pageIndex + 1);
+                    if (title == null) {
+                        title = SlideTitleResolver.resolve(null, section, pageIndex + 1);
+                    }
                 }
-                entries.add(new Entry(pageIndex, title, section));
+                entries.add(new Entry(pageIndex, title, section, fileName));
             }
         }
         return new NTxSlideTitleIndex(entries, computeGrouped(entries));
@@ -130,5 +147,14 @@ public final class NTxSlideTitleIndex {
             return (String) s;
         }
         return null;
+    }
+
+    private static String fileName(String path) {
+        if (path == null) {
+            return null;
+        }
+        int i = Math.max(path.lastIndexOf('/'), path.lastIndexOf('\\'));
+        String s = i >= 0 ? path.substring(i + 1) : path;
+        return s.isEmpty() ? null : s;
     }
 }

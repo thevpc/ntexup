@@ -26,6 +26,8 @@ public class NTxSlideSearcher {
         public final int totalSlides;
         public final String title;
         public final String kicker;
+        /** chapter/section of the slide, may be null */
+        public final String chapter;
         public final String sourceFileName;
         /**
          * Raw window (+ ellipses) around the first match; newlines collapsed.
@@ -40,13 +42,14 @@ public class NTxSlideSearcher {
         public final String queryTerm;
         public final int score;
 
-        public SlideSearchResult(int pageIndex, int totalSlides, String title, String kicker,
+        public SlideSearchResult(int pageIndex, int totalSlides, String title, String kicker, String chapter,
                                  String sourceFileName, String snippet, List<int[]> snippetRanges,
                                  Color queryColor, String queryTerm, int score) {
             this.pageIndex = pageIndex;
             this.totalSlides = totalSlides;
             this.title = title;
             this.kicker = kicker;
+            this.chapter = chapter;
             this.sourceFileName = sourceFileName;
             this.snippet = snippet;
             this.snippetRanges = Collections.unmodifiableList(snippetRanges);
@@ -177,7 +180,7 @@ public class NTxSlideSearcher {
                 snippet = snippet.substring(0, 90) + "…";
             }
         }
-        return new SlideSearchResult(e.pageIndex, total, e.title, e.kicker, e.sourceFileName,
+        return new SlideSearchResult(e.pageIndex, total, e.title, e.kicker, e.chapter, e.sourceFileName,
                 snippet, ranges, q.getColor(), q.getTerm(), score);
     }
 

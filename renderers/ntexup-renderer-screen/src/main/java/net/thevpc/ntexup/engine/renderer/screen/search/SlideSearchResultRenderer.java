@@ -81,6 +81,10 @@ public class SlideSearchResultRenderer extends JPanel implements ListCellRendere
         int xTitle = pad + fmMeta.stringWidth(slideInfo) + 10;
 
         String title = value.title == null || value.title.trim().isEmpty() ? "(untitled)" : value.title.trim();
+        String chapter = value.chapter == null ? "" : value.chapter.trim();
+        if (!chapter.isEmpty() && (chapter.equalsIgnoreCase(title) || chapter.equals("(untitled)"))) {
+            chapter = "";
+        }
         String src = value.sourceFileName == null ? "" : value.sourceFileName;
         int srcW = 0;
         if (!src.isEmpty()) {
@@ -88,6 +92,23 @@ public class SlideSearchResultRenderer extends JPanel implements ListCellRendere
             srcW = g2.getFontMetrics().stringWidth(src) + pad + 12;
         }
         int kickerBudget = w - xTitle - pad - srcW - 8;
+
+        // chapter (muted, before the title), then the title, then the kicker
+        int chapterW = 0;
+        if (!chapter.isEmpty()) {
+            g2.setFont(fMeta);
+            String suffix = " › ";
+            int maxChapter = Math.max(0, kickerBudget / 3);
+            String shownChapter = clip(g2, chapter, Math.max(0, maxChapter - g2.getFontMetrics().stringWidth(suffix)));
+            if (!shownChapter.isEmpty()) {
+                shownChapter = shownChapter + suffix;
+                chapterW = g2.getFontMetrics().stringWidth(shownChapter);
+                g2.setColor(new Color(129, 140, 248));
+                g2.drawString(shownChapter, xTitle, y1);
+            }
+        }
+        kickerBudget -= chapterW;
+
         String kicker = "";
         if (value.kicker != null && !value.kicker.trim().isEmpty() && !value.kicker.trim().equals(title)) {
             kicker = " · " + value.kicker.trim();
@@ -104,9 +125,10 @@ public class SlideSearchResultRenderer extends JPanel implements ListCellRendere
         if (kickerBudget > 0 && fmTitle.stringWidth(title + kicker) > kickerBudget) {
             title = clip(g2, title, Math.max(8, kickerBudget - g2.getFontMetrics().stringWidth(kicker)));
         }
+        int xTitleText = xTitle + chapterW;
         g2.setColor(Color.WHITE);
-        g2.drawString(title, xTitle, y1);
-        int xAfter = xTitle + fmTitle.stringWidth(title);
+        g2.drawString(title, xTitleText, y1);
+        int xAfter = xTitleText + fmTitle.stringWidth(title);
         if (!kicker.isEmpty()) {
             g2.setFont(fSource);
             g2.setColor(new Color(148, 163, 184));

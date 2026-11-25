@@ -4,6 +4,7 @@ import net.thevpc.ntexup.api.document.node.NTxItem;
 import net.thevpc.ntexup.api.document.node.NTxNode;
 import net.thevpc.ntexup.api.engine.NTxCompiledDocument;
 import net.thevpc.ntexup.api.engine.NTxCompiledPage;
+import net.thevpc.ntexup.api.engine.NTxSlideMeta;
 import net.thevpc.ntexup.api.eval.NTxResolutionContext;
 import net.thevpc.ntexup.api.util.NTxUtils;
 import net.thevpc.ntexup.engine.document.DefaultNTxNode;
@@ -68,6 +69,10 @@ public class NTxCompiledPageImpl implements NTxCompiledPage {
                     initialize();
                     NChronometer c = NChronometer.of();
                     pageContext = compiledDocument.engine().newContext(this.rawPage, compiledDocument.document(), compiledDocument, this, parentContext).setInPage(true);
+                    // conventional chapter annotation: a `documentChapter="..."`
+                    // assignment applies to the pages compiled after it
+                    NTxSlideMeta.setIfBetter(this.rawPage, NTxSlideMeta.CHAPTER,
+                            stringVar(pageContext, "documentChapter"), Integer.MAX_VALUE);
 
                     NTxNode o = DefaultNTxNode.ofBlock();
                     o.setParent(this.rawPage.parent());
@@ -116,6 +121,15 @@ public class NTxCompiledPageImpl implements NTxCompiledPage {
     @Override
     public boolean isCompiled() {
         return compiledPage != null;
+    }
+
+    private static String stringVar(NTxResolutionContext ctx, String name) {
+        if (ctx == null) {
+            return null;
+        }
+        NElement e = ctx.getVarValue(name).orNull();
+        String s = e == null ? null : e.asStringValue().orNull();
+        return s == null || s.trim().isEmpty() ? null : s.trim();
     }
 
     @Override

@@ -7,6 +7,7 @@ import net.thevpc.ntexup.api.document.style.NTxStyleRule;
 import net.thevpc.ntexup.api.engine.CompileNodeVisitor;
 import net.thevpc.ntexup.api.engine.ImportDependencyResult;
 import net.thevpc.ntexup.api.engine.NTxCompiledDocument;
+import net.thevpc.ntexup.api.engine.NTxSlideMeta;
 import net.thevpc.ntexup.api.extension.NTxFunction;
 import net.thevpc.ntexup.api.eval.*;
 import net.thevpc.ntexup.api.engine.NTxEngine;
@@ -523,12 +524,19 @@ public class NTxCompiler {
 
         List<NElement> callArgs = c.getCallArgs();
 
+        // remember the slide-level arguments (title/subtitle/chapter) so tools
+        // (search, go-to-slide, HUD) can tell a slide title from the document
+        // title/author rendered by the theme header
+        Map<String, String> slideMeta = new LinkedHashMap<>();
+        int callDepth = CALL_SOURCES.get().size();
+
         int posIndex = 0;
         java.util.Set<String> assignedNames = new java.util.HashSet<>();
         for (NElement e : callArgs) {
             if (e.isNamedPair()) {
                 NPairElement p = e.asPair().get();
                 String n = p.key().asStringValue().get();
+                captureSlideMeta(context, slideMeta, n, p.value());
                 assigns.add(DefaultNTxNode.ofAssign(n, NTxUtils.addCompilerDeclarationPath(p.value(), c.source()), context.source()));
                 assignedNames.add(n);
             } else {
@@ -544,6 +552,11 @@ public class NTxCompiler {
             }
         }
         NTxNode[] oldBody = d.body();
+        // component parameters / slot are fixed for the compiled page: their
+        // render-time assignment must never invalidate the page graph
+        for (int i = 0; i < assigns.size(); i++) {
+            assigns.set(i, NTxAssign.markStatic(assigns.get(i)));
+        }
         NTxResolutionContext newContext = context.pushContext();
         newContext.doWithChild(block, d, cc -> {
             FillNodeCompileNodeVisitor fill = new FillNodeCompileNodeVisitor(block);
@@ -572,7 +585,48 @@ public class NTxCompiler {
                 }
             }
         }
+        if (!slideMeta.isEmpty()) {
+            NTxSlideMeta.attach(block, slideMeta, callDepth);
+        }
         visitor.visitNode(block, context);
+    }
+
+    /**
+     * Collects the slide-level metadata arguments of a component call.
+     * Only {@code title}/{@code subtitle}/{@code kicker}/{@code chapter}/
+     * {@code section} are considered; the value must evaluate to a string.
+     */
+    private void captureSlideMeta(NTxResolutionContext context, Map<String, String> meta, String name, NElement value) {
+        String key = slideMetaKey(name);
+        if (key == null || meta.containsKey(key)) {
+            return;
+        }
+        NElement evaluated = context.evalExpression(value).orNull();
+        String s = evaluated == null ? null : evaluated.asStringValue().orNull();
+        if (s != null && !s.trim().isEmpty()) {
+            meta.put(key, s.trim());
+        }
+    }
+
+    private static String slideMetaKey(String name) {
+        if (name == null) {
+            return null;
+        }
+        String n = NTxUtils.uid(name).replace("-", "").replace("_", "");
+        switch (n) {
+            case "title":
+                return NTxSlideMeta.TITLE;
+            case "subtitle":
+                return NTxSlideMeta.SUBTITLE;
+            case "kicker":
+                return NTxSlideMeta.KICKER;
+            case "chapter":
+                return NTxSlideMeta.CHAPTER;
+            case "section":
+                return NTxSlideMeta.SECTION;
+            default:
+                return null;
+        }
     }
 
     private void compileNodeTree_define(NTxResolutionContext context, CompileNodeVisitor visitor) {

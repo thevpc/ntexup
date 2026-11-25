@@ -73,7 +73,6 @@ import net.thevpc.nuts.util.*;
 
 import javax.imageio.ImageIO;
 
-import net.thevpc.nuts.text.NTextBuilder;
 import net.thevpc.nuts.collections.NCollections;
 
 /**
@@ -593,9 +592,7 @@ public class DefaultNTxEngine implements NTxEngine {
                 .toArray(NDependency[]::new);
         if (okDeps.length > 0) {
             log().log(NMsg.ofC("importing dependencies %s",
-                    NTextBuilder.of()
-                            .appendJoined(",", Arrays.asList(okDeps))
-                            .build()
+                    Arrays.stream(okDeps).map(Object::toString).collect(Collectors.joining(", "))
             ));
             NDefinition[] u = classLoader.add(okDeps);
             Map<String, NDefinition> reallyLoaded = new HashMap<>();
@@ -615,9 +612,7 @@ public class DefaultNTxEngine implements NTxEngine {
             }
             if (u.length > 0) {
                 log().log(NMsg.ofC("new dependencies %s",
-                        NTextBuilder.of()
-                                .appendJoined(",", Arrays.asList(u))
-                                .build()
+                        Arrays.stream(u).map(x -> x.id().toString()).collect(Collectors.joining(", "))
                 ));
                 for (NTxDependencyLoadedListener d : dependencyLoadedListeners) {
                     d.onLoadDependencyLoaded(u);

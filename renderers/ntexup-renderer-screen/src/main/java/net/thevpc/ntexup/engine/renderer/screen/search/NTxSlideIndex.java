@@ -6,9 +6,11 @@ import net.thevpc.ntexup.api.document.style.NTxProp;
 import net.thevpc.ntexup.api.engine.NTxCompiledDocument;
 import net.thevpc.ntexup.api.engine.NTxCompiledPage;
 import net.thevpc.ntexup.api.engine.NTxEngine;
+import net.thevpc.ntexup.api.engine.NTxSlideMeta;
 import net.thevpc.ntexup.api.renderer.NTxNodeRenderer;
 import net.thevpc.ntexup.api.source.NTxSource;
 import net.thevpc.ntexup.api.util.NTxUtils;
+import net.thevpc.ntexup.engine.renderer.screen.navigation.SlideTitleResolver;
 import net.thevpc.ntexup.engine.renderer.text.NTxTextBaseRenderer;
 import net.thevpc.nuts.elem.NElement;
 import net.thevpc.nuts.io.NPath;
@@ -17,8 +19,10 @@ import net.thevpc.nuts.util.NOptional;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -80,18 +84,22 @@ public class NTxSlideIndex {
     public static class SlideEntry {
         public final int pageIndex;
         public final String title;
+        /** subtitle/kicker of the slide, may be null */
         public final String kicker;
+        /** chapter/section of the slide (metadata, else source folder), may be null */
+        public final String chapter;
         public final String sourceFileName;
         public final String rawText;
         public final String normText;
         public final List<String> words;
         public final List<NodeText> nodeTexts;
 
-        public SlideEntry(int pageIndex, String title, String kicker, String sourceFileName,
+        public SlideEntry(int pageIndex, String title, String kicker, String chapter, String sourceFileName,
                           String rawText, String normText, List<String> words, List<NodeText> nodeTexts) {
             this.pageIndex = pageIndex;
             this.title = title;
             this.kicker = kicker;
+            this.chapter = chapter;
             this.sourceFileName = sourceFileName;
             this.rawText = rawText;
             this.normText = normText;
@@ -117,12 +125,61 @@ public class NTxSlideIndex {
                 try {
                     entries.add(buildEntry(engine, page));
                 } catch (Throwable ex) {
-                    entries.add(new SlideEntry(page.index(), null, null, null,
+                    entries.add(new SlideEntry(page.index(), null, null, null, null,
                             "", "", new ArrayList<>(), new ArrayList<>()));
                 }
             }
         }
+        entries = dropRunningKickers(entries);
         return new NTxSlideIndex(entries);
+    }
+
+    /**
+     * A value repeated on a large share of the slides is a running header or
+     * footer (author, document title, ...), not a slide subtitle. It must not
+     * be shown as the kicker of every result.
+     */
+    private static List<SlideEntry> dropRunningKickers(List<SlideEntry> entries) {
+        if (entries.size() < 4) {
+            return entries;
+        }
+        Map<String, Integer> counts = new HashMap<>();
+        for (SlideEntry e : entries) {
+            if (e.kicker != null) {
+                counts.merge(NTxHighlights.normalize(e.kicker), 1, Integer::sum);
+            }
+        }
+        int threshold = Math.max(3, entries.size() / 5);
+        List<SlideEntry> out = new ArrayList<>(entries.size());
+        for (SlideEntry e : entries) {
+            if (e.kicker != null && counts.getOrDefault(NTxHighlights.normalize(e.kicker), 0) > threshold) {
+                out.add(withoutKicker(e));
+            } else {
+                out.add(e);
+            }
+        }
+        return out;
+    }
+
+    private static SlideEntry withoutKicker(SlideEntry e) {
+        StringBuilder raw = new StringBuilder();
+        appendLine(raw, e.chapter);
+        appendLine(raw, e.title);
+        for (NodeText nt : e.nodeTexts) {
+            appendLine(raw, nt.text);
+        }
+        String rawText = raw.toString();
+        String normText = NTxHighlights.normalize(rawText);
+        List<String> words = new ArrayList<>();
+        if (!normText.isEmpty()) {
+            for (String w : normText.split(" ")) {
+                if (!w.isEmpty()) {
+                    words.add(w);
+                }
+            }
+        }
+        return new SlideEntry(e.pageIndex, e.title, null, e.chapter, e.sourceFileName,
+                rawText, normText, words, e.nodeTexts);
     }
 
     public List<SlideEntry> entries() {
@@ -138,11 +195,24 @@ public class NTxSlideIndex {
         String[] firstTwo = new String[2];
         String[] classTitle = new String[1];
         NTxNode root = page.compiledPage();
-        String title = null;
-        String kicker = null;
+        // slide metadata captured at compile time: the component call's
+        // title/subtitle/chapter arguments (document title and author printed
+        // by the theme header are not slide metadata)
+        java.util.Map<String, String> meta = NTxSlideMeta.read(page.rawPage());
+        String title = meta.get(NTxSlideMeta.TITLE);
+        String kicker = meta.get(NTxSlideMeta.SUBTITLE);
+        String chapter = meta.get(NTxSlideMeta.CHAPTER);
+        String sourceFileName = sourceName(page);
+        if (chapter == null) {
+            chapter = SlideTitleResolver.sectionFromPath(sourcePath(page));
+        }
         if (root != null) {
-            title = firstStringProp(root, "title");
-            kicker = firstStringProp(root, "kicker");
+            if (title == null) {
+                title = firstStringProp(root, "title");
+            }
+            if (kicker == null) {
+                kicker = firstStringProp(root, "kicker");
+            }
             collect(engine, root, nodeTexts, firstTwo, classTitle);
             if (title == null) {
                 title = classTitle[0];
@@ -158,8 +228,10 @@ public class NTxSlideIndex {
         }
         title = firstLine(title);
         kicker = firstLine(kicker);
+        chapter = firstLine(chapter);
 
         StringBuilder raw = new StringBuilder();
+        appendLine(raw, chapter);
         appendLine(raw, title);
         appendLine(raw, kicker);
         for (NodeText nt : nodeTexts) {
@@ -175,7 +247,7 @@ public class NTxSlideIndex {
                 }
             }
         }
-        return new SlideEntry(page.index(), title, kicker, sourceName(page),
+        return new SlideEntry(page.index(), title, kicker, chapter, sourceFileName,
                 rawText, normText, words, nodeTexts);
     }
 
@@ -287,6 +359,21 @@ public class NTxSlideIndex {
         }
         if (s instanceof String) {
             return basename((String) s);
+        }
+        return null;
+    }
+
+    private static String sourcePath(NTxCompiledPage page) {
+        Object s = page.source();
+        if (s == null && page.rawPage() != null) {
+            s = NTxUtils.sourceOf(page.rawPage());
+        }
+        if (s instanceof NTxSource) {
+            NPath path = ((NTxSource) s).path().orNull();
+            return path == null ? null : path.toString();
+        }
+        if (s instanceof String) {
+            return (String) s;
         }
         return null;
     }

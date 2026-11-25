@@ -28,7 +28,6 @@ import java.util.UUID;
 
 public class PageView extends JComponent {
     public static Dimension REF_SIZE = new Dimension(1024, 768);
-    private static final int DEFAULT_RENDER_WIDTH = 1024;
     private static final int FRAME_PERIOD_MS = 40;
     private static final int MIN_TIMER_PERIOD_MS = 5;
     /**
@@ -52,7 +51,7 @@ public class PageView extends JComponent {
     private String uuid;
     private final NTxEngine engine;
     private final NTxCompiledDocument document;
-    private final double ratio = 16.0 / 9.0;
+
     private final Object renderLock = new Object();
     private volatile BufferedImage pageImage;
     private volatile int renderW = -1;
@@ -64,6 +63,15 @@ public class PageView extends JComponent {
     private volatile boolean renderCacheDirty;
     private volatile boolean discarded;
     private volatile int renderEpoch;
+    /**
+     * True while this page's paint pass runs on the render pool. Invalidation
+     * events fired by the pass itself (assign nodes update a binding, the
+     * dependency graph notifies the pages that read it) must not schedule a new
+     * pass: that is a render -> invalidate -> render loop that pins the CPU and
+     * floods the event queue.
+     */
+    private volatile boolean rendering;
+
     /**
      * Serialises paint passes of this page: the render pool is multi-threaded, so
      * two passes can otherwise mutate the same node render cache at once.
@@ -88,10 +96,30 @@ public class PageView extends JComponent {
         if (document != null && document.dependencyGraph() != null) {
             document.dependencyGraph().addPageInvalidationListener(pageIndex -> {
                 if (pageIndex == this.page.index() || pageIndex < 0) {
-                    repaintDirty();
+                    onExternalInvalidation();
                 }
             });
         }
+    }
+
+    /**
+     * A binding this page reads changed. If the change comes from the pass
+     * currently rendering this very page, the image being produced already
+     * reflects it: only drop the node caches for the next pass instead of
+     * scheduling a new render (which would loop forever, since each pass
+     * re-executes the assignment that fired the notification).
+     */
+    private void onExternalInvalidation() {
+        if (rendering) {
+            synchronized (renderLock) {
+                if (discarded) {
+                    return;
+                }
+                renderCacheDirty = true;
+            }
+            return;
+        }
+        repaintDirty();
     }
 
     public void repaintDirty() {
@@ -119,9 +147,22 @@ public class PageView extends JComponent {
             if (discarded) {
                 return;
             }
+            boolean hadImage = pageImage != null;
             cancelInFlightRender();
             pageImage = null;
             renderInvalidated = true;
+            // Drop the per-node render caches too. Keeping them for pages far
+            // from the current slide pins images and text layouts and makes a
+            // long deck grow without bound.
+            if (hadImage && page.isCompiled()) {
+                try {
+                    NTxNode p = page.compiledPage();
+                    if (p != null) {
+                        p.invalidateRenderCache();
+                    }
+                } catch (Throwable ignored) {
+                }
+            }
         }
     }
 
@@ -203,7 +244,24 @@ public class PageView extends JComponent {
     }
 
     public void prefetch() {
-        requestRender(false);
+        // Off-screen pages are hidden by the CardLayout (bounds 0x0): they
+        // cannot be rendered yet. Warm their compilation only — the image is
+        // produced when the page gets a real size.
+        if (discarded) {
+            return;
+        }
+        DocumentView.submitRender(() -> {
+            if (discarded) {
+                return;
+            }
+            try {
+                page.compiledPage();
+            } catch (Throwable ex) {
+                if (engine != null) {
+                    engine.log().log(NMsg.ofC("failed to precompile page %s: %s", page.index() + 1, ex));
+                }
+            }
+        }, false);
     }
 
     /**
@@ -555,28 +613,25 @@ public class PageView extends JComponent {
         }
     }
 
-    protected void repaintHierarchy() {
-        this.revalidate();
-        this.repaint();
-        Component c = this;
-        while (c != null) {
-            c.revalidate();
-            c.repaint();
-            if (c instanceof Window) {
-                ((Window) c).validate();
-                ((Window) c).repaint();
-                break;
-            }
-            c = c.getParent();
-        }
+    private void repaintHierarchy() {
+        // Only this page's image changed: repaint it. Revalidating the page and
+        // every ancestor (and forcing Window.validate()) once per rendered frame
+        // re-laid out the whole viewer — including the hundreds of off-screen
+        // CardLayout cards — and made resizing interactively unusable.
+        repaint();
     }
 
+    /**
+     * Size to render at, or {@code null} when the component has not been laid
+     * out yet (or is a hidden CardLayout card, whose bounds are 0x0). Rendering
+     * at a fallback size in that case compiled every off-screen page of the
+     * deck on startup.
+     */
     private Dimension currentRenderSize() {
         int w = getWidth();
         int h = getHeight();
         if (w <= 16 || h <= 16) {
-            w = DEFAULT_RENDER_WIDTH;
-            h = (int) (w / ratio);
+            return null;
         }
         return new Dimension(w, h);
     }
@@ -590,7 +645,19 @@ public class PageView extends JComponent {
             if (discarded) {
                 return;
             }
+            if (!showing) {
+                // CardLayout resizes every card (hidden ones included) when the
+                // window is laid out; hidden pages must not render: that compiled
+                // and painted the whole deck at startup. onShow() forces the
+                // first pass once the page becomes visible.
+                return;
+            }
             Dimension d = currentRenderSize();
+            if (d == null) {
+                // not laid out yet; the resize event that gives us a real size
+                // will schedule the first pass
+                return;
+            }
             boolean sizeOk = pageImage != null && d.width == renderW && d.height == renderH;
             if (sizeOk && !renderInvalidated) {
                 return;
@@ -638,6 +705,7 @@ public class PageView extends JComponent {
             }
             BufferedImage img = null;
             Throwable error = null;
+            rendering = true;
             try {
                 img = new BufferedImage(tw, th, BufferedImage.TYPE_INT_ARGB);
                 Graphics2D g = img.createGraphics();
@@ -653,27 +721,26 @@ public class PageView extends JComponent {
                 g.dispose();
             } catch (Throwable t) {
                 error = t;
+            } finally {
+                rendering = false;
             }
             if (error != null) {
                 engine.log().log(NMsg.ofC("failed to render page %s: %s", page.index() + 1, error));
             }
-            int cw;
-            int ch;
-            boolean more;
             synchronized (renderLock) {
                 if (discarded || epoch != renderEpoch) {
                     return;
                 }
                 Dimension d = currentRenderSize();
-                cw = d.width;
-                ch = d.height;
+                int cw = d == null ? -1 : d.width;
+                int ch = d == null ? -1 : d.height;
                 if (cw == tw && ch == th && img != null) {
                     pageImage = img;
                     renderW = tw;
                     renderH = th;
                 }
                 renderPending = false;
-                more = renderInvalidated || (cw != tw || ch != th);
+                boolean more = renderInvalidated || (d != null && (cw != tw || ch != th));
                 renderInvalidated = false;
                 if (more) {
                     requestRender(true);
@@ -694,6 +761,11 @@ public class PageView extends JComponent {
             }
             renderInvalidated = true;
             renderCacheDirty = true;
+            if (rendering) {
+                // the pass in flight will notice renderInvalidated and schedule
+                // exactly one follow-up when it completes
+                return;
+            }
         }
         requestRender(true);
     }
@@ -731,8 +803,12 @@ public class PageView extends JComponent {
         g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
         g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED);
         g2d.drawImage(img, 0, 0, getWidth(), getHeight(), null);
-        g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, oldInterpolation);
-        g2d.setRenderingHint(RenderingHints.KEY_RENDERING, oldRendering);
+        if (oldInterpolation != null) {
+            g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, oldInterpolation);
+        }
+        if (oldRendering != null) {
+            g2d.setRenderingHint(RenderingHints.KEY_RENDERING, oldRendering);
+        }
     }
 
     public Object source() {

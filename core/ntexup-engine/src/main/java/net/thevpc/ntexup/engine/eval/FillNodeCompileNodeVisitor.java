@@ -1,5 +1,6 @@
 package net.thevpc.ntexup.engine.eval;
 
+import net.thevpc.ntexup.api.document.node.NTxAssign;
 import net.thevpc.ntexup.api.document.node.NTxNode;
 import net.thevpc.ntexup.api.document.node.NTxNodeDef;
 import net.thevpc.ntexup.api.document.style.NTxProp;
@@ -39,7 +40,7 @@ public class FillNodeCompileNodeVisitor implements CompileNodeVisitor {
 
     @Override
     public void visitVar(String varName, NTxVar nTxVar, NTxResolutionContext context) {
-        visitNode(DefaultNTxNode.ofAssign(varName,nTxVar.get(),context.source()),context);
+        visitNode(NTxAssign.markStatic(DefaultNTxNode.ofAssign(varName, nTxVar.get(), context.source())), context);
     }
 
     @Override

@@ -149,6 +149,37 @@ thankyou-slide(title: "Bye")
 
 New folders are picked up automatically via `include("02-pages")`.
 
+## Slide Metadata (chapter, title, subtitle)
+
+The viewer's **Find in slides** (Ctrl+F) and **Go to slide** (Ctrl+G)
+dialogs display, for each slide, its chapter, title and source file. The
+chapter/title/subtitle of a slide are captured at compile time from two
+places, so they never have to be duplicated in the theme:
+
+1. **The slide component call** — pass `title`, `subtitle` (or `kicker`),
+   `chapter` (or `section`) arguments to the outermost component of the page:
+
+   ```tson
+   content-slide(title: "Directivity", subtitle: "Antenna pattern", chapter: "Antennas") {
+       body { ... }
+   }
+   ```
+
+   The outermost call wins: a `title` argument given to a card *inside* the
+   slide never replaces the slide title.
+
+2. **A top-level `documentChapter = "..."` assignment** — it applies to every
+   page that follows it in source order (typically put it at the top of a
+   chapter's folder, or in its `0000-init.ntx`):
+
+   ```tson
+   documentChapter = "Antennas"
+   content-slide(title: "Introduction") { ... }
+   ```
+
+If neither is present, the viewer falls back to a `title` classed node, then
+the first text node, then the source folder name, then `Slide N`.
+
 ## Related
 
 - [Multi-file Projects](21-multi-file-includes.md)
