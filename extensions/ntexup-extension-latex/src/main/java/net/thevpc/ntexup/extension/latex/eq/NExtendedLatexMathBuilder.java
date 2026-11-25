@@ -10,9 +10,10 @@ public class NExtendedLatexMathBuilder {
     /**
      * JLaTeXmath 1.0.7 maps {@code \Omega} to a glyph that is missing from the
      * bundled cmr10 font (code 173 is the empty "soft hyphen" slot), so the
-     * symbol is silently rendered as a blank. The bold font does contain the
-     * glyph, so route the uppercase omega through {@code \mathbf}. Remove this
-     * workaround once the underlying font has been fixed.
+     * symbol is silently rendered as a blank. The Greek alphabet registration
+     * (jlatexmath-font-greek) renders the Unicode omega correctly, so route the
+     * command through {@code \text{Ω}}. Remove this workaround once the
+     * underlying font has been fixed.
      */
     private static final Pattern OMEGA = Pattern.compile("\\\\Omega(?![A-Za-z])");
 
@@ -20,7 +21,7 @@ public class NExtendedLatexMathBuilder {
         if (tex == null) {
             return null;
         }
-        return OMEGA.matcher(tex).replaceAll(Matcher.quoteReplacement("\\mathbf{\\Omega}"));
+        return OMEGA.matcher(tex).replaceAll(Matcher.quoteReplacement("\\text{\u03A9}"));
     }
     private static final Map<Character, String> LATEX_MATH_MAP = new HashMap<>();
     private static final Map<Character, String> LATEX_SUPERSCRIPT = new HashMap<>();
@@ -77,7 +78,7 @@ public class NExtendedLatexMathBuilder {
         LATEX_MATH_MAP.put('Φ', "\\Phi");
         LATEX_MATH_MAP.put('Χ', "X");
         LATEX_MATH_MAP.put('Ψ', "\\Psi");
-        LATEX_MATH_MAP.put('Ω', "\\Omega");
+        LATEX_MATH_MAP.put('Ω', "\\text{\u03A9}");
 
         // Other math symbols
         LATEX_MATH_MAP.put('∞', "\\infty");

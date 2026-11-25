@@ -106,7 +106,13 @@ class NTxTextTokenParseHelper {
     }
 
     public NTxTextRendererFlavor resolveFlavor(String s) {
+        String self = builderContext == null ? null : builderContext.id();
         for (NTxTextRendererFlavor flavor : flavors) {
+            // never delegate a fenced block to the flavor of the node being rendered,
+            // otherwise ```text inside a text node re-parses itself forever
+            if (self != null && self.equals(flavor.type())) {
+                continue;
+            }
             for (String p : flavor.parsePrefixes()) {
                 int ln = p.length();
                 if (ln > 0) {
@@ -347,6 +353,10 @@ class NTxTextTokenParseHelper {
             if (nt.start().equals("`")) {
                 NTxTextTokenText t = new NTxTextTokenText(value);
                 t.options().foregroundColor = NTxColors.resolveDefaultColorByIndex(3, null, rendererContext);
+                String codeFont = codeFontFamily();
+                if (codeFont != null) {
+                    t.options().setFontFamily(codeFont);
+                }
                 tokens.add(t);
                 return;
             }

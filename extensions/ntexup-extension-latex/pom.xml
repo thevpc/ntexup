@@ -60,6 +60,7 @@
     <dependencies>
         <dependency><groupId>net.thevpc.ntexup</groupId><artifactId>ntexup-api</artifactId><version>1.2.0.0</version></dependency>
         <dependency><groupId>org.scilab.forge</groupId><artifactId>jlatexmath</artifactId><version>1.0.7</version></dependency>
+        <dependency><groupId>org.scilab.forge</groupId><artifactId>jlatexmath-font-greek</artifactId><version>1.0.7</version></dependency>
     </dependencies>
     <build>
         <plugins>
