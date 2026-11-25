@@ -368,9 +368,21 @@ class NTxTextTokenParseHelper {
                     }
                     return;
                 }
+                // a fenced block is code: give it the code font and syntax colours,
+                // even when the fence has no explicit language
+                String lang = NStringUtils.stripToNull(q);
+                if (lang == null) {
+                    lang = defaultCodeLanguage();
+                }
+                NText highlighted = lang == null ? nt.highlight() : NText.ofCode(lang, value).highlight();
+                NTxTextOptions codeOptions = options.copy();
+                String codeFont = codeFontFamily();
+                if (codeFont != null) {
+                    codeOptions.setFontFamily(codeFont);
+                }
+                collect(highlighted, codeOptions, tokens);
+                return;
             }
-            collect(nt.highlight(), options, tokens);
-            return;
         }
         if (node instanceof NTextPlain) {
             appendPlain(((NTextPlain) node).value(), options, tokens);
@@ -389,6 +401,54 @@ class NTxTextTokenParseHelper {
             }
         }
         return true;
+    }
+
+    /**
+     * Language used for fenced code blocks that do not declare one
+     * ({@code ```} instead of {@code ```scala}). Themes/decks may set the
+     * {@code defaultCodeLanguage} variable; when absent, nuts keeps the block plain.
+     */
+    private String defaultCodeLanguage() {
+        if (rendererContext == null) {
+            return null;
+        }
+        return NStringUtils.stripToNull(
+                NTxValue.of(rendererContext.getVarValue("defaultCodeLanguage").orNull())
+                        .asString().orNull());
+    }
+
+    /**
+     * Font family used for code, taken from {@code source-code-font-family}
+     * (theme) and defaulting to a monospaced family.
+     */
+    private String codeFontFamily() {
+        if (rendererContext != null) {
+            String v = NStringUtils.stripToNull(
+                    NTxValue.of(rendererContext.computePropertyValue("source-code-font-family").orNull())
+                            .asString().orNull());
+            if (v != null) {
+                return v;
+            }
+        }
+        return "monospaced";
+    }
+
+    /**
+     * Resolves a {@code source-<token>-color} theme property for a code token type.
+     * Returns {@code null} when the theme does not define one, so that the token
+     * keeps the inherited code colour instead of falling back to the document palette.
+     */
+    private Color resolveCodeColor(NTextStyle style) {
+        if (rendererContext == null) {
+            return null;
+        }
+        String name = "source-" + style.type().id() + "-color";
+        NElement v = rendererContext.computePropertyValue(name).orNull();
+        Color[] colors = NTxValue.of(v).asColorArrayOrColor().orNull();
+        if (colors == null || colors.length == 0) {
+            return null;
+        }
+        return NTxColors.resolveDefaultColorByIndex(style.variant(), colors, rendererContext);
     }
 
     /**
@@ -419,6 +479,37 @@ class NTxTextTokenParseHelper {
                 case PRIMARY:
                     options.foregroundColor = resolvePrimaryColor();
                     break;
+                case KEYWORD:
+                case ENTITY:
+                case ACTION:
+                case ANNOTATION:
+                case VAR:
+                case OPERATOR:
+                case SEPARATOR:
+                case COMMENTS:
+                case STRING:
+                case INPUT:
+                case PATH:
+                case VERSION:
+                case NUMBER:
+                case DATE:
+                case BOOLEAN:
+                case OPTION:
+                case TITLE:
+                case PLACEHOLDER:
+                case INFO:
+                case CONFIG:
+                case SUCCESS:
+                case WARN:
+                case ERROR:
+                case DANGER:
+                case FAIL: {
+                    Color codeColor = resolveCodeColor(style);
+                    if (codeColor != null) {
+                        options.foregroundColor = codeColor;
+                    }
+                    break;
+                }
                 case BACK_COLOR:
                     options.backgroundColor = NTxColors.resolveDefaultColorByIndex(style.variant(), null, rendererContext);
                     break;

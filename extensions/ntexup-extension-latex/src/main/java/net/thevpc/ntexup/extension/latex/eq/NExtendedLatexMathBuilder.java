@@ -2,8 +2,26 @@ package net.thevpc.ntexup.extension.latex.eq;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class NExtendedLatexMathBuilder {
+
+    /**
+     * JLaTeXmath 1.0.7 maps {@code \Omega} to a glyph that is missing from the
+     * bundled cmr10 font (code 173 is the empty "soft hyphen" slot), so the
+     * symbol is silently rendered as a blank. The bold font does contain the
+     * glyph, so route the uppercase omega through {@code \mathbf}. Remove this
+     * workaround once the underlying font has been fixed.
+     */
+    private static final Pattern OMEGA = Pattern.compile("\\\\Omega(?![A-Za-z])");
+
+    public static String normalizeTex(String tex) {
+        if (tex == null) {
+            return null;
+        }
+        return OMEGA.matcher(tex).replaceAll(Matcher.quoteReplacement("\\mathbf{\\Omega}"));
+    }
     private static final Map<Character, String> LATEX_MATH_MAP = new HashMap<>();
     private static final Map<Character, String> LATEX_SUPERSCRIPT = new HashMap<>();
     private static final Map<Character, String> LATEX_SUBSCRIPT = new HashMap<>();

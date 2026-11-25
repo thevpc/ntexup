@@ -186,7 +186,11 @@ public class NTxHighlighterMapper {
         {
             NTxValue e = NTxValue.of(ctx.computePropertyValue(prefix + "color").orNull());
             Color[] colors = e.asColorArrayOrColor().orNull();
-            ss.foreground = NTxColors.resolveDefaultColorByIndex(nTextStyle.variant(), colors, ctx);
+            if (colors != null && colors.length > 0) {
+                // when the theme has no source-<token>-color, keep the inherited code color
+                // instead of falling back to the (possibly dark) document palette
+                ss.foreground = NTxColors.resolveDefaultColorByIndex(nTextStyle.variant(), colors, ctx);
+            }
         }
         {
             NTxValue e = NTxValue.of(ctx.computePropertyValue(prefix + "background").orNull());

@@ -87,6 +87,7 @@ public class NTxEquationBuilder implements NTxNodeBuilder {
             String text = NTxValue.of(vElemValue).asStringOrName().orElse("");
 
             String tex = NStringUtils.strip(rendererContext.engine().tools().trimBloc(text));
+            tex = NExtendedLatexMathBuilder.normalizeTex(tex);
             if (tex.isEmpty()) {
                 u.selfBounds = rendererContext.defaultSelfBounds2D();
             } else {
@@ -132,6 +133,7 @@ public class NTxEquationBuilder implements NTxNodeBuilder {
 
 
         String tex = NStringUtils.strip(rendererContext.engine().tools().trimBloc(text));
+        tex = NExtendedLatexMathBuilder.normalizeTex(tex);
         if (tex.isEmpty()) {
             NTxBounds2D selfBounds = rendererContext.selfBounds2D();
             double x = selfBounds.minX();
@@ -225,6 +227,7 @@ public class NTxEquationBuilder implements NTxNodeBuilder {
     }
 
     public NTxTextRendererBuilder.ImagePainter createLatex(String tex, double fontSize, NTxTextOptions options, NTxRendererContext ctx) {
+        tex = NExtendedLatexMathBuilder.normalizeTex(tex);
         TeXFormula formula;
         boolean error = false;
         try {
@@ -235,7 +238,7 @@ public class NTxEquationBuilder implements NTxNodeBuilder {
             ctx.log(NMsg.ofC("error evaluating latex formula %s : %s", tex, ex), ctx.source());
         }
         float size = (float) (fontSize);
-        TeXIcon icon = formula.createTeXIcon(TeXConstants.STYLE_DISPLAY, size);
+        TeXIcon icon = formula.createTeXIcon(TeXConstants.STYLE_TEXT, size);
         icon.setInsets(new Insets(0, 0, 0, 0));
         Color fg = NTxUtils.paintAsColor(NTxUtils.resolveForegroundColor(options, ctx));
         if (fg == null) {

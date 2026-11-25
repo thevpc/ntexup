@@ -72,6 +72,7 @@ public class NTxTextRendererFlavorLatexEquation implements NTxTextRendererFlavor
     }
 
     public NTxTextRendererBuilder.ImagePainter createLatex(String tex, double fontSize, NTxTextOptions options, NTxRendererContext ctx) {
+        tex = NExtendedLatexMathBuilder.normalizeTex(tex);
         TeXFormula formula;
         boolean error = false;
         try {
@@ -82,7 +83,7 @@ public class NTxTextRendererFlavorLatexEquation implements NTxTextRendererFlavor
             ctx.log(NMsg.ofC("error evaluating latex formula %s : %s", tex, ex), ctx.source());
         }
         float size = (float) (fontSize / 2.0);
-        TeXIcon icon = formula.createTeXIcon(TeXConstants.STYLE_DISPLAY, size);
+        TeXIcon icon = formula.createTeXIcon(TeXConstants.STYLE_TEXT, size);
 
         // insert a border
         icon.setInsets(new Insets(0, 0, 0, 0));
