@@ -380,7 +380,13 @@ class NTxTextTokenParseHelper {
                 if (codeFont != null) {
                     codeOptions.setFontFamily(codeFont);
                 }
-                collect(highlighted, codeOptions, tokens);
+                if (containsCodeNode(highlighted)) {
+                    // an unknown/plain language falls back to the very same NTextCode:
+                    // re-entering the fenced branch would recurse forever
+                    appendPlain(value, codeOptions, tokens);
+                } else {
+                    collect(highlighted, codeOptions, tokens);
+                }
                 return;
             }
         }
@@ -401,6 +407,32 @@ class NTxTextTokenParseHelper {
             }
         }
         return true;
+    }
+
+    /**
+     * True when the tree still contains a code node (typically because the
+     * requested language has no highlighter and nuts returned the original
+     * {@link NTextCode} unchanged).
+     */
+    private static boolean containsCodeNode(NText n) {
+        if (n == null) {
+            return false;
+        }
+        if (n instanceof NTextCode) {
+            return true;
+        }
+        if (n instanceof NTextList) {
+            for (NText c : ((NTextList) n).children()) {
+                if (containsCodeNode(c)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+        if (n instanceof NTextStyled) {
+            return containsCodeNode(((NTextStyled) n).child());
+        }
+        return false;
     }
 
     /**
