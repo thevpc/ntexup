@@ -26,8 +26,12 @@ import java.awt.font.FontRenderContext;
 import java.awt.font.TextLayout;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.CubicCurve2D;
+import java.awt.geom.Ellipse2D;
+import java.awt.geom.Line2D;
+import java.awt.geom.Path2D;
 import java.awt.geom.QuadCurve2D;
 import java.awt.geom.Rectangle2D;
+import java.awt.geom.RoundRectangle2D;
 import java.awt.image.ImageObserver;
 import java.text.AttributedCharacterIterator;
 import java.text.AttributedString;
@@ -165,9 +169,8 @@ public class NTxGraphicsImpl implements NTxGraphics {
         if (arrow == null || arrow.getType() == null) {
             return;
         }
-        int[] xPoints;
-        int[] yPoints;
         NTxArrowType type = arrow.getType();
+        Path2D.Double head = new Path2D.Double();
         if (type == NTxArrowType.DEFAULT) {
             type = NTxArrowType.SIMPLE;
         }
@@ -192,9 +195,10 @@ public class NTxGraphicsImpl implements NTxGraphics {
                 if (arrowWidth <= 0) {
                     arrowWidth = 10;
                 }
-                xPoints = new int[]{-(int) arrowWidth, 0, -(int) arrowWidth};
-                yPoints = new int[]{-(int) arrowHeight, 0, (int) arrowHeight};
-                g.drawPolyline(xPoints, yPoints, xPoints.length);
+                head.moveTo(-arrowWidth, -arrowHeight);
+                head.lineTo(0, 0);
+                head.lineTo(-arrowWidth, arrowHeight);
+                g.draw(head);
                 break;
             }
             case TRIANGLE_FULL:
@@ -205,13 +209,14 @@ public class NTxGraphicsImpl implements NTxGraphics {
                 if (arrowWidth <= 0) {
                     arrowWidth = 10;
                 }
-                xPoints = new int[]{0, -(int) arrowWidth, -(int) arrowWidth};
-                yPoints = new int[]{0, -(int) arrowHeight, (int) arrowHeight};
-                Polygon arrowHead = new Polygon(xPoints, yPoints, xPoints.length);
+                head.moveTo(0, 0);
+                head.lineTo(-arrowWidth, -arrowHeight);
+                head.lineTo(-arrowWidth, arrowHeight);
+                head.closePath();
                 if (type == NTxArrowType.TRIANGLE_FULL) {
-                    g.fill(arrowHead);
+                    g.fill(head);
                 } else {
-                    g.draw(arrowHead);
+                    g.draw(head);
                 }
                 break;
             }
@@ -227,13 +232,15 @@ public class NTxGraphicsImpl implements NTxGraphics {
                 double ymin = -arrowHeight / 2 + arrowHeight / 4;
                 double xlen = arrowWidth / 2;
                 double ylen = arrowHeight / 2;
-                xPoints = new int[]{(int) (xmin + xlen / 2), (int) (xmin + xlen), (int) (xmin + xlen / 2), (int) (xmin)};
-                yPoints = new int[]{(int) (ymin), (int) (ymin + ylen / 2), (int) (ymin + ylen), (int) (ymin + ylen / 2)};
-                Polygon arrowHead = new Polygon(xPoints, yPoints, xPoints.length);
+                head.moveTo(xmin + xlen / 2, ymin);
+                head.lineTo(xmin + xlen, ymin + ylen / 2);
+                head.lineTo(xmin + xlen / 2, ymin + ylen);
+                head.lineTo(xmin, ymin + ylen / 2);
+                head.closePath();
                 if (type == NTxArrowType.DIAMOND_FULL) {
-                    g.fill(arrowHead);
+                    g.fill(head);
                 } else {
-                    g.draw(arrowHead);
+                    g.draw(head);
                 }
                 break;
             }
@@ -249,10 +256,11 @@ public class NTxGraphicsImpl implements NTxGraphics {
                 double ymin = -arrowHeight / 2 + arrowHeight / 4;
                 double xlen = arrowWidth / 2;
                 double ylen = arrowHeight / 2;
+                Ellipse2D.Double arrowHead = new Ellipse2D.Double(xmin, ymin, xlen, ylen);
                 if (type == NTxArrowType.OVAL_FULL) {
-                    fillOval(xmin, ymin, xlen, ylen);
+                    g.fill(arrowHead);
                 } else {
-                    drawOval(xmin, ymin, xlen, ylen);
+                    g.draw(arrowHead);
                 }
                 break;
             }
@@ -268,10 +276,11 @@ public class NTxGraphicsImpl implements NTxGraphics {
                 double ymin = -arrowHeight / 2 + arrowHeight / 4;
                 double xlen = arrowWidth / 2;
                 double ylen = arrowHeight / 2;
+                Rectangle2D.Double arrowHead = new Rectangle2D.Double(xmin, ymin, xlen, ylen);
                 if (type == NTxArrowType.RECTANGLE_FULL) {
-                    fillRect(xmin, ymin, xlen, ylen);
+                    g.fill(arrowHead);
                 } else {
-                    drawRect(xmin, ymin, xlen, ylen);
+                    g.draw(arrowHead);
                 }
                 break;
             }
@@ -548,7 +557,7 @@ public class NTxGraphicsImpl implements NTxGraphics {
 
     @Override
     public void drawLine(double x1, double y1, double x2, double y2) {
-        g.drawLine((int) x1, (int) y1, (int) x2, (int) y2);
+        g.draw(new Line2D.Double(x1, y1, x2, y2));
     }
 
 
@@ -572,21 +581,25 @@ public class NTxGraphicsImpl implements NTxGraphics {
 
     @Override
     public void drawPolyline(double[] xx, double[] yy, int length) {
-        g.drawPolyline(
-                Arrays.stream(xx).mapToInt(d -> (int) d).toArray(),
-                Arrays.stream(yy).mapToInt(d -> (int) d).toArray(),
-                length
-        );
+        if (length <= 0) {
+            return;
+        }
+        Path2D.Double path = new Path2D.Double();
+        path.moveTo(xx[0], yy[0]);
+        for (int i = 1; i < length; i++) {
+            path.lineTo(xx[i], yy[i]);
+        }
+        g.draw(path);
     }
 
     @Override
     public void fillRoundRect(double x, double y, double w, double h, double cx, double cy) {
-        g.fillRoundRect((int) x, (int) y, (int) w, (int) h, (int) cx, (int) cy);
+        g.fill(new RoundRectangle2D.Double(x, y, w, h, cx, cy));
     }
 
     @Override
     public void drawRoundRect(double x, double y, double w, double h, double cx, double cy) {
-        g.drawRoundRect((int) x, (int) y, (int) w, (int) h, (int) cx, (int) cy);
+        g.draw(new RoundRectangle2D.Double(x, y, w, h, cx, cy));
     }
 
     @Override
@@ -768,10 +781,7 @@ public class NTxGraphicsImpl implements NTxGraphics {
         if (pr.getLinePaint()  != null) setPaint(pr.getLinePaint());
         if (pr.getLineStroke() != null) setStroke(pr.getLineStroke());
 
-        g.drawLine(
-                (int) lineStart.x, (int) lineStart.y,
-                (int) lineEnd.x,   (int) lineEnd.y
-        );
+        drawLine(lineStart.x, lineStart.y, lineEnd.x, lineEnd.y);
 
         setStroke(oldStroke); // restore before drawing arrows (they use their own geometry)
 
@@ -804,8 +814,8 @@ public class NTxGraphicsImpl implements NTxGraphics {
 
         //restore default stroke?
         setStroke(oldStroke);
-        drawArrayHead(a, a.minus(b).asVector(), pr.getStartArrow());
-        drawArrayHead(b, b.minus(a).asVector(), pr.getEndArrow());
+        drawArrayHead(a, a.minus(c).asVector(), pr.getStartArrow());
+        drawArrayHead(b, b.minus(c).asVector(), pr.getEndArrow());
         setPaint(oldPaint);
         setStroke(oldStroke);
     }
@@ -834,8 +844,8 @@ public class NTxGraphicsImpl implements NTxGraphics {
 
         //restore default stroke?
         setStroke(oldStroke);
-        drawArrayHead(a, a.minus(b).asVector(), pr.getStartArrow());
-        drawArrayHead(b, b.minus(a).asVector(), pr.getEndArrow());
+        drawArrayHead(a, a.minus(c1).asVector(), pr.getStartArrow());
+        drawArrayHead(b, b.minus(c2).asVector(), pr.getEndArrow());
         setPaint(oldPaint);
         setStroke(oldStroke);
     }
@@ -897,14 +907,14 @@ public class NTxGraphicsImpl implements NTxGraphics {
             }
         }
 
-        int[] xx = new int[drawNodes.length];
-        int[] yy = new int[drawNodes.length];
+        double[] xx = new double[drawNodes.length];
+        double[] yy = new double[drawNodes.length];
         for (int i = 0; i < xx.length; i++) {
             NTxPoint2D pp = drawNodes[i];
-            xx[i] = (int) (pp.x);
-            yy[i] = (int) (pp.y);
+            xx[i] = pp.x;
+            yy[i] = pp.y;
         }
-        g.drawPolyline(xx, yy, xx.length);
+        drawPolyline(xx, yy, xx.length);
 
         setStroke(oldStroke);
         if (nodes != null && nodes.length >= 2) {
