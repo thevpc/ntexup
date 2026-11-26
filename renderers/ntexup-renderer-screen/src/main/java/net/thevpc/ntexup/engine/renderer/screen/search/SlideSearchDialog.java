@@ -13,6 +13,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -60,7 +61,7 @@ public class SlideSearchDialog extends JDialog {
     };
     private final JButton clearBtn = createFlatButton("✕", "Clear");
     private final JPanel chipsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 3));
-    private final DefaultListModel<NTxSlideSearcher.SlideSearchResult> listModel = new DefaultListModel<>();
+    private DefaultListModel<NTxSlideSearcher.SlideSearchResult> listModel = new DefaultListModel<>();
     private final JList<NTxSlideSearcher.SlideSearchResult> resultList = new JList<>(listModel);
     private final SlideSearchResultRenderer resultRenderer = new SlideSearchResultRenderer();
     private final JScrollPane scrollPane;
@@ -69,6 +70,8 @@ public class SlideSearchDialog extends JDialog {
     private final JPanel resultsPanel;
     private final JPanel northPanel;
     private final javax.swing.Timer debounceTimer;
+    private List<SlideHighlightManager.HighlightQuery> displayedCommittedQueries = Collections.emptyList();
+    private SlideHighlightManager.HighlightQuery displayedLiveQuery;
     private long shownAt;
     private boolean closing;
 
@@ -382,10 +385,12 @@ public class SlideSearchDialog extends JDialog {
                     : "No matching slides found");
         }
 
-        listModel.clear();
+        DefaultListModel<NTxSlideSearcher.SlideSearchResult> nextModel = new DefaultListModel<>();
         for (NTxSlideSearcher.SlideSearchResult r : results) {
-            listModel.addElement(r);
+            nextModel.addElement(r);
         }
+        listModel = nextModel;
+        resultList.setModel(listModel);
         resultRenderer.setHoverIndex(-1);
         if (!results.isEmpty()) {
             resultList.setSelectedIndex(0);
@@ -445,31 +450,51 @@ public class SlideSearchDialog extends JDialog {
     // ------------------------------------------------------------------
 
     private void rebuildChips() {
+        List<SlideHighlightManager.HighlightQuery> committed = manager.getQueries();
+        SlideHighlightManager.HighlightQuery live = manager.getLiveQuery();
+        SlideHighlightManager.HighlightQuery liveChip = live;
+        if (liveChip != null) {
+            for (SlideHighlightManager.HighlightQuery q : committed) {
+                if (q.getNormalized().equals(liveChip.getNormalized())) {
+                    liveChip = null;
+                    break;
+                }
+            }
+        }
+        if (sameChips(committed, liveChip)) {
+            return;
+        }
+
         chipsPanel.removeAll();
-        for (SlideHighlightManager.HighlightQuery q : manager.getQueries()) {
+        for (SlideHighlightManager.HighlightQuery q : committed) {
             chipsPanel.add(createChip(q.getTerm(), q.getColor(), () -> {
                 manager.removeQuery(q);
                 refresh();
             }));
         }
-        SlideHighlightManager.HighlightQuery live = manager.getLiveQuery();
-        if (live != null) {
-            boolean sameAsChip = false;
-            for (SlideHighlightManager.HighlightQuery q : manager.getQueries()) {
-                if (q.getNormalized().equals(live.getNormalized())) {
-                    sameAsChip = true;
-                    break;
-                }
-            }
-            if (!sameAsChip) {
-                chipsPanel.add(createChip(live.getTerm(), live.getColor(), () -> {
-                    input.setText("");
-                    refresh();
-                }));
-            }
+        if (liveChip != null) {
+            chipsPanel.add(createChip(liveChip.getTerm(), liveChip.getColor(), () -> {
+                input.setText("");
+                refresh();
+            }));
         }
+        displayedCommittedQueries = new ArrayList<>(committed);
+        displayedLiveQuery = liveChip;
         chipsPanel.revalidate();
         chipsPanel.repaint();
+    }
+
+    private boolean sameChips(List<SlideHighlightManager.HighlightQuery> committed,
+                              SlideHighlightManager.HighlightQuery liveChip) {
+        if (displayedLiveQuery != liveChip || displayedCommittedQueries.size() != committed.size()) {
+            return false;
+        }
+        for (int i = 0; i < committed.size(); i++) {
+            if (displayedCommittedQueries.get(i) != committed.get(i)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private JPanel createChip(String term, Color color, Runnable onRemove) {
@@ -545,18 +570,19 @@ public class SlideSearchDialog extends JDialog {
         Window owner = getOwner();
         int ownerW = owner != null ? owner.getWidth() : 1200;
         int w = Math.min(780, Math.max(420, ownerW - 80));
-        setSize(w, Math.max(getHeight(), 200));
 
         // give the vertical box its width so FlowLayout wraps the chips
         northPanel.setSize(w - 28, northPanel.getHeight());
         int northH = northPanel.getPreferredSize().height;
         int rows = Math.min(Math.max(listModel.size(), 1), VISIBLE_ROWS);
         int h = northH + rows * CELL_H + 6 + 24;
-        setSize(w, h);
 
         int x;
         int y;
-        if (owner != null) {
+        if (isShowing()) {
+            x = getX();
+            y = getY();
+        } else if (owner != null) {
             Rectangle b = owner.getBounds();
             x = b.x + (b.width - w) / 2;
             y = b.y + (documentView.isFullScreen() ? 40 : 70);
@@ -565,6 +591,9 @@ public class SlideSearchDialog extends JDialog {
             x = (scr.width - w) / 2;
             y = 60;
         }
-        setLocation(x, y);
+        Rectangle bounds = new Rectangle(x, y, w, h);
+        if (!getBounds().equals(bounds)) {
+            setBounds(bounds);
+        }
     }
 }
