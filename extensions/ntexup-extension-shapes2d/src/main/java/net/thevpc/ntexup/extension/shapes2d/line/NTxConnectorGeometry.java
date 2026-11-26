@@ -6,16 +6,35 @@ import net.thevpc.ntexup.api.document.elem2d.NTxPoint2D;
 import java.awt.Shape;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.PathIterator;
+import java.awt.geom.Rectangle2D;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Pure geometry helpers for {@link NTxConnectorBuilder}. Kept separate so the
  * anchor/clipping math can be unit tested without a rendering context.
  */
 public final class NTxConnectorGeometry {
+    private static final Pattern PARAMETRIC_ANCHOR = Pattern.compile(
+            "(radial|top|right|bottom|left)\\s*\\(\\s*"
+                    + "([+-]?(?:\\d+(?:\\.\\d*)?|\\.\\d+)(?:[eE][+-]?\\d+)?)\\s*\\)");
+    private static final Set<String> SIDES = Set.of(
+            "left", "right", "top", "bottom", "top-left", "top-right",
+            "bottom-left", "bottom-right", "center");
+
     private NTxConnectorGeometry() {
+    }
+
+    public enum AnchorKind {
+        AUTO, SIDE, EDGE, RADIAL
+    }
+
+    public record AnchorSpec(AnchorKind kind, String side, double value) {
     }
 
     public static NTxPoint2D center(NTxBounds2D bounds, AffineTransform toRoot) {
@@ -73,6 +92,104 @@ public final class NTxConnectorGeometry {
         }
         Point2D p = toRoot.transform(new Point2D.Double(x, y), null);
         return new NTxPoint2D(p.getX(), p.getY());
+    }
+
+    public static AnchorSpec parseAnchorSpec(String side) {
+        if (side == null) {
+            return null;
+        }
+        String value = side.trim().toLowerCase(Locale.ROOT);
+        if (value.isEmpty()) {
+            return null;
+        }
+        if ("auto".equals(value)) {
+            return new AnchorSpec(AnchorKind.AUTO, value, 0);
+        }
+        if (SIDES.contains(value)) {
+            return new AnchorSpec(AnchorKind.SIDE, value, 0);
+        }
+        if (!value.contains("(") && !value.contains(")")) {
+            return new AnchorSpec(AnchorKind.SIDE, value, 0);
+        }
+        Matcher matcher = PARAMETRIC_ANCHOR.matcher(value);
+        if (!matcher.matches()) {
+            return null;
+        }
+        double number = Double.parseDouble(matcher.group(2));
+        if (!Double.isFinite(number)) {
+            return null;
+        }
+        AnchorKind kind = "radial".equals(matcher.group(1))
+                ? AnchorKind.RADIAL : AnchorKind.EDGE;
+        if (kind == AnchorKind.EDGE && (number < 0 || number > 100)) {
+            return null;
+        }
+        return new AnchorSpec(kind, matcher.group(1), number);
+    }
+
+    public static NTxPoint2D anchorPoint(NTxBounds2D bounds, AffineTransform toRoot,
+                                         Shape outline, AnchorSpec spec) {
+        if (spec == null || spec.kind() == AnchorKind.AUTO) {
+            return center(bounds, toRoot);
+        }
+        return switch (spec.kind()) {
+            case SIDE -> sidePoint(bounds, toRoot, spec.side());
+            case EDGE -> edgePoint(bounds, toRoot, spec.side(), spec.value());
+            case RADIAL -> radialPoint(bounds, toRoot, outline, spec.value());
+            default -> center(bounds, toRoot);
+        };
+    }
+
+    public static NTxPoint2D edgePoint(NTxBounds2D bounds, AffineTransform toRoot,
+                                       String edge, double percent) {
+        double minX = bounds.minX();
+        double maxX = minX + bounds.widthX();
+        double minY = bounds.minY();
+        double maxY = minY + bounds.widthY();
+        double p = Math.max(0, Math.min(1, percent / 100.0));
+        double x;
+        double y;
+        switch (edge.toLowerCase(Locale.ROOT)) {
+            case "top" -> {
+                x = minX + bounds.widthX() * p;
+                y = minY;
+            }
+            case "right" -> {
+                x = maxX;
+                y = minY + bounds.widthY() * p;
+            }
+            case "bottom" -> {
+                x = maxX - bounds.widthX() * p;
+                y = maxY;
+            }
+            case "left" -> {
+                x = minX;
+                y = maxY - bounds.widthY() * p;
+            }
+            default -> {
+                return center(bounds, toRoot);
+            }
+        }
+        Point2D point = toRoot.transform(new Point2D.Double(x, y), null);
+        return new NTxPoint2D(point.getX(), point.getY());
+    }
+
+    public static NTxPoint2D radialPoint(NTxBounds2D bounds, AffineTransform toRoot,
+                                         Shape outline, double degrees) {
+        double cx = bounds.minX() + bounds.widthX() / 2.0;
+        double cy = bounds.minY() + bounds.widthY() / 2.0;
+        double radius = Math.hypot(bounds.widthX(), bounds.widthY());
+        Point2D center = toRoot.transform(new Point2D.Double(cx, cy), null);
+        if (radius <= 1e-9) {
+            return new NTxPoint2D(center.getX(), center.getY());
+        }
+        double angle = Math.toRadians(degrees % 360.0);
+        Point2D far = toRoot.transform(new Point2D.Double(
+                cx + Math.cos(angle) * radius,
+                cy + Math.sin(angle) * radius), null);
+        Shape target = outline != null ? outline : toRoot.createTransformedShape(
+                new Rectangle2D.Double(bounds.minX(), bounds.minY(), bounds.widthX(), bounds.widthY()));
+        return intersectOutline(target, center, new NTxPoint2D(far.getX(), far.getY()));
     }
 
     /**

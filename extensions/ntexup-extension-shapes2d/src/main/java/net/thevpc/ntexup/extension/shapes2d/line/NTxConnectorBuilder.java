@@ -150,10 +150,11 @@ public class NTxConnectorBuilder implements NTxNodeBuilder {
         if (endpoint.placed == null) {
             return endpoint.point;
         }
-        NTxPlaced p = endpoint.placed;
-        if (endpoint.side != null && !"auto".equalsIgnoreCase(endpoint.side)) {
-            return NTxConnectorGeometry.sidePoint(p.bounds, p.toRoot, endpoint.side);
+        NTxPoint2D explicit = explicitAnchor(endpoint);
+        if (explicit != null) {
+            return explicit;
         }
+        NTxPlaced p = endpoint.placed;
         NTxPoint2D center = NTxConnectorGeometry.center(p.bounds, p.toRoot);
         NTxPoint2D otherPoint = next != null ? next : preliminary(other);
         if (otherPoint == null) {
@@ -166,10 +167,20 @@ public class NTxConnectorBuilder implements NTxNodeBuilder {
         if (e.placed == null) {
             return e.point;
         }
-        if (e.side != null && !"auto".equalsIgnoreCase(e.side)) {
-            return NTxConnectorGeometry.sidePoint(e.placed.bounds, e.placed.toRoot, e.side);
+        NTxPoint2D explicit = explicitAnchor(e);
+        if (explicit != null) {
+            return explicit;
         }
         return NTxConnectorGeometry.center(e.placed.bounds, e.placed.toRoot);
+    }
+
+    private NTxPoint2D explicitAnchor(Endpoint endpoint) {
+        if (endpoint.placed == null || endpoint.anchorSpec == null
+                || endpoint.anchorSpec.kind() == NTxConnectorGeometry.AnchorKind.AUTO) {
+            return null;
+        }
+        NTxPlaced p = endpoint.placed;
+        return NTxConnectorGeometry.anchorPoint(p.bounds, p.toRoot, p.outline(), endpoint.anchorSpec);
     }
 
     private Endpoint endpoint(NTxRendererContext ctx, NTxNode node, NTxGeometryIndex geometry,
@@ -186,6 +197,13 @@ public class NTxConnectorBuilder implements NTxNodeBuilder {
             }
         } else if (elem != null && elem.isName()) {
             e.ref = elem.toString().trim();
+        }
+        if (e.side != null) {
+            e.anchorSpec = NTxConnectorGeometry.parseAnchorSpec(e.side);
+            if (e.anchorSpec == null) {
+                warnOnce(ctx, node, "connector endpoint anchor '" + e.side + "' is invalid");
+                return null;
+            }
         }
         if (e.ref != null && !e.ref.isEmpty()) {
             NOptional<NTxPlaced> placed = geometry.resolve(node, e.ref);
@@ -312,6 +330,13 @@ public class NTxConnectorBuilder implements NTxNodeBuilder {
         if (e.side != null) {
             ob.add("side", NElement.of(e.side));
         }
+        if (e.anchorSpec != null) {
+            ob.add("anchor", NElement.of(e.anchorSpec.kind().name().toLowerCase(Locale.ROOT)));
+            if (e.anchorSpec.kind() == NTxConnectorGeometry.AnchorKind.EDGE
+                    || e.anchorSpec.kind() == NTxConnectorGeometry.AnchorKind.RADIAL) {
+                ob.add("anchor-value", NElement.of(e.anchorSpec.value()));
+            }
+        }
         if (e.placed != null) {
             ob.add("type", NElement.of(e.placed.node.type()));
             if (e.placed.name != null) {
@@ -372,6 +397,7 @@ public class NTxConnectorBuilder implements NTxNodeBuilder {
     private static final class Endpoint {
         String ref;
         String side;
+        NTxConnectorGeometry.AnchorSpec anchorSpec;
         NTxPlaced placed;
         NTxPoint2D point;
         boolean hidden;

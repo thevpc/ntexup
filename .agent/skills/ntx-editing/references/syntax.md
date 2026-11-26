@@ -79,9 +79,10 @@ Built-in list style class names: `ul-item`, `ol-item`, `ul-bullet`.
 group{ ... }                                  // overlay children in one box (new var scope)
 grid(3, 2){ a b c d e f }                     // cols, rows; filled row by row
 grid((2, 2), columns-weight: [1, 3], rows-weight: [1, 1], draw-grid){ ... }
+grid(2, 2){ rectangle(grid-weight: 3){...} x y } // child weight, both axes
 grid(3, 2){ rectangle(colspan: 2){...} x y }  // colspan / rowspan
-col(rows-weight: [22, 78]){ top bottom }      // vertical stack
-row{ left right }                             // horizontal stack
+col{ text("top", grid-weight: 22) text("bottom", grid-weight: 78) }
+row{ text("left", grid-weight: 1) text("right", grid-weight: 3) }
 fragment{ ... }                               // grouping only (no scope, no node)
 block{ ... }                                  // own var scope, no node
 ```
@@ -126,6 +127,7 @@ rectangle(name: "a", position: (2, 10), origin: top-left, size: (16, 12), draw-c
 rectangle(name: "b", position: (40, 30), origin: top-left, size: (16, 12), draw-contour){ text("DB", at: center) }
 connector("a", "b", end-arrow: simple(), stroke: 2)                  // auto anchors
 connector(from: "a@right", to: "b@left", end-arrow: triangle())     // explicit sides
+connector(from: "a@right(20)", to: "b@radial(30)", end-arrow: triangle()) // edge % / angle
 connector("a", "b", via: (24, 75), end-arrow: simple())              // polyline
 connector("a", (92, 72), end-arrow: simple())                        // node -> free point
 connector("a", "b", flow: dots(count: 3, size: 1.2, period: 3))      // animated (viewer only)

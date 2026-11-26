@@ -1,5 +1,6 @@
 package net.thevpc.ntexup.test;
 
+import net.thevpc.ntexup.api.document.elem2d.NTxPoint2D;
 import net.thevpc.ntexup.api.document.node.NTxNode;
 import net.thevpc.ntexup.api.engine.NTxCompiledDocument;
 import net.thevpc.ntexup.api.engine.NTxCompiledPage;
@@ -8,9 +9,12 @@ import net.thevpc.ntexup.api.log.NTxLogger;
 import net.thevpc.ntexup.api.log.NTxMsg;
 import net.thevpc.ntexup.api.renderer.NTxDocumentStreamRendererConfig;
 import net.thevpc.ntexup.api.renderer.NTxNodeRendererConfig;
+import net.thevpc.ntexup.api.renderer.NTxPlaced;
+import net.thevpc.ntexup.api.renderer.NTxRenderSessionListener;
 import net.thevpc.ntexup.api.source.NTxSource;
 import net.thevpc.ntexup.engine.impl.DefaultNTxEngine;
 import net.thevpc.ntexup.engine.renderer.dump.DumpDocumentRenderer;
+import net.thevpc.ntexup.extension.shapes2d.line.NTxConnectorGeometry;
 import net.thevpc.nuts.Nuts;
 import net.thevpc.nuts.elem.NElement;
 import net.thevpc.nuts.io.NPath;
@@ -32,6 +36,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class TestConnectorDeck {
@@ -243,6 +248,95 @@ public class TestConnectorDeck {
     }
 
     @Test
+    public void testEdgeAndRadialAnchorsExposeResolvedGeometry() {
+        NTxEngine engine = new DefaultNTxEngine();
+        String deck = "page{\n"
+                + "  rectangle(name:\"a\", position:(10,20), origin:top-left, size:(20,20), draw-contour)\n"
+                + "  rectangle(name:\"b\", position:(70,20), origin:top-left, size:(20,20), draw-contour)\n"
+                + "  connector(from:\"a@right(20)\", to:\"b@radial(270)\", route:\"rounded\")\n"
+                + "}";
+        NTxCompiledDocument doc = engine.loadDocument(
+                new ByteArrayInputStream(deck.getBytes(StandardCharsets.UTF_8)));
+        List<NTxPlaced> placed = renderPlaced(engine, doc);
+        NTxPlaced a = placed(placed, "a");
+        NTxPlaced b = placed(placed, "b");
+        NTxPoint2D expectedFrom = NTxConnectorGeometry.edgePoint(
+                a.bounds, a.toRoot, "right", 20);
+        NTxPoint2D expectedTo = NTxConnectorGeometry.radialPoint(
+                b.bounds, b.toRoot, b.outline(), 270);
+
+        NElement dump = renderDump(engine, doc, 400, 300);
+        NElement connector = connectorDump(dump);
+        assertNotNull(connector, "parametric anchors should produce a connector dump: " + dump);
+        List<Point2D.Double> routed = points(field(field(connector, "data"), "points"));
+        assertEquals(expectedFrom.x, routed.get(0).x, 0.002);
+        assertEquals(expectedFrom.y, routed.get(0).y, 0.002);
+        assertEquals(expectedTo.x, routed.get(routed.size() - 1).x, 0.002);
+        assertEquals(expectedTo.y, routed.get(routed.size() - 1).y, 0.002);
+
+        NElement data = field(connector, "data");
+        NElement from = field(data, "from");
+        NElement to = field(data, "to");
+        assertEquals("edge", stringField(from, "anchor"));
+        assertEquals(20.0, doubleField(from, "anchor-value"), 0.001);
+        assertEquals("radial", stringField(to, "anchor"));
+        assertEquals(270.0, doubleField(to, "anchor-value"), 0.001);
+    }
+
+    @Test
+    public void testRadialAnchorSurvivesRotationAndAimsAutomaticOppositeAnchor() {
+        NTxEngine engine = new DefaultNTxEngine();
+        String deck = "page{\n"
+                + "  group(name:\"rotated\", position:(10,10), origin:top-left, size:(80,70), rotate:30){\n"
+                + "    rectangle(name:\"a\", position:(5,15), origin:top-left, size:(20,20), draw-contour)\n"
+                + "    rectangle(name:\"b\", position:(65,15), origin:top-left, size:(20,20), draw-contour)\n"
+                + "    connector(from:\"a@radial(30)\", to:\"b\", end-arrow:simple())\n"
+                + "  }\n"
+                + "}";
+        NTxCompiledDocument doc = engine.loadDocument(
+                new ByteArrayInputStream(deck.getBytes(StandardCharsets.UTF_8)));
+        List<NTxPlaced> placed = renderPlaced(engine, doc);
+        NTxPlaced a = placed(placed, "a");
+        NTxPlaced b = placed(placed, "b");
+        NTxPoint2D expectedFrom =
+                NTxConnectorGeometry.radialPoint(
+                        a.bounds, a.toRoot, a.outline(), 30);
+        Point2D centerB = b.toRoot.transform(
+                new Point2D.Double(b.bounds.centerX(), b.bounds.centerY()), null);
+        NTxPoint2D expectedTo =
+                NTxConnectorGeometry.intersectOutline(
+                        b.outline(), centerB, expectedFrom);
+
+        NElement connector = connectorDump(renderDump(engine, doc, 400, 300));
+        assertNotNull(connector);
+        List<Point2D.Double> routed = points(field(field(connector, "data"), "points"));
+        assertEquals(expectedFrom.x, routed.get(0).x, 0.002);
+        assertEquals(expectedFrom.y, routed.get(0).y, 0.002);
+        assertEquals(expectedTo.x, routed.get(routed.size() - 1).x, 0.002);
+        assertEquals(expectedTo.y, routed.get(routed.size() - 1).y, 0.002);
+    }
+
+    @Test
+    public void testMalformedParametricAnchorWarnsAndSkipsConnector() {
+        CapturingLogger logs = new CapturingLogger();
+        NTxEngine engine = new DefaultNTxEngine();
+        engine.addLog(logs);
+        String deck = "page{\n"
+                + "  rectangle(name:\"a\", size:(20,20))\n"
+                + "  rectangle(name:\"b\", position:(70,20), size:(20,20))\n"
+                + "  connector(from:\"a@right(101)\", to:\"b\")\n"
+                + "}";
+        NTxCompiledDocument doc = engine.loadDocument(
+                new ByteArrayInputStream(deck.getBytes(StandardCharsets.UTF_8)));
+        assertNotNull(engine.renderImage(doc.page(0).get(),
+                new NTxNodeRendererConfig(400, 300).withAnimate(false).withPrint(true)));
+        assertNull(connectorDump(renderDump(engine, doc, 400, 300)),
+                "malformed anchors should not paint a connector");
+        assertTrue(logs.messages.stream().anyMatch(m -> m.contains("anchor 'right(101)' is invalid")),
+                "malformed anchors should warn, got: " + logs.messages);
+    }
+
+    @Test
     public void testUnsupportedRouteWarnsAndStillRenders() throws Exception {
         CapturingLogger logs = new CapturingLogger();
         NTxEngine engine = new DefaultNTxEngine();
@@ -261,6 +355,23 @@ public class TestConnectorDeck {
         assertNotNull(img);
         assertTrue(logs.messages.stream().anyMatch(m -> m.contains("not supported")),
                 "an unsupported connector route should warn, got: " + logs.messages);
+    }
+
+    private static List<NTxPlaced> renderPlaced(NTxEngine engine, NTxCompiledDocument doc) {
+        List<NTxPlaced> placed = new ArrayList<>();
+        NTxNodeRendererConfig config = new NTxNodeRendererConfig(400, 300)
+                .withAnimate(false)
+                .withPrint(true);
+        config.setCapability(NTxRenderSessionListener.CAPABILITY,
+                (NTxRenderSessionListener) session -> placed.addAll(session.geometry().placed()));
+        assertNotNull(engine.renderImage(doc.page(0).get(), config));
+        return placed;
+    }
+
+    private static NTxPlaced placed(List<NTxPlaced> placed, String name) {
+        NTxPlaced result = placed.stream().filter(p -> name.equals(p.name)).findFirst().orElse(null);
+        assertNotNull(result, "missing placed node " + name + " in " + placed);
+        return result;
     }
 
     private static NElement renderDump(NTxEngine engine, NTxCompiledDocument doc, int width, int height) {

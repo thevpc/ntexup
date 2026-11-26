@@ -137,15 +137,26 @@ the nodes it references (forward references are supported).
 |------|---------|
 | `"name"` | automatic border point aimed toward the other endpoint, or toward the first/last `via` point when present |
 | `"name@side"` | fixed side point: `left`, `right`, `top`, `bottom`, `top-left`, `top-right`, `bottom-left`, `bottom-right`, `center`; `auto` selects the automatic border point |
+| `"name@top(25)"` / `right(25)` / `bottom(25)` / `left(25)` | percentage position along an edge |
+| `"name@radial(30)"` | angle from the node center, intersected with its layout outline |
 | `(x, y)` | free point in the parent's coordinate space |
 
 Endpoint arguments may also be named:
 
 ```tson
 connector(from: "api@right", to: "db@left", end-arrow: triangle())
+connector(from: "api@right(20)", to: "db@radial(270)", end-arrow: triangle())
 connector(from: "api", to: (75, 75), end-arrow: simple())
 connector("api", "db", via: ((50, 30), (50, 70)), end-arrow: simple())
 ```
+
+Edge percentages run clockwise from the top-left corner: `top` goes left to right,
+`right` top to bottom, `bottom` right to left, and `left` bottom to top. Values must
+be in `0..100`. Radial angles are degrees clockwise from local right: `0` is right,
+`90` down, `180` left, and `270` up; negative and multi-turn angles are normalized.
+Both forms are calculated in the node's local layout rectangle and then transformed
+with its placement, so nested rotation preserves the selected port. A malformed
+parametric anchor logs a warning and skips the connector.
 
 `via` adds waypoints between the resolved endpoints. The `route` mode determines whether
 those waypoints are joined by sharp segments, adjusted into orthogonal legs, or rounded

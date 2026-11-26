@@ -67,9 +67,10 @@ The complete list of node properties observed in ntexup.
 
 | Property | Description |
 |----------|-------------|
-| `columns-weight` | `[w1, w2, ...]` column expansion weights |
-| `rows-weight` | `[h1, h2, ...]` row expansion weights |
-| `col-weight` / `row-weight` | per-cell weight |
+| `columns-weight` | `[w1, w2, ...]` column expansion weights; positive entries override child weights |
+| `rows-weight` | `[h1, h2, ...]` row expansion weights; positive entries override child weights |
+| `col-weight` / `row-weight` | positive per-cell weight for one axis |
+| `grid-weight` | positive per-cell weight for both axes; used when the matching axis weight is absent |
 | `colspan` | columns a cell spans |
 | `rowspan` | rows a cell spans |
 | `draw-grid` | draw grid lines |
@@ -123,7 +124,7 @@ The complete list of node properties observed in ntexup.
 
 | Property | Description |
 |----------|-------------|
-| `from` | named node reference `"name"`, `"name@side"`, or a free `(x,y)` point in the parent's coordinate space |
+| `from` | named node reference `"name"`, `"name@side"`, `"name@edge(percent)"`, `"name@radial(degrees)"`, or a free `(x,y)` point in the parent's coordinate space |
 | `to` | same as `from` |
 | `via` | optional waypoints in the parent's coordinate space; routing determines how they are joined |
 | `route` | case-insensitive mode: sharp/polyline (`straight`, `direct`, `line`, `none`, `auto`, `polyline`, `sharp`; default `auto`), orthogonal (`orthogonal`, `ortho`, `right-angle`, `elbow`), or rounded (`rounded`, `curve`, `curved`) |
@@ -131,8 +132,12 @@ The complete list of node properties observed in ntexup.
 
 Endpoint names may be dotted (`"block.node"`) to select a node inside a named ancestor.
 A bare name (or `@auto`) aims its border anchor toward the other endpoint, or toward the
-first/last `via` point when present. Hidden endpoints suppress the connector silently;
-unresolved names log a warning.
+first/last `via` point when present. `top/right/bottom/left(percent)` selects a point on
+that edge; percentages run clockwise from the top-left and must be in `0..100`.
+`radial(degrees)` uses clockwise-positive local angles (`0` right, `90` down) and
+intersects the transformed layout outline. Explicit anchors also guide the opposite
+automatic anchor. Hidden endpoints suppress the connector silently; unresolved names
+and malformed parametric anchors log a warning.
 
 Routing is waypoint-based and does not avoid obstacles or choose alternate corridors.
 Unsupported route names warn and fall back to sharp waypoint routing. Painting, arrowheads,
