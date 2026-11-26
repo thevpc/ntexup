@@ -158,7 +158,15 @@ public abstract class PlantUmlBuilderBase implements NTxNodeBuilder {
         SourceStringReader reader = new SourceStringReader(source);
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         try {
-            reader.outputImage(bos);
+            net.sourceforge.plantuml.core.DiagramDescription desc = reader.outputImage(bos);
+            if (desc != null && desc.getDescription() != null
+                    && desc.getDescription().toLowerCase().contains("error")) {
+                // PlantUML still returns an image (its red/green error page): report it,
+                // otherwise check/pdf exit cleanly with a broken diagram in the output
+                NTxSource src = NTxUtils.sourceOf(node);
+                rendererContext.log(NMsg.ofC("%s: PlantUML reports a syntax error in the diagram source",
+                        node.type()).asSevere(), src);
+            }
             BufferedImage image = ImageIO.read(new ByteArrayInputStream(bos.toByteArray()));
             if (image != null) {
                 node.setRenderCache(DIAGRAM_CACHE_KEY,
@@ -197,9 +205,9 @@ public abstract class PlantUmlBuilderBase implements NTxNodeBuilder {
         NElement bgVal = rendererContext.getVarValue("documentBg").orNull();
         if (bgVal != null && bgVal.isString()) {
             String s = bgVal.asStringValue().get().trim();
-            if (s.startsWith("#") && (s.length() == 7 || s.length() == 4)) {
+            if (s.startsWith("#") && (s.length() == 7 || s.length() == 9)) {
                 try {
-                    Color c = Color.decode(s);
+                    Color c = Color.decode(s.substring(0, 7));
                     double lum = 0.299 * c.getRed() + 0.587 * c.getGreen() + 0.114 * c.getBlue();
                     return lum < 128;
                 } catch (Exception ignore) {
@@ -209,9 +217,9 @@ public abstract class PlantUmlBuilderBase implements NTxNodeBuilder {
         NElement txtVal = rendererContext.getVarValue("documentTextPrimary").orNull();
         if (txtVal != null && txtVal.isString()) {
             String s = txtVal.asStringValue().get().trim();
-            if (s.startsWith("#") && (s.length() == 7 || s.length() == 4)) {
+            if (s.startsWith("#") && (s.length() == 7 || s.length() == 9)) {
                 try {
-                    Color c = Color.decode(s);
+                    Color c = Color.decode(s.substring(0, 7));
                     double lum = 0.299 * c.getRed() + 0.587 * c.getGreen() + 0.114 * c.getBlue();
                     return lum > 128;
                 } catch (Exception ignore) {
@@ -223,74 +231,74 @@ public abstract class PlantUmlBuilderBase implements NTxNodeBuilder {
 
     private void appendDarkSkinparams(NStringBuilder out) {
         out.println("skinparam defaultFontColor #e6edf3");
-        out.println("skinparam ArrowColor #8b949e");
-        out.println("skinparam ActivityBorderColor #8b949e");
+        out.println("skinparam ArrowColor #b4bdd0");
+        out.println("skinparam ActivityBorderColor #b4bdd0");
         out.println("skinparam ActivityBackgroundColor #21262d");
         out.println("skinparam ActivityFontColor #e6edf3");
-        out.println("skinparam ActivityDiamondBorderColor #8b949e");
+        out.println("skinparam ActivityDiamondBorderColor #b4bdd0");
         out.println("skinparam ActivityDiamondBackgroundColor #21262d");
         out.println("skinparam ActivityDiamondFontColor #e6edf3");
-        out.println("skinparam UsecaseBorderColor #8b949e");
+        out.println("skinparam UsecaseBorderColor #b4bdd0");
         out.println("skinparam UsecaseBackgroundColor #21262d");
         out.println("skinparam UsecaseFontColor #e6edf3");
-        out.println("skinparam ActorBorderColor #8b949e");
+        out.println("skinparam ActorBorderColor #b4bdd0");
         out.println("skinparam ActorBackgroundColor #21262d");
         out.println("skinparam ActorFontColor #e6edf3");
-        out.println("skinparam ClassBorderColor #8b949e");
+        out.println("skinparam ClassBorderColor #b4bdd0");
         out.println("skinparam ClassBackgroundColor #21262d");
         out.println("skinparam ClassFontColor #e6edf3");
         out.println("skinparam ClassHeaderBackgroundColor #30363d");
-        out.println("skinparam ComponentBorderColor #8b949e");
+        out.println("skinparam ComponentBorderColor #b4bdd0");
         out.println("skinparam ComponentBackgroundColor #21262d");
         out.println("skinparam ComponentFontColor #e6edf3");
-        out.println("skinparam InterfaceBorderColor #8b949e");
+        out.println("skinparam InterfaceBorderColor #b4bdd0");
         out.println("skinparam InterfaceBackgroundColor #21262d");
         out.println("skinparam InterfaceFontColor #e6edf3");
-        out.println("skinparam NodeBorderColor #8b949e");
+        out.println("skinparam NodeBorderColor #b4bdd0");
         out.println("skinparam NodeBackgroundColor #21262d");
         out.println("skinparam NodeFontColor #e6edf3");
-        out.println("skinparam PackageBorderColor #8b949e");
+        out.println("skinparam PackageBorderColor #b4bdd0");
         out.println("skinparam PackageBackgroundColor #161b22");
         out.println("skinparam PackageFontColor #e6edf3");
-        out.println("skinparam RectangleBorderColor #8b949e");
+        out.println("skinparam RectangleBorderColor #b4bdd0");
         out.println("skinparam RectangleBackgroundColor #21262d");
         out.println("skinparam RectangleFontColor #e6edf3");
-        out.println("skinparam SequenceLifeLineBorderColor #8b949e");
+        out.println("skinparam SequenceLifeLineBorderColor #b4bdd0");
         out.println("skinparam SequenceLifeLineBackgroundColor #21262d");
-        out.println("skinparam SequenceGroupBorderColor #8b949e");
+        out.println("skinparam SequenceGroupBorderColor #b4bdd0");
         out.println("skinparam SequenceGroupBackgroundColor #161b22");
         out.println("skinparam SequenceGroupFontColor #e6edf3");
-        out.println("skinparam ParticipantBorderColor #8b949e");
+        out.println("skinparam ParticipantBorderColor #b4bdd0");
         out.println("skinparam ParticipantBackgroundColor #21262d");
         out.println("skinparam ParticipantFontColor #e6edf3");
-        out.println("skinparam StateBorderColor #8b949e");
+        out.println("skinparam StateBorderColor #b4bdd0");
         out.println("skinparam StateBackgroundColor #21262d");
         out.println("skinparam StateFontColor #e6edf3");
-        out.println("skinparam ObjectBorderColor #8b949e");
+        out.println("skinparam ObjectBorderColor #b4bdd0");
         out.println("skinparam ObjectBackgroundColor #21262d");
         out.println("skinparam ObjectFontColor #e6edf3");
-        out.println("skinparam DatabaseBorderColor #8b949e");
+        out.println("skinparam DatabaseBorderColor #b4bdd0");
         out.println("skinparam DatabaseBackgroundColor #21262d");
         out.println("skinparam DatabaseFontColor #e6edf3");
-        out.println("skinparam EntityBorderColor #8b949e");
+        out.println("skinparam EntityBorderColor #b4bdd0");
         out.println("skinparam EntityBackgroundColor #21262d");
         out.println("skinparam EntityFontColor #e6edf3");
-        out.println("skinparam AgentBorderColor #8b949e");
+        out.println("skinparam AgentBorderColor #b4bdd0");
         out.println("skinparam AgentBackgroundColor #21262d");
         out.println("skinparam AgentFontColor #e6edf3");
-        out.println("skinparam CardBorderColor #8b949e");
+        out.println("skinparam CardBorderColor #b4bdd0");
         out.println("skinparam CardBackgroundColor #21262d");
         out.println("skinparam CardFontColor #e6edf3");
-        out.println("skinparam FileBorderColor #8b949e");
+        out.println("skinparam FileBorderColor #b4bdd0");
         out.println("skinparam FileBackgroundColor #21262d");
         out.println("skinparam FileFontColor #e6edf3");
-        out.println("skinparam FolderBorderColor #8b949e");
+        out.println("skinparam FolderBorderColor #b4bdd0");
         out.println("skinparam FolderBackgroundColor #161b22");
         out.println("skinparam FolderFontColor #e6edf3");
-        out.println("skinparam FrameBorderColor #8b949e");
+        out.println("skinparam FrameBorderColor #b4bdd0");
         out.println("skinparam FrameBackgroundColor #161b22");
         out.println("skinparam FrameFontColor #e6edf3");
-        out.println("skinparam CloudBorderColor #8b949e");
+        out.println("skinparam CloudBorderColor #b4bdd0");
         out.println("skinparam CloudBackgroundColor #21262d");
         out.println("skinparam CloudFontColor #e6edf3");
     }

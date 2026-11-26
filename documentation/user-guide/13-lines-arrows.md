@@ -45,6 +45,16 @@ polyline(points: ((80, 200), (220, 120), (360, 240), (500, 160)),
          end-arrow: triangle())
 ```
 
+Add the `relative` flag to give the points as percentages of the polyline's box
+instead (like `line` endpoints). Relative points do not depend on the output
+resolution or on where the box is laid out, which is what you want inside grids
+and cards:
+
+```tson
+polyline(points: ((10, 70), (35, 30), (60, 70), (90, 30)), relative,
+         stroke: 2, end-arrow: triangle())
+```
+
 Points may also be written one per argument:
 
 ```tson

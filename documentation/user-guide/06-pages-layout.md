@@ -22,7 +22,7 @@ content-slide(title: "Rationale", variant: 2) {
 }
 ```
 
-The component name depends on the theme (classic, eniso, ibtihel). Raw `page` is always available:
+The component name depends on the theme (classic, meridian, lucid, eniso, ibtihel). Raw `page` is always available:
 
 ```tson
 page {

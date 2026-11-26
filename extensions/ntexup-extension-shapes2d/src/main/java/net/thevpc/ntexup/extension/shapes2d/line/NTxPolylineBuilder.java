@@ -104,6 +104,7 @@ public class NTxPolylineBuilder implements NTxNodeBuilder {
                     return false;
                 })
                 .parseParam().matchesNamedPair(NTxPropName.START_ARROW, NTxPropName.END_ARROW, "arrow", "label", "flow").then()
+                .parseParam().matchesNamedPair("relative").asFlags().then()
                 .renderComponent(this::render);
     }
 
@@ -114,6 +115,17 @@ public class NTxPolylineBuilder implements NTxNodeBuilder {
         NTxBounds2D b = rendererContext.selfBounds2D();
         NTxGraphics g = rendererContext.graphics();
         NTxPoint2D[] points = NTxValue.ofProp(node, NTxPropName.POINTS).asPoint2DArray().get();
+        if (NTxValueByType.getBoolean(rendererContext, "relative").orElse(false)) {
+            // relative points are percents of the polyline box, like line endpoints:
+            // independent of the output resolution and of where the box is laid out
+            NTxPoint2D[] mapped = new NTxPoint2D[points.length];
+            for (int i = 0; i < points.length; i++) {
+                mapped[i] = new NTxPoint2D(
+                        b.minX() + points[i].x / 100.0 * b.widthX(),
+                        b.minY() + points[i].y / 100.0 * b.widthY());
+            }
+            points = mapped;
+        }
         if (!rendererContext.isDry()) {
             Paint fc = rendererContext.getLineColor(true);
             NtxElement2DPolyline pl = (NtxElement2DPolyline) NTxElement2DFactory.polyline(points)

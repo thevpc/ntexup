@@ -6,9 +6,16 @@ Templates and themes provide ready-to-use structures and styles. They come from 
 
 | Template | Description |
 |-------|-------------|
-| `classic` | Default template, 12-accent-color palette |
+| `classic` | Default. Light, sophisticated and modern (warm paper, ink cover panel, accent-tab cards) |
+| `meridian` | Dark, sleek and modern (night background, luminous accents, globe cover) |
+| `lucid` | Clean and minimalist (white page, hairlines, editorial typography; the former classic look) |
+| `eniso` | Academic: ENISo institutional header, serif headings, navy and crimson |
 | `ibtihel` | Alternative template style |
-| `eniso` | Another template variant |
+
+`classic`, `meridian` and `eniso` share one component API (`cover-slide`, `section-slide`, `agenda-slide`,
+`content-slide`, `conclusion-slide`, `thankyou-slide`, `card`, `kicker`, `stat`, `quote`, `panel`, `callout`,
+`hint-*`, `definition`, `theorem`, `example`, `remark`, `image-fig`) and one page grid, so switching
+between them needs no page edits.
 
 Each template has three layout variants (a "layout" is the starter file structure):
 

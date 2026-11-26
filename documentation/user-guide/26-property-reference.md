@@ -113,7 +113,7 @@ The complete list of node properties observed in ntexup.
 | `start-arrow` | `simple()`, `triangle()`, `triangle-full()`, `oval()`, `oval-full()`, `rectangle()`, `rectangle-full()`, `diamond()`, `diamond-full()`, `none` |
 | `end-arrow` | same as `start-arrow` |
 | `arrow` | sets both arrows at once (unless `start-arrow`/`end-arrow` is given) |
-| `points` | polyline points in absolute page units (`((x1,y1), (x2,y2), ...)`) |
+| `points` | polyline points in absolute page units (`((x1,y1), (x2,y2), ...)`), or percents of the polyline box with the `relative` flag |
 | `via` | connector waypoints in the parent's coordinate space |
 | `route` | connector route: sharp/polyline (default), orthogonal, or rounded; see the Connector table for aliases |
 | `bend-radius` | rounded-route corner radius (default `12`), reduced to fit short adjacent segments |

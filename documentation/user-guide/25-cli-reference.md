@@ -43,6 +43,7 @@ nuts ntexup new --template=classic --documentation
 
 Supported `-t/--template` values — a **template** name optionally followed by a **layout** (the project file structure: `small` = single file, `medium` = sections as files, `large` = sections as subfolders):
 
+- `lucid:small`, `lucid:medium`, `lucid:large`
 - `classic:small`, `classic:medium`, `classic:large`
 - `ibtihel:small`, `ibtihel:medium`, `ibtihel:large`
 - `eniso:small`, `eniso:medium`, `eniso:large`

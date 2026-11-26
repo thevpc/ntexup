@@ -54,7 +54,7 @@ Later, `include(...)`ing a folder loads its files/folders in **lexicographic ord
 Real-world example (from doc-slides):
 
 ```tson
-themeName = "eniso"                       // classic, eniso, ibtihel, ...
+themeName = "eniso"                       // classic, meridian, lucid, eniso, ibtihel
 documentColorAccent = 0                   // 0..11
 themeShowPalette = true
 documentTitle = "ntexup"
@@ -79,7 +79,7 @@ include("02-pages")
 
 | Variable | Purpose |
 |----------|---------|
-| `themeName` | theme to use (`classic`, `eniso`, `ibtihel`) |
+| `themeName` | theme to use (`classic`, `meridian`, `lucid`, `eniso`, `ibtihel`) |
 | `documentColorAccent` | active palette color (0..11) |
 | `themeShowPalette` | render a palette showcase slide |
 | `documentTitle` | title (cover) |

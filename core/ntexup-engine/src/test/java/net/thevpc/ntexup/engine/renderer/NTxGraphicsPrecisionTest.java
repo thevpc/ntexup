@@ -57,11 +57,11 @@ class NTxGraphicsPrecisionTest {
         assertEndSetback(NTxArrowType.SIMPLE, 100);
         assertEndSetback(NTxArrowType.TRIANGLE, 80);
         assertEndSetback(NTxArrowType.TRIANGLE_FULL, 80);
-        assertEndSetback(NTxArrowType.DIAMOND, 90);
-        assertEndSetback(NTxArrowType.OVAL, 90);
-        assertEndSetback(NTxArrowType.OVAL_FULL, 90);
-        assertEndSetback(NTxArrowType.RECTANGLE, 90);
-        assertEndSetback(NTxArrowType.RECTANGLE_FULL, 90);
+        assertEndSetback(NTxArrowType.DIAMOND, 80);
+        assertEndSetback(NTxArrowType.OVAL, 80);
+        assertEndSetback(NTxArrowType.OVAL_FULL, 80);
+        assertEndSetback(NTxArrowType.RECTANGLE, 80);
+        assertEndSetback(NTxArrowType.RECTANGLE_FULL, 80);
     }
 
     @Test
@@ -73,7 +73,7 @@ class NTxGraphicsPrecisionTest {
         line.setEndArrow(new NTxArrow(NTxArrowType.OVAL, 20, 10));
         renderer.draw2D(line);
 
-        assertEquals(90, graphics.shapes.get(0).getBounds2D().getMaxX(), 1e-9);
+        assertEquals(80, graphics.shapes.get(0).getBounds2D().getMaxX(), 1e-9);
         assertEquals(0, graphics.shapes.get(1).getBounds2D().getMaxX(), 1e-9);
     }
 
@@ -86,7 +86,7 @@ class NTxGraphicsPrecisionTest {
         curve.setEndArrow(new NTxArrow(NTxArrowType.OVAL, 20, 10));
         renderer.draw2D(curve);
 
-        assertEquals(90, ((QuadCurve2D) graphics.shapes.get(0)).getX2(), 0.01);
+        assertEquals(80, ((QuadCurve2D) graphics.shapes.get(0)).getX2(), 0.01);
     }
 
     @Test

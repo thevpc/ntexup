@@ -1,5 +1,7 @@
 package net.thevpc.ntexup.engine.renderer;
 
+import net.thevpc.ntexup.api.document.elem2d.NTxLinearGradientPaint;
+
 import net.thevpc.ntexup.api.engine.NTxEngine;
 import net.thevpc.ntexup.api.document.NTxArrow;
 import net.thevpc.ntexup.api.document.NTxArrowType;
@@ -29,6 +31,7 @@ import java.awt.geom.CubicCurve2D;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Line2D;
 import java.awt.geom.Path2D;
+import java.awt.geom.Point2D;
 import java.awt.geom.QuadCurve2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.RoundRectangle2D;
@@ -221,22 +224,22 @@ public class NTxGraphicsImpl implements NTxGraphics {
                 }
                 break;
             }
+            // diamond, oval and rectangle heads share the triangle geometry: they
+            // extend 'width' back along the line from the tip and +/- 'height'
+            // across it (they used to be drawn at half their declared size, so a
+            // 14x9 head showed up as a barely visible 7x4.5 blob)
             case DIAMOND_FULL:
             case DIAMOND: {
-                if (arrowHeight <= 0) {
-                    arrowHeight = 50;
-                }
                 if (arrowWidth <= 0) {
-                    arrowWidth = 50;
+                    arrowWidth = 14;
                 }
-                double xmin = -arrowWidth / 2;
-                double ymin = -arrowHeight / 2 + arrowHeight / 4;
-                double xlen = arrowWidth / 2;
-                double ylen = arrowHeight / 2;
-                head.moveTo(xmin + xlen / 2, ymin);
-                head.lineTo(xmin + xlen, ymin + ylen / 2);
-                head.lineTo(xmin + xlen / 2, ymin + ylen);
-                head.lineTo(xmin, ymin + ylen / 2);
+                if (arrowHeight <= 0) {
+                    arrowHeight = arrowWidth / 2;
+                }
+                head.moveTo(0, 0);
+                head.lineTo(-arrowWidth / 2, -arrowHeight);
+                head.lineTo(-arrowWidth, 0);
+                head.lineTo(-arrowWidth / 2, arrowHeight);
                 head.closePath();
                 if (type == NTxArrowType.DIAMOND_FULL) {
                     g.fill(head);
@@ -247,17 +250,13 @@ public class NTxGraphicsImpl implements NTxGraphics {
             }
             case OVAL_FULL:
             case OVAL: {
-                if (arrowHeight <= 0) {
-                    arrowHeight = 30;
-                }
                 if (arrowWidth <= 0) {
-                    arrowWidth = 30;
+                    arrowWidth = 10;
                 }
-                double xmin = -arrowWidth / 2;
-                double ymin = -arrowHeight / 2 + arrowHeight / 4;
-                double xlen = arrowWidth / 2;
-                double ylen = arrowHeight / 2;
-                Ellipse2D.Double arrowHead = new Ellipse2D.Double(xmin, ymin, xlen, ylen);
+                if (arrowHeight <= 0) {
+                    arrowHeight = arrowWidth / 2;
+                }
+                Ellipse2D.Double arrowHead = new Ellipse2D.Double(-arrowWidth, -arrowHeight, arrowWidth, 2 * arrowHeight);
                 if (type == NTxArrowType.OVAL_FULL) {
                     g.fill(arrowHead);
                 } else {
@@ -267,17 +266,13 @@ public class NTxGraphicsImpl implements NTxGraphics {
             }
             case RECTANGLE:
             case RECTANGLE_FULL: {
-                if (arrowHeight <= 0) {
-                    arrowHeight = 30;
-                }
                 if (arrowWidth <= 0) {
-                    arrowWidth = 30;
+                    arrowWidth = 10;
                 }
-                double xmin = -arrowWidth / 2;
-                double ymin = -arrowHeight / 2 + arrowHeight / 4;
-                double xlen = arrowWidth / 2;
-                double ylen = arrowHeight / 2;
-                Rectangle2D.Double arrowHead = new Rectangle2D.Double(xmin, ymin, xlen, ylen);
+                if (arrowHeight <= 0) {
+                    arrowHeight = arrowWidth / 2;
+                }
+                Rectangle2D.Double arrowHead = new Rectangle2D.Double(-arrowWidth, -arrowHeight, arrowWidth, 2 * arrowHeight);
                 if (type == NTxArrowType.RECTANGLE_FULL) {
                     g.fill(arrowHead);
                 } else {
@@ -310,8 +305,8 @@ public class NTxGraphicsImpl implements NTxGraphics {
         return switch (type) {
             case SIMPLE -> 0;
             case TRIANGLE, TRIANGLE_FULL -> width > 0 ? width : 10;
-            case DIAMOND, DIAMOND_FULL -> width > 0 ? width / 2.0 : 25;
-            case OVAL, OVAL_FULL, RECTANGLE, RECTANGLE_FULL -> width > 0 ? width / 2.0 : 15;
+            case DIAMOND, DIAMOND_FULL -> width > 0 ? width : 14;
+            case OVAL, OVAL_FULL, RECTANGLE, RECTANGLE_FULL -> width > 0 ? width : 10;
             default -> 0;
         };
     }
@@ -348,6 +343,10 @@ public class NTxGraphicsImpl implements NTxGraphics {
 
     @Override
     public void fillOval(double x, double y, double w, double h) {
+        if (hasRelativeGradient()) {
+            fillWithRelativeGradient(new Ellipse2D.Double((int) x, (int) y, (int) w, (int) h));
+            return;
+        }
         g.fillOval((int) x, (int) y, (int) w, (int) h);
     }
 
@@ -358,6 +357,10 @@ public class NTxGraphicsImpl implements NTxGraphics {
 
     @Override
     public void fillRect(double x, double y, double w, double h) {
+        if (hasRelativeGradient()) {
+            fillWithRelativeGradient(new Rectangle2D.Double((int) x, (int) y, (int) w, (int) h));
+            return;
+        }
         g.fillRect((int) x, (int) y, (int) w, (int) h);
     }
 
@@ -510,6 +513,13 @@ public class NTxGraphicsImpl implements NTxGraphics {
 
     @Override
     public void fillPolygon(double[] xx, double[] yy, int length) {
+        if (hasRelativeGradient()) {
+            fillWithRelativeGradient(new Polygon(
+                    Arrays.stream(xx).mapToInt(d -> (int) d).toArray(),
+                    Arrays.stream(yy).mapToInt(d -> (int) d).toArray(),
+                    length));
+            return;
+        }
         g.fillPolygon(
                 Arrays.stream(xx).mapToInt(d -> (int) d).toArray(),
                 Arrays.stream(yy).mapToInt(d -> (int) d).toArray(),
@@ -541,7 +551,7 @@ public class NTxGraphicsImpl implements NTxGraphics {
 
     @Override
     public void fillRoundRect(double x, double y, double w, double h, double cx, double cy) {
-        g.fill(new RoundRectangle2D.Double(x, y, w, h, cx, cy));
+        fill(new RoundRectangle2D.Double(x, y, w, h, cx, cy));
     }
 
     @Override
@@ -604,7 +614,43 @@ public class NTxGraphicsImpl implements NTxGraphics {
 
     @Override
     public void fill(Shape shape) {
+        if (hasRelativeGradient()) {
+            fillWithRelativeGradient(shape);
+            return;
+        }
         g.fill(shape);
+    }
+
+    private boolean hasRelativeGradient() {
+        return g.getPaint() instanceof NTxLinearGradientPaint;
+    }
+
+    /**
+     * {@link NTxLinearGradientPaint} expresses its axis in percents of the filled
+     * shape and only resolves it lazily in {@code createContext}. Vector
+     * backends (the PDF graphics) never call {@code createContext}: they only
+     * understand the standard java.awt gradient paints and dropped the fill
+     * ("Don't know paint ..."). Resolving it here against the shape bounds gives
+     * them a plain {@link LinearGradientPaint} and the raster output is
+     * unchanged.
+     */
+    private void fillWithRelativeGradient(Shape shape) {
+        Paint old = g.getPaint();
+        NTxLinearGradientPaint p = (NTxLinearGradientPaint) old;
+        Rectangle2D b = shape.getBounds2D();
+        Point2D s = new Point2D.Double(b.getX() + p.getStart().getX() / 100.0 * b.getWidth(),
+                b.getY() + p.getStart().getY() / 100.0 * b.getHeight());
+        Point2D e = new Point2D.Double(b.getX() + p.getEnd().getX() / 100.0 * b.getWidth(),
+                b.getY() + p.getEnd().getY() / 100.0 * b.getHeight());
+        if (s.distance(e) < 1e-4) {
+            e = new Point2D.Double(s.getX() + 1, s.getY());
+        }
+        g.setPaint(new LinearGradientPaint(s, e, p.getFractions(), p.getColors(), p.getCycleMethod()));
+        try {
+            g.fill(shape);
+        } finally {
+            g.setPaint(old);
+        }
     }
 
     @Override

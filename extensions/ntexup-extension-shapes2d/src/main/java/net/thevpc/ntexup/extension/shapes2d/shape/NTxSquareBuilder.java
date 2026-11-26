@@ -21,6 +21,9 @@ public class NTxSquareBuilder implements NTxNodeBuilder {
                 .id(NTxNodeType.SQUARE)
                 .parseParam().matchesNamedPair(NTxPropName.ROUND_CORNER, NTxPropName.THREED, NTxPropName.RAISED).asFlags().then()
                 .renderComponent(this::renderMain)
+                // a regular shape keeps its proportions (like circle) unless the author
+                // sets preserve-aspect-ratio explicitly
+                .initializeNodeAction(NTxPolygonHelper::defaultPreserveAspectRatio)
         ;
     }
 
