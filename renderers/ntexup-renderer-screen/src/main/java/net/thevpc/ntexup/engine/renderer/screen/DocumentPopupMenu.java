@@ -72,6 +72,9 @@ public class DocumentPopupMenu {
         popupMenu.addMenuItem("Find... (Ctrl+F)", ev -> {
             documentView.openFindDialog();
         });
+        popupMenu.addMenuItem((documentView.isOutlineVisible() ? "Hide Outline" : "Outline") + " (Ctrl+Shift+O)", ev -> {
+            documentView.toggleOutline();
+        });
 
         JMenu sizeMenu = new JMenu("Size");
         for (String s : new String[]{

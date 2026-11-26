@@ -18,6 +18,7 @@ import net.thevpc.ntexup.engine.renderer.screen.search.SlideHighlightManager;
 import net.thevpc.ntexup.engine.renderer.screen.search.SlideSearchDialog;
 import net.thevpc.ntexup.engine.renderer.screen.navigation.NTxSlideTitleIndex;
 import net.thevpc.ntexup.engine.renderer.screen.navigation.SlideGotoDialog;
+import net.thevpc.ntexup.engine.renderer.screen.navigation.SlideOutlinePanel;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -120,6 +121,13 @@ public class DocumentView implements NTxDocumentView {
     private SlideGotoDialog gotoDialog;
     private long gotoDialogDismissedAt;
     private boolean slideTitleIndexBuilding;
+    // ---- Outline explorer (Ctrl+Shift+O): side panel over the same outline ----
+    /** frame content pane: outline (WEST, lazily added) + slides (CENTER) */
+    private JPanel rootPanel;
+    private SlideOutlinePanel outlinePanel;
+    /** outline visibility is remembered separately for windowed / fullscreen */
+    private boolean outlineWantedWindowed;
+    private boolean outlineWantedFullScreen;
 
     public DocumentView(NTxDocumentRendererSupplier documentSupplier,
                         NTxEngine engine, NTxDocumentRendererListener listener, ScreenDocumentRenderer renderer) {
@@ -137,7 +145,10 @@ public class DocumentView implements NTxDocumentView {
         );
         contentPane = new DocumentViewContentPanel(this);
 //        contentPane.setFocusTraversalKeysEnabled(false);
-        frame.setContentPane(contentPane);
+        rootPanel = new JPanel(new BorderLayout());
+        rootPanel.setBackground(new Color(NColor.GRAY_15.rgb()));
+        rootPanel.add(contentPane, BorderLayout.CENTER);
+        frame.setContentPane(rootPanel);
         reloadDocumentAsync();
         frame.setSize(PageView.REF_SIZE);
         frame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
@@ -254,6 +265,7 @@ public class DocumentView implements NTxDocumentView {
                 }
                 frame.setVisible(true);
             }
+            applyOutlineVisibility();
             repositionHud();
             contentPane.requestFocusInWindow();
         });
@@ -261,7 +273,7 @@ public class DocumentView implements NTxDocumentView {
 
     public void repositionHud() {
         if (hud != null) {
-            int hudW = Math.min(410, frame.getWidth() - 40);
+            int hudW = Math.min(450, frame.getWidth() - 40);
             int hudH = 38;
             int hudX = (frame.getWidth() - hudW) / 2;
             int hudY = frame.getHeight() - hudH - (isFullScreen ? 25 : 55);
@@ -571,6 +583,10 @@ public class DocumentView implements NTxDocumentView {
                 if (gotoDialog != null && gotoDialog.isShowing()) {
                     gotoDialog.onIndexReady();
                 }
+                if (outlinePanel != null && outlinePanel.isVisible()) {
+                    outlinePanel.setIndex(slideTitleIndex);
+                    outlinePanel.setCurrentPage(getPageIndex());
+                }
             });
         });
     }
@@ -602,7 +618,82 @@ public class DocumentView implements NTxDocumentView {
         boolean dialogOpen = gotoDialog != null && gotoDialog.isShowing();
         if (dialogOpen) {
             gotoDialog.onDocumentReloaded();
+        }
+        boolean outlineShown = outlinePanel != null && outlinePanel.isVisible() && outlinePanel.getParent() != null;
+        if (outlineShown) {
+            // keeps the previous tree until the new outline is ready (no blank flash)
+            outlinePanel.setIndex(null);
+        }
+        if (dialogOpen || outlineShown) {
             ensureSlideTitleIndexAsync();
+        }
+    }
+
+    // ------------------------------------------------------------------
+    // Outline explorer
+    // ------------------------------------------------------------------
+
+    /** Toggles the outline side panel (Ctrl+Shift+O, HUD ☰, popup item). */
+    public void toggleOutline() {
+        setOutlineVisible(!isOutlineVisible());
+    }
+
+    /** true when the outline panel is shown in the current (windowed/fullscreen) mode */
+    public boolean isOutlineVisible() {
+        return isFullScreen ? outlineWantedFullScreen : outlineWantedWindowed;
+    }
+
+    /**
+     * Shows/hides the outline for the current mode. Fullscreen and windowed
+     * remember their own state, so the outline stays hidden in fullscreen
+     * unless toggled there.
+     */
+    public void setOutlineVisible(boolean visible) {
+        if (closed) {
+            return;
+        }
+        if (isFullScreen) {
+            outlineWantedFullScreen = visible;
+        } else {
+            outlineWantedWindowed = visible;
+        }
+        applyOutlineVisibility();
+        requestContentPaneFocus();
+    }
+
+    private void applyOutlineVisibility() {
+        boolean want = isOutlineVisible();
+        if (!want && outlinePanel == null) {
+            return;
+        }
+        if (outlinePanel == null) {
+            outlinePanel = new SlideOutlinePanel(this);
+            outlinePanel.setVisible(false);
+            rootPanel.add(outlinePanel, BorderLayout.WEST);
+        }
+        if (outlinePanel.isVisible() == want) {
+            return;
+        }
+        outlinePanel.setVisible(want);
+        rootPanel.revalidate();
+        rootPanel.repaint();
+        if (want) {
+            if (slideTitleIndex != null) {
+                outlinePanel.setIndex(slideTitleIndex);
+            } else {
+                ensureSlideTitleIndexAsync();
+            }
+            outlinePanel.setCurrentPage(getPageIndex());
+        }
+        if (hud != null) {
+            hud.setOutlineActive(want);
+        }
+    }
+
+    /** moves the outline highlight; cheap (selection only), called per page change */
+    private void syncOutlineCurrentPage() {
+        if (outlinePanel != null && outlinePanel.isVisible()) {
+            outlinePanel.setCurrentPage(getPageIndex());
         }
     }
 
@@ -713,6 +804,10 @@ public class DocumentView implements NTxDocumentView {
         bindShortcut(im, am, "ntexup.pdf", () -> openExportDialog(ExportDialog.Format.PDF),
                 KeyStroke.getKeyStroke(KeyEvent.VK_P, InputEvent.CTRL_DOWN_MASK),
                 KeyStroke.getKeyStroke(KeyEvent.VK_P, InputEvent.META_DOWN_MASK));
+        // Outline explorer (Ctrl+Shift+O / Cmd+Shift+O)
+        bindShortcut(im, am, "ntexup.outline", this::toggleOutline,
+                KeyStroke.getKeyStroke(KeyEvent.VK_O, InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK),
+                KeyStroke.getKeyStroke(KeyEvent.VK_O, InputEvent.META_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK));
         // Fullscreen
         bindShortcut(im, am, "ntexup.fullscreen", this::toggleFullScreen,
                 KeyStroke.getKeyStroke(KeyEvent.VK_F11, 0));
@@ -764,6 +859,11 @@ public class DocumentView implements NTxDocumentView {
      * leave fullscreen.
      */
     private void onEscapeKey() {
+        if (outlinePanel != null && outlinePanel.isTreeFocused()) {
+            // ESC in the outline tree hands the keyboard back to the deck
+            contentPane.requestFocusInWindow();
+            return;
+        }
         if (gotoDialog != null && gotoDialog.isShowing()) {
             gotoDialog.closeDialog();
             return;
@@ -865,7 +965,7 @@ public class DocumentView implements NTxDocumentView {
             if (highlightManager != null) {
                 SwingUtilities.invokeLater(this::onDocumentReloadedForSearch);
             }
-            if (slideTitleIndex != null || gotoDialog != null) {
+            if (slideTitleIndex != null || gotoDialog != null || outlinePanel != null) {
                 SwingUtilities.invokeLater(this::onDocumentReloadedForGoto);
             }
         }
@@ -916,6 +1016,9 @@ public class DocumentView implements NTxDocumentView {
                 hud.updateState(getPageUserIndex(), getPagesCount(), isFullScreen);
                 hud.ping();
             });
+        }
+        if (outlinePanel != null) {
+            SwingUtilities.invokeLater(this::syncOutlineCurrentPage);
         }
         SwingUtilities.invokeLater(() -> frame.setVisible(true));
     }
