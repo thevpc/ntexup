@@ -232,7 +232,7 @@ Paths are `NPath`; GitHub paths (`github://user/repo/...`) are cloned lazily int
 Signing uses `SHA-256` + ECDSA/EC keys (`secp256r1`), RFC 3161 trusted timestamps (BouncyCastle), and manifests over `(payload, resources, dependencies)` fingerprints. **There is no bytecode sandbox**: imported extensions run with full JVM privileges — the user must `nuts install`/trust the artifact.
 
 ### 4.10 Templates as versioned themes in a separate git repo
-Themes (`classic`, `eniso`, `ibtihel`, `meridian`) live in the `ntexup-templates` repository and are included via `include(github://thevpc/ntexup-templates/.../theme)` or a local clone, resolved with `eitherPath`. Templates are ordinary `.ntx` documents, not code.
+Themes (`classic`, `meridian`, `lucid`, `eniso`, `ibtihel`) live in the `ntexup-templates` repository and are included via `include(github://thevpc/ntexup-templates/.../theme)` or a local clone, resolved with `eitherPath`. Templates are ordinary `.ntx` documents, not code.
 
 ### 4.11 Simple, observable things (deliberately kept small)
 - No IoC container; one `DefaultNTxEngine` with constructor injection of classloaders.

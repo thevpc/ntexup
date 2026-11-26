@@ -42,7 +42,8 @@ public class NTxEllipsoidBuilder implements NTxNodeBuilder {
                 });
             }
         }
-        rendererContext.drawContour();
+        // the oval outline above is the contour: the generic drawContour() would
+        // also stroke the rectangular bounds around it
     }
 
 }

@@ -13,7 +13,10 @@ public class NTxOctagonBuilder implements NTxNodeBuilder {
     @Override
     public void build(NTxNodeBuilderContext builderContext) {
         builderContext.id(NTxNodeType.OCTAGON)
-                .renderComponent(this::render);
+                .renderComponent(this::render)
+                // a regular shape keeps its proportions (like circle) unless the author
+                // sets preserve-aspect-ratio explicitly
+                .initializeNodeAction(NTxPolygonHelper::defaultPreserveAspectRatio);
     }
 
     public void render(NTxRendererContext rendererContext) {

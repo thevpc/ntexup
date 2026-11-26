@@ -39,12 +39,19 @@ public final class NTxSlideTitleIndex {
         public final String section;
         /** source file name (e.g. {@code 0010-intro.ntx}), may be null */
         public final String sourceFileName;
+        /** subtitle (else kicker) from the slide metadata, may be null */
+        public final String subtitle;
 
-        public Entry(int pageIndex, String title, String section, String sourceFileName) {
+        public Entry(int pageIndex, String title, String section, String sourceFileName, String subtitle) {
             this.pageIndex = pageIndex;
             this.title = title;
             this.section = section;
             this.sourceFileName = sourceFileName;
+            this.subtitle = subtitle;
+        }
+
+        public Entry(int pageIndex, String title, String section, String sourceFileName) {
+            this(pageIndex, title, section, sourceFileName, null);
         }
 
         public Entry(int pageIndex, String title, String section) {
@@ -84,9 +91,14 @@ public final class NTxSlideTitleIndex {
                 String fileName = fileName(sourcePath);
                 String section = null;
                 String title = null;
+                String subtitle = null;
                 try {
                     java.util.Map<String, String> meta = NTxSlideMeta.read(page.rawPage());
                     title = meta.get(NTxSlideMeta.TITLE);
+                    subtitle = meta.get(NTxSlideMeta.SUBTITLE);
+                    if (subtitle == null || subtitle.trim().isEmpty()) {
+                        subtitle = meta.get(NTxSlideMeta.KICKER);
+                    }
                     String chapter = meta.get(NTxSlideMeta.CHAPTER);
                     section = chapter != null ? chapter : SlideTitleResolver.sectionFromPath(sourcePath);
                     if (title == null) {
@@ -98,7 +110,7 @@ public final class NTxSlideTitleIndex {
                         title = SlideTitleResolver.resolve(null, section, pageIndex + 1);
                     }
                 }
-                entries.add(new Entry(pageIndex, title, section, fileName));
+                entries.add(new Entry(pageIndex, title, section, fileName, firstLine(subtitle)));
             }
         }
         return new NTxSlideTitleIndex(entries, computeGrouped(entries));
@@ -147,6 +159,18 @@ public final class NTxSlideTitleIndex {
             return (String) s;
         }
         return null;
+    }
+
+    private static String firstLine(String s) {
+        if (s == null) {
+            return null;
+        }
+        s = s.trim();
+        int nl = s.indexOf('\n');
+        if (nl >= 0) {
+            s = s.substring(0, nl).trim();
+        }
+        return s.isEmpty() ? null : s;
     }
 
     private static String fileName(String path) {

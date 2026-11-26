@@ -1,7 +1,7 @@
 package net.thevpc.ntexup.engine.renderer.screen.components;
 
 import net.thevpc.ntexup.engine.renderer.screen.DocumentView;
-import net.thevpc.ntexup.engine.renderer.screen.PdfConfigDialog;
+import net.thevpc.ntexup.engine.renderer.screen.ExportDialog;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -17,8 +17,10 @@ public class PresentationHud extends JPanel {
     private final JButton nextBtn = createHudButton("▶", "Next Slide (Right / Down / Space / PageDown)");
     private final JButton lastBtn = createHudButton("▶|", "Last Slide (End)");
     private final JButton fullscreenBtn = createHudButton("⛶", "Fullscreen (F11)");
+    private final JButton outlineBtn = createHudButton("☰", "Outline (Ctrl+Shift+O)");
     private final JButton searchBtn = createHudButton("🔍", "Find in Slides (Ctrl+F)");
-    private final JButton pdfBtn = createHudButton("PDF", "Export to PDF");
+    private final JButton pdfBtn = createHudButton("PDF", "Export to PDF (Ctrl+P)");
+    private final JButton exportBtn = createHudButton("⇪", "Export: HTML, images, ntxp, zip… (Ctrl+E)");
     private final Timer autoHideTimer;
     private boolean mouseInside = false;
 
@@ -53,16 +55,16 @@ public class PresentationHud extends JPanel {
             documentView.requestContentPaneFocus();
             ping();
         });
+        outlineBtn.addActionListener(e -> {
+            documentView.toggleOutline();
+            ping();
+        });
         searchBtn.addActionListener(e -> {
             documentView.openFindDialog();
             ping();
         });
-        pdfBtn.addActionListener(e -> {
-            Frame owner = (Frame) SwingUtilities.getWindowAncestor(this);
-            PdfConfigDialog configDialog = new PdfConfigDialog(owner, documentView);
-            configDialog.setVisible(true);
-            documentView.requestContentPaneFocus();
-        });
+        pdfBtn.addActionListener(e -> documentView.openExportDialog(ExportDialog.Format.PDF));
+        exportBtn.addActionListener(e -> documentView.openExportDialog(ExportDialog.Format.HTML_STANDALONE));
 
         pageLabel.setForeground(Color.WHITE);
         pageLabel.setFont(new Font("SansSerif", Font.BOLD, 13));
@@ -82,8 +84,10 @@ public class PresentationHud extends JPanel {
         add(lastBtn);
         add(createSeparator());
         add(fullscreenBtn);
+        add(outlineBtn);
         add(searchBtn);
         add(pdfBtn);
+        add(exportBtn);
 
         autoHideTimer = new Timer(2500, e -> {
             if (!mouseInside) {
@@ -165,6 +169,13 @@ public class PresentationHud extends JPanel {
     public void ping() {
         setVisible(true);
         autoHideTimer.restart();
+    }
+
+    /** marks the outline toggle as on/off (filled background when on) */
+    public void setOutlineActive(boolean active) {
+        outlineBtn.setContentAreaFilled(active);
+        outlineBtn.setToolTipText(active ? "Hide Outline (Ctrl+Shift+O)" : "Outline (Ctrl+Shift+O)");
+        outlineBtn.repaint();
     }
 
     public void updateState(int currentPage, int totalPages, boolean isFullScreen) {

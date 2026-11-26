@@ -273,7 +273,12 @@ public class NTxListHelper {
     private static void fillNonList(NTxNode p, List<NodeWithIndent> all, int indent, boolean ordered, String parentString, int userIndex, NTxRendererContext ctx, NumberingStrategy ns) {
         NodeWithIndent z = new NodeWithIndent();
         z.indent = indent;
-        z.child = p.addStyleClasses(cls("item", indent));
+        // themes style items through ul-item / ol-item (and -<level> variants), the
+        // generic "item" class is kept for documents written against it
+        String kind = ordered ? "ol" : "ul";
+        z.child = indent > 0
+                ? p.addStyleClasses("item", kind + "-item", cls("item", indent), cls(kind + "-item", indent))
+                : p.addStyleClasses("item", kind + "-item");
         z.bullet = createBullet(p, ordered, indent, parentString, userIndex, ctx, ns, z);
         all.add(z);
     }
@@ -646,24 +651,47 @@ public class NTxListHelper {
         String bulletAlign = NTxValueByType.getStringOrName(ctx, PROP_BULLET_ALIGN).orElse(ALIGN_CENTER);
         boolean bulletAlignTop = ALIGN_TOP.equalsIgnoreCase(String.valueOf(bulletAlign).trim());
 
-        //1) resolve the appearance of every bullet, and measure the ordered markers
+        //1) resolve the appearance of every bullet, and measure the ordered markers.
+        //   Items carry their own classes (ul-item, ul-item-2 ...): their text size, not
+        //   the list's, drives the row metrics and the bullet size
         double maxBulletSize = 0;
         double maxOrderedWidth = 0;
+        double maxItemFont = 0;
         for (NodeWithIndent item : all) {
             item.child.invalidateRenderCache();
             if (item.bullet != null) {
                 item.bullet.invalidateRenderCache();
             }
+            item.fontSize = fontSize;
+            item.emSize = emSize;
+            try {
+                NTxRendererContext childCtx = ctx.resolveNode(item.child, box);
+                Font f = NTxValueByName.getFont(childCtx);
+                if (f != null && f.getSize2D() > 0) {
+                    item.fontSize = f.getSize2D();
+                }
+                double em = NTxValueByName.getFontSize(childCtx);
+                item.emSize = em > 0 ? em : item.fontSize;
+            } catch (RuntimeException ignored) {
+                //keep the list metrics
+            }
+            maxItemFont = Math.max(maxItemFont, item.fontSize);
             if (item.spec != null) {
-                item.spec.resolvedSize = resolveSize(item.spec, emSize, rootWidth);
+                item.spec.resolvedSize = resolveSize(item.spec, item.emSize, rootWidth);
                 maxBulletSize = Math.max(maxBulletSize, item.spec.resolvedSize);
             }
             if (ordered && item.bullet != null) {
                 //the natural width of the marker, in a wide enough box
                 item.bulletSelfBounds = ctx.resolveNode(item.bullet,
-                        NTxBounds2D.ofWidth(box.minX(), box.minY(), 10000, fontSize * 2)).selfBounds2D();
+                        NTxBounds2D.ofWidth(box.minX(), box.minY(), 10000, item.fontSize * 2)).selfBounds2D();
                 maxOrderedWidth = Math.max(maxOrderedWidth, item.bulletSelfBounds.widthX());
             }
+        }
+        if (maxItemFont > 0) {
+            //the column metrics follow the items' text
+            fontSize = maxItemFont;
+            indentFactor = Math.max(18, fontSize * 1.2);
+            marginWidth = Math.max(8, fontSize * 0.42);
         }
         //2) the bullet column
         double bulletColumn;
@@ -681,19 +709,19 @@ public class NTxListHelper {
             double childWidth = Math.max(10, box.maxX() - childX);
 
             item.childSelfBounds = ctx.resolveNode(item.child,
-                    NTxBounds2D.ofWidth(childX, y0, childWidth, fontSize * 1.5)).selfBounds2D();
-            item.height = Math.max(item.childSelfBounds.widthY(), fontSize * 1.2);
+                    NTxBounds2D.ofWidth(childX, y0, childWidth, item.fontSize * 1.5)).selfBounds2D();
+            item.height = Math.max(item.childSelfBounds.widthY(), item.fontSize * 1.2);
 
             double bulletBoxY = y0;
             double bulletBoxHeight = item.height;
             if (bulletAlignTop) {
-                bulletBoxHeight = fontSize * 1.3;
-                bulletBoxY = y0 + fontSize * 0.15;
+                bulletBoxHeight = item.fontSize * 1.3;
+                bulletBoxY = y0 + item.fontSize * 0.15;
             }
             NTxBounds2D bulletBox = NTxBounds2D.ofWidth(bulletX, bulletBoxY, bulletColumn, bulletBoxHeight);
             item.bulletBounds = bulletBox;
             if (item.bullet != null) {
-                applyBulletDefaults(ctx, item, bulletBox, emSize, rootWidth, rootHeight);
+                applyBulletDefaults(ctx, item, bulletBox, item.emSize, rootWidth, rootHeight);
                 item.bulletSelfBounds = ctx.resolveNode(item.bullet, bulletBox).selfBounds2D();
             }
             item.childBounds = NTxBounds2D.ofWidth(childX, y0, childWidth, item.height);
@@ -701,7 +729,7 @@ public class NTxListHelper {
 
             y0 += item.height;
             if (i < all.size() - 1) {
-                y0 += itemGap;
+                y0 += Math.max(4, item.fontSize * 0.25);
             }
         }
         //4) optional vertical distribution
@@ -1274,6 +1302,9 @@ public class NTxListHelper {
     // ------------------------------------------------------------------------
 
     public static class NodeWithIndent {
+        /** font size / em size of this item's own text (its ul-item class may differ from the list) */
+        double fontSize;
+        double emSize;
         public NTxNode bullet;
         public NTxNode child;
         public int indent;

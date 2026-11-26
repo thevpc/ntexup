@@ -1,6 +1,7 @@
 package net.thevpc.ntexup.engine.renderer.screen.navigation;
 
 import net.thevpc.ntexup.engine.renderer.screen.DocumentView;
+import net.thevpc.ntexup.engine.renderer.screen.components.FramelessPopupSupport;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -40,7 +41,8 @@ public class SlideGotoDialog extends JDialog {
     private static final long DEACTIVATION_GUARD_MS = 300;
 
     // -- palette (dark, coherent with the Find dialog; to move to the theme) --
-    private static final Color GLASS_BG = new Color(15, 23, 42, 235);
+    private static final Color GLASS_BG = new Color(15, 23, 42);
+    private static final int ARC = 16;
     private static final Color GLASS_BORDER = new Color(255, 255, 255, 38);
     private static final Color TEXT_FG = Color.WHITE;
     private static final Color PLACEHOLDER_FG = new Color(148, 163, 184);
@@ -52,7 +54,7 @@ public class SlideGotoDialog extends JDialog {
     private final DocumentView documentView;
 
     private final GotoInput input = new GotoInput();
-    private final DefaultListModel<NTxSlideTitleIndex.Entry> listModel = new DefaultListModel<>();
+    private DefaultListModel<NTxSlideTitleIndex.Entry> listModel = new DefaultListModel<>();
     private final JList<NTxSlideTitleIndex.Entry> slideList = new JList<>(listModel);
     private final SlideGotoListRenderer renderer = new SlideGotoListRenderer();
     private final JScrollPane scrollPane;
@@ -63,28 +65,17 @@ public class SlideGotoDialog extends JDialog {
 
     private long shownAt;
     private boolean closing;
+    private int hoverRow = -1;
+    /** last rendered query, so identical refreshes are skipped */
+    private String lastQuery;
+    private NTxSlideTitleIndex lastIndex;
 
     public SlideGotoDialog(JFrame owner, DocumentView documentView) {
         super(owner, false);
         this.documentView = documentView;
 
-        setUndecorated(true);
-        setBackground(new Color(0, 0, 0, 0));
-
-        JPanel glass = new JPanel(new BorderLayout(0, 0)) {
-            @Override
-            protected void paintComponent(Graphics g) {
-                Graphics2D g2 = (Graphics2D) g.create();
-                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.setColor(GLASS_BG);
-                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 16, 16);
-                g2.setColor(GLASS_BORDER);
-                g2.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 16, 16);
-                g2.dispose();
-                super.paintComponent(g);
-            }
-        };
-        glass.setOpaque(false);
+        FramelessPopupSupport.install(this, GLASS_BG, ARC);
+        JPanel glass = FramelessPopupSupport.createContentPane(new BorderLayout(0, 0), GLASS_BG, GLASS_BORDER, ARC);
         glass.setBorder(new EmptyBorder(12, 14, 12, 14));
         setContentPane(glass);
 
@@ -170,13 +161,13 @@ public class SlideGotoDialog extends JDialog {
         slideList.addMouseMotionListener(new MouseAdapter() {
             @Override
             public void mouseMoved(MouseEvent e) {
-                renderer.setHoverIndex(slideList.locationToIndex(e.getPoint()));
+                setHoverRow(slideList.locationToIndex(e.getPoint()));
             }
         });
         slideList.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseExited(MouseEvent e) {
-                renderer.setHoverIndex(-1);
+                setHoverRow(-1);
             }
 
             @Override
@@ -283,11 +274,13 @@ public class SlideGotoDialog extends JDialog {
         renderer.setCurrentPageIndex(documentView.getPageIndex());
         if (!isShowing()) {
             shownAt = System.currentTimeMillis();
+            lastQuery = null;
             input.setText("");
             refresh();
             layoutDialog();
             setVisible(true);
         } else {
+            lastQuery = null;
             refresh();
         }
         SwingUtilities.invokeLater(() -> {
@@ -300,14 +293,18 @@ public class SlideGotoDialog extends JDialog {
     public void onIndexReady() {
         if (isShowing()) {
             renderer.setCurrentPageIndex(documentView.getPageIndex());
+            lastQuery = null;
             refresh();
         }
     }
 
     /** the document was reloaded: the outline is stale until rebuilt */
     public void onDocumentReloaded() {
-        listModel.clear();
-        renderer.setHoverIndex(-1);
+        listModel = new DefaultListModel<>();
+        slideList.setModel(listModel);
+        lastQuery = null;
+        lastIndex = null;
+        setHoverRow(-1);
         updateEmptyState("Indexing slides…");
         resultsCard.show(resultsPanel, "empty");
         if (isShowing()) {
@@ -335,9 +332,14 @@ public class SlideGotoDialog extends JDialog {
 
     private void refresh() {
         String text = input.getText().trim();
+        NTxSlideTitleIndex index = documentView.slideTitleIndex();
+        if (index != null && index == lastIndex && text.equals(lastQuery)) {
+            return;
+        }
+        lastQuery = text;
+        lastIndex = index;
         renderer.setQuery(text);
 
-        NTxSlideTitleIndex index = documentView.slideTitleIndex();
         boolean outOfRange = false;
         boolean selectCurrent = false;
         List<NTxSlideTitleIndex.Entry> entries;
@@ -360,10 +362,13 @@ public class SlideGotoDialog extends JDialog {
         }
         input.setInvalid(outOfRange);
 
-        listModel.clear();
-        for (NTxSlideTitleIndex.Entry e : entries) {
-            listModel.addElement(e);
-        }
+        // swap in a fresh model: clear()+addElement() fires one event (and
+        // one repaint/revalidate) per row
+        DefaultListModel<NTxSlideTitleIndex.Entry> next = new DefaultListModel<>();
+        next.addAll(entries);
+        listModel = next;
+        slideList.setModel(listModel);
+        hoverRow = -1;
         renderer.setHoverIndex(-1);
 
         if (!entries.isEmpty()) {
@@ -382,7 +387,19 @@ public class SlideGotoDialog extends JDialog {
     }
 
     private void updateEmptyState(String message) {
-        emptyLabel.setText(message);
+        if (!message.equals(emptyLabel.getText())) {
+            emptyLabel.setText(message);
+        }
+    }
+
+    private void setHoverRow(int row) {
+        if (row == hoverRow) {
+            return;
+        }
+        int old = hoverRow;
+        hoverRow = row;
+        renderer.setHoverIndex(row);
+        FramelessPopupSupport.repaintRows(slideList, old, row);
     }
 
     private void selectCurrentSlide() {
@@ -448,13 +465,20 @@ public class SlideGotoDialog extends JDialog {
         int w = Math.min(560, Math.max(360, ownerW - 120));
         northPanel.setSize(w - 28, northPanel.getHeight());
         int northH = northPanel.getPreferredSize().height;
-        int rows = Math.min(Math.max(listModel.size(), 1), VISIBLE_ROWS);
+        // the height follows the whole outline, not the filtered rows: a
+        // window that resizes on every keystroke is re-mapped by the window
+        // manager each time, which is the blink users saw while typing
+        NTxSlideTitleIndex index = documentView.slideTitleIndex();
+        int total = index == null ? listModel.size() : index.entries().size();
+        int rows = Math.min(Math.max(total, 1), VISIBLE_ROWS);
         int h = northH + 8 + rows * CELL_H + 6 + 12;
-        setSize(w, h);
 
         int x;
         int y;
-        if (owner != null) {
+        if (isShowing()) {
+            x = getX();
+            y = getY();
+        } else if (owner != null) {
             Rectangle b = owner.getBounds();
             x = b.x + (b.width - w) / 2;
             y = b.y + (documentView.isFullScreen() ? 40 : 70);
@@ -463,7 +487,7 @@ public class SlideGotoDialog extends JDialog {
             x = (scr.width - w) / 2;
             y = 60;
         }
-        setLocation(x, y);
+        FramelessPopupSupport.setBoundsIfChanged(this, new Rectangle(x, y, w, h));
     }
 
     // ------------------------------------------------------------------

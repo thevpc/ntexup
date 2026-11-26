@@ -80,7 +80,7 @@ so always render **all** pages before declaring success.
 
 ```bash
 mkdir my-talk && cd my-talk
-nuts -Zy ntexup new -t=classic:medium     # template: classic|eniso|ibtihel|meridian ; layout: small|medium|large
+nuts -Zy ntexup new -t=classic:medium     # template: classic|meridian|lucid|eniso|ibtihel ; layout: small|medium|large
 nuts -Zy ntexup list-templates
 ```
 
@@ -128,7 +128,7 @@ thankyou-slide()
 
 Direct content uses the component's opt-in `@default-body(body, body2a, ...)` metadata and goes to the first listed body. Explicit listed layouts remain available; definitions can also use bare `slot`.
 
-Theme helper components (classic): `card`, `kicker(text)`, `divider`, `stat(value, label)`,
+Theme helper components (all bundled themes; classic, meridian and eniso also have `section-slide(title, number:, subtitle:)`): `card`, `kicker(text)`, `divider`, `stat(value, label)`,
 `quote(author:)`, `panel`, `callout(title, accentColor, bgColor)`,
 `hint-info(title)` / `hint-warning` / `hint-error` / `hint-success`, `image-fig(src, title:, legend:)`.
 Read the theme file for exact args before using one:

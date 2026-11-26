@@ -54,7 +54,7 @@ Later, `include(...)`ing a folder loads its files/folders in **lexicographic ord
 Real-world example (from doc-slides):
 
 ```tson
-themeName = "eniso"                       // classic, eniso, ibtihel, ...
+themeName = "eniso"                       // classic, meridian, lucid, eniso, ibtihel
 documentColorAccent = 0                   // 0..11
 themeShowPalette = true
 documentTitle = "ntexup"
@@ -79,7 +79,7 @@ include("02-pages")
 
 | Variable | Purpose |
 |----------|---------|
-| `themeName` | theme to use (`classic`, `eniso`, `ibtihel`) |
+| `themeName` | theme to use (`classic`, `meridian`, `lucid`, `eniso`, `ibtihel`) |
 | `documentColorAccent` | active palette color (0..11) |
 | `themeShowPalette` | render a palette showcase slide |
 | `documentTitle` | title (cover) |
@@ -152,7 +152,19 @@ New folders are picked up automatically via `include("02-pages")`.
 ## Slide Metadata (chapter, title, subtitle)
 
 The viewer's **Find in slides** (Ctrl+F) and **Go to slide** (Ctrl+G)
-dialogs display, for each slide, its chapter, title and source file. The
+dialogs display, for each slide, its chapter, title and source file.
+The **Outline** explorer (Ctrl+Shift+O / Cmd+Shift+O, the HUD ☰ button or
+the right-click menu) docks a tree left of the slide: chapters (or source
+folders) → slide titles, with the subtitle/kicker underneath when known.
+The current slide is highlighted and its chapter expanded as you move
+through the deck; click a slide (or select it and press Enter) to jump to
+it, Esc returns the keyboard to the deck. The filter field on top narrows
+the tree as you type (title, subtitle, chapter, file name or slide number;
+all words must match; typing while the tree has focus jumps to it, Down
+moves into the results, Enter opens the first match, Esc clears). Drag the
+panel's right edge to resize it; double-click the edge to fit the longest
+title. It is hidden by default and,
+in fullscreen, stays hidden unless toggled there. The
 chapter/title/subtitle of a slide are captured at compile time from two
 places, so they never have to be duplicated in the theme:
 

@@ -35,10 +35,13 @@ public class DocumentPopupMenu {
         popupMenu.addMenuItem(documentView.isFullScreen() ? "Exit Fullscreen (F11 / Esc)" : "Fullscreen (F11)", ev -> {
             documentView.toggleFullScreen();
         });
-        popupMenu.addMenuItem("Save as PDF", ev -> {
-            PdfConfigDialog configDialog = new PdfConfigDialog((Frame) SwingUtilities.getWindowAncestor((Component) e.getSource()), documentView);
-            configDialog.setVisible(true);
-        });
+        JMenu exportMenu = new JMenu("Export");
+        for (ExportDialog.Format f : ExportDialog.Format.values()) {
+            JMenuItem item = new JMenuItem(f == ExportDialog.Format.PDF ? f.label + "  (Ctrl+P)" : f.label + "…");
+            item.addActionListener(ev -> documentView.openExportDialog(f));
+            exportMenu.add(item);
+        }
+        popupMenu.addMenu(exportMenu);
 
         NTxSource source = documentView.compiledDocument().source();
         if (source != null) {
@@ -68,6 +71,9 @@ public class DocumentPopupMenu {
         });
         popupMenu.addMenuItem("Find... (Ctrl+F)", ev -> {
             documentView.openFindDialog();
+        });
+        popupMenu.addMenuItem((documentView.isOutlineVisible() ? "Hide Outline" : "Outline") + " (Ctrl+Shift+O)", ev -> {
+            documentView.toggleOutline();
         });
 
         JMenu sizeMenu = new JMenu("Size");

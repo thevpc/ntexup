@@ -36,3 +36,4 @@ net.thevpc.ntexup.extension.commonfunctions.numbers.NTxFunctionSpread
 net.thevpc.ntexup.extension.commonfunctions.numbers.NTxFunctionSpreadPct
 net.thevpc.ntexup.extension.commonfunctions.numbers.NTxFunctionClaim
 net.thevpc.ntexup.extension.commonfunctions.numbers.NTxFunctionWithinPct
+net.thevpc.ntexup.extension.commonfunctions.numbers.NTxFunctionCases

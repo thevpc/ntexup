@@ -55,6 +55,7 @@ public class NTxCircleBuilder implements NTxNodeBuilder {
                 });
             }
         }
-        nodeRendererContext.drawContour();
+        // the oval outline above is the contour: the generic drawContour() would
+        // also stroke the rectangular bounds around it
     }
 }

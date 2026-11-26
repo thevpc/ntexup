@@ -256,8 +256,7 @@ public class NTxValue {
                 String s = (String) element;
                 if (s.startsWith("#")) {
                     try {
-                        Color value = new Color(Integer.parseInt(s.substring(1), 16));
-                        return NOptional.of(value);
+                        return NOptional.of(parseHexColor(s));
                     } catch (Exception ex) {
                         return NOptional.ofNamedError(NMsg.ofC("invalid color %s", s));
                     }
@@ -390,8 +389,7 @@ public class NTxValue {
                 String s = (String) element;
                 if (s.startsWith("#")) {
                     try {
-                        Color value = new Color(Integer.parseInt(s.substring(1), 16));
-                        return NOptional.of(value);
+                        return NOptional.of(parseHexColor(s));
                     } catch (Exception ex) {
                         return NOptional.ofNamedError(NMsg.ofC("invalid color %s", s));
                     }
@@ -1497,5 +1495,38 @@ public class NTxValue {
 
     public Object raw() {
         return element;
+    }
+
+    /**
+     * CSS-style hex colors: {@code #rgb}, {@code #rgba}, {@code #rrggbb} and
+     * {@code #rrggbbaa} (alpha last, as in CSS). Previously every form went
+     * through a plain int parse, so the alpha byte of {@code #rrggbbaa} was read
+     * as red and the color came out opaque and wrong.
+     *
+     * @since 1.2.0
+     */
+    public static Color parseHexColor(String s) {
+        String h = s.startsWith("#") ? s.substring(1) : s;
+        switch (h.length()) {
+            case 3:
+            case 4: {
+                StringBuilder sb = new StringBuilder();
+                for (char c : h.toCharArray()) {
+                    sb.append(c).append(c);
+                }
+                h = sb.toString();
+                break;
+            }
+            case 6:
+            case 8:
+                break;
+            default:
+                throw new IllegalArgumentException("invalid color " + s);
+        }
+        int r = Integer.parseInt(h.substring(0, 2), 16);
+        int g = Integer.parseInt(h.substring(2, 4), 16);
+        int b = Integer.parseInt(h.substring(4, 6), 16);
+        int a = h.length() == 8 ? Integer.parseInt(h.substring(6, 8), 16) : 255;
+        return new Color(r, g, b, a);
     }
 }

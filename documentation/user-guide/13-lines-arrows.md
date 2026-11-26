@@ -45,6 +45,16 @@ polyline(points: ((80, 200), (220, 120), (360, 240), (500, 160)),
          end-arrow: triangle())
 ```
 
+Add the `relative` flag to give the points as percentages of the polyline's box
+instead (like `line` endpoints). Relative points do not depend on the output
+resolution or on where the box is laid out, which is what you want inside grids
+and cards:
+
+```tson
+polyline(points: ((10, 70), (35, 30), (60, 70), (90, 30)), relative,
+         stroke: 2, end-arrow: triangle())
+```
+
 Points may also be written one per argument:
 
 ```tson
@@ -135,21 +145,39 @@ the nodes it references (forward references are supported).
 
 | Form | Meaning |
 |------|---------|
-| `"name"` | border point on the ray between the two node centers |
-| `"name@side"` | fixed side point: `left`, `right`, `top`, `bottom`, `top-left`, `top-right`, `bottom-left`, `bottom-right`, `center` |
-| `(x, y)` | free point, in percent of the parent's available area (0..100) |
+| `"name"` | automatic border point aimed toward the other endpoint, or toward the first/last `via` point when present |
+| `"name@side"` | fixed side point: `left`, `right`, `top`, `bottom`, `top-left`, `top-right`, `bottom-left`, `bottom-right`, `center`; `auto` selects the automatic border point |
+| `"name@top(25)"` / `right(25)` / `bottom(25)` / `left(25)` | percentage position along an edge |
+| `"name@radial(30)"` | angle from the node center, intersected with its layout outline |
+| `(x, y)` | free point in the parent's coordinate space |
 
 Endpoint arguments may also be named:
 
 ```tson
 connector(from: "api@right", to: "db@left", end-arrow: triangle())
+connector(from: "api@right(20)", to: "db@radial(270)", end-arrow: triangle())
 connector(from: "api", to: (75, 75), end-arrow: simple())
 connector("api", "db", via: ((50, 30), (50, 70)), end-arrow: simple())
 ```
 
-`via` adds intermediate points and draws a polyline; without `via` the connector draws a
-straight line. `label`, `flow`, `start-arrow`, `end-arrow`, `arrow`, `stroke`, `dash`, and
-the usual line/color properties apply to both forms.
+Edge percentages run clockwise from the top-left corner: `top` goes left to right,
+`right` top to bottom, `bottom` right to left, and `left` bottom to top. Values must
+be in `0..100`. Radial angles are degrees clockwise from local right: `0` is right,
+`90` down, `180` left, and `270` up; negative and multi-turn angles are normalized.
+Both forms are calculated in the node's local layout rectangle and then transformed
+with its placement, so nested rotation preserves the selected port. A malformed
+parametric anchor logs a warning and skips the connector.
+
+`via` adds waypoints between the resolved endpoints. The `route` mode determines whether
+those waypoints are joined by sharp segments, adjusted into orthogonal legs, or rounded
+at each junction. Without `via`, a connector is a straight line between its anchors.
+`label`, `flow`, `start-arrow`, `end-arrow`, `arrow`, `stroke`, `dash`, and the usual
+line/color properties apply to every route.
+
+Free endpoints and every `via` tuple use the same coordinate rules: unsuffixed numbers
+and `%` are percentages of the parent bounds, `%P` is a percentage of the page, and `px`
+is a pixel offset from the parent origin. A multi-waypoint array follows these rules too;
+it is not interpreted as raw page coordinates.
 
 ### Name scoping
 
@@ -177,9 +205,35 @@ of ancestors with the connector). Duplicate names in sibling groups are therefor
 
 ### Routing
 
-Only straight routes are implemented today. `route: straight` is accepted; any other route
-value logs a warning and falls back to a straight line. Orthogonal/obstacle routing,
-curved routes, and rounded corners are planned but not part of this version.
+`route` selects how the connector passes through its `via` waypoints. Route names are
+case-insensitive.
+
+| Mode | Aliases | Behavior |
+|------|---------|----------|
+| Sharp / polyline | `straight`, `direct`, `line`, `none`, `auto`, `polyline`, `sharp` | Joins anchors and waypoints with straight segments. `auto` is the default; with `via`, it is a polyline rather than a single straight line. |
+| Orthogonal | `orthogonal`, `ortho`, `right-angle`, `elbow` | Adjusts waypoints into horizontal/vertical legs where possible. |
+| Rounded | `rounded`, `curve`, `curved` | Rounds each change of direction at a waypoint. Multiple waypoints produce multiple rounded junctions. |
+
+`bend-radius` sets the rounded corner radius (default `12`). The radius is reduced near
+short adjacent segments so neighboring corners do not overlap. For example:
+
+```tson
+connector(from: "api@right", to: "db@left",
+          via: ((42, 30), (55, 30), (55, 62)),
+          route: "rounded", bend-radius: 8,
+          label: {text: "routed", position: 50, offset: 0},
+          flow: dots(count: 3, period: 3), end-arrow: simple())
+```
+
+Painting, arrowheads, label placement, flow particles and trails, debug bounds, and render
+dumps all use the same final routed point list. In particular, label `position` is measured
+along the rounded path, and flow follows its bends rather than the straight chord between
+the endpoints.
+
+This is **waypoint routing, not obstacle avoidance**: the engine does not inspect other
+nodes, choose alternate corridors, or move waypoints around obstacles. Orthogonal and
+rounded modes only transform the supplied waypoints. Unsupported route names (for example,
+`dijkstra`) log a warning and fall back to sharp waypoint routing.
 
 ## Arc
 

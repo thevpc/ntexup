@@ -58,7 +58,7 @@ text("Pending tasks: ${count}")
 ```
 
 A function call is evaluated too, so a sentence can format and check the numbers it quotes
-(the numeric functions below need `import("stdlib#1.2.0.0")`):
+(the numeric functions below need `import(stdlib)`):
 
 ```tson
 text("fr = ${fixed(div(oems_fr, 1e9), 3)} GHz, ${within-pct(oems_fr, sheen_fr, 1)} from the reference")
@@ -115,7 +115,7 @@ if (x > 10) {
 | `either(a, b)` | first non-null argument |
 | `min`, `max` | numeric helpers (`stdlib`, see below) |
 
-### Numeric functions (`import("stdlib#1.2.0.0")`)
+### Numeric functions (`import(stdlib)`)
 
 For numbers computed from results (solver metrics such as `oems_fr`, `oems_minDb`).
 Arrays are flattened by the aggregates. A value bound to the empty string (a solver metric
@@ -133,11 +133,22 @@ error and rendered as `[name: reason]` in place of the number; NaN renders as `n
 | `spread(...)`, `spread-pct(...)` | `max - min`, and the same in percent of the mean |
 | `claim(value, op, bound, decimals?)` | checked claim: renders the value if `value op bound` holds (`op`: `'<' '<=' '>' '>=' '==' '!='` or `lt le gt ge eq ne`), else `[CLAIM FAILED: ...]` plus a render error |
 | `within-pct(value, ref, tol, decimals = 2)` | checked claim: renders `pct-diff` as `+0.42%` if `abs(pct-diff) <= tol`, else `[CLAIM FAILED: ...]` plus a render error |
+| `cases(value, 'cond', 'text', ..., 'fallback'?)` | the text of the first condition that holds (`'abs<=1'`, `'> 2.5'`, `'7.4..7.6'` inclusive, `'nan'`), else the fallback; `@v`, `@+v`, `@\|v\|` in it are the value (2 decimals, a digit after sets them: `@+v1`); no match and no fallback is a render error |
 
 ```tson
 text("OpenEMS lies ${within-pct(oems_fr, sheen_fr, 1)} from Sheen's resonance;
 the three solvers spread by ${fixed(spread-pct(oems_fr, scuff_fr, palace_fr), 1)}%.")
 ```
+
+`cases` picks the wording from the value, so a discussion is not written for one particular run.
+Conditions are tried in order, so open bounds come from their order:
+
+```tson
+text("OpenEMS ${cases(pct-diff(oems_fr, sheen_fr), 'abs<=1', 'falls within 1% of it (@+v%)', 'abs<=3', 'lies @+v% from it', 'misses it by @+v1%')}.")
+```
+
+The value marker is `@`, not `$` (which the engine would interpolate first), and a branch text
+cannot hold a `${...}` of its own: put other computed values outside the `cases` call.
 
 ### Color functions (`import("stdlib")`)
 

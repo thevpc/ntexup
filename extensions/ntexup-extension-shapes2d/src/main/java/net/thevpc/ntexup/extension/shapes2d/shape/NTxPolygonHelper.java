@@ -57,4 +57,13 @@ public final class NTxPolygonHelper {
         rendererContext.drawContour();
     }
 
+
+    /** sets {@code preserve-aspect-ratio:true} unless the node already declares it */
+    public static void defaultPreserveAspectRatio(net.thevpc.ntexup.api.document.node.NTxNode node,
+                                                  net.thevpc.ntexup.api.engine.NTxNodeBuilderContext ctx) {
+        if (node.getProperty(net.thevpc.ntexup.api.document.style.NTxPropName.PRESERVE_ASPECT_RATIO).isEmpty()) {
+            node.setProperty(net.thevpc.ntexup.api.document.style.NTxPropName.PRESERVE_ASPECT_RATIO,
+                    net.thevpc.nuts.elem.NElement.ofTrue());
+        }
+    }
 }

@@ -178,6 +178,11 @@ public class SlideHighlightManager {
             return;
         }
         List<HighlightQuery> active = activeQueries();
+        // only the visible page is repainted, and only when its highlight
+        // model really changed: re-rendering the slide on every keystroke is
+        // what made typing in the Find dialog flash the deck behind it
+        int currentPage = documentView.getPageIndex();
+        boolean currentChanged = false;
         for (NTxSlideIndex.SlideEntry e : idx.entries()) {
             for (NTxSlideIndex.NodeText nt : e.nodeTexts) {
                 List<NTxNodeHighlight> spans = null;
@@ -198,10 +203,35 @@ public class SlideHighlightManager {
                         }
                     }
                 }
-                NTxHighlights.set(nt.node, spans);
+                if (!sameHighlights(NTxHighlights.get(nt.node), spans)) {
+                    NTxHighlights.set(nt.node, spans);
+                    if (e.pageIndex == currentPage) {
+                        currentChanged = true;
+                    }
+                }
             }
         }
-        documentView.repaintCurrentPage();
+        if (currentChanged) {
+            documentView.repaintCurrentPage();
+        }
+    }
+
+    private static boolean sameHighlights(List<NTxNodeHighlight> a, List<NTxNodeHighlight> b) {
+        int na = a == null ? 0 : a.size();
+        int nb = b == null ? 0 : b.size();
+        if (na != nb) {
+            return false;
+        }
+        for (int i = 0; i < na; i++) {
+            NTxNodeHighlight x = a.get(i);
+            NTxNodeHighlight y = b.get(i);
+            if (x.isWholeNode() != y.isWholeNode()
+                    || !java.util.Objects.equals(x.getColor(), y.getColor())
+                    || !java.util.Arrays.equals(x.getNeedles(), y.getNeedles())) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private Color nextColor() {
