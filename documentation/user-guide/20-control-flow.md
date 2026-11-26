@@ -58,7 +58,7 @@ text("Pending tasks: ${count}")
 ```
 
 A function call is evaluated too, so a sentence can format and check the numbers it quotes
-(the numeric functions below need `import("stdlib#1.2.0.0")`):
+(the numeric functions below need `import(stdlib)`):
 
 ```tson
 text("fr = ${fixed(div(oems_fr, 1e9), 3)} GHz, ${within-pct(oems_fr, sheen_fr, 1)} from the reference")
@@ -115,7 +115,7 @@ if (x > 10) {
 | `either(a, b)` | first non-null argument |
 | `min`, `max` | numeric helpers (`stdlib`, see below) |
 
-### Numeric functions (`import("stdlib#1.2.0.0")`)
+### Numeric functions (`import(stdlib)`)
 
 For numbers computed from results (solver metrics such as `oems_fr`, `oems_minDb`).
 Arrays are flattened by the aggregates. A value bound to the empty string (a solver metric
