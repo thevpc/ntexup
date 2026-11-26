@@ -31,9 +31,9 @@ import java.awt.Paint;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.WeakHashMap;
@@ -44,16 +44,13 @@ import java.util.WeakHashMap;
  * geometry index contains every node regardless of source order.
  */
 public class NTxConnectorBuilder implements NTxNodeBuilder {
-    private static final Set<String> STRAIGHT_ROUTES = new HashSet<>(Arrays.asList(
-            "straight", "direct", "line", "none", "auto"
-    ));
     private static final Map<NTxNode, Set<String>> WARNED = new WeakHashMap<>();
 
     @Override
     public void build(NTxNodeBuilderContext builderContext) {
         builderContext.id(NTxNodeType.CONNECTOR)
                 .parseParam().matchesAnyNonPair().storeFirstMissingName(NTxPropName.FROM, NTxPropName.TO).then()
-                .parseParam().matchesNamedPair(NTxPropName.FROM, NTxPropName.TO, "via",
+                .parseParam().matchesNamedPair(NTxPropName.FROM, NTxPropName.TO, "via", "bend-radius",
                         NTxPropName.START_ARROW, NTxPropName.END_ARROW, "arrow", "label", "flow", "route").then()
                 .initializeNodeAction((node, bctx) -> node.setProperty(NTxPropName.LAYOUT, NElement.ofString("none")))
                 .renderComponent(this::renderMain);
@@ -65,12 +62,13 @@ public class NTxConnectorBuilder implements NTxNodeBuilder {
             warnOnce(ctx, node, "connector rotate is meaningless and ignored");
         }
         warnUnsupportedRoute(ctx, node);
+        String route = resolveRoute(ctx, node);
         NTxRenderSession session = ctx.session();
         AffineTransform ancestorsToRoot = session.geometry().currentToRoot();
-        session.defer(node, ctx, ancestorsToRoot, drawCtx -> draw(drawCtx, node, ancestorsToRoot));
+        session.defer(node, ctx, ancestorsToRoot, drawCtx -> draw(drawCtx, node, ancestorsToRoot, route));
     }
 
-    private void draw(NTxRendererContext ctx, NTxNode node, AffineTransform ancestorsToRoot) {
+    private void draw(NTxRendererContext ctx, NTxNode node, AffineTransform ancestorsToRoot, String route) {
         NTxGeometryIndex geometry = ctx.session().geometry();
 
         NElement fromElem = eval(ctx, node.getPropertyValue(NTxPropName.FROM).orNull());
@@ -89,16 +87,21 @@ public class NTxConnectorBuilder implements NTxNodeBuilder {
             return;
         }
 
-        NTxPoint2D fromAnchor = anchor(from, to);
-        NTxPoint2D toAnchor = anchor(to, from);
+        List<NTxPoint2D> vias = new ArrayList<>();
+        appendVia(ctx, node, ancestorsToRoot, vias);
+        NTxPoint2D fromAnchor = anchor(from, to, vias.isEmpty() ? preliminary(to) : vias.get(0));
+        NTxPoint2D toAnchor = anchor(to, from, vias.isEmpty() ? preliminary(from) : vias.get(vias.size() - 1));
         if (fromAnchor == null || toAnchor == null) {
             return;
         }
 
-        List<NTxPoint2D> pts = new ArrayList<>();
-        pts.add(fromAnchor);
-        appendVia(ctx, node, ancestorsToRoot, pts);
-        pts.add(toAnchor);
+        List<NTxPoint2D> anchors = new ArrayList<>();
+        anchors.add(fromAnchor);
+        anchors.addAll(vias);
+        anchors.add(toAnchor);
+        double bendRadius = NTxValue.of(eval(ctx, node.getPropertyValue("bend-radius").orNull()))
+                .asDouble().orElse(NTxConnectorRouting.DEFAULT_BEND_RADIUS);
+        List<NTxPoint2D> pts = NTxConnectorRouting.route(route, anchors, bendRadius);
 
         NTxGraphics g = ctx.graphics();
         Paint linePaint = ctx.getLineColor(true);
@@ -122,7 +125,7 @@ public class NTxConnectorBuilder implements NTxNodeBuilder {
         if (flow != null) {
             NTxFlowDecorator.draw(ctx, g, path, flow);
         }
-        dumpConnector(ctx, from, to, fromAnchor, toAnchor, pts, flow);
+        dumpConnector(ctx, from, to, fromAnchor, toAnchor, anchors, route, pts, flow);
 
         if (NTxValueByName.isDebug(ctx)) {
             double minX = Double.MAX_VALUE;
@@ -143,7 +146,7 @@ public class NTxConnectorBuilder implements NTxNodeBuilder {
         }
     }
 
-    private NTxPoint2D anchor(Endpoint endpoint, Endpoint other) {
+    private NTxPoint2D anchor(Endpoint endpoint, Endpoint other, NTxPoint2D next) {
         if (endpoint.placed == null) {
             return endpoint.point;
         }
@@ -152,7 +155,7 @@ public class NTxConnectorBuilder implements NTxNodeBuilder {
             return NTxConnectorGeometry.sidePoint(p.bounds, p.toRoot, endpoint.side);
         }
         NTxPoint2D center = NTxConnectorGeometry.center(p.bounds, p.toRoot);
-        NTxPoint2D otherPoint = preliminary(other);
+        NTxPoint2D otherPoint = next != null ? next : preliminary(other);
         if (otherPoint == null) {
             otherPoint = center;
         }
@@ -214,13 +217,7 @@ public class NTxConnectorBuilder implements NTxNodeBuilder {
         if (via == null) {
             return;
         }
-        NOptional<NTxPoint2D[]> arr = NTxValue.of(via).asPoint2DArray();
-        if (arr.isPresent()) {
-            for (NTxPoint2D vp : arr.get()) {
-                pts.add(transform(ancestorsToRoot, vp));
-            }
-            return;
-        }
+        NOptional<NTxPoint2D> single = NTxValue.of(via).asPoint2D();
         if (via.isListContainer()) {
             java.util.List<NElement> children = via.asListContainer().get().children();
             if (children.size() == 2 && children.get(0).isNumber() && children.get(1).isNumber()) {
@@ -233,6 +230,10 @@ public class NTxConnectorBuilder implements NTxNodeBuilder {
                 NElement ce = eval(ctx, c.element());
                 pts.add(transform(ancestorsToRoot, NTxLineBuilder.resolvePoint2D(ce, ctx, freeBounds(ctx))));
             }
+            return;
+        }
+        if (single.isPresent()) {
+            pts.add(transform(ancestorsToRoot, single.get()));
         }
     }
 
@@ -275,16 +276,17 @@ public class NTxConnectorBuilder implements NTxNodeBuilder {
      */
     private void dumpConnector(NTxRendererContext ctx, Endpoint from, Endpoint to,
                                NTxPoint2D fromAnchor, NTxPoint2D toAnchor,
+                               List<NTxPoint2D> anchors, String route,
                                List<NTxPoint2D> pts, NTxFlow flow) {
         ctx.renderDump().ifPresent(d -> {
             NObjectElementBuilder ob = NElement.ofObjectBuilder("connector");
             ob.add("from", endpointElement(from, fromAnchor));
             ob.add("to", endpointElement(to, toAnchor));
-            ob.add("route", NElement.of(pts.size() > 2 ? "polyline" : "straight"));
+            ob.add("route", NElement.of(NTxConnectorRouting.isSupported(route) ? route : "sharp"));
             NArrayElementBuilder via = NElement.ofArrayBuilder();
             int viaCount = 0;
-            for (int i = 1; i < pts.size() - 1; i++) {
-                via.add(pointElement(pts.get(i)));
+            for (int i = 1; i < anchors.size() - 1; i++) {
+                via.add(pointElement(anchors.get(i)));
                 viaCount++;
             }
             if (viaCount > 0) {
@@ -333,17 +335,20 @@ public class NTxConnectorBuilder implements NTxNodeBuilder {
     }
 
     private void warnUnsupportedRoute(NTxRendererContext ctx, NTxNode node) {
+        String route = resolveRoute(ctx, node);
+        if (route != null && !NTxConnectorRouting.isStraight(route)
+                && !NTxConnectorRouting.isSupported(route)) {
+            warnOnce(ctx, node, "connector route '" + route + "' is not supported; using sharp waypoint routing");
+        }
+    }
+
+    private String resolveRoute(NTxRendererContext ctx, NTxNode node) {
         NElement route = eval(ctx, node.getPropertyValue("route").orNull());
         if (route == null) {
-            return;
+            return "auto";
         }
-        String s = route.asStringValue().orNull();
-        if (s == null || s.trim().isEmpty()) {
-            return;
-        }
-        if (!STRAIGHT_ROUTES.contains(s.trim().toLowerCase())) {
-            warnOnce(ctx, node, "connector route '" + s.trim() + "' is not supported; using a straight route");
-        }
+        String value = route.asStringValue().orNull();
+        return value == null || value.trim().isEmpty() ? "auto" : value.trim().toLowerCase(Locale.ROOT);
     }
 
     private NElement eval(NTxRendererContext ctx, NElement e) {

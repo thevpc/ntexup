@@ -113,22 +113,31 @@ The complete list of node properties observed in ntexup.
 | `end-arrow` | same as `start-arrow` |
 | `arrow` | sets both arrows at once (unless `start-arrow`/`end-arrow` is given) |
 | `points` | polyline points in absolute page units (`((x1,y1), (x2,y2), ...)`) |
-| `via` | connector intermediate points, in percent of the parent area |
-| `route` | connector routing; only `straight` is implemented (others warn and fall back) |
-| `label` | line/polyline/curve/connector label: string or `{text, position, offset, color, font-size, bold, italic, font-family}` |
-| `flow` | flow animation: `dots(count, size, period, speed, reverse, color, static: hide)` |
+| `via` | connector waypoints in the parent's coordinate space |
+| `route` | connector route: sharp/polyline (default), orthogonal, or rounded; see the Connector table for aliases |
+| `bend-radius` | rounded-route corner radius (default `12`), reduced to fit short adjacent segments |
+| `label` | line/polyline/curve/connector label: string or `{text, position, offset, color, font-size, bold, italic, font-family}`; connectors place it along the final route |
+| `flow` | flow animation: `dots(count, size, period, speed, reverse, color, static: hide)`; connectors follow the final route |
 
 ## Connector
 
 | Property | Description |
 |----------|-------------|
-| `from` | named node reference `"name"`, `"name@side"`, or a free `(x,y)` point in percent of the parent area |
+| `from` | named node reference `"name"`, `"name@side"`, or a free `(x,y)` point in the parent's coordinate space |
 | `to` | same as `from` |
-| `via` | optional intermediate points in percent of the parent area; the connector becomes a polyline |
-| `route` | `straight` (default). Other values warn and fall back to straight |
+| `via` | optional waypoints in the parent's coordinate space; routing determines how they are joined |
+| `route` | case-insensitive mode: sharp/polyline (`straight`, `direct`, `line`, `none`, `auto`, `polyline`, `sharp`; default `auto`), orthogonal (`orthogonal`, `ortho`, `right-angle`, `elbow`), or rounded (`rounded`, `curve`, `curved`) |
+| `bend-radius` | rounded corner radius (default `12`); each waypoint change of direction is rounded, with the radius reduced near short segments |
 
 Endpoint names may be dotted (`"block.node"`) to select a node inside a named ancestor.
-Hidden endpoints suppress the connector silently; unresolved names log a warning.
+A bare name (or `@auto`) aims its border anchor toward the other endpoint, or toward the
+first/last `via` point when present. Hidden endpoints suppress the connector silently;
+unresolved names log a warning.
+
+Routing is waypoint-based and does not avoid obstacles or choose alternate corridors.
+Unsupported route names warn and fall back to sharp waypoint routing. Painting, arrowheads,
+labels, flow, debug bounds, and render dumps share the final routed geometry; label
+`position` and flow distance are measured along that geometry, including rounded bends.
 
 ## Plot
 
