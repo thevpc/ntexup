@@ -575,6 +575,18 @@ public class NTxValueByName {
         ).get();
     }
 
+    public static double getGridWeight(NTxRendererContext ctx) {
+        return (double) ctx.node().getAndSetRenderCache(NTxPropName.GRID_WEIGHT, AUTO_FORCE,
+                () -> {
+                    Double i = NTxValueByType.getDouble(ctx, NTxPropName.GRID_WEIGHT, "gridWeight").orElse(0.0);
+                    if (i == null || Double.isNaN(i) || Double.isInfinite(i) || i <= 0) {
+                        return 0.0;
+                    }
+                    return i;
+                }
+        ).get();
+    }
+
     public static double[] getColumnsWeight(NTxRendererContext ctx) {
         return NTxValueByType.getDoubleArray(ctx, NTxPropName.COLUMNS_WEIGHT, "columns-weight", "columnsWeight", "colWeights", "col-weights", "columnWeights", "columnsWeights", "cols-weight", "colsWeight").orNull();
     }

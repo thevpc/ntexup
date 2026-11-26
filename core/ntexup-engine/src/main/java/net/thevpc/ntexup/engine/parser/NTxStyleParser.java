@@ -38,6 +38,7 @@ public class NTxStyleParser {
                 NTxPropName.COL_WEIGHT,
                 NTxPropName.ROWWEIGHT,
                 NTxPropName.ROW_WEIGHT,
+                NTxPropName.GRID_WEIGHT,
                 NTxPropName.GRID_COLOR,
                 NTxPropName.LINE_COLOR,
                 NTxPropName.ROTATE,

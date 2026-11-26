@@ -105,6 +105,26 @@ grid(2, 3, columns-weight: [1, 1.2], rows-weight: [1, 2]) {
 }
 ```
 
+#### Per-child grid weights
+
+Use `grid-weight` on a child when the layout should follow the content hierarchy
+instead of repeating weight arrays on the container. It sizes both the child's
+column and row:
+
+```tson
+grid(2, 2) {
+    rectangle(grid-weight: 3) { text("Main") }
+    rectangle(grid-weight: 1) { text("Sidebar") }
+    rectangle(grid-weight: 1) { text("Details") }
+    rectangle(grid-weight: 2) { text("Summary") }
+}
+```
+
+Use `col-weight` or `row-weight` to override just one axis. A positive matching
+entry in `columns-weight` or `rows-weight` still takes precedence over all child
+weights. Missing, zero, negative, and non-finite child weights fall back to the
+default track weight of `1`.
+
 #### Grid lines
 
 ```tson
@@ -145,9 +165,9 @@ grid(3, 2, draw-grid) {
 ### `col` — Vertical Stack
 
 ```tson
-col(rows-weight: [22, 74]) {
-    text("Top 22%")
-    text("Bottom 74%")
+col {
+    text("Top", grid-weight: 22)
+    text("Bottom", grid-weight: 74)
 }
 ```
 
@@ -155,10 +175,13 @@ col(rows-weight: [22, 74]) {
 
 ```tson
 row {
-    text("Left")
-    text("Right")
+    text("Left", grid-weight: 1)
+    text("Right", grid-weight: 3)
 }
 ```
+
+`row` and `col` are grid layouts too, so they read the same per-child
+`grid-weight`, `col-weight`, and `row-weight` properties.
 
 ### `group` — Positioned Container
 

@@ -130,8 +130,15 @@ public class NTxGridRendererHelper {
             NTxRendererContext chctx = ctx.resolveNode(cc, ctx.defaultSelfBounds2D());
             e.colspan = NTxValueByName.getColSpan(chctx);
             e.rowspan = NTxValueByName.getRowSpan(chctx);
+            double gridWeight = NTxValueByName.getGridWeight(chctx);
             e.colweight = NTxValueByName.getColWeight(chctx);
+            if (e.colweight <= 0) {
+                e.colweight = gridWeight;
+            }
             e.rowweight = NTxValueByName.getRowWeight(chctx);
+            if (e.rowweight <= 0) {
+                e.rowweight = gridWeight;
+            }
             e.index = i;
             effPositions.add(e.colspan, e.rowspan, e);
         }
