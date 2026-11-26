@@ -1,6 +1,7 @@
 package net.thevpc.ntexup.engine.renderer.screen.search;
 
 import net.thevpc.ntexup.engine.renderer.screen.DocumentView;
+import net.thevpc.ntexup.engine.renderer.screen.components.FramelessPopupSupport;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -74,29 +75,20 @@ public class SlideSearchDialog extends JDialog {
     private SlideHighlightManager.HighlightQuery displayedLiveQuery;
     private long shownAt;
     private boolean closing;
+    private int hoverRow = -1;
+    /** grow-only height while open: shrinking/growing per keystroke blinks */
+    private int openHeight;
+    private static final Color GLASS_BG = new Color(15, 23, 42);
+    private static final Color GLASS_BORDER = new Color(255, 255, 255, 38);
+    private static final int ARC = 16;
 
     public SlideSearchDialog(JFrame owner, DocumentView documentView) {
         super(owner, false);
         this.documentView = documentView;
         this.manager = documentView.highlightManager();
 
-        setUndecorated(true);
-        setBackground(new Color(0, 0, 0, 0));
-
-        JPanel glass = new JPanel(new BorderLayout(0, 0)) {
-            @Override
-            protected void paintComponent(Graphics g) {
-                Graphics2D g2 = (Graphics2D) g.create();
-                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.setColor(new Color(15, 23, 42, 235));
-                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 16, 16);
-                g2.setColor(new Color(255, 255, 255, 38));
-                g2.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 16, 16);
-                g2.dispose();
-                super.paintComponent(g);
-            }
-        };
-        glass.setOpaque(false);
+        FramelessPopupSupport.install(this, GLASS_BG, ARC);
+        JPanel glass = FramelessPopupSupport.createContentPane(new BorderLayout(0, 0), GLASS_BG, GLASS_BORDER, ARC);
         glass.setBorder(new EmptyBorder(12, 14, 12, 14));
         setContentPane(glass);
 
@@ -190,13 +182,13 @@ public class SlideSearchDialog extends JDialog {
         resultList.addMouseMotionListener(new MouseAdapter() {
             @Override
             public void mouseMoved(MouseEvent e) {
-                resultRenderer.setHoverIndex(resultList.locationToIndex(e.getPoint()));
+                setHoverRow(resultList.locationToIndex(e.getPoint()));
             }
         });
         resultList.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseExited(MouseEvent e) {
-                resultRenderer.setHoverIndex(-1);
+                setHoverRow(-1);
             }
 
             @Override
@@ -299,6 +291,7 @@ public class SlideSearchDialog extends JDialog {
             return;
         }
         shownAt = System.currentTimeMillis();
+        openHeight = 0;
         input.setText("");
         rebuildChips();
         refresh();
@@ -319,8 +312,9 @@ public class SlideSearchDialog extends JDialog {
 
     /** the document was reloaded: results are stale until the index is rebuilt */
     public void onDocumentReloaded() {
-        listModel.clear();
-        resultRenderer.setHoverIndex(-1);
+        listModel = new DefaultListModel<>();
+        resultList.setModel(listModel);
+        setHoverRow(-1);
         updateEmptyState("Indexing slides…");
         resultsCard.show(resultsPanel, "empty");
         if (isShowing()) {
@@ -351,7 +345,10 @@ public class SlideSearchDialog extends JDialog {
     // ------------------------------------------------------------------
 
     private void onInputChanged() {
-        clearBtn.setVisible(!input.getText().isEmpty());
+        boolean hasText = !input.getText().isEmpty();
+        if (clearBtn.isVisible() != hasText) {
+            clearBtn.setVisible(hasText);
+        }
         debounceTimer.restart();
     }
 
@@ -391,6 +388,7 @@ public class SlideSearchDialog extends JDialog {
         }
         listModel = nextModel;
         resultList.setModel(listModel);
+        hoverRow = -1;
         resultRenderer.setHoverIndex(-1);
         if (!results.isEmpty()) {
             resultList.setSelectedIndex(0);
@@ -407,7 +405,19 @@ public class SlideSearchDialog extends JDialog {
     }
 
     private void updateEmptyState(String message) {
-        emptyLabel.setText(message);
+        if (!message.equals(emptyLabel.getText())) {
+            emptyLabel.setText(message);
+        }
+    }
+
+    private void setHoverRow(int row) {
+        if (row == hoverRow) {
+            return;
+        }
+        int old = hoverRow;
+        hoverRow = row;
+        resultRenderer.setHoverIndex(row);
+        FramelessPopupSupport.repaintRows(resultList, old, row);
     }
 
     private void moveSelection(int delta) {
@@ -576,6 +586,11 @@ public class SlideSearchDialog extends JDialog {
         int northH = northPanel.getPreferredSize().height;
         int rows = Math.min(Math.max(listModel.size(), 1), VISIBLE_ROWS);
         int h = northH + rows * CELL_H + 6 + 24;
+        if (isShowing()) {
+            // grow only while open; the list scrolls inside the extra room
+            h = Math.max(h, openHeight);
+        }
+        openHeight = h;
 
         int x;
         int y;
@@ -591,9 +606,6 @@ public class SlideSearchDialog extends JDialog {
             x = (scr.width - w) / 2;
             y = 60;
         }
-        Rectangle bounds = new Rectangle(x, y, w, h);
-        if (!getBounds().equals(bounds)) {
-            setBounds(bounds);
-        }
+        FramelessPopupSupport.setBoundsIfChanged(this, new Rectangle(x, y, w, h));
     }
 }

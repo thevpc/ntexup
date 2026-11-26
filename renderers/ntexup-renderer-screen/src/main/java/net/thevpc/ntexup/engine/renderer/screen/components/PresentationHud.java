@@ -1,7 +1,7 @@
 package net.thevpc.ntexup.engine.renderer.screen.components;
 
 import net.thevpc.ntexup.engine.renderer.screen.DocumentView;
-import net.thevpc.ntexup.engine.renderer.screen.PdfConfigDialog;
+import net.thevpc.ntexup.engine.renderer.screen.ExportDialog;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -18,7 +18,8 @@ public class PresentationHud extends JPanel {
     private final JButton lastBtn = createHudButton("▶|", "Last Slide (End)");
     private final JButton fullscreenBtn = createHudButton("⛶", "Fullscreen (F11)");
     private final JButton searchBtn = createHudButton("🔍", "Find in Slides (Ctrl+F)");
-    private final JButton pdfBtn = createHudButton("PDF", "Export to PDF");
+    private final JButton pdfBtn = createHudButton("PDF", "Export to PDF (Ctrl+P)");
+    private final JButton exportBtn = createHudButton("⇪", "Export: HTML, images, ntxp, zip… (Ctrl+E)");
     private final Timer autoHideTimer;
     private boolean mouseInside = false;
 
@@ -57,12 +58,8 @@ public class PresentationHud extends JPanel {
             documentView.openFindDialog();
             ping();
         });
-        pdfBtn.addActionListener(e -> {
-            Frame owner = (Frame) SwingUtilities.getWindowAncestor(this);
-            PdfConfigDialog configDialog = new PdfConfigDialog(owner, documentView);
-            configDialog.setVisible(true);
-            documentView.requestContentPaneFocus();
-        });
+        pdfBtn.addActionListener(e -> documentView.openExportDialog(ExportDialog.Format.PDF));
+        exportBtn.addActionListener(e -> documentView.openExportDialog(ExportDialog.Format.HTML_STANDALONE));
 
         pageLabel.setForeground(Color.WHITE);
         pageLabel.setFont(new Font("SansSerif", Font.BOLD, 13));
@@ -84,6 +81,7 @@ public class PresentationHud extends JPanel {
         add(fullscreenBtn);
         add(searchBtn);
         add(pdfBtn);
+        add(exportBtn);
 
         autoHideTimer = new Timer(2500, e -> {
             if (!mouseInside) {

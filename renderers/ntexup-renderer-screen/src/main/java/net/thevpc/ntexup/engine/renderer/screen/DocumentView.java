@@ -499,6 +499,22 @@ public class DocumentView implements NTxDocumentView {
      * counter, popup item). Builds the static slide outline on the async
      * loader thread the first time.
      */
+    /**
+     * Opens the export dialog (Ctrl+E, HUD / popup "Export"): images, html,
+     * ntxp, sources zip; PDF goes to {@link PdfConfigDialog}.
+     */
+    public void openExportDialog(ExportDialog.Format format) {
+        if (closed) {
+            return;
+        }
+        if (format == ExportDialog.Format.PDF) {
+            new PdfConfigDialog(frame, this).setVisible(true);
+        } else {
+            new ExportDialog(frame, this, format).setVisible(true);
+        }
+        requestContentPaneFocus();
+    }
+
     public void openGotoDialog() {
         if (closed) {
             return;
@@ -690,6 +706,13 @@ public class DocumentView implements NTxDocumentView {
         bindShortcut(im, am, "ntexup.goto", this::openGotoDialog,
                 KeyStroke.getKeyStroke(KeyEvent.VK_G, InputEvent.CTRL_DOWN_MASK),
                 KeyStroke.getKeyStroke(KeyEvent.VK_G, InputEvent.META_DOWN_MASK));
+        // Export (Ctrl+E) and PDF (Ctrl+P)
+        bindShortcut(im, am, "ntexup.export", () -> openExportDialog(ExportDialog.Format.HTML_STANDALONE),
+                KeyStroke.getKeyStroke(KeyEvent.VK_E, InputEvent.CTRL_DOWN_MASK),
+                KeyStroke.getKeyStroke(KeyEvent.VK_E, InputEvent.META_DOWN_MASK));
+        bindShortcut(im, am, "ntexup.pdf", () -> openExportDialog(ExportDialog.Format.PDF),
+                KeyStroke.getKeyStroke(KeyEvent.VK_P, InputEvent.CTRL_DOWN_MASK),
+                KeyStroke.getKeyStroke(KeyEvent.VK_P, InputEvent.META_DOWN_MASK));
         // Fullscreen
         bindShortcut(im, am, "ntexup.fullscreen", this::toggleFullScreen,
                 KeyStroke.getKeyStroke(KeyEvent.VK_F11, 0));
