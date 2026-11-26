@@ -111,7 +111,8 @@ Builds a local template repository from a folder of templates.
 ## `pdf` / `html` / `image`
 
 ```bash
-nuts ntexup pdf . -o out.pdf            # render to PDF
+nuts ntexup pdf . -o out.pdf            # vector PDF (default)
+nuts ntexup pdf . -o out.pdf --pdf-mode=raster --dpi=150
 nuts ntexup image . -o target/img       # render every page to an image
 nuts ntexup image . -o page.png --pages=2-5   # render a page range
 nuts ntexup pdf . -o out.pdf --page-size=a4
@@ -123,7 +124,9 @@ Common options:
 |--------|--------|
 | `-o` / `--output <out>` | Output file (or folder if it ends with `/`) |
 | `-p` / `--pages <range>` | Page range, e.g. `2-5`, `3,5,8-10`, `all` |
-| `--dpi <n>` | Image resolution |
+| `--dpi <n>` | Image resolution; for PDF, raster resolution (a positive value selects raster mode unless `--pdf-mode` is explicit) |
+| `--pdf-mode <vector\|raster>` | PDF encoding (default `vector`); aliases `native` and `image` |
+| `--pdf-vector` / `--pdf-raster` | Select the PDF encoding explicitly |
 | `--type` / `--format <fmt>` | Image format (png, jpg, ...) |
 | `--size <WxH>` | Page size in pixels |
 | `--page-size <name>` | Named page size: `a0..a6`, `letter`, `legal`, `ledger`, `executive`, `folio`, `statement` |

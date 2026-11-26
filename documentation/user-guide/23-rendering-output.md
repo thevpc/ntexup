@@ -36,20 +36,27 @@ nuts ntexup show slides.ntx
 ## PDF Generation
 
 ```bash
-nuts ntexup pdf . -o output.pdf
+nuts ntexup pdf . -o output.pdf                    # vector PDF (default)
+nuts ntexup pdf . -o output.pdf --pdf-mode=raster --dpi=150
 ```
+
+PDF output is vector-based by default, preserving selectable text and scalable geometry.
+Raster mode embeds page images instead, producing larger files with non-selectable text.
 
 ### PDF Options
 
 | Option | Effect |
 |--------|--------|
 | `-o FILE` | output file |
+| `--pdf-mode <vector\|raster>` | PDF encoding; aliases: `native` for vector, `image` for raster |
+| `--pdf-vector` / `--pdf-raster` | Explicit PDF-mode flags |
+| `--dpi <n>` | Raster PDF resolution; a positive value also selects raster mode unless `--pdf-mode` is set |
 | `--page-size` | `A4`, `A3`, `LETTER`, ... |
 | `--landscape` / `--portrait` | page orientation |
 | `--margin` | page margins |
 | `--grid` | pages per sheet (`colsxrows`) |
 
-> In a headless container, only PDF rendering works (no viewer).
+> PDF and image rendering work headless; the Swing viewer requires a display such as X11.
 
 ## HTML Generation
 
