@@ -122,7 +122,7 @@ public class NTxImageBuilder implements NTxNodeBuilder {
         if (p.isRegularFile()) {
             return p;
         }
-        for (String ext : new String[]{"png", "jpg", "gif", "jpeg","svg"}) {
+        for (String ext : new String[]{"png", "jpg", "gif", "jpeg", "svg", "avif", "webp"}) {
             String n = p.name();
             String nLowered = n.toLowerCase();
             if (nLowered.endsWith(".")) {
