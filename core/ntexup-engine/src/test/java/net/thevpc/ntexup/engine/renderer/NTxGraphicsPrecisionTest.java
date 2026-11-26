@@ -5,6 +5,7 @@ import net.thevpc.ntexup.api.document.NTxArrowType;
 import net.thevpc.ntexup.api.document.elem2d.NTxPoint2D;
 import net.thevpc.ntexup.api.document.elem2d.NTxVector2D;
 import net.thevpc.ntexup.api.document.elem2d.primitives.NtxElement2DCubicCurve;
+import net.thevpc.ntexup.api.document.elem2d.primitives.NtxElement2DLine;
 import net.thevpc.ntexup.api.document.elem2d.primitives.NtxElement2DPolyline;
 import net.thevpc.ntexup.api.document.elem2d.primitives.NtxElement2DQuadCurve;
 import net.thevpc.ntexup.lib.geometry2d.NTxElement2DFactory;
@@ -13,7 +14,10 @@ import org.junit.jupiter.api.Test;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.geom.AffineTransform;
+import java.awt.geom.CubicCurve2D;
+import java.awt.geom.Line2D;
 import java.awt.geom.Path2D;
+import java.awt.geom.QuadCurve2D;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.List;
@@ -49,6 +53,72 @@ class NTxGraphicsPrecisionTest {
     }
 
     @Test
+    void lineShaftsStopAtArrowheadBases() {
+        assertEndSetback(NTxArrowType.SIMPLE, 100);
+        assertEndSetback(NTxArrowType.TRIANGLE, 80);
+        assertEndSetback(NTxArrowType.TRIANGLE_FULL, 80);
+        assertEndSetback(NTxArrowType.DIAMOND, 90);
+        assertEndSetback(NTxArrowType.OVAL, 90);
+        assertEndSetback(NTxArrowType.OVAL_FULL, 90);
+        assertEndSetback(NTxArrowType.RECTANGLE, 90);
+        assertEndSetback(NTxArrowType.RECTANGLE_FULL, 90);
+    }
+
+    @Test
+    void polylineShaftStopsAtFinalArrowheadBase() {
+        RecordingGraphics2D graphics = new RecordingGraphics2D();
+        NTxGraphicsImpl renderer = new NTxGraphicsImpl(graphics, null);
+        NtxElement2DPolyline line = (NtxElement2DPolyline) NTxElement2DFactory.polyline(
+                new NTxPoint2D(0, 0), new NTxPoint2D(50, 0), new NTxPoint2D(100, 0));
+        line.setEndArrow(new NTxArrow(NTxArrowType.OVAL, 20, 10));
+        renderer.draw2D(line);
+
+        assertEquals(90, graphics.shapes.get(0).getBounds2D().getMaxX(), 1e-9);
+        assertEquals(0, graphics.shapes.get(1).getBounds2D().getMaxX(), 1e-9);
+    }
+
+    @Test
+    void quadraticShaftStopsAtOvalArrowheadBase() {
+        RecordingGraphics2D graphics = new RecordingGraphics2D();
+        NTxGraphicsImpl renderer = new NTxGraphicsImpl(graphics, null);
+        NtxElement2DQuadCurve curve = NTxElement2DFactory.quad(
+                new NTxPoint2D(0, 0), new NTxPoint2D(50, 0), new NTxPoint2D(100, 0));
+        curve.setEndArrow(new NTxArrow(NTxArrowType.OVAL, 20, 10));
+        renderer.draw2D(curve);
+
+        assertEquals(90, ((QuadCurve2D) graphics.shapes.get(0)).getX2(), 0.01);
+    }
+
+    @Test
+    void cubicShaftStopsAtTriangleArrowheadBase() {
+        RecordingGraphics2D graphics = new RecordingGraphics2D();
+        NTxGraphicsImpl renderer = new NTxGraphicsImpl(graphics, null);
+        NtxElement2DCubicCurve curve = NTxElement2DFactory.cubic(
+                new NTxPoint2D(0, 0), new NTxPoint2D(30, 0),
+                new NTxPoint2D(70, 0), new NTxPoint2D(100, 0));
+        curve.setEndArrow(new NTxArrow(NTxArrowType.TRIANGLE, 20, 10));
+        renderer.draw2D(curve);
+
+        assertEquals(80, ((CubicCurve2D) graphics.shapes.get(0)).getX2(), 0.01);
+    }
+
+    @Test
+    void opposingCurveArrowsLeaveOnlyTheMiddleShaft() {
+        RecordingGraphics2D graphics = new RecordingGraphics2D();
+        NTxGraphicsImpl renderer = new NTxGraphicsImpl(graphics, null);
+        NtxElement2DCubicCurve curve = NTxElement2DFactory.cubic(
+                new NTxPoint2D(0, 0), new NTxPoint2D(30, 0),
+                new NTxPoint2D(70, 0), new NTxPoint2D(100, 0));
+        curve.setStartArrow(new NTxArrow(NTxArrowType.TRIANGLE, 20, 10))
+                .setEndArrow(new NTxArrow(NTxArrowType.TRIANGLE, 20, 10));
+        renderer.draw2D(curve);
+
+        CubicCurve2D shaft = (CubicCurve2D) graphics.shapes.get(0);
+        assertEquals(20, shaft.getX1(), 0.01);
+        assertEquals(80, shaft.getX2(), 0.01);
+    }
+
+    @Test
     void quadraticArrowheadsFollowEndpointTangents() {
         RecordingGraphics2D graphics = new RecordingGraphics2D();
         NTxGraphicsImpl renderer = new NTxGraphicsImpl(graphics, null);
@@ -75,6 +145,19 @@ class NTxGraphicsPrecisionTest {
 
         assertArrowTransform(graphics, 1, 10, 10, Math.PI);
         assertArrowTransform(graphics, 2, 50, 30, 0);
+    }
+
+    private static void assertEndSetback(NTxArrowType type, double expectedShaftEnd) {
+        RecordingGraphics2D graphics = new RecordingGraphics2D();
+        NTxGraphicsImpl renderer = new NTxGraphicsImpl(graphics, null);
+        NtxElement2DLine line = NTxElement2DFactory.line(new NTxPoint2D(0, 0), new NTxPoint2D(100, 0));
+        line.setEndArrow(new NTxArrow(type, 20, 10));
+        renderer.draw2D(line);
+
+        assertEquals(2, graphics.shapes.size(), type.toString());
+        Line2D shaft = (Line2D) graphics.shapes.get(0);
+        assertEquals(expectedShaftEnd, shaft.getX2(), 1e-9, type.toString());
+        assertEquals(0, graphics.shapes.get(1).getBounds2D().getMaxX(), 1e-9, type.toString());
     }
 
     private static void assertArrowTransform(RecordingGraphics2D graphics, int index,
@@ -126,7 +209,10 @@ class NTxGraphicsPrecisionTest {
             transform.concatenate(AffineTransform.getRotateInstance(theta, x, y));
         }
 
-        @Override public void fill(java.awt.Shape shape) { }
+        @Override public void fill(java.awt.Shape shape) {
+            shapes.add(shape);
+            shapeTransforms.add(new AffineTransform(transform));
+        }
         @Override public void drawString(String str, int x, int y) { }
         @Override public void drawString(java.text.AttributedCharacterIterator iterator, int x, int y) { }
         @Override public void drawString(String str, float x, float y) { }

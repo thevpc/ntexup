@@ -36,6 +36,7 @@ import java.awt.image.ImageObserver;
 import java.text.AttributedCharacterIterator;
 import java.text.AttributedString;
 import java.util.*;
+import java.util.function.DoubleUnaryOperator;
 
 public class NTxGraphicsImpl implements NTxGraphics {
 
@@ -292,81 +293,27 @@ public class NTxGraphicsImpl implements NTxGraphics {
         g.setTransform(originalTransform);
     }
 
-    /**
-     * Returns the distance (in pixels) by which the line endpoint must be
-     * pulled back so the shaft stops exactly at the arrow's base — not at its tip.
-     *
-     * For SIMPLE (open chevron):  no setback needed, the line IS the shaft.
-     * For TRIANGLE / TRIANGLE_FULL: setback = arrowWidth (the depth of the head).
-     * For DIAMOND / DIAMOND_FULL:  setback = full diamond length (arrowWidth / 2 * 2 = arrowWidth).
-     * For OVAL / OVAL_FULL:        setback = full oval length = arrowWidth / 2 (xlen in your code).
-     * For RECTANGLE / RECTANGLE_FULL: same as oval.
-     */
     private double computeArrowSetback(NTxArrow arrow) {
         if (arrow == null || arrow.getType() == null) {
             return 0;
         }
-        NTxArrowType type = arrow.getType();
-        if (type == NTxArrowType.DEFAULT) {
-            type = NTxArrowType.SIMPLE;
+        NTxArrowType type = arrow.getType() == NTxArrowType.DEFAULT
+                ? NTxArrowType.SIMPLE : arrow.getType();
+        double width = arrow.getWidth();
+        double height = arrow.getHeight();
+        if (width <= 0) {
+            width = height;
         }
-
-        double arrowWidth = arrow.getWidth();
-        double arrowHeight = arrow.getHeight();
-        if (arrowWidth <= 0) arrowWidth = arrowHeight;
-        if (arrowHeight <= 0) arrowHeight = arrowWidth;
-
-        switch (type) {
-            case SIMPLE:
-                return 0; // open chevron: line extends to tip, no setback
-
-            case TRIANGLE:
-            case TRIANGLE_FULL: {
-                if (arrowWidth <= 0) arrowWidth = 10;
-                return arrowWidth; // arrowWidth is the depth along the axis
-            }
-
-            case DIAMOND:
-            case DIAMOND_FULL: {
-                if (arrowWidth <= 0) arrowWidth = 50;
-                // In your code: xlen = arrowWidth/2, diamond spans from xmin to xmin+xlen
-                // but xmin = -arrowWidth/2 + ... let me trace your coords:
-                // xPoints = {xmin+xlen/2, xmin+xlen, xmin+xlen/2, xmin}
-                // rightmost point (tip) = xmin+xlen, leftmost = xmin
-                // total width along axis = xlen = arrowWidth/2
-                // BUT there's an offset: xmin = -arrowWidth/2
-                // So tip is at: -arrowWidth/2 + arrowWidth/2 = 0  ✓ (the origin)
-                // And base is at: xmin = -arrowWidth/2
-                // Setback = arrowWidth/2 (full diamond depth)
-                return arrowWidth / 2.0;
-            }
-
-            case OVAL:
-            case OVAL_FULL: {
-                if (arrowWidth <= 0) arrowWidth = 30;
-                // xlen = arrowWidth/2; oval spans from xmin to xmin+xlen
-                // xmin = -arrowWidth/2 + arrowHeight/4  (note: same offset as diamond)
-                // Tip (rightmost of oval) = xmin + xlen = -arrowWidth/2 + arrowHeight/4 + arrowWidth/2
-                //                         = arrowHeight/4
-                // That's not at origin — your oval is slightly offset. Fix in drawArrayHead too.
-                // For setback: full extent from origin to left edge of oval:
-                // left edge = xmin = -arrowWidth/2 + arrowHeight/4
-                // setback = arrowWidth/2 - arrowHeight/4   (when arrowWidth==arrowHeight: W/4)
-                if (arrowHeight <= 0) arrowHeight = arrowWidth;
-                return arrowWidth / 2.0 - arrowHeight / 4.0;
-            }
-
-            case RECTANGLE:
-            case RECTANGLE_FULL: {
-                if (arrowWidth <= 0) arrowWidth = 30;
-                if (arrowHeight <= 0) arrowHeight = arrowWidth;
-                // Same geometry as oval
-                return arrowWidth / 2.0 - arrowHeight / 4.0;
-            }
-
-            default:
-                return 0;
+        if (height <= 0) {
+            height = width;
         }
+        return switch (type) {
+            case SIMPLE -> 0;
+            case TRIANGLE, TRIANGLE_FULL -> width > 0 ? width : 10;
+            case DIAMOND, DIAMOND_FULL -> width > 0 ? width / 2.0 : 25;
+            case OVAL, OVAL_FULL, RECTANGLE, RECTANGLE_FULL -> width > 0 ? width / 2.0 : 15;
+            default -> 0;
+        };
     }
 
     @Override
@@ -807,15 +754,39 @@ public class NTxGraphicsImpl implements NTxGraphics {
             setStroke(pr.getLineStroke());
         }
         QuadCurve2D q = new QuadCurve2D.Double();
-
         q.setCurve(a.x, a.y, c.x, c.y, b.x, b.y);
 
-        g.draw(q);
+        NTxArrow startArrow = pr.getStartArrow();
+        NTxArrow endArrow = pr.getEndArrow();
+        boolean hasStart = startArrow != null && startArrow.getType() != null;
+        boolean hasEnd = endArrow != null && endArrow.getType() != null;
+        if (hasStart || hasEnd) {
+            CurveProfile profile = quadProfile(q);
+            double ratio = hasStart && hasEnd ? 0.3 : 0.45;
+            if (hasStart) {
+                startArrow = scaleArrow(startArrow, profile.length(), ratio);
+            }
+            if (hasEnd) {
+                endArrow = scaleArrow(endArrow, profile.length(), ratio);
+            }
+            double startSetback = computeArrowSetback(startArrow);
+            double endSetback = computeArrowSetback(endArrow);
+            if (startSetback + endSetback > profile.length() && profile.length() > 0) {
+                double scale = profile.length() / (startSetback + endSetback);
+                startSetback *= scale;
+                endSetback *= scale;
+            }
+            QuadCurve2D shaft = trimQuadCurve(q, profile, startSetback, endSetback);
+            if (shaft != null) {
+                g.draw(shaft);
+            }
+        } else {
+            g.draw(q);
+        }
 
-        //restore default stroke?
         setStroke(oldStroke);
-        drawArrayHead(a, a.minus(c).asVector(), pr.getStartArrow());
-        drawArrayHead(b, b.minus(c).asVector(), pr.getEndArrow());
+        drawArrayHead(a, a.minus(c).asVector(), startArrow);
+        drawArrayHead(b, b.minus(c).asVector(), endArrow);
         setPaint(oldPaint);
         setStroke(oldStroke);
     }
@@ -834,20 +805,212 @@ public class NTxGraphicsImpl implements NTxGraphics {
             setStroke(pr.getLineStroke());
         }
         CubicCurve2D q = new CubicCurve2D.Double();
+        q.setCurve(a.x, a.y, c1.x, c1.y, c2.x, c2.y, b.x, b.y);
 
-        q.setCurve(a.x, a.y,
-                c1.x, c1.y,
-                c2.x, c2.y,
-                b.x, b.y);
+        NTxArrow startArrow = pr.getStartArrow();
+        NTxArrow endArrow = pr.getEndArrow();
+        boolean hasStart = startArrow != null && startArrow.getType() != null;
+        boolean hasEnd = endArrow != null && endArrow.getType() != null;
+        if (hasStart || hasEnd) {
+            CurveProfile profile = cubicProfile(q);
+            double ratio = hasStart && hasEnd ? 0.3 : 0.45;
+            if (hasStart) {
+                startArrow = scaleArrow(startArrow, profile.length(), ratio);
+            }
+            if (hasEnd) {
+                endArrow = scaleArrow(endArrow, profile.length(), ratio);
+            }
+            double startSetback = computeArrowSetback(startArrow);
+            double endSetback = computeArrowSetback(endArrow);
+            if (startSetback + endSetback > profile.length() && profile.length() > 0) {
+                double scale = profile.length() / (startSetback + endSetback);
+                startSetback *= scale;
+                endSetback *= scale;
+            }
+            CubicCurve2D shaft = trimCubicCurve(q, profile, startSetback, endSetback);
+            if (shaft != null) {
+                g.draw(shaft);
+            }
+        } else {
+            g.draw(q);
+        }
 
-        g.draw(q);
-
-        //restore default stroke?
         setStroke(oldStroke);
-        drawArrayHead(a, a.minus(c1).asVector(), pr.getStartArrow());
-        drawArrayHead(b, b.minus(c2).asVector(), pr.getEndArrow());
+        drawArrayHead(a, a.minus(c1).asVector(), startArrow);
+        drawArrayHead(b, b.minus(c2).asVector(), endArrow);
         setPaint(oldPaint);
         setStroke(oldStroke);
+    }
+
+    private static final int CURVE_TRIM_SAMPLES = 256;
+    private static final int CURVE_TRIM_ITERATIONS = 24;
+
+    private record CurveProfile(double[] distances, double length, DoubleUnaryOperator speed) {
+    }
+
+    private static CurveProfile quadProfile(QuadCurve2D q) {
+        return curveProfile(t -> {
+            double u = 1 - t;
+            double x = 2 * (u * (q.getCtrlX() - q.getX1()) + t * (q.getX2() - q.getCtrlX()));
+            double y = 2 * (u * (q.getCtrlY() - q.getY1()) + t * (q.getY2() - q.getCtrlY()));
+            return Math.hypot(x, y);
+        });
+    }
+
+    private static CurveProfile cubicProfile(CubicCurve2D q) {
+        return curveProfile(t -> {
+            double u = 1 - t;
+            double x = 3 * (u * u * (q.getCtrlX1() - q.getX1())
+                    + 2 * u * t * (q.getCtrlX2() - q.getCtrlX1())
+                    + t * t * (q.getX2() - q.getCtrlX2()));
+            double y = 3 * (u * u * (q.getCtrlY1() - q.getY1())
+                    + 2 * u * t * (q.getCtrlY2() - q.getCtrlY1())
+                    + t * t * (q.getY2() - q.getCtrlY2()));
+            return Math.hypot(x, y);
+        });
+    }
+
+    private static CurveProfile curveProfile(DoubleUnaryOperator speed) {
+        double[] distances = new double[CURVE_TRIM_SAMPLES + 1];
+        for (int i = 0; i < CURVE_TRIM_SAMPLES; i++) {
+            double t0 = i / (double) CURVE_TRIM_SAMPLES;
+            double t1 = (i + 1) / (double) CURVE_TRIM_SAMPLES;
+            distances[i + 1] = distances[i] + integratedSpeed(speed, t0, t1);
+        }
+        return new CurveProfile(distances, distances[CURVE_TRIM_SAMPLES], speed);
+    }
+
+    private static double integratedSpeed(DoubleUnaryOperator speed, double t0, double t1) {
+        double mid = (t0 + t1) / 2;
+        return (t1 - t0) / 6 * (speed.applyAsDouble(t0)
+                + 4 * speed.applyAsDouble(mid) + speed.applyAsDouble(t1));
+    }
+
+    private static double parameterAtDistance(CurveProfile profile, double distance, boolean fromEnd) {
+        if (distance <= 0) {
+            return fromEnd ? 1 : 0;
+        }
+        if (distance >= profile.length()) {
+            return fromEnd ? 0 : 1;
+        }
+        double target = fromEnd ? profile.length() - distance : distance;
+        int low = 0;
+        int high = CURVE_TRIM_SAMPLES;
+        while (high - low > 1) {
+            int mid = (low + high) / 2;
+            if (profile.distances()[mid] <= target) {
+                low = mid;
+            } else {
+                high = mid;
+            }
+        }
+        double t0 = low / (double) CURVE_TRIM_SAMPLES;
+        double t1 = high / (double) CURVE_TRIM_SAMPLES;
+        double segmentLength = profile.distances()[high] - profile.distances()[low];
+        if (segmentLength <= 0) {
+            return t0;
+        }
+        double segmentStart = t0;
+        double remaining = target - profile.distances()[low];
+        for (int i = 0; i < CURVE_TRIM_ITERATIONS; i++) {
+            double mid = (t0 + t1) / 2;
+            if (integratedSpeed(profile.speed(), segmentStart, mid) < remaining) {
+                t0 = mid;
+            } else {
+                t1 = mid;
+            }
+        }
+        return (t0 + t1) / 2;
+    }
+
+    private static QuadCurve2D trimQuadCurve(QuadCurve2D q, CurveProfile profile,
+                                             double startSetback, double endSetback) {
+        if (profile.length() <= 1e-9) {
+            return q;
+        }
+        double t0 = parameterAtDistance(profile, startSetback, false);
+        double t1 = parameterAtDistance(profile, endSetback, true);
+        if (t1 <= t0) {
+            return null;
+        }
+        if (t0 <= 0 && t1 >= 1) {
+            return q;
+        }
+        QuadCurve2D left = new QuadCurve2D.Double();
+        QuadCurve2D right = new QuadCurve2D.Double();
+        if (t1 < 1) {
+            splitQuadAt(q, t1, left, right);
+            q = left;
+        }
+        if (t0 > 0) {
+            splitQuadAt(q, t0 / t1, left, right);
+            return right;
+        }
+        return q;
+    }
+
+    private static void splitQuadAt(QuadCurve2D q, double t,
+                                    QuadCurve2D left, QuadCurve2D right) {
+        double x1 = q.getX1();
+        double y1 = q.getY1();
+        double x2 = q.getX2();
+        double y2 = q.getY2();
+        double ax = x1 + (q.getCtrlX() - x1) * t;
+        double ay = y1 + (q.getCtrlY() - y1) * t;
+        double bx = q.getCtrlX() + (x2 - q.getCtrlX()) * t;
+        double by = q.getCtrlY() + (y2 - q.getCtrlY()) * t;
+        double mx = ax + (bx - ax) * t;
+        double my = ay + (by - ay) * t;
+        right.setCurve(mx, my, bx, by, x2, y2);
+        left.setCurve(x1, y1, ax, ay, mx, my);
+    }
+
+    private static CubicCurve2D trimCubicCurve(CubicCurve2D q, CurveProfile profile,
+                                               double startSetback, double endSetback) {
+        if (profile.length() <= 1e-9) {
+            return q;
+        }
+        double t0 = parameterAtDistance(profile, startSetback, false);
+        double t1 = parameterAtDistance(profile, endSetback, true);
+        if (t1 <= t0) {
+            return null;
+        }
+        if (t0 <= 0 && t1 >= 1) {
+            return q;
+        }
+        CubicCurve2D left = new CubicCurve2D.Double();
+        CubicCurve2D right = new CubicCurve2D.Double();
+        if (t1 < 1) {
+            splitCubicAt(q, t1, left, right);
+            q = left;
+        }
+        if (t0 > 0) {
+            splitCubicAt(q, t0 / t1, left, right);
+            return right;
+        }
+        return q;
+    }
+
+    private static void splitCubicAt(CubicCurve2D q, double t,
+                                     CubicCurve2D left, CubicCurve2D right) {
+        double x1 = q.getX1();
+        double y1 = q.getY1();
+        double x2 = q.getX2();
+        double y2 = q.getY2();
+        double ax = x1 + (q.getCtrlX1() - x1) * t;
+        double ay = y1 + (q.getCtrlY1() - y1) * t;
+        double bx = q.getCtrlX1() + (q.getCtrlX2() - q.getCtrlX1()) * t;
+        double by = q.getCtrlY1() + (q.getCtrlY2() - q.getCtrlY1()) * t;
+        double cx = q.getCtrlX2() + (x2 - q.getCtrlX2()) * t;
+        double cy = q.getCtrlY2() + (y2 - q.getCtrlY2()) * t;
+        double dx = ax + (bx - ax) * t;
+        double dy = ay + (by - ay) * t;
+        double ex = bx + (cx - bx) * t;
+        double ey = by + (cy - by) * t;
+        double mx = dx + (ex - dx) * t;
+        double my = dy + (ey - dy) * t;
+        right.setCurve(mx, my, ex, ey, cx, cy, x2, y2);
+        left.setCurve(x1, y1, ax, ay, dx, dy, mx, my);
     }
 
     private void draw2DHElement2DPolyline(NtxElement2DPolyline pr) {
